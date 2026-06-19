@@ -20,7 +20,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 font-bold text-xl text-gray-900 shrink-0">
             <span className="bg-blue-600 text-white rounded-lg w-8 h-8 flex items-center justify-center text-sm font-black">A</span>
-            <span>Am<span className="text-blue-600">Logistico</span></span>
+            <span>AM<span className="text-blue-600">Logistico</span></span>
           </Link>
 
           {/* Desktop nav — tylko na landing */}

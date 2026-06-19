@@ -31,7 +31,7 @@ export default function Footer() {
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-2 font-bold text-white text-lg mb-3">
               <span className="bg-blue-500 text-white rounded-lg w-7 h-7 flex items-center justify-center text-xs font-black">A</span>
-              Am<span className="text-blue-400">Logistico</span>
+              AM<span className="text-blue-400">Logistico</span>
             </Link>
             <p className="text-sm leading-relaxed">
               Automatyczne generowanie dokumentów transportowych dla spedytorów i firm logistycznych.
@@ -59,7 +59,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} AmLogistico. Wszelkie prawa zastrzeżone.</p>
+          <p>© {new Date().getFullYear()} AMLogistico. Wszelkie prawa zastrzeżone.</p>
           <p>Zbudowane z ❤️ dla branży TSL</p>
         </div>
       </div>

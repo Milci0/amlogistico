@@ -18,20 +18,20 @@ const EU_CODES = ['PL','DE','FR','NL','BE','CZ','SK','AT','IT','ES','PT','SE','D
 function getDocsList(transport, bothEU) {
   if (transport === 'road') {
     return [
-      { name: 'CMR — list przewozowy', desc: 'Podstawowy dokument transportu drogowego', required: true, icon: 'doc' },
-      { name: 'Packing List', desc: 'Szczegółowy wykaz zawartości przesyłki', required: true, icon: 'list' },
-      { name: 'Faktura handlowa', desc: 'Dokument rozliczeniowy między sprzedającym a kupującym', required: true, icon: 'doc' },
-      ...(!bothEU ? [{ name: 'Faktura Proforma', desc: 'Dokument celny do odprawy eksportowej', required: true, icon: 'doc' }] : []),
-      { name: 'Zlecenie transportowe', desc: 'Umowa między zleceniodawcą a przewoźnikiem', required: false, icon: 'clipboard' },
-      { name: 'Protokół odbioru (POD)', desc: 'Potwierdzenie dostarczenia towaru przez odbiorcę', required: false, icon: 'sign' },
+      { key: 'cmr', name: 'CMR — list przewozowy', desc: 'Podstawowy dokument transportu drogowego', required: true, icon: 'doc', fillFn: fillCmr },
+      { key: 'packing', name: 'Packing List', desc: 'Szczegółowy wykaz zawartości przesyłki', required: true, icon: 'list', fillFn: fillPackingList },
+      { key: 'faktura', name: 'Faktura handlowa', desc: 'Dokument rozliczeniowy między sprzedającym a kupującym', required: true, icon: 'doc', fillFn: fillFakturaHandlowa },
+      ...(!bothEU ? [{ key: 'proforma', name: 'Faktura Proforma', desc: 'Dokument celny do odprawy eksportowej', required: true, icon: 'doc', fillFn: fillFakturaProforma }] : []),
+      { key: 'zlecenie', name: 'Zlecenie transportowe', desc: 'Umowa między zleceniodawcą a przewoźnikiem', required: false, icon: 'clipboard', fillFn: fillZlecenie },
+      { key: 'pod', name: 'Protokół odbioru (POD)', desc: 'Potwierdzenie dostarczenia towaru przez odbiorcę', required: false, icon: 'sign', fillFn: fillPOD },
     ]
   }
   return [
-    { name: 'Bill of Lading', desc: 'Konosament morski — negocjowalny dokument tytułowy', required: true, icon: 'doc' },
-    { name: 'Sea Waybill', desc: 'Morski list przewozowy — szybszy odbiór niż B/L', required: false, icon: 'doc' },
-    { name: 'Packing List', desc: 'Szczegółowy wykaz zawartości kontenera', required: true, icon: 'list' },
-    { name: 'Faktura handlowa', desc: 'Dokument rozliczeniowy między sprzedającym a kupującym', required: true, icon: 'doc' },
-    ...(!bothEU ? [{ name: 'Faktura Proforma', desc: 'Dokument celny do odprawy eksportowej', required: true, icon: 'doc' }] : []),
+    { key: 'bol', name: 'Bill of Lading', desc: 'Konosament morski — negocjowalny dokument tytułowy', required: true, icon: 'doc', fillFn: fillBillOfLading },
+    { key: 'packing', name: 'Packing List', desc: 'Szczegółowy wykaz zawartości kontenera', required: true, icon: 'list', fillFn: fillPackingList },
+    { key: 'faktura', name: 'Faktura handlowa', desc: 'Dokument rozliczeniowy między sprzedającym a kupującym', required: true, icon: 'doc', fillFn: fillFakturaHandlowa },
+    ...(!bothEU ? [{ key: 'proforma', name: 'Faktura Proforma', desc: 'Dokument celny do odprawy eksportowej', required: true, icon: 'doc', fillFn: fillFakturaProforma }] : []),
+    { key: 'seawaybill', name: 'Sea Waybill', desc: 'Morski list przewozowy — szybszy odbiór niż B/L', required: false, icon: 'doc', fillFn: fillSeaWaybill },
   ]
 }
 
@@ -322,15 +322,60 @@ function Step3({ data, setData, onNext, onBack }) {
 
 // ── Step 4: Dokumenty ──────────────────────────────────────────────────────────
 
-function Step4({ routeData, cargoData, partiesData, onBack }) {
-  const [loading, setLoading] = useState(false)
-  const [results, setResults] = useState(null)
-  const [error, setError] = useState(null)
+function DocDownloadButton({ status, onClick }) {
+  if (status === 'loading') {
+    return (
+      <button disabled className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed">
+        <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+        Generuję…
+      </button>
+    )
+  }
+  if (status === 'done') {
+    return (
+      <button onClick={onClick} className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors">
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+        </svg>
+        Pobrano
+      </button>
+    )
+  }
+  if (status === 'error') {
+    return (
+      <button onClick={onClick} className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors">
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Ponów
+      </button>
+    )
+  }
+  return (
+    <button onClick={onClick} className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors">
+      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg>
+      Pobierz PDF
+    </button>
+  )
+}
 
+function Step4({ routeData, cargoData, partiesData, onBack }) {
   const fromCountry = COUNTRIES.find(c => c.code === routeData.fromCountry)
   const toCountry = COUNTRIES.find(c => c.code === routeData.toCountry)
   const bothEU = !!(fromCountry && toCountry && EU_CODES.includes(fromCountry.code) && EU_CODES.includes(toCountry.code))
   const docsList = getDocsList(routeData.transport, bothEU)
+
+  const [statuses, setStatuses] = useState(() =>
+    Object.fromEntries(docsList.map(d => [d.key, 'idle']))
+  )
+
+  const isAnyLoading = Object.values(statuses).some(s => s === 'loading')
+  const doneCount = Object.values(statuses).filter(s => s === 'done').length
 
   const summary = [
     ['Typ transportu', routeData.transport === 'road' ? 'Drogowy (TIR)' : 'Morski (Kontener)'],
@@ -341,103 +386,53 @@ function Step4({ routeData, cargoData, partiesData, onBack }) {
     ['Cel. wymagana odprawa', fromCountry && toCountry ? (bothEU ? 'Nie — ruch wewnątrz UE' : 'Tak') : '—'],
   ]
 
-  async function handleGenerate() {
-    setLoading(true)
-    setError(null)
+  const formData = {
+    transport: routeData.transport,
+    fromCountry: routeData.fromCountry,
+    fromCity: routeData.fromCity,
+    toCountry: routeData.toCountry,
+    toCity: routeData.toCity,
+    loadDate: routeData.loadDate,
+    cargo: {
+      name: cargoData.cargoName,
+      hsCode: cargoData.hsCode,
+      weight: cargoData.weight,
+      volume: cargoData.volume,
+      packages: cargoData.packages,
+      value: cargoData.value,
+      currency: cargoData.currency,
+      notes: cargoData.notes,
+    },
+    sender: { ...partiesData.sender, country: routeData.fromCountry },
+    receiver: { ...partiesData.receiver, country: routeData.toCountry },
+  }
 
-    const formData = {
-      transport: routeData.transport,
-      fromCountry: routeData.fromCountry,
-      fromCity: routeData.fromCity,
-      toCountry: routeData.toCountry,
-      toCity: routeData.toCity,
-      loadDate: routeData.loadDate,
-      cargo: {
-        name: cargoData.cargoName,
-        hsCode: cargoData.hsCode,
-        weight: cargoData.weight,
-        volume: cargoData.volume,
-        packages: cargoData.packages,
-        value: cargoData.value,
-        currency: cargoData.currency,
-        notes: cargoData.notes,
-      },
-      sender: { ...partiesData.sender, country: routeData.fromCountry },
-      receiver: { ...partiesData.receiver, country: routeData.toCountry },
-    }
-
-    const generated = []
-
-    const run = async (fn, label) => {
-      await fn(formData)
-      generated.push({ name: label, status: 'ready' })
-    }
-
+  async function downloadOne(doc) {
+    setStatuses(s => ({ ...s, [doc.key]: 'loading' }))
     try {
-      if (routeData.transport === 'road') {
-        await run(fillCmr, 'CMR — list przewozowy')
-        await run(fillZlecenie, 'Zlecenie transportowe')
-        await run(fillPOD, 'Protokół odbioru (POD)')
-      } else {
-        await run(fillBillOfLading, 'Bill of Lading')
-        await run(fillSeaWaybill, 'Sea Waybill')
-      }
-
-      await run(fillPackingList, 'Packing List')
-      await run(fillFakturaHandlowa, 'Faktura handlowa')
-
-      if (!bothEU) {
-        await run(fillFakturaProforma, 'Faktura Proforma')
-      }
-
-      setResults(generated)
+      await doc.fillFn(formData)
+      setStatuses(s => ({ ...s, [doc.key]: 'done' }))
     } catch (err) {
       console.error(err)
-      setError('Błąd generowania PDF. Sprawdź czy szablony są w folderze public/templates/')
-    } finally {
-      setLoading(false)
+      setStatuses(s => ({ ...s, [doc.key]: 'error' }))
     }
   }
 
-  if (results) {
-    return (
-      <div>
-        <div className="flex items-center gap-2 mb-5">
-          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900">Dokumenty gotowe!</p>
-            <p className="text-xs text-gray-400">Linki aktywne przez 24h</p>
-          </div>
-        </div>
-
-        <div className="space-y-2 mb-5">
-          {results.map(doc => (
-            <div key={doc.name} className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-xl bg-white">
-              <DocIcon type="doc" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">{doc.name}</p>
-                <p className="text-xs text-green-600 mt-0.5">Pobrano automatycznie</p>
-              </div>
-              <svg className="w-4 h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          ))}
-        </div>
-
-        <button
-          onClick={() => setResults(null)}
-          className="w-full border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-3 rounded-xl transition-colors text-sm"
-        >
-          ← Wróć do podglądu
-        </button>
-      </div>
-    )
+  async function generateBatch(docs) {
+    for (const doc of docs) {
+      setStatuses(s => ({ ...s, [doc.key]: 'loading' }))
+      try {
+        await doc.fillFn(formData)
+        setStatuses(s => ({ ...s, [doc.key]: 'done' }))
+      } catch (err) {
+        console.error(err)
+        setStatuses(s => ({ ...s, [doc.key]: 'error' }))
+      }
+    }
   }
+
+  const requiredDocs = docsList.filter(d => d.required)
+  const optionalDocs = docsList.filter(d => !d.required)
 
   return (
     <div>
@@ -457,51 +452,75 @@ function Step4({ routeData, cargoData, partiesData, onBack }) {
         ))}
       </div>
 
-      <SectionLabel>Dokumenty do wygenerowania</SectionLabel>
-      <div className="space-y-2 mb-6">
-        {docsList.map(doc => (
-          <div key={doc.name} className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl bg-white">
+      <div className="flex items-center justify-between mb-3">
+        <SectionLabel>Dokumenty</SectionLabel>
+        {doneCount > 0 && (
+          <span className="text-xs text-green-600 font-medium">{doneCount}/{docsList.length} pobrano</span>
+        )}
+      </div>
+
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Wymagane</p>
+      <div className="space-y-2 mb-4">
+        {requiredDocs.map(doc => (
+          <div key={doc.key} className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl bg-white">
             <DocIcon type={doc.icon} />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900">{doc.name}</p>
               <p className="text-xs text-gray-400 mt-0.5">{doc.desc}</p>
             </div>
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0
-              ${doc.required ? 'bg-gray-100 text-gray-600' : 'bg-gray-50 text-gray-400 border border-gray-200'}`}>
-              {doc.required ? 'wymagany' : 'opcjonalny'}
-            </span>
+            <DocDownloadButton status={statuses[doc.key]} onClick={() => downloadOne(doc)} />
           </div>
         ))}
       </div>
 
-      {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
-          {error}
-        </div>
+      {optionalDocs.length > 0 && (
+        <>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Opcjonalne</p>
+          <div className="space-y-2 mb-6">
+            {optionalDocs.map(doc => (
+              <div key={doc.key} className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl bg-white">
+                <DocIcon type={doc.icon} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">{doc.name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{doc.desc}</p>
+                </div>
+                <DocDownloadButton status={statuses[doc.key]} onClick={() => downloadOne(doc)} />
+              </div>
+            ))}
+          </div>
+        </>
       )}
+      {optionalDocs.length === 0 && <div className="mb-6" />}
 
-      <button
-        onClick={handleGenerate}
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3.5 rounded-xl transition-colors"
-      >
-        {loading ? (
-          <>
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => generateBatch(requiredDocs)}
+          disabled={isAnyLoading}
+          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
+        >
+          {isAnyLoading ? (
             <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
-            Generuję dokumenty...
-          </>
-        ) : (
-          <>
+          ) : (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Generuj dokumenty ↗
-          </>
-        )}
-      </button>
+          )}
+          Generuj wymagane
+        </button>
+        <button
+          onClick={() => generateBatch(docsList)}
+          disabled={isAnyLoading}
+          className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-900 disabled:bg-gray-500 text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Generuj wszystkie
+        </button>
+      </div>
     </div>
   )
 }

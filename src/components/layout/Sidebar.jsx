@@ -49,7 +49,7 @@ export default function Sidebar({ onClose }) {
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
         <Link to="/" className="flex items-center gap-2 font-bold text-white text-lg">
           <span className="bg-blue-500 text-white rounded-md w-7 h-7 flex items-center justify-center text-xs font-black">A</span>
-          Am<span className="text-blue-400">Logistico</span>
+          AM<span className="text-blue-400">Logistico</span>
         </Link>
         {/* Przycisk zamknięcia — tylko mobile */}
         {onClose && (

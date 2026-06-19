@@ -43,7 +43,7 @@ export default function AppShell() {
             </svg>
           </button>
           <span className="font-bold text-gray-900 text-base">
-            Am<span className="text-blue-600">Logistico</span>
+            AM<span className="text-blue-600">Logistico</span>
           </span>
         </header>
 
