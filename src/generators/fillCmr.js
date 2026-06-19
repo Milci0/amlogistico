@@ -1,6 +1,6 @@
-import { printDocument } from './printDocument'
+import { generatePdf } from './generatePdf'
 import { CmrTemplate } from './templates/CmrTemplate'
 
 export async function fillCmr(data) {
-  await printDocument(CmrTemplate, data, 'CMR.pdf')
+  await generatePdf(CmrTemplate, data, 'CMR.pdf')
 }
