@@ -15,7 +15,7 @@ export async function fillZlecenie(data) {
     { x: 300, y: 300, text: data.loadDate },
     { x: 35, y: 400, text: `${data.toCity}, ${data.toCountry}` },
     { x: 35, y: 510, text: data.cargo.name },
-    { x: 200, y: 510, text: data.cargo.weight ? `${data.cargo.weight} kg` : '' },
+    { x: 280, y: 500, text: data.cargo.weight ? `${data.cargo.weight} kg` : '' },
     { x: 310, y: 510, text: data.cargo.volume ? `${data.cargo.volume} m³` : '' },
     { x: 410, y: 510, text: data.cargo.packages ? String(data.cargo.packages) : '' },
   ]
