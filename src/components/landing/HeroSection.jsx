@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import WizardModal from './WizardModal'
 
 export default function HeroSection() {
@@ -33,23 +32,14 @@ export default function HeroSection() {
         </p>
 
         {/* CTA */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-14">
-          <Link
-            to="/app/dashboard"
-            className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-7 py-3.5 rounded-xl shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5"
-          >
-            Zacznij bezpłatnie
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </Link>
+        <div className="flex justify-center mb-14">
           <button
             onClick={() => setWizardOpen(true)}
-            className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-800 font-semibold px-7 py-3.5 rounded-xl border border-gray-200 shadow-sm transition-all hover:-translate-y-0.5"
+            className="inline-flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-bold px-12 py-4 rounded-xl shadow-lg shadow-blue-200 text-lg transition-all hover:-translate-y-0.5"
           >
             Rozpocznij
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
           </button>
         </div>
