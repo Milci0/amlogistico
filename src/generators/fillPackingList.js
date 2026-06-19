@@ -30,5 +30,5 @@ export async function fillPackingList(data) {
     { x: 400, y: 80,  text: new Date().toLocaleDateString('pl-PL') },
   ]
 
-  await fillPdf('/templates/eu/common/packing_list.pdf', fields, 'Packing_List.pdf')
+  await fillPdf('/templates/eu/common/02_Packing_List.pdf', fields, 'Packing_List.pdf')
 }

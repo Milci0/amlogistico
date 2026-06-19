@@ -48,5 +48,5 @@ export async function fillCmr(data) {
     { x: 30,  y: 520, text: `${data.fromCity}, ${new Date().toLocaleDateString('pl-PL')}` },
   ]
 
-  await fillPdf('/templates/eu/land/cmr.pdf', fields, 'CMR.pdf')
+  await fillPdf('/templates/eu/land/01_CMR_List_Przewozowy.pdf', fields, 'CMR.pdf')
 }
