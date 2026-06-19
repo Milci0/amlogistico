@@ -1,165 +1,190 @@
-const s = {
-  page: { width: '794px', minHeight: '1123px', padding: '20px 24px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '9px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box' },
-  title: { textAlign: 'center', fontSize: '15px', fontWeight: 'bold', letterSpacing: '2px', marginBottom: '2px' },
-  subtitle: { textAlign: 'center', fontSize: '8px', color: '#555', marginBottom: '2px' },
-  blNo: { textAlign: 'right', marginBottom: '10px' },
-  row: { display: 'flex', borderLeft: '1px solid #000', borderTop: '1px solid #000' },
-  cell: { borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '5px 7px' },
-  label: { fontSize: '7px', color: '#666', textTransform: 'uppercase', marginBottom: '2px' },
-  val: { fontSize: '10px', fontWeight: 'bold', minHeight: '13px' },
-  val2: { fontSize: '9px', minHeight: '12px' },
-  th: { padding: '5px 7px', backgroundColor: '#333', color: '#fff', fontWeight: 'bold', fontSize: '8px', borderRight: '1px solid #555', textAlign: 'center' },
-  td: { padding: '5px 7px', borderRight: '1px solid #ccc', borderBottom: '1px solid #ccc', fontSize: '9px' },
-  sigBox: { borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 7px', minHeight: '70px' },
-}
-
 export function BillOfLadingTemplate({ data }) {
+  const b = '1px solid #c0c0c0'
+  const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
+  const val = { fontSize: '9px', minHeight: '12px' }
+  const thStyle = {
+    padding: '3px 5px', borderRight: b, borderBottom: b,
+    fontSize: '7px', fontWeight: 'bold', color: '#fff',
+    backgroundColor: '#2c5fa8', verticalAlign: 'top',
+  }
+  const emptyRow = (
+    <div style={{ display: 'flex', minHeight: '22px' }}>
+      {[110, 75, 60, 70, null, 55, 75, 75].map((w, i) => (
+        <div key={i} style={{ width: w ? `${w}px` : undefined, flex: w ? undefined : 1, borderRight: b, borderBottom: b }} />
+      ))}
+    </div>
+  )
   const today = new Date().toLocaleDateString('pl-PL')
-  const blNo = `BL/${new Date().getFullYear()}/${String(Date.now()).slice(-4)}`
 
   return (
-    <div style={s.page}>
-      <div style={s.title}>BILL OF LADING</div>
-      <div style={s.subtitle}>KONOSAMENT MORSKI — NEGOTIABLE</div>
-      <div style={s.subtitle}>COMBINED TRANSPORT BILL OF LADING</div>
-      <div style={{ textAlign: 'right', marginBottom: '8px' }}>
-        <span style={s.label}>B/L No.: </span>
-        <span style={{ fontWeight: 'bold', fontSize: '11px' }}>{blNo}</span>
-      </div>
+    <div style={{ width: '794px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '8px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box', padding: '8px 10px' }}>
 
-      {/* Shipper | Consignee */}
-      <div style={s.row}>
-        <div style={{ ...s.cell, flex: 1, minHeight: '55px' }}>
-          <div style={s.label}>Shipper / Nadawca (name, address, country)</div>
-          <div style={s.val}>{data.sender?.name}</div>
-          <div style={s.val2}>{data.sender?.address}</div>
-          <div style={s.val2}>{data.sender?.country}</div>
+      {/* NAGŁÓWEK */}
+      <div style={{ display: 'flex', border: b }}>
+        <div style={{ flex: 1, backgroundColor: '#1a3a6b', padding: '8px 12px', borderRight: b }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', letterSpacing: '2px' }}>BILL OF LADING</div>
+          <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>KONOSAMENT MORSKI · ORIGINAL</div>
         </div>
-        <div style={{ ...s.cell, flex: 1, minHeight: '55px' }}>
-          <div style={s.label}>Consignee / Odbiorca (name, address, country)</div>
-          <div style={s.val}>{data.receiver?.name}</div>
-          <div style={s.val2}>{data.receiver?.address}</div>
-          <div style={s.val2}>{data.receiver?.country}</div>
+        <div style={{ width: '220px', padding: '6px 8px', backgroundColor: '#1a3a6b' }}>
+          <div style={{ ...lbl, color: '#a0b8d8' }}>B/L No. / Nr konosamentu:</div>
+          <div style={{ color: '#fff', fontSize: '9px', minHeight: '12px', marginBottom: '4px' }} />
+          <div style={{ ...lbl, color: '#a0b8d8' }}>B/L Type:</div>
+          <div style={{ fontSize: '8px', color: '#d0e4f8', marginTop: '2px' }}>&#9634; Original (3 oryg.) &nbsp; &#9634; Sea Waybill &nbsp; &#9634; Telex Release</div>
         </div>
       </div>
 
-      {/* Notify */}
-      <div style={s.row}>
-        <div style={{ ...s.cell, flex: 1, minHeight: '36px' }}>
-          <div style={s.label}>Notify party / Strona do powiadomienia</div>
-          <div style={s.val}>{data.receiver?.name}</div>
-          <div style={s.val2}>{data.receiver?.address}</div>
+      {/* SHIPPER | CONSIGNEE */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '60px' }}>
+          <div style={lbl}>Shipper / Załadowca:</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
+          <div style={val}>{data.sender?.address}</div>
+          <div style={val}>{data.sender?.country}</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '60px' }}>
+          <div style={lbl}>Consignee / Odbiorca:</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
+          <div style={val}>{data.receiver?.address}</div>
+          <div style={val}>{data.receiver?.country}</div>
         </div>
       </div>
 
-      {/* Vessel / Voyage */}
-      <div style={s.row}>
-        <div style={{ ...s.cell, flex: 1 }}>
-          <div style={s.label}>Vessel / Statek</div>
-          <div style={s.val}>{data.cargo?.vessel || '—'}</div>
+      {/* NOTIFY PARTY | ALSO NOTIFY */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
+          <div style={lbl}>Notify Party / Strona powiadamiana:</div>
+          <div style={val}>{data.receiver?.name}</div>
         </div>
-        <div style={{ ...s.cell, flex: 1 }}>
-          <div style={s.label}>Voyage No. / Nr rejsu</div>
-          <div style={s.val}>{data.cargo?.voyageNo || '—'}</div>
-        </div>
-        <div style={{ ...s.cell, flex: 1 }}>
-          <div style={s.label}>Freight payment / Fracht</div>
-          <div style={s.val}>{data.cargo?.incoterms || 'PREPAID'}</div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '32px' }}>
+          <div style={lbl}>Also Notify:</div>
+          <div style={val} />
         </div>
       </div>
 
-      {/* Ports */}
-      <div style={s.row}>
-        <div style={{ ...s.cell, flex: 1 }}>
-          <div style={s.label}>Port of loading / Port załadunku</div>
-          <div style={s.val}>{data.fromCity}, {data.fromCountry}</div>
+      {/* VESSEL | VOYAGE | FLAG | FREIGHT TERMS */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 2, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
+          <div style={lbl}>Vessel / Statek:</div>
+          <div style={val}>{data.cargo?.vessel}</div>
         </div>
-        <div style={{ ...s.cell, flex: 1 }}>
-          <div style={s.label}>Port of discharge / Port wyładunku</div>
-          <div style={s.val}>{data.toCity}, {data.toCountry}</div>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
+          <div style={lbl}>Voyage No.:</div>
+          <div style={val}>{data.cargo?.voyageNo}</div>
         </div>
-        <div style={{ ...s.cell, flex: 1 }}>
-          <div style={s.label}>Date of loading / Data załadunku</div>
-          <div style={s.val}>{data.loadDate}</div>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
+          <div style={lbl}>Flag / Bandera:</div>
+          <div style={val} />
         </div>
-      </div>
-
-      {/* Container table */}
-      <div style={{ borderLeft: '1px solid #000', borderTop: '1px solid #000' }}>
-        <div style={{ display: 'flex' }}>
-          <div style={{ ...s.th, width: '110px' }}>Container No.</div>
-          <div style={{ ...s.th, width: '80px' }}>Seal No.</div>
-          <div style={{ ...s.th, width: '70px' }}>Type</div>
-          <div style={{ ...s.th, flex: 3 }}>Description of goods / Opis towaru</div>
-          <div style={{ ...s.th, width: '60px' }}>Packages<br/>Szt.</div>
-          <div style={{ ...s.th, width: '70px' }}>Weight<br/>kg</div>
-          <div style={{ ...s.th, width: '65px', borderRight: 'none' }}>Volume<br/>m³</div>
-        </div>
-        <div style={{ display: 'flex', minHeight: '40px' }}>
-          <div style={{ ...s.td, width: '110px' }}>{data.cargo?.containerNo || ''}</div>
-          <div style={{ ...s.td, width: '80px' }}>{data.cargo?.sealNo || ''}</div>
-          <div style={{ ...s.td, width: '70px', textAlign: 'center' }}>{data.cargo?.containerType || '20GP'}</div>
-          <div style={{ ...s.td, flex: 3 }}>{data.cargo?.name}</div>
-          <div style={{ ...s.td, width: '60px', textAlign: 'center' }}>{data.cargo?.packages}</div>
-          <div style={{ ...s.td, width: '70px', textAlign: 'center' }}>{data.cargo?.weight}</div>
-          <div style={{ ...s.td, width: '65px', textAlign: 'center', borderRight: 'none' }}>{data.cargo?.volume}</div>
-        </div>
-        {/* Totals */}
-        <div style={{ display: 'flex', backgroundColor: '#f0f0f0', fontWeight: 'bold' }}>
-          <div style={{ ...s.td, width: '110px', fontSize: '8px', color: '#555' }}>TOTAL</div>
-          <div style={{ ...s.td, width: '80px' }}></div>
-          <div style={{ ...s.td, width: '70px' }}></div>
-          <div style={{ ...s.td, flex: 3 }}></div>
-          <div style={{ ...s.td, width: '60px', textAlign: 'center' }}>{data.cargo?.packages}</div>
-          <div style={{ ...s.td, width: '70px', textAlign: 'center' }}>{data.cargo?.weight} kg</div>
-          <div style={{ ...s.td, width: '65px', textAlign: 'center', borderRight: 'none' }}>{data.cargo?.volume} m³</div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
+          <div style={lbl}>Freight Terms:</div>
+          <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Prepaid &nbsp; &#9634; Collect</div>
         </div>
       </div>
 
-      {/* Terms */}
-      <div style={{ display: 'flex', borderLeft: '1px solid #000' }}>
-        <div style={{ ...s.cell, flex: 1, minHeight: '40px' }}>
-          <div style={s.label}>Freight terms / Warunki frachtu</div>
-          <div style={{ display: 'flex', gap: '20px', marginTop: '6px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px' }}><input type="checkbox" readOnly /> Prepaid</label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px' }}><input type="checkbox" readOnly /> Collect</label>
+      {/* PORT OF LOADING | PORT OF DISCHARGE | PLACE OF DELIVERY */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
+          <div style={lbl}>Port of Loading / Port załadunku:</div>
+          <div style={val}>{data.fromCity}, {data.fromCountry}</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
+          <div style={lbl}>Port of Discharge / Port rozładunku:</div>
+          <div style={val}>{data.toCity}, {data.toCountry}</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
+          <div style={lbl}>Place of Delivery:</div>
+          <div style={val}>{data.toCity}</div>
+        </div>
+      </div>
+
+      {/* ETD | ETA | BOOKING NO */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
+          <div style={lbl}>ETD:</div>
+          <div style={val}>{data.loadDate}</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
+          <div style={lbl}>ETA:</div>
+          <div style={val} />
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
+          <div style={lbl}>Booking No.:</div>
+          <div style={val} />
+        </div>
+      </div>
+
+      {/* SEKCJA: CARGO */}
+      <div style={{ backgroundColor: '#2c5fa8', borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px' }}>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>SZCZEGÓŁY ŁADUNKU / CARGO DETAILS</span>
+      </div>
+
+      {/* TABELA NAGŁÓWEK */}
+      <div style={{ display: 'flex', borderLeft: b }}>
+        <div style={{ ...thStyle, width: '110px' }}>Container No.<br />Nr kontenera</div>
+        <div style={{ ...thStyle, width: '75px' }}>Seal No.<br />Nr plomby</div>
+        <div style={{ ...thStyle, width: '60px' }}>Type<br />Typ</div>
+        <div style={{ ...thStyle, width: '70px' }}>Marks &amp; Nos<br />Znaki</div>
+        <div style={{ ...thStyle, flex: 1 }}>Description of goods<br />Opis towaru</div>
+        <div style={{ ...thStyle, width: '55px' }}>Packages<br />Szt.</div>
+        <div style={{ ...thStyle, width: '75px' }}>Gross Weight<br />Waga brutto (kg)</div>
+        <div style={{ ...thStyle, width: '75px', borderRight: b }}>Measurement<br />Objętość (m³)</div>
+      </div>
+
+      {/* Wiersz z danymi */}
+      <div style={{ display: 'flex', borderLeft: b, minHeight: '22px' }}>
+        <div style={{ width: '110px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.containerNo}</div>
+        <div style={{ width: '75px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.sealNo}</div>
+        <div style={{ width: '60px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.containerType}</div>
+        <div style={{ width: '70px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
+        <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.name}</div>
+        <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packages}</div>
+        <div style={{ width: '75px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.weight}</div>
+        <div style={{ width: '75px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.volume}</div>
+      </div>
+
+      {/* 4 puste wiersze */}
+      {emptyRow}{emptyRow}{emptyRow}{emptyRow}
+
+      {/* FREIGHT & CHARGES */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b }}>
+          <div style={{ fontSize: '7px', fontWeight: 'bold', color: '#555' }}>Freight &amp; Charges:</div>
+        </div>
+        <div style={{ width: '110px', padding: '3px 5px', borderRight: b }}>
+          <div style={lbl}>Prepaid (USD):</div>
+        </div>
+        <div style={{ width: '110px', padding: '3px 5px', borderRight: b }}>
+          <div style={lbl}>Collect (USD):</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px' }}>
+          <div style={lbl}>Place of issue / Miejsce wystawienia:</div>
+          <div style={val}>{data.fromCity}</div>
+        </div>
+      </div>
+      {[['Freight'], ['B/L Fee'], ['TOTAL']].map(([label], i) => (
+        <div key={i} style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+          <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px', fontSize: '8px', fontWeight: i === 2 ? 'bold' : 'normal' }}>{label}</div>
+          <div style={{ width: '110px', padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
+            {i === 1 && <div style={{ ...lbl }}>Date of issue / Data wystawienia:</div>}
+            {i === 1 && <div style={val}>{today}</div>}
           </div>
+          <div style={{ width: '110px', padding: '3px 5px', borderRight: b, minHeight: '22px' }} />
+          <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }} />
         </div>
-        <div style={{ ...s.cell, flex: 2 }}>
-          <div style={s.label}>Special notes / Uwagi szczególne</div>
-          <div style={s.val2}>{data.cargo?.notes || ''}</div>
-        </div>
+      ))}
+
+      {/* PODPIS */}
+      <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '3px 5px', minHeight: '50px' }}>
+        <div style={lbl}>Signed for and on behalf of the Carrier / Master:</div>
+        <div style={{ flex: 1, minHeight: '30px' }} />
+      </div>
+      <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '3px 5px', textAlign: 'center', fontSize: '7px', color: '#555' }}>
+        As agent(s) for the Carrier · Podpis armatora lub agenta
+      </div>
+      <div style={{ marginTop: '6px', fontSize: '7px', color: '#777', textAlign: 'center' }}>
+        Wydano w oryginale (3 egzemplarze). Po zrealizowaniu jednego oryginału pozostałe tracą ważność. | ONE of the Bills of Lading being accomplished, the others to stand void.
       </div>
 
-      {/* Signatures */}
-      <div style={{ display: 'flex', borderLeft: '1px solid #000' }}>
-        <div style={{ ...s.sigBox, flex: 1 }}>
-          <div style={s.label}>Issued in / Wystawiono w</div>
-          <div style={{ fontSize: '9px', fontWeight: 'bold' }}>{data.fromCity}</div>
-          <div style={{ fontSize: '9px' }}>{today}</div>
-          <div style={{ marginTop: '25px', borderTop: '1px solid #000', paddingTop: '4px', fontSize: '7px', color: '#666' }}>
-            Carrier's signature / Podpis przewoźnika
-          </div>
-        </div>
-        <div style={{ ...s.sigBox, flex: 1 }}>
-          <div style={s.label}>On behalf of the Carrier</div>
-          <div style={s.val2}></div>
-          <div style={{ marginTop: '25px', borderTop: '1px solid #000', paddingTop: '4px', fontSize: '7px', color: '#666' }}>
-            As agent for the Carrier
-          </div>
-        </div>
-        <div style={{ ...s.sigBox, flex: 1 }}>
-          <div style={s.label}>Shipper's signature / Podpis nadawcy</div>
-          <div style={{ fontSize: '9px', fontWeight: 'bold' }}>{data.sender?.name}</div>
-          <div style={{ marginTop: '25px', borderTop: '1px solid #000', paddingTop: '4px', fontSize: '7px', color: '#666' }}>
-            Authorized signature
-          </div>
-        </div>
-      </div>
-
-      <div style={{ marginTop: '8px', fontSize: '7px', color: '#888', textAlign: 'center' }}>
-        ONE ORIGINAL BILL OF LADING MUST BE SURRENDERED DULY ENDORSED IN EXCHANGE FOR THE GOODS OR DELIVERY ORDER
-      </div>
     </div>
   )
 }

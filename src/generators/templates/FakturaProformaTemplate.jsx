@@ -1,140 +1,174 @@
-const s = {
-  page: { width: '794px', minHeight: '1123px', padding: '30px 36px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '9px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box' },
-  title: { fontSize: '18px', fontWeight: 'bold', marginBottom: '2px' },
-  subtitle: { fontSize: '10px', color: '#555', marginBottom: '4px' },
-  badge: { display: 'inline-block', backgroundColor: '#ffe066', color: '#000', fontWeight: 'bold', fontSize: '8px', padding: '2px 8px', border: '1px solid #cca000', marginBottom: '16px', letterSpacing: '1px' },
-  section: { border: '1px solid #ccc', padding: '10px 12px', marginBottom: '0' },
-  label: { fontSize: '7px', color: '#666', textTransform: 'uppercase', marginBottom: '2px' },
-  val: { fontSize: '10px', fontWeight: 'bold' },
-  val2: { fontSize: '9px' },
-  th: { padding: '6px 8px', backgroundColor: '#222', color: '#fff', fontWeight: 'bold', fontSize: '8px', borderRight: '1px solid #444' },
-  td: { padding: '6px 8px', borderRight: '1px solid #ccc', borderBottom: '1px solid #ccc', fontSize: '9px' },
-}
-
 export function FakturaProformaTemplate({ data }) {
+  const b = '1px solid #c0c0c0'
+  const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
+  const val = { fontSize: '9px', minHeight: '12px' }
+  const thStyle = {
+    padding: '3px 5px', borderRight: b, borderBottom: b,
+    fontSize: '7px', fontWeight: 'bold', color: '#fff',
+    backgroundColor: '#2c5fa8', verticalAlign: 'top',
+  }
   const today = new Date().toLocaleDateString('pl-PL')
   const validUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pl-PL')
-  const proformaNo = `PF/${new Date().getFullYear()}/${String(Date.now()).slice(-4)}`
-  const incoterms = data.cargo?.incoterms || 'DAP'
-  const currency = data.cargo?.currency || 'EUR'
-  const value = data.cargo?.value || ''
+  const emptyRow = (
+    <div style={{ display: 'flex', minHeight: '20px' }}>
+      {[30, null, 65, 50, 45, 80, 80].map((w, i) => (
+        <div key={i} style={{ width: w ? `${w}px` : undefined, flex: w ? undefined : 1, borderRight: b, borderBottom: b }} />
+      ))}
+    </div>
+  )
 
   return (
-    <div style={s.page}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-        <div>
-          <div style={s.title}>PROFORMA INVOICE</div>
-          <div style={s.subtitle}>FAKTURA PROFORMA</div>
-          <div style={s.badge}>PROFORMA — NIE JEST DOKUMENTEM CELNYM</div>
+    <div style={{ width: '794px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '8px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box', padding: '8px 10px' }}>
+
+      {/* NAGŁÓWEK */}
+      <div style={{ display: 'flex', border: b }}>
+        <div style={{ flex: 1, padding: '8px 12px', borderRight: b }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#1a3a6b' }}>FAKTURA PROFORMA</div>
+          <div style={{ fontSize: '8px', color: '#555', marginTop: '2px' }}>Proforma Invoice · NOT A TAX DOCUMENT</div>
+          <div style={{ fontSize: '7px', color: '#888', marginTop: '2px' }}>Dokument handlowy — nie rodzi obowiązku podatkowego</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={s.label}>Nr / No.</div>
-          <div style={{ fontSize: '12px', fontWeight: 'bold' }}>{proformaNo}</div>
-          <div style={{ marginTop: '6px', ...s.label }}>Data wystawienia</div>
-          <div style={{ fontWeight: 'bold' }}>{today}</div>
-          <div style={{ marginTop: '6px', ...s.label }}>Ważna do / Valid until</div>
-          <div style={{ fontWeight: 'bold' }}>{validUntil}</div>
+        <div style={{ width: '190px', padding: '6px 8px' }}>
+          <div style={lbl}>Nr proformy / Proforma No.:</div>
+          <div style={{ ...val, marginBottom: '4px' }} />
+          <div style={lbl}>Data wystawienia / Issue date:</div>
+          <div style={{ ...val, marginBottom: '4px' }}>{today}</div>
+          <div style={lbl}>Ważna do / Valid until:</div>
+          <div style={val}>{validUntil}</div>
         </div>
       </div>
 
-      {/* Seller / Buyer */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-        <div style={{ ...s.section, flex: 1, borderTop: '3px solid #000' }}>
-          <div style={{ ...s.label, marginBottom: '6px', fontSize: '8px', fontWeight: 'bold', color: '#000' }}>SPRZEDAWCA / SELLER</div>
-          <div style={s.val}>{data.sender?.name}</div>
-          <div style={s.val2}>{data.sender?.address}</div>
-          <div style={s.val2}>{data.sender?.country}</div>
-          <div style={{ marginTop: '4px', ...s.val2 }}>NIP: {data.sender?.vat || '—'}</div>
+      {/* SPRZEDAJĄCY | KUPUJĄCY */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '60px' }}>
+          <div style={lbl}>Sprzedający / Seller:</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
+          <div style={val}>{data.sender?.address}</div>
+          <div style={val}>{data.sender?.country}</div>
         </div>
-        <div style={{ ...s.section, flex: 1, borderTop: '3px solid #000' }}>
-          <div style={{ ...s.label, marginBottom: '6px', fontSize: '8px', fontWeight: 'bold', color: '#000' }}>NABYWCA / BUYER</div>
-          <div style={s.val}>{data.receiver?.name}</div>
-          <div style={s.val2}>{data.receiver?.address}</div>
-          <div style={s.val2}>{data.receiver?.country}</div>
-          <div style={{ marginTop: '4px', ...s.val2 }}>NIP: {data.receiver?.vat || '—'}</div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '60px' }}>
+          <div style={lbl}>Kupujący / Buyer:</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
+          <div style={val}>{data.receiver?.address}</div>
+          <div style={val}>{data.receiver?.country}</div>
         </div>
       </div>
 
-      {/* Route + Terms */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-        <div style={{ ...s.section, flex: 1 }}>
-          <div style={s.label}>Kraj wysyłki / Country of dispatch</div>
-          <div style={s.val}>{data.fromCountry}</div>
+      {/* NIP/VAT */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
+          <div style={lbl}>NIP/VAT:</div>
+          <div style={val}>{data.sender?.vat}</div>
         </div>
-        <div style={{ ...s.section, flex: 1 }}>
-          <div style={s.label}>Kraj przeznaczenia / Destination</div>
-          <div style={s.val}>{data.toCountry}</div>
-        </div>
-        <div style={{ ...s.section, flex: 1 }}>
-          <div style={s.label}>Warunki dostawy / Incoterms</div>
-          <div style={s.val}>{incoterms} {data.toCity}</div>
-        </div>
-        <div style={{ ...s.section, flex: 1 }}>
-          <div style={s.label}>Waluta / Currency</div>
-          <div style={s.val}>{currency}</div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
+          <div style={lbl}>NIP/VAT:</div>
+          <div style={val}>{data.receiver?.vat}</div>
         </div>
       </div>
 
-      {/* Goods table */}
-      <div style={{ border: '1px solid #ccc', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', backgroundColor: '#222' }}>
-          <div style={{ ...s.th, width: '30px', textAlign: 'center' }}>Lp.</div>
-          <div style={{ ...s.th, flex: 3 }}>Opis towaru / Description of goods</div>
-          <div style={{ ...s.th, width: '80px', textAlign: 'center' }}>Kod HS</div>
-          <div style={{ ...s.th, width: '60px', textAlign: 'center' }}>Ilość</div>
-          <div style={{ ...s.th, width: '100px', textAlign: 'center' }}>Wartość ({currency})</div>
-          <div style={{ ...s.th, width: '100px', textAlign: 'center', borderRight: 'none' }}>Łącznie ({currency})</div>
+      {/* KRAJ */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
+          <div style={lbl}>Kraj / Country:</div>
+          <div style={val}>{data.fromCountry}</div>
         </div>
-        <div style={{ display: 'flex' }}>
-          <div style={{ ...s.td, width: '30px', textAlign: 'center' }}>1</div>
-          <div style={{ ...s.td, flex: 3 }}>{data.cargo?.name}</div>
-          <div style={{ ...s.td, width: '80px', textAlign: 'center' }}>{data.cargo?.hsCode}</div>
-          <div style={{ ...s.td, width: '60px', textAlign: 'center' }}>{data.cargo?.packages} szt.</div>
-          <div style={{ ...s.td, width: '100px', textAlign: 'right' }}>{value}</div>
-          <div style={{ ...s.td, width: '100px', textAlign: 'right', borderRight: 'none' }}>{value}</div>
-        </div>
-        {[1, 2].map(i => (
-          <div key={i} style={{ display: 'flex', minHeight: '24px' }}>
-            <div style={{ ...s.td, width: '30px' }}></div>
-            <div style={{ ...s.td, flex: 3 }}></div>
-            <div style={{ ...s.td, width: '80px' }}></div>
-            <div style={{ ...s.td, width: '60px' }}></div>
-            <div style={{ ...s.td, width: '100px' }}></div>
-            <div style={{ ...s.td, width: '100px', borderRight: 'none' }}></div>
-          </div>
-        ))}
-        <div style={{ display: 'flex', backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>
-          <div style={{ ...s.td, width: '30px' }}></div>
-          <div style={{ ...s.td, flex: 3, fontSize: '8px', color: '#555' }}>ŁĄCZNIE / TOTAL</div>
-          <div style={{ ...s.td, width: '80px' }}></div>
-          <div style={{ ...s.td, width: '60px', textAlign: 'center' }}>{data.cargo?.packages}</div>
-          <div style={{ ...s.td, width: '100px' }}></div>
-          <div style={{ ...s.td, width: '100px', textAlign: 'right', borderRight: 'none' }}>{value} {currency}</div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
+          <div style={lbl}>Kraj / Country:</div>
+          <div style={val}>{data.toCountry}</div>
         </div>
       </div>
 
-      {/* Note */}
-      <div style={{ border: '1px solid #ffe066', backgroundColor: '#fffbe6', padding: '8px 12px', marginBottom: '30px', fontSize: '8px', color: '#555' }}>
-        Niniejsza faktura proforma nie stanowi wezwania do zapłaty ani faktury podatkowej. Jest wystawiana wyłącznie do celów informacyjnych i celnych. /
-        This proforma invoice is not a demand for payment or a tax invoice. It is issued for informational and customs purposes only.
+      {/* INCOTERMS | MIEJSCE | WALUTA | KRAJ POCHODZENIA */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ width: '80px', padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
+          <div style={lbl}>Incoterms:</div>
+          <div style={val}>{data.cargo?.incoterms}</div>
+        </div>
+        <div style={{ width: '110px', padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
+          <div style={lbl}>Miejsce:</div>
+          <div style={val}>{data.toCity}</div>
+        </div>
+        <div style={{ width: '100px', padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
+          <div style={lbl}>Waluta / Currency:</div>
+          <div style={val}>{data.cargo?.currency}</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
+          <div style={lbl}>Kraj pochodzenia:</div>
+          <div style={val}>{data.fromCountry}</div>
+        </div>
       </div>
 
-      {/* Signature */}
-      <div style={{ display: 'flex', gap: '40px' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ borderTop: '1px solid #000', paddingTop: '6px' }}>
-            <div style={{ fontSize: '8px', color: '#555' }}>Podpis wystawcy / Issuer's signature</div>
-            <div style={{ marginTop: '8px', fontSize: '9px', fontWeight: 'bold' }}>{data.sender?.name}</div>
-          </div>
+      {/* SEKCJA: POZYCJE */}
+      <div style={{ backgroundColor: '#2c5fa8', borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px' }}>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>POZYCJE / ITEMS</span>
+      </div>
+
+      {/* TABELA NAGŁÓWEK */}
+      <div style={{ display: 'flex', borderLeft: b }}>
+        <div style={{ ...thStyle, width: '30px' }}>Lp.</div>
+        <div style={{ ...thStyle, flex: 1 }}>Opis towaru / Description of goods</div>
+        <div style={{ ...thStyle, width: '65px' }}>Kod HS<br />HS Code</div>
+        <div style={{ ...thStyle, width: '50px' }}>Ilość<br />Qty</div>
+        <div style={{ ...thStyle, width: '45px' }}>Jedn.<br />Unit</div>
+        <div style={{ ...thStyle, width: '80px' }}>Cena jedn.<br />Unit price</div>
+        <div style={{ ...thStyle, width: '80px', borderRight: b }}>Wartość<br />Total value</div>
+      </div>
+
+      {/* Wiersz z danymi */}
+      <div style={{ display: 'flex', borderLeft: b, minHeight: '20px' }}>
+        <div style={{ width: '30px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>1</div>
+        <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.name}</div>
+        <div style={{ width: '65px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.hsCode}</div>
+        <div style={{ width: '50px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packages}</div>
+        <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>szt.</div>
+        <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'right' }}>{data.cargo?.value}</div>
+        <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'right' }}>{data.cargo?.value}</div>
+      </div>
+
+      {/* 9 pustych wierszy */}
+      {emptyRow}{emptyRow}{emptyRow}{emptyRow}{emptyRow}
+      {emptyRow}{emptyRow}{emptyRow}{emptyRow}
+
+      {/* PODSUMOWANIE */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '30px' }}>
+          <div style={lbl}>Wartość towaru / Goods value:</div>
+          <div style={val}>{data.cargo?.value} {data.cargo?.currency}</div>
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ borderTop: '1px solid #000', paddingTop: '6px' }}>
-            <div style={{ fontSize: '8px', color: '#555' }}>Miejscowość i data / Place and date</div>
-            <div style={{ marginTop: '8px', fontSize: '9px' }}>{data.fromCity}, {today}</div>
-          </div>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '30px' }}>
+          <div style={lbl}>Szac. koszt transportu / Est. freight:</div>
+          <div style={val} />
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '30px', backgroundColor: '#fffbe6' }}>
+          <div style={{ ...lbl, fontWeight: 'bold' }}>WARTOŚĆ CELNA / CUSTOMS VALUE:</div>
+          <div style={{ ...val, fontWeight: 'bold' }}>{data.cargo?.value} {data.cargo?.currency}</div>
         </div>
       </div>
+
+      {/* NOTA PRAWNA */}
+      <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px', fontSize: '7px', color: '#555', lineHeight: '1.4' }}>
+        Niniejszy dokument nie jest fakturą VAT i nie stanowi podstawy do odliczenia podatku. Służy wyłącznie do celów celnych i ofertowych.
+        This document is not a VAT invoice and cannot be used for tax deduction purposes. For customs and quotation purposes only.
+      </div>
+
+      {/* PODPISY */}
+      <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
+        <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
+          <div style={lbl}>Wystawił / Prepared by</div>
+          <div style={{ flex: 1 }} />
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć</div>
+        </div>
+        <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
+          <div style={lbl}>Data / Date</div>
+          <div style={{ flex: 1 }} />
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć</div>
+        </div>
+        <div style={{ flex: 1, padding: '5px 7px', minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
+          <div style={lbl}>Podpis i pieczęć</div>
+          <div style={{ flex: 1 }} />
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć</div>
+        </div>
+      </div>
+
     </div>
   )
 }

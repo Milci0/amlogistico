@@ -1,142 +1,232 @@
-const s = {
-  page: { width: '794px', minHeight: '1123px', padding: '28px 34px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '9px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box' },
-  title: { fontSize: '16px', fontWeight: 'bold', marginBottom: '2px' },
-  subtitle: { fontSize: '9px', color: '#666', marginBottom: '16px' },
-  metaRow: { display: 'flex', gap: '20px', marginBottom: '16px' },
-  metaBox: { border: '1px solid #ccc', padding: '6px 10px' },
-  label: { fontSize: '7px', color: '#666', textTransform: 'uppercase', marginBottom: '2px' },
-  val: { fontSize: '10px', fontWeight: 'bold' },
-  val2: { fontSize: '9px' },
-  section: { border: '1px solid #ccc', padding: '10px 12px', marginBottom: '12px' },
-  sectionTitle: { fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', color: '#333', borderBottom: '1px solid #ddd', paddingBottom: '4px', marginBottom: '8px' },
-  table: { width: '100%', borderCollapse: 'collapse' },
-  th: { padding: '6px 8px', backgroundColor: '#333', color: '#fff', fontWeight: 'bold', fontSize: '8px', textAlign: 'center', border: '1px solid #333' },
-  td: { padding: '6px 8px', border: '1px solid #ccc', fontSize: '9px' },
-  sigBox: { flex: 1, border: '1px solid #ccc', padding: '8px 10px', minHeight: '70px' },
-}
-
 export function ZlecenieTemplate({ data }) {
+  const b = '1px solid #c0c0c0'
+  const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
+  const val = { fontSize: '9px', minHeight: '12px' }
+  const secHdr = { backgroundColor: '#2c5fa8', color: '#fff', fontWeight: 'bold', fontSize: '8px', padding: '4px 6px' }
   const today = new Date().toLocaleDateString('pl-PL')
-  const docNo = `ZT/${new Date().getFullYear()}/${String(Date.now()).slice(-4)}`
 
   return (
-    <div style={s.page}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-        <div>
-          <div style={s.title}>ZLECENIE TRANSPORTOWE</div>
-          <div style={s.subtitle}>TRANSPORT ORDER</div>
+    <div style={{ width: '794px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '8px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box', padding: '8px 10px' }}>
+
+      {/* NAGŁÓWEK */}
+      <div style={{ display: 'flex', border: b }}>
+        <div style={{ flex: 1, backgroundColor: '#1a3a6b', padding: '8px 12px', borderRight: b }}>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '2px' }}>ZLECENIE TRANSPORTOWE</div>
+          <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Transport Order · Frachtauftrag</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={s.label}>Nr zlecenia / Order No.</div>
-          <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{docNo}</div>
-          <div style={{ marginTop: '4px', ...s.label }}>Data wystawienia / Date</div>
-          <div style={{ fontWeight: 'bold' }}>{today}</div>
+        <div style={{ width: '150px', padding: '6px 8px', backgroundColor: '#1a3a6b' }}>
+          <div style={{ ...lbl, color: '#a0b8d8' }}>Nr dokumentu:</div>
+          <div style={{ color: '#fff', fontSize: '9px', minHeight: '14px' }} />
         </div>
       </div>
 
-      {/* Parties */}
-      <div style={{ display: 'flex', gap: '14px', marginBottom: '14px' }}>
-        <div style={{ ...s.section, flex: 1, marginBottom: '0', borderTop: '3px solid #000' }}>
-          <div style={s.sectionTitle}>Zleceniodawca / Shipper</div>
-          <div style={s.val}>{data.sender?.name}</div>
-          <div style={s.val2}>{data.sender?.address}</div>
-          <div style={{ marginTop: '4px', ...s.val2 }}>NIP: {data.sender?.vat || '—'}</div>
+      {/* NR ZLECENIA | DATA | PRIORYTET */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
+          <div style={lbl}>Nr zlecenia / Order No.:</div>
+          <div style={val} />
         </div>
-        <div style={{ ...s.section, flex: 1, marginBottom: '0', borderTop: '3px solid #000' }}>
-          <div style={s.sectionTitle}>Przewoźnik / Carrier</div>
-          <div style={s.val}>{data.receiver?.name}</div>
-          <div style={s.val2}>{data.receiver?.address}</div>
-          <div style={{ marginTop: '4px', ...s.val2 }}>NIP: {data.receiver?.vat || '—'}</div>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
+          <div style={lbl}>Data zlecenia / Date:</div>
+          <div style={val}>{today}</div>
         </div>
-      </div>
-
-      {/* Loading */}
-      <div style={s.section}>
-        <div style={s.sectionTitle}>Miejsce i termin załadunku / Loading place and date</div>
-        <div style={{ display: 'flex', gap: '30px' }}>
-          <div>
-            <div style={s.label}>Adres załadunku / Loading address</div>
-            <div style={s.val}>{data.fromCity}, {data.fromCountry}</div>
-          </div>
-          <div>
-            <div style={s.label}>Data załadunku / Loading date</div>
-            <div style={s.val}>{data.loadDate}</div>
-          </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '32px' }}>
+          <div style={lbl}>Priorytet / Priority:</div>
+          <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Standard &nbsp;&nbsp; &#9634; Ekspres &nbsp;&nbsp; &#9634; Dedykowany</div>
         </div>
       </div>
 
-      {/* Unloading */}
-      <div style={s.section}>
-        <div style={s.sectionTitle}>Miejsce i termin rozładunku / Unloading place and date</div>
-        <div>
-          <div style={s.label}>Adres rozładunku / Unloading address</div>
-          <div style={s.val}>{data.toCity}, {data.toCountry}</div>
+      {/* ZLECENIODAWCA | PRZEWOŹNIK */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '55px' }}>
+          <div style={lbl}>Zleceniodawca / Shipper:</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
+          <div style={val}>{data.sender?.address}</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '55px' }}>
+          <div style={lbl}>Przewoźnik / Carrier:</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
+          <div style={val}>{data.receiver?.address}</div>
         </div>
       </div>
 
-      {/* Cargo table */}
-      <div style={{ ...s.section }}>
-        <div style={s.sectionTitle}>Opis ładunku / Cargo description</div>
-        <table style={s.table}>
-          <thead>
-            <tr>
-              <th style={{ ...s.th, textAlign: 'left' }}>Opis towaru / Goods description</th>
-              <th style={s.th}>Waga brutto / Gross weight</th>
-              <th style={s.th}>Objętość / Volume</th>
-              <th style={s.th}>Ilość / Quantity</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={s.td}>{data.cargo?.name}</td>
-              <td style={{ ...s.td, textAlign: 'center' }}>{data.cargo?.weight ? `${data.cargo.weight} kg` : '—'}</td>
-              <td style={{ ...s.td, textAlign: 'center' }}>{data.cargo?.volume ? `${data.cargo.volume} m³` : '—'}</td>
-              <td style={{ ...s.td, textAlign: 'center' }}>{data.cargo?.packages ? `${data.cargo.packages} szt.` : '—'}</td>
-            </tr>
-            <tr style={{ minHeight: '24px' }}>
-              <td style={s.td}>&nbsp;</td>
-              <td style={s.td}></td>
-              <td style={s.td}></td>
-              <td style={s.td}></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* Special conditions */}
-      <div style={s.section}>
-        <div style={s.sectionTitle}>Warunki szczególne / Special conditions</div>
-        <div style={{ ...s.val2, minHeight: '40px' }}>{data.cargo?.notes || ''}</div>
-      </div>
-
-      {/* Signatures */}
-      <div style={{ marginTop: '20px' }}>
-        <div style={{ marginBottom: '8px', fontSize: '8px', color: '#555' }}>
-          Zamawiający potwierdza zlecenie transportu na warunkach opisanych powyżej. /
-          The ordering party confirms the transport order on the terms described above.
+      {/* NIP/VAT */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
+          <div style={lbl}>NIP / VAT:</div>
+          <div style={val}>{data.sender?.vat}</div>
         </div>
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <div style={s.sigBox}>
-            <div style={s.label}>Zleceniodawca / Shipper</div>
-            <div style={{ marginTop: '8px', ...s.val2 }}>{data.sender?.name}</div>
-            <div style={{ marginTop: '25px', borderTop: '1px solid #000', paddingTop: '4px', fontSize: '7px', color: '#666' }}>
-              Podpis i pieczęć / Signature and stamp
-            </div>
-          </div>
-          <div style={s.sigBox}>
-            <div style={s.label}>Przewoźnik / Carrier</div>
-            <div style={{ marginTop: '8px', ...s.val2 }}>{data.receiver?.name}</div>
-            <div style={{ marginTop: '25px', borderTop: '1px solid #000', paddingTop: '4px', fontSize: '7px', color: '#666' }}>
-              Podpis i pieczęć / Signature and stamp
-            </div>
-          </div>
-          <div style={s.sigBox}>
-            <div style={s.label}>Data i miejsce / Date and place</div>
-            <div style={{ marginTop: '8px', ...s.val2 }}>{data.fromCity}, {today}</div>
-          </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
+          <div style={lbl}>NIP / VAT:</div>
+          <div style={val}>{data.receiver?.vat}</div>
         </div>
       </div>
+
+      {/* OSOBA KONTAKTOWA */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
+          <div style={lbl}>Osoba kontaktowa:</div>
+          <div style={val} />
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
+          <div style={lbl}>Osoba kontaktowa / kierowca:</div>
+          <div style={val} />
+        </div>
+      </div>
+
+      {/* TEL */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
+          <div style={lbl}>Tel.:</div>
+          <div style={val} />
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
+          <div style={lbl}>Tel. kierowcy / Driver phone:</div>
+          <div style={val} />
+        </div>
+      </div>
+
+      {/* SEKCJA: ZAŁADUNEK */}
+      <div style={{ ...secHdr, borderLeft: b, borderRight: b, borderTop: b }}>SZCZEGÓŁY ZAŁADUNKU / LOADING DETAILS</div>
+
+      {/* ADRES ZAŁADUNKU | DATA I GODZINA */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '40px' }}>
+          <div style={lbl}>Adres załadunku / Loading address:</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.fromCity}, {data.fromCountry}</div>
+          <div style={val}>{data.sender?.address}</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '40px' }}>
+          <div style={lbl}>Data i godzina załadunku / Loading date &amp; time:</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.loadDate}</div>
+        </div>
+      </div>
+
+      {/* OSOBA ZAŁADUNEK | REFERENCJA ZAŁADUNKOWA */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
+          <div style={lbl}>Osoba do kontaktu w miejscu załadunku:</div>
+          <div style={val} />
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
+          <div style={lbl}>Referencja załadunkowa / Reference:</div>
+          <div style={val} />
+        </div>
+      </div>
+
+      {/* ADRES ROZŁADUNKU | DATA DOSTAWY */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '40px' }}>
+          <div style={lbl}>Adres rozładunku / Delivery address:</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.toCity}, {data.toCountry}</div>
+          <div style={val}>{data.receiver?.address}</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '40px' }}>
+          <div style={lbl}>Planowana data dostawy / Delivery date:</div>
+          <div style={val} />
+        </div>
+      </div>
+
+      {/* OSOBA DOSTAWY | REFERENCJA DOSTAWY */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
+          <div style={lbl}>Osoba do kontaktu w miejscu dostawy:</div>
+          <div style={val} />
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
+          <div style={lbl}>Referencja dostawy / Reference:</div>
+          <div style={val} />
+        </div>
+      </div>
+
+      {/* SEKCJA: TOWAR */}
+      <div style={{ ...secHdr, borderLeft: b, borderRight: b, borderTop: b }}>OPIS TOWARU / CARGO DESCRIPTION</div>
+
+      {/* OPIS | WAGA | LDM | ILOŚĆ */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 2, padding: '3px 5px', borderRight: b, minHeight: '40px' }}>
+          <div style={lbl}>Opis towaru / Cargo description:</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.cargo?.name}</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '40px' }}>
+          <div style={lbl}>Waga brutto (kg):</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.cargo?.weight}</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '40px' }}>
+          <div style={lbl}>Metry ładunkowe (LDM):</div>
+          <div style={val} />
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '40px' }}>
+          <div style={lbl}>Ilość opakowań:</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.cargo?.packages}</div>
+        </div>
+      </div>
+
+      {/* TYP POJAZDU | TEMPERATURA | ADR | KLASA ADR */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '36px' }}>
+          <div style={lbl}>Typ pojazdu / Vehicle type:</div>
+          <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Plandeka &nbsp; &#9634; Chłodnia &nbsp; &#9634; Mroźnia</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '36px' }}>
+          <div style={lbl}>Temperatura / Temp. (°C):</div>
+          <div style={{ fontSize: '8px', marginTop: '2px' }}>Od: &nbsp;&nbsp;&nbsp; Do:</div>
+        </div>
+        <div style={{ width: '90px', padding: '3px 5px', borderRight: b, minHeight: '36px' }}>
+          <div style={lbl}>&#9634; ADR:</div>
+          <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Tak &nbsp; &#9634; Nie</div>
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '36px' }}>
+          <div style={lbl}>Klasa ADR / UN Nr:</div>
+          <div style={val} />
+        </div>
+      </div>
+
+      {/* CENA FRACHTU | WALUTA | TERMIN PŁATNOŚCI | PODSTAWA FAKTURY */}
+      <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
+          <div style={lbl}>Cena frachtu / Freight price:</div>
+          <div style={val} />
+        </div>
+        <div style={{ width: '80px', padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
+          <div style={lbl}>Waluta / Currency:</div>
+          <div style={val}>{data.cargo?.currency}</div>
+        </div>
+        <div style={{ width: '130px', padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
+          <div style={lbl}>Termin płatności / Payment terms (dni):</div>
+          <div style={val} />
+        </div>
+        <div style={{ flex: 1, padding: '3px 5px', minHeight: '32px' }}>
+          <div style={lbl}>Podstawa faktury / Invoice basis:</div>
+          <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; FV netto &nbsp; &#9634; FV+VAT 23% &nbsp; &#9634; Inny:</div>
+        </div>
+      </div>
+
+      {/* UWAGI */}
+      <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '3px 5px', minHeight: '40px' }}>
+        <div style={lbl}>Uwagi i wymagania specjalne / Special requirements:</div>
+        <div style={{ ...val, marginTop: '2px' }}>{data.cargo?.notes}</div>
+      </div>
+
+      {/* PODPISY */}
+      <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
+        <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
+          <div style={lbl}>Zleceniodawca / Shipper</div>
+          <div style={{ flex: 1 }} />
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć</div>
+        </div>
+        <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
+          <div style={lbl}>Przewoźnik / Carrier</div>
+          <div style={{ flex: 1 }} />
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć</div>
+        </div>
+        <div style={{ flex: 1, padding: '5px 7px', minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
+          <div style={lbl}>Data przyjęcia / Accepted</div>
+          <div style={{ flex: 1 }} />
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć</div>
+        </div>
+      </div>
+
     </div>
   )
 }
