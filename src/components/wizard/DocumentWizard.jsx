@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { COUNTRIES } from '../../data/mockData'
 import CountrySelect from '../ui/CountrySelect'
+import { fillCmr } from '../../generators/fillCmr'
+import { fillPackingList } from '../../generators/fillPackingList'
 
 const STEPS = ['Trasa', 'Towar', 'Strony', 'Dokumenty']
 const CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF']
@@ -299,8 +301,6 @@ function Step3({ data, setData, onNext, onBack }) {
   )
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-
 // ── Step 4: Dokumenty ──────────────────────────────────────────────────────────
 
 function Step4({ routeData, cargoData, partiesData, onBack }) {
@@ -324,49 +324,42 @@ function Step4({ routeData, cargoData, partiesData, onBack }) {
   async function handleGenerate() {
     setLoading(true)
     setError(null)
+
+    const formData = {
+      transport: routeData.transport,
+      fromCountry: routeData.fromCountry,
+      fromCity: routeData.fromCity,
+      toCountry: routeData.toCountry,
+      toCity: routeData.toCity,
+      loadDate: routeData.loadDate,
+      cargo: {
+        name: cargoData.cargoName,
+        hsCode: cargoData.hsCode,
+        weight: cargoData.weight,
+        volume: cargoData.volume,
+        packages: cargoData.packages,
+        value: cargoData.value,
+        currency: cargoData.currency,
+        notes: cargoData.notes,
+      },
+      sender: { ...partiesData.sender, country: routeData.fromCountry },
+      receiver: { ...partiesData.receiver, country: routeData.toCountry },
+    }
+
+    const generated = []
+
     try {
-      const payload = {
-        transport: routeData.transport,
-        fromCountry: routeData.fromCountry,
-        fromCity: routeData.fromCity,
-        toCountry: routeData.toCountry,
-        toCity: routeData.toCity,
-        loadDate: routeData.loadDate,
-        cargo: {
-          name: cargoData.cargoName,
-          hsCode: cargoData.hsCode,
-          weight: cargoData.weight,
-          volume: cargoData.volume,
-          packages: cargoData.packages,
-          value: cargoData.value,
-          currency: cargoData.currency,
-          notes: cargoData.notes,
-        },
-        sender: {
-          name: partiesData.sender.name,
-          vat: partiesData.sender.vat,
-          address: partiesData.sender.address,
-          country: routeData.fromCountry,
-        },
-        receiver: {
-          name: partiesData.receiver.name,
-          vat: partiesData.receiver.vat,
-          address: partiesData.receiver.address,
-          country: routeData.toCountry,
-        },
+      if (routeData.transport === 'road') {
+        await fillCmr(formData)
+        generated.push({ name: 'CMR — list przewozowy', status: 'ready' })
       }
 
-      const res = await fetch(`${API_URL}/api/documents/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+      await fillPackingList(formData)
+      generated.push({ name: 'Packing List', status: 'ready' })
 
-      if (!res.ok) throw new Error(`Błąd serwera: ${res.status}`)
-      const data = await res.json()
-      setResults(data)
+      setResults(generated)
     } catch (err) {
-      setError(err.message)
+      setError('Nie znaleziono szablonu PDF. Wgraj formularze do folderu public/templates/')
     } finally {
       setLoading(false)
     }
@@ -388,27 +381,16 @@ function Step4({ routeData, cargoData, partiesData, onBack }) {
         </div>
 
         <div className="space-y-2 mb-5">
-          {results.documents.map(doc => (
-            <div key={doc.code} className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-xl bg-white">
+          {results.map(doc => (
+            <div key={doc.name} className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-xl bg-white">
               <DocIcon type="doc" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900">{doc.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {doc.status === 'ready' ? 'Gotowy do pobrania' : doc.status === 'unsupported' ? 'Wkrótce dostępny' : 'Błąd generowania'}
-                </p>
+                <p className="text-xs text-green-600 mt-0.5">Pobrano automatycznie</p>
               </div>
-              {doc.url ? (
-                <a
-                  href={`${API_URL}${doc.url}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs font-medium text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-400 px-3 py-1.5 rounded-lg transition-colors shrink-0"
-                >
-                  Pobierz PDF
-                </a>
-              ) : (
-                <span className="text-xs text-gray-400 shrink-0">{doc.status === 'unsupported' ? 'Wkrótce' : 'Błąd'}</span>
-              )}
+              <svg className="w-4 h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
           ))}
         </div>
