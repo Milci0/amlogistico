@@ -1,7 +1,12 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import WizardModal from './WizardModal'
 
 export default function HeroSection() {
+  const [wizardOpen, setWizardOpen] = useState(false)
+
   return (
+    <>
     <section className="relative bg-gradient-to-br from-white via-blue-50 to-indigo-100 pt-20 pb-28 px-4 overflow-hidden">
       {/* Dekoracje tła */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
@@ -22,8 +27,9 @@ export default function HeroSection() {
 
         {/* Podtytuł */}
         <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-          CMR, Packing List, Faktura handlowa, SAD, Sea Waybill — wszystkie dokumenty
-          spedycyjne w jednym miejscu. Bez błędów, bez papieru, gotowe do druku.
+          Ponad 99+ dokumentów spedycyjnych w jednym miejscu — faktury, listy przewozowe,
+          świadectwa i deklaracje celne. Wypełniasz jeden formularz, a my dobieramy i generujemy
+          wszystko, co potrzebne na Twoją trasę.
         </p>
 
         {/* CTA */}
@@ -37,12 +43,15 @@ export default function HeroSection() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
           </Link>
-          <a
-            href="#how-it-works"
+          <button
+            onClick={() => setWizardOpen(true)}
             className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-800 font-semibold px-7 py-3.5 rounded-xl border border-gray-200 shadow-sm transition-all hover:-translate-y-0.5"
           >
-            Zobacz jak to działa
-          </a>
+            Rozpocznij
+            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
 
         {/* Mockup karty dokumentu */}
@@ -85,5 +94,7 @@ export default function HeroSection() {
         </div>
       </div>
     </section>
+    {wizardOpen && <WizardModal onClose={() => setWizardOpen(false)} />}
+    </>
   )
 }
