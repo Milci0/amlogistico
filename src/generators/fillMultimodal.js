@@ -5,24 +5,16 @@ export async function fillMultimodal(data) {
   const docNo = `MTD/${new Date().getFullYear()}/${String(Date.now()).slice(-4)}`
 
   const fields = [
-    { x: 30,  y: 133, text: data.sender.name, size: 10 },
-    { x: 30,  y: 145, text: data.sender.address },
-    { x: 30,  y: 157, text: data.sender.country },
-
-    { x: 300, y: 133, text: data.receiver.name, size: 10 },
-    { x: 300, y: 145, text: data.receiver.address },
-    { x: 300, y: 157, text: data.receiver.country },
-
-    { x: 30,  y: 188, text: data.receiver.name },
-
-    // Leg 1 — Pre-carriage (road)
+    { x: 35, y: 130, text: data.sender.name },
+    { x: 35, y: 142, text: data.sender.address },
+    { x: 305, y: 130, text: data.receiver.name },
+    { x: 305, y: 142, text: data.receiver.address },
+    { x: 35, y: 185, text: data.receiver.name },
     { x: 120, y: 242, text: 'Road' },
     { x: 210, y: 242, text: data.fromCity },
     { x: 290, y: 242, text: data.fromCity },
     { x: 370, y: 242, text: data.fromCity },
     { x: 480, y: 242, text: data.sender.name },
-
-    // Leg 2 — Main carriage (sea)
     { x: 120, y: 272, text: 'Sea' },
     { x: 210, y: 272, text: `${data.fromCity}, ${data.fromCountry}` },
     { x: 290, y: 272, text: `${data.fromCity}, ${data.fromCountry}` },
@@ -30,10 +22,7 @@ export async function fillMultimodal(data) {
     { x: 430, y: 272, text: `${data.toCity}, ${data.toCountry}` },
     { x: 480, y: 272, text: data.cargo.carrier || '' },
     { x: 545, y: 272, text: data.loadDate },
-
-    // Cargo
-    { x: 20,  y: 348, text: '1' },
-    { x: 45,  y: 348, text: data.cargo.name },
+    { x: 45, y: 348, text: data.cargo.name },
     { x: 235, y: 348, text: data.cargo.hsCode || '' },
     { x: 285, y: 348, text: data.cargo.packages ? String(data.cargo.packages) : '1' },
     { x: 330, y: 348, text: 'szt.' },
