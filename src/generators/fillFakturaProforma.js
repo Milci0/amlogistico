@@ -1,6 +1,6 @@
-import { printDocument } from './printDocument'
+import { generatePdf } from './generatePdf'
 import { FakturaProformaTemplate } from './templates/FakturaProformaTemplate'
 
 export async function fillFakturaProforma(data) {
-  await printDocument(FakturaProformaTemplate, data, 'Faktura_Proforma.pdf')
+  await generatePdf(FakturaProformaTemplate, data, 'Faktura_Proforma.pdf')
 }

@@ -1,6 +1,6 @@
-import { printDocument } from './printDocument'
+import { generatePdf } from './generatePdf'
 import { ZlecenieTemplate } from './templates/ZlecenieTemplate'
 
 export async function fillZlecenie(data) {
-  await printDocument(ZlecenieTemplate, data, 'Zlecenie_Transportowe.pdf')
+  await generatePdf(ZlecenieTemplate, data, 'Zlecenie_Transportowe.pdf')
 }

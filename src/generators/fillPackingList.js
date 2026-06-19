@@ -1,6 +1,6 @@
-import { printDocument } from './printDocument'
+import { generatePdf } from './generatePdf'
 import { PackingListTemplate } from './templates/PackingListTemplate'
 
 export async function fillPackingList(data) {
-  await printDocument(PackingListTemplate, data, 'Packing_List.pdf')
+  await generatePdf(PackingListTemplate, data, 'Packing_List.pdf')
 }

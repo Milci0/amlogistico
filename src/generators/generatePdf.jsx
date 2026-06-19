@@ -10,7 +10,7 @@ function loadHtml2Pdf() {
     const s = document.createElement('script')
     s.src = CDN_URL
     s.onload = () => resolve(window.html2pdf)
-    s.onerror = () => reject(new Error('Nie udało się załadować html2pdf.js'))
+    s.onerror = () => reject(new Error('Nie można załadować html2pdf.js z CDN'))
     document.head.appendChild(s)
   })
 }
@@ -18,15 +18,16 @@ function loadHtml2Pdf() {
 export async function generatePdf(TemplateComponent, data, filename) {
   const html2pdf = await loadHtml2Pdf()
 
+  // Render w (0,0) za wszystkimi elementami — html2canvas poprawnie uchwyci
   const container = document.createElement('div')
   container.style.cssText =
-    'position:fixed;top:-9999px;left:-9999px;width:794px;background:white;'
+    'position:fixed;top:0;left:0;width:794px;background:white;z-index:-9999;pointer-events:none;'
   document.body.appendChild(container)
 
   const root = createRoot(container)
   root.render(createElement(TemplateComponent, { data }))
 
-  await new Promise(r => setTimeout(r, 400))
+  await new Promise(r => setTimeout(r, 500))
 
   const el = container.firstElementChild
 
@@ -40,7 +41,8 @@ export async function generatePdf(TemplateComponent, data, filename) {
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: 794,
+        scrollX: -window.scrollX,
+        scrollY: -window.scrollY,
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     })

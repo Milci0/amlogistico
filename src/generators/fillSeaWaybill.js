@@ -1,6 +1,6 @@
-import { printDocument } from './printDocument'
+import { generatePdf } from './generatePdf'
 import { SeaWaybillTemplate } from './templates/SeaWaybillTemplate'
 
 export async function fillSeaWaybill(data) {
-  await printDocument(SeaWaybillTemplate, data, 'Sea_Waybill.pdf')
+  await generatePdf(SeaWaybillTemplate, data, 'Sea_Waybill.pdf')
 }
