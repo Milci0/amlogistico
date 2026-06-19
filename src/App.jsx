@@ -7,11 +7,16 @@ import HistoryPage from './pages/HistoryPage'
 import CompaniesPage from './pages/CompaniesPage'
 import SubscriptionPage from './pages/SubscriptionPage'
 import SettingsPage from './pages/SettingsPage'
+import CalibratePage from './pages/CalibratePage'
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <LandingPage />,
+  },
+  {
+    path: '/calibrate',
+    element: <CalibratePage />,
   },
   {
     path: '/app',
