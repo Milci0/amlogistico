@@ -9,10 +9,10 @@ towar, dane firm) i otrzymuje komplet PDF-ów dopasowany do trasy
 
 ## Stack
 - Frontend: React.js + Tailwind CSS + React Router
-- Backend (jeszcze nie zaczęty): Node.js + Express, REST API
-- Baza danych (jeszcze nie zaczęta): PostgreSQL + Prisma/Sequelize
-- Generowanie PDF: PDFKit
-- Płatności: Stripe
+- Backend: Node.js + Express, REST API — nie zaczęty
+- Baza danych: PostgreSQL + Prisma — nie zaczęta
+- Generowanie PDF: html2pdf.js z CDN (po stronie przeglądarki, szablony JSX)
+- Płatności: Stripe — nie zaczęte
 
 ## Pełny plan techniczny — szczegóły w docs/
 Pełny opis każdej części znajduje się w trzech plikach:
@@ -28,7 +28,7 @@ samego streszczenia poniżej.
 
 ## AKTUALNY STATUS (aktualizuj po każdej sesji!)
 
-### Część 1 — Frontend: ~60-70% gotowe
+### Część 1 — Frontend: ~80% gotowe
 Zrobione:
 - Landing Page (hero, karty zalet, lista dokumentów, "jak to działa", 
   cennik, stopka)
@@ -37,21 +37,25 @@ Zrobione:
 - Dashboard z metrykami i tabelą dokumentów
 - Formularz "Nowy dokument" — 4 kroki (Trasa, Towar, Strony, Dokumenty)
 - Strona "Moje firmy"
+- Generowanie PDF po stronie przeglądarki (html2pdf.js z CDN):
+  - `src/generators/generatePdf.jsx` — core utility (React → html2canvas → PDF)
+  - `src/generators/templates/` — 9 szablonów JSX dopasowanych do PDF wzorców
+  - `src/generators/fill*.js` — 9 plików, wszystkie używają generatePdf
+  - WAŻNE: element musi być na position:fixed;top:0;left:0;z-index:-9999
+    (nie left:-9999px — html2canvas wymaga elementu w viewport)
+- Step 4 wizarda: sekcje Wymagane/Opcjonalne, przycisk PDF per dokument
+  (stany idle/loading/done/error), 2 przyciski zbiorcze
+- Branding: AMLogistico w Navbar/Sidebar/AppShell/Footer
+- Oryginalne PDF wzorce w `public/templates/eu/` (land/, sea/, common/)
 
-Do zrobienia / niesprawdzone:
-- Historia dokumentów (strona może nie istnieć)
-- Panel abonamentu
-- Ekran wynikowy po wygenerowaniu dokumentów (lista PDF + ZIP)
-- CountrySelect z flagami, AlertBox o dokumentach celnych
-- Prawdziwe strony Rejestracja/Logowanie (obecnie "Zaloguj się" to atrapa, 
-  od razu przenosi do dashboardu)
+Do zrobienia:
+- Prawdziwe strony Rejestracja/Logowanie (atrapa → od razu dashboard)
+- Panel abonamentu (integracja ze Stripe)
+- Podmiana NewDocumentPage na DocumentWizard w routingu
 
-Cała aplikacja na tym etapie działa na DANYCH MOCKOWANYCH — bez 
-prawdziwego backendu i bazy danych.
+### Część 2 — Backend: 0%, nie zaczęty
 
-### Część 2 — Backend: 0%, nie zaczęte
-
-### Część 3 — Baza danych: 0%, nie zaczęte
+### Część 3 — Baza danych: 0%, nie zaczęta
 
 ## Zasady pracy
 - Pracujemy etapami — najpierw dokończ frontend (MVP na danych mockowanych), 
