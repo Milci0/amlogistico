@@ -66,11 +66,12 @@ export async function generatePdf(TemplateComponent, data, filename) {
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          // Wymuś obliczenie CSS layoutu dla szerokości 794px (fix mobile) —
-          // ale nie nadpisuj width/height, żeby html2canvas mierzył element sam.
+          // Wymuś obliczenie CSS layoutu dla szerokości 794px (fix mobile reflow).
           windowWidth: DOC_WIDTH,
-          scrollX: 0,
-          scrollY: 0,
+          // Kompensacja aktualnej pozycji scrolla — bez tego html2canvas przesuwa
+          // obszar capture i ucina lewą/górną część dokumentu.
+          scrollX: -window.scrollX,
+          scrollY: -window.scrollY,
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       })
