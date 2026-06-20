@@ -14,11 +14,12 @@ export default function WizardModal({ onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center p-2 pt-4 sm:p-4 sm:pt-12 bg-black/40 backdrop-blur-sm overflow-hidden"
+      className="fixed inset-0 z-50 flex items-start justify-center p-2 pt-4 sm:p-4 sm:pt-12 bg-black/40 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-full flex flex-col"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col"
+        style={{ maxHeight: 'calc(100svh - 2rem)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
