@@ -51,14 +51,36 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   `preloadHtml2Pdf()` przy montażu wizardu; na iOS Safari PDF otwiera się w nowej karcie
   (obejście blokady pobierania po await)
 
+- **Autoryzacja (logowanie/rejestracja) — GOTOWE:**
+  - Strony `src/pages/LoginPage.jsx` i `RegisterPage.jsx` (wspólny `components/auth/AuthShell.jsx`,
+    styl spójny z wizardem), obsługa błędów 401/409/400 (per pole) przez `AlertBox`
+  - `src/auth/AuthContext.jsx` — provider sesji (hydratacja przez `GET /api/auth/me` na starcie),
+    `login/register/logout`; `src/lib/api.js` — fetch wrapper z `credentials:'include'` + `ApiError`
+  - `src/components/auth/RequireAuth.jsx` — chroni `/app/*` (redirect na `/login`, zapamiętuje `from`)
+  - `App.jsx` — root layout z `AuthProvider`, trasy `/login` `/register`, guard na `/app`
+  - Navbar: przyciski → `/login` i `/register`; Sidebar: profil z danymi usera + „Wyloguj"
+  - Dev: proxy `/api` → `:3001` w `vite.config.js`; `vercel.json` routuje `/api/*` do funkcji
+
 **Do zrobienia:**
-- Prawdziwe strony Rejestracja/Logowanie
 - Panel abonamentu (integracja ze Stripe)
 - Podmiana `NewDocumentPage` na `DocumentWizard`
+- Deploy autoryzacji na Vercel (env vary DATABASE_URL/DIRECT_URL/JWT_SECRET) — patrz niżej
 
-### Backend: 0% — nie zaczęty
+### Backend: auth gotowy (serverless `/api`)
+- `api/index.js` — Express 5 (lokalnie `npm run server` na `:3001`, na Vercelu funkcja serverless)
+- `api/routes/auth.js` — `POST /api/auth/register|login|logout`, `GET /api/auth/me`
+- `api/lib/auth.js` — JWT (jsonwebtoken) w **httpOnly cookie** (`sameSite:lax`, `secure` na prod),
+  middleware `requireAuth` gotowe pod kolejne trasy; `api/lib/prisma.js` — singleton
+- `api/validation/auth.js` — Zod 4; hasła bcryptjs (salt 12)
+- Endpointy documents/companies/subscription, Stripe, rate-limiting — jeszcze nie zaczęte
+- **Uwaga env:** firmowy proxy → `npm` wymaga `NODE_OPTIONS=--use-system-ca`.
+  Prisma przypięta do **6.x** (Prisma 7 usunęło `url=env()` w schemacie — wymaga driver-adapterów)
 
-### Baza danych: 0% — nie zaczęta
+### Baza danych: users na Neonie (Prisma 6 + PostgreSQL)
+- `prisma/schema.prisma` — model `User` (`@@map("users")`, snake_case przez `@map`)
+- Hosting **Neon**; `.env`: `DATABASE_URL` (pooled, `-pooler`) + `DIRECT_URL` (direct, do migracji)
+- Schema wgrana przez `npx prisma db push`; podgląd `npx prisma studio`
+- Tabele companies/document_sets/payments — jeszcze nie zaczęte (schema w `docs/3.Baza danych.md`)
 
 ## Zasady pracy
 - Przed większymi zmianami przedstaw krótki plan

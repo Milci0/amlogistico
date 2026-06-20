@@ -41,13 +41,13 @@ export default function Navbar() {
           {/* Przyciski desktop */}
           <div className="hidden md:flex items-center gap-3">
             <Link
-              to="/app/dashboard"
+              to="/login"
               className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors px-3 py-2"
             >
               Zaloguj się
             </Link>
             <Link
-              to="/app/dashboard"
+              to="/register"
               className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
               Zacznij bezpłatnie
@@ -92,14 +92,14 @@ export default function Navbar() {
           )}
           <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
             <Link
-              to="/app/dashboard"
+              to="/login"
               className="text-sm font-medium text-center text-gray-700 border border-gray-300 rounded-lg py-2.5 hover:bg-gray-50 transition-colors"
               onClick={() => setMenuOpen(false)}
             >
               Zaloguj się
             </Link>
             <Link
-              to="/app/dashboard"
+              to="/register"
               className="text-sm font-semibold text-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5 transition-colors"
               onClick={() => setMenuOpen(false)}
             >

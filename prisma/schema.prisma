@@ -1,0 +1,27 @@
+// Prisma schema dla AmLogistico
+// Baza: PostgreSQL (Neon). Connection string w env DATABASE_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled (z "-pooler") — zapytania aplikacji w runtime
+  directUrl = env("DIRECT_URL")   // direct (bez "-pooler") — migracje / db push
+}
+
+// users — konta użytkowników (zgodne z docs/3.Baza danych.md)
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  passwordHash     String    @map("password_hash")
+  companyName      String    @map("company_name")
+  vatNumber        String?   @map("vat_number")
+  plan             String    @default("free") // free / monthly / pay_per_doc
+  planExpiresAt    DateTime? @map("plan_expires_at")
+  stripeCustomerId String?   @map("stripe_customer_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@map("users")
+}

@@ -1,5 +1,13 @@
-import { NavLink, Link } from 'react-router-dom'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { MENU_ITEMS } from '../../data/mockData'
+import { useAuth } from '../../auth/AuthContext'
+
+const PLAN_LABELS = { free: 'Plan Free', monthly: 'Plan Miesięczny', pay_per_doc: 'Pay-per-doc' }
+
+function initials(user) {
+  const src = (user?.companyName || user?.email || '?').trim()
+  return src.slice(0, 2).toUpperCase()
+}
 
 const ICONS = {
   grid: (
@@ -42,6 +50,15 @@ const ICONS = {
 }
 
 export default function Sidebar({ onClose }) {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    onClose?.()
+    await logout()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <aside className="flex flex-col h-full w-64 bg-slate-800 text-slate-300">
 
@@ -90,17 +107,27 @@ export default function Sidebar({ onClose }) {
         ))}
       </nav>
 
-      {/* Stopka sidebar — profil */}
+      {/* Stopka sidebar — profil + wylogowanie */}
       <div className="px-4 py-4 border-t border-slate-700">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-            MP
+            {initials(user)}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-100 truncate">Moje konto</p>
-            <p className="text-xs text-slate-400 truncate">Plan Free</p>
+            <p className="text-sm font-medium text-slate-100 truncate">{user?.companyName || 'Moje konto'}</p>
+            <p className="text-xs text-slate-400 truncate">{PLAN_LABELS[user?.plan] || 'Plan Free'}</p>
           </div>
         </div>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Wyloguj
+        </button>
       </div>
     </aside>
   )
