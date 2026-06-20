@@ -55,8 +55,6 @@ export async function generatePdf(TemplateComponent, data, filename) {
     await new Promise(r => setTimeout(r, 300))
 
     const el = container.firstElementChild
-    // Pełna wysokość treści — bez tego A4 obcina dół na wyższych dokumentach.
-    const height = el.scrollHeight
 
     const worker = html2pdf()
       .set({
@@ -68,16 +66,12 @@ export async function generatePdf(TemplateComponent, data, filename) {
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          // Wymuś render w szerokości desktopowej (794px) niezależnie od ekranu
-          // urządzenia — to naprawia ucinanie prawej strony dokumentu na telefonach.
-          width: DOC_WIDTH,
-          height,
+          // Wymuś obliczenie CSS layoutu dla szerokości 794px (fix mobile) —
+          // ale nie nadpisuj width/height, żeby html2canvas mierzył element sam.
           windowWidth: DOC_WIDTH,
-          windowHeight: height,
           scrollX: 0,
           scrollY: 0,
         },
-        pagebreak: { mode: ['css', 'legacy'] },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       })
       .from(el)
