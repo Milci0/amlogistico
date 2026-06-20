@@ -2,39 +2,11 @@ import { useState, useEffect } from 'react'
 import { COUNTRIES } from '../../data/mockData'
 import CountrySelect from '../ui/CountrySelect'
 import { preloadHtml2Pdf } from '../../generators/generatePdf'
-import { fillCmr } from '../../generators/fillCmr'
-import { fillPackingList } from '../../generators/fillPackingList'
-import { fillFakturaHandlowa } from '../../generators/fillFakturaHandlowa'
-import { fillFakturaProforma } from '../../generators/fillFakturaProforma'
-import { fillZlecenie } from '../../generators/fillZlecenie'
-import { fillPOD } from '../../generators/fillPOD'
-import { fillBillOfLading } from '../../generators/fillBillOfLading'
-import { fillSeaWaybill } from '../../generators/fillSeaWaybill'
-import { fillMultimodal } from '../../generators/fillMultimodal'
+import { getDocsList, generateDocument } from '../../generators/documents'
 
 const STEPS = ['Trasa', 'Towar', 'Strony', 'Dokumenty']
 const CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF']
 const EU_CODES = ['PL','DE','FR','NL','BE','CZ','SK','AT','IT','ES','PT','SE','DK','FI','HU','RO','BG','HR','GR','EE','LV','LT']
-
-function getDocsList(transport, bothEU) {
-  if (transport === 'road') {
-    return [
-      { key: 'cmr', name: 'CMR — list przewozowy', desc: 'Podstawowy dokument transportu drogowego', required: true, icon: 'doc', fillFn: fillCmr },
-      { key: 'packing', name: 'Packing List', desc: 'Szczegółowy wykaz zawartości przesyłki', required: true, icon: 'list', fillFn: fillPackingList },
-      { key: 'faktura', name: 'Faktura handlowa', desc: 'Dokument rozliczeniowy między sprzedającym a kupującym', required: true, icon: 'doc', fillFn: fillFakturaHandlowa },
-      ...(!bothEU ? [{ key: 'proforma', name: 'Faktura Proforma', desc: 'Dokument celny do odprawy eksportowej', required: true, icon: 'doc', fillFn: fillFakturaProforma }] : []),
-      { key: 'zlecenie', name: 'Zlecenie transportowe', desc: 'Umowa między zleceniodawcą a przewoźnikiem', required: false, icon: 'clipboard', fillFn: fillZlecenie },
-      { key: 'pod', name: 'Protokół odbioru (POD)', desc: 'Potwierdzenie dostarczenia towaru przez odbiorcę', required: false, icon: 'sign', fillFn: fillPOD },
-    ]
-  }
-  return [
-    { key: 'bol', name: 'Bill of Lading', desc: 'Konosament morski — negocjowalny dokument tytułowy', required: true, icon: 'doc', fillFn: fillBillOfLading },
-    { key: 'packing', name: 'Packing List', desc: 'Szczegółowy wykaz zawartości kontenera', required: true, icon: 'list', fillFn: fillPackingList },
-    { key: 'faktura', name: 'Faktura handlowa', desc: 'Dokument rozliczeniowy między sprzedającym a kupującym', required: true, icon: 'doc', fillFn: fillFakturaHandlowa },
-    ...(!bothEU ? [{ key: 'proforma', name: 'Faktura Proforma', desc: 'Dokument celny do odprawy eksportowej', required: true, icon: 'doc', fillFn: fillFakturaProforma }] : []),
-    { key: 'seawaybill', name: 'Sea Waybill', desc: 'Morski list przewozowy — szybszy odbiór niż B/L', required: false, icon: 'doc', fillFn: fillSeaWaybill },
-  ]
-}
 
 const cls = {
   input: 'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-colors',
@@ -411,7 +383,7 @@ function Step4({ routeData, cargoData, partiesData, onBack }) {
   async function downloadOne(doc) {
     setStatuses(s => ({ ...s, [doc.key]: 'loading' }))
     try {
-      await doc.fillFn(formData)
+      await generateDocument(doc, formData)
       setStatuses(s => ({ ...s, [doc.key]: 'done' }))
     } catch (err) {
       console.error(err)
@@ -423,7 +395,7 @@ function Step4({ routeData, cargoData, partiesData, onBack }) {
     for (const doc of docs) {
       setStatuses(s => ({ ...s, [doc.key]: 'loading' }))
       try {
-        await doc.fillFn(formData)
+        await generateDocument(doc, formData)
         setStatuses(s => ({ ...s, [doc.key]: 'done' }))
       } catch (err) {
         console.error(err)

@@ -29,10 +29,13 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 - Dashboard z metrykami i tabelą dokumentów (dane mockowane)
 - Strony: Historia, Moje firmy, Abonament, Ustawienia (szkielet)
 - **Generowanie PDF po stronie przeglądarki** (html2pdf.js z CDN, bez backendu)
-  - `src/generators/generatePdf.jsx` — renderer React → html2canvas → PDF
-  - Element renderowany na `position:fixed;top:0;left:0;z-index:-9999` (krytyczne dla html2canvas)
-  - 9 szablonów JSX w `src/generators/templates/` — każdy ma inline styles, 794px, Arial
-  - 9 fill*.js w `src/generators/` — każdy wywołuje `generatePdf`, bez otwierania okien
+  - `src/generators/generatePdf.jsx` — wspólny silnik React → html2canvas → PDF (jeden dla wszystkich)
+  - Szablony JSX w `src/generators/templates/eu/{common,land,sea}/` — inline styles, 794px, Arial
+    (folder odwzorowuje strukturę wzorcowych PDF-ów z `public/templates/eu/`)
+  - **`src/generators/documents.js` — centralny rejestr `DOCUMENTS`** (jedyne źródło prawdy):
+    każdy dokument to wpis `{ key, transport, required, show?, name, desc, icon, filename, template }`.
+    `getDocsList(transport, bothEU)` filtruje listę, `generateDocument(doc, data)` woła silnik.
+    Dodanie nowego dokumentu = szablon JSX + 1 wpis w rejestrze (koniec z plikami `fill*.js`)
 - **Step 4 wizarda** — lista Wymagane/Opcjonalne, przycisk PDF przy każdym dokumencie,
   stany idle/loading/done/error, 2 przyciski zbiorcze: "Generuj wymagane" + "Generuj wszystkie"
 - **Branding:** logo `AMLogistico` (Navbar, Sidebar, AppShell, Footer)
