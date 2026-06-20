@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { COUNTRIES } from '../../data/mockData'
 import CountrySelect from '../ui/CountrySelect'
+import { preloadHtml2Pdf } from '../../generators/generatePdf'
 import { fillCmr } from '../../generators/fillCmr'
 import { fillPackingList } from '../../generators/fillPackingList'
 import { fillFakturaHandlowa } from '../../generators/fillFakturaHandlowa'
@@ -49,7 +50,7 @@ function StepBar({ current }) {
         return (
           <div
             key={name}
-            className={`flex items-center gap-2 px-4 py-3${i < STEPS.length - 1 ? ' border-r border-gray-200' : ''}`}
+            className={`flex items-center justify-center sm:justify-start gap-2 px-1.5 sm:px-4 py-3${i < STEPS.length - 1 ? ' border-r border-gray-200' : ''}`}
           >
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0
               ${done ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
@@ -59,7 +60,7 @@ function StepBar({ current }) {
                 </svg>
               ) : num}
             </div>
-            <span className={`text-sm font-medium ${active ? 'text-gray-900' : done ? 'text-gray-700' : 'text-gray-400'}`}>
+            <span className={`hidden sm:inline text-sm font-medium ${active ? 'text-gray-900' : done ? 'text-gray-700' : 'text-gray-400'}`}>
               {name}
             </span>
           </div>
@@ -137,7 +138,7 @@ function Step1({ data, setData, onNext }) {
   return (
     <div>
       <SectionLabel>Typ transportu</SectionLabel>
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         {[
           {
             id: 'road',
@@ -185,7 +186,7 @@ function Step1({ data, setData, onNext }) {
 
       <div className="mb-5">
         <SectionLabel>Skąd</SectionLabel>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Kraj">
             <CountrySelect value={data.fromCountry} onChange={v => setData(d => ({ ...d, fromCountry: v }))} />
           </Field>
@@ -197,7 +198,7 @@ function Step1({ data, setData, onNext }) {
 
       <div className="mb-5">
         <SectionLabel>Dokąd</SectionLabel>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Kraj">
             <CountrySelect value={data.toCountry} onChange={v => setData(d => ({ ...d, toCountry: v }))} />
           </Field>
@@ -225,7 +226,7 @@ function Step2({ data, setData, onNext, onBack }) {
       <BackButton onClick={onBack} />
       <SectionLabel>Opis towaru</SectionLabel>
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <Field label="Nazwa towaru">
           <input className={cls.input} placeholder="np. części elektroniczne" value={data.cargoName} onChange={e => setData(d => ({ ...d, cargoName: e.target.value }))} />
         </Field>
@@ -234,7 +235,7 @@ function Step2({ data, setData, onNext, onBack }) {
         </Field>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
         <Field label="Waga (kg)">
           <input type="number" className={cls.input} placeholder="1500" value={data.weight} onChange={e => setData(d => ({ ...d, weight: e.target.value }))} />
         </Field>
@@ -246,7 +247,7 @@ function Step2({ data, setData, onNext, onBack }) {
         </Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <Field label="Wartość towaru">
           <input type="number" className={cls.input} placeholder="15000" value={data.value} onChange={e => setData(d => ({ ...d, value: e.target.value }))} />
         </Field>
@@ -279,7 +280,7 @@ function PartySection({ title, data, onChange }) {
   return (
     <div className="border border-gray-200 rounded-xl p-5 mb-4">
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">{title}</p>
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <Field label="Nazwa firmy">
           <input className={cls.input} placeholder={title === 'Nadawca' ? 'np. ABC Sp. z o.o.' : 'np. Schmidt GmbH'} value={data.name} onChange={e => upd('name', e.target.value)} />
         </Field>
@@ -297,7 +298,7 @@ function PartySection({ title, data, onChange }) {
           />
         </Field>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Osoba kontaktowa">
           <input className={cls.input} placeholder={title === 'Nadawca' ? 'Jan Kowalski' : 'Hans Schmidt'} value={data.contact} onChange={e => upd('contact', e.target.value)} />
         </Field>
@@ -492,7 +493,7 @@ function Step4({ routeData, cargoData, partiesData, onBack }) {
       )}
       {optionalDocs.length === 0 && <div className="mb-6" />}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button
           onClick={() => generateBatch(requiredDocs)}
           disabled={isAnyLoading}
@@ -536,6 +537,10 @@ export default function DocumentWizard() {
   const [route, setRoute] = useState(initRoute)
   const [cargo, setCargo] = useState(initCargo)
   const [parties, setParties] = useState({ sender: { ...initParty }, receiver: { ...initParty } })
+
+  // Wczytaj bibliotekę PDF z góry, żeby kliknięcie „Pobierz" działało od razu
+  // (skraca okno async — istotne dla pobierania na urządzeniach mobilnych).
+  useEffect(() => { preloadHtml2Pdf() }, [])
 
   const next = () => setStep(s => Math.min(s + 1, 4))
   const back = () => setStep(s => Math.max(s - 1, 1))

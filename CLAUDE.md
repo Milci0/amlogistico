@@ -37,6 +37,16 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   stany idle/loading/done/error, 2 przyciski zbiorcze: "Generuj wymagane" + "Generuj wszystkie"
 - **Branding:** logo `AMLogistico` (Navbar, Sidebar, AppShell, Footer)
 - Oryginalne szablony PDF (9 plików) w `public/templates/eu/` jako wzorzec wizualny
+- **Responsywność (RWD):** wizard działa na telefonie/tablecie
+  - `WizardModal` — `min-h-0` na scrollowalnym body (naprawia brak przewijania na mobile —
+    klasyczny bug flexa), mniejsze paddingi i większy `max-h` na małych ekranach
+  - `DocumentWizard` — siatki `grid-cols-1 sm:grid-cols-2` / `grid-cols-2 sm:grid-cols-3`,
+    `StepBar` ukrywa etykiety na mobile (zostają numery), przyciski zbiorcze Step 4 stackują się
+- **PDF cross-device:** `generatePdf.jsx` wymusza render desktopowy w html2canvas
+  (`windowWidth: 794`, `width: 794`, zmierzona wysokość) — naprawia ucinanie prawej strony
+  na węższych ekranach; czeka na `document.fonts.ready`; `try/finally` sprząta kontener;
+  `preloadHtml2Pdf()` przy montażu wizardu; na iOS Safari PDF otwiera się w nowej karcie
+  (obejście blokady pobierania po await)
 
 **Do zrobienia:**
 - Prawdziwe strony Rejestracja/Logowanie
