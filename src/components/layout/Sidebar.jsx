@@ -1,43 +1,49 @@
-import { NavLink, Link, useNavigate } from 'react-router-dom'
-import { MENU_ITEMS } from '../../data/mockData'
-import { useAuth } from '../../auth/AuthContext'
-
-const PLAN_LABELS = { free: 'Plan Free', monthly: 'Plan Miesięczny', pay_per_doc: 'Pay-per-doc' }
-
-function initials(user) {
-  const src = (user?.companyName || user?.email || '?').trim()
-  return src.slice(0, 2).toUpperCase()
-}
+import { NavLink, Link } from 'react-router-dom'
+import { MENU_GROUPS, MENU_BOTTOM } from '../../data/mockData'
 
 const ICONS = {
-  grid: (
+  home: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-        d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+        d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1V10" />
     </svg>
   ),
-  plus: (
+  calculator: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-        d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        d="M9 7h6m-6 4h.01M12 11h.01M15 11h.01M9 15h.01M12 15h.01M15 15h.01M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
     </svg>
   ),
-  clock: (
+  document: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
   ),
-  building: (
+  pencil: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
     </svg>
   ),
-  'credit-card': (
+  shield: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+  ),
+  map: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+    </svg>
+  ),
+  globe: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18" />
     </svg>
   ),
   cog: (
@@ -47,30 +53,76 @@ const ICONS = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   ),
+  user: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  ),
+}
+
+function Badge({ children }) {
+  const isCore = children === 'Core'
+  return (
+    <span
+      className={
+        'ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full ' +
+        (isCore
+          ? 'bg-emerald-50 text-emerald-700'
+          : 'bg-slate-100 text-slate-500')
+      }
+    >
+      {children}
+    </span>
+  )
+}
+
+function MenuLink({ item, onClose }) {
+  return (
+    <NavLink
+      to={item.path}
+      onClick={onClose}
+      end={item.path === '/app'}
+      className={({ isActive }) =>
+        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ' +
+        (isActive
+          ? 'bg-emerald-50 text-emerald-700'
+          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900')
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <span className={isActive ? 'text-emerald-600' : 'text-slate-400'}>
+            {ICONS[item.icon]}
+          </span>
+          <span className="truncate">{item.label}</span>
+          {item.badge && <Badge>{item.badge}</Badge>}
+        </>
+      )}
+    </NavLink>
+  )
 }
 
 export default function Sidebar({ onClose }) {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
-
-  async function handleLogout() {
-    onClose?.()
-    await logout()
-    navigate('/login', { replace: true })
-  }
-
   return (
-    <aside className="flex flex-col h-full w-64 bg-slate-800 text-slate-300">
+    <aside className="flex flex-col h-full w-64 bg-white border-r border-slate-200">
 
       {/* Logo */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
-        <Link to="/" className="flex items-center gap-2 font-bold text-white text-lg">
-          <span className="bg-blue-500 text-white rounded-md w-7 h-7 flex items-center justify-center text-xs font-black">A</span>
-          AM<span className="text-blue-400">Logistico</span>
+      <div className="flex items-center justify-between px-5 py-4">
+        <Link to="/" className="flex items-center gap-2.5 font-bold text-slate-900 text-lg">
+          <span className="bg-emerald-500 text-white rounded-lg w-8 h-8 flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10h10zM13 8h4l3 4v4h-7V8z" />
+            </svg>
+          </span>
+          <span>AM<span className="text-emerald-600">Logistico</span></span>
         </Link>
-        {/* Przycisk zamknięcia — tylko mobile */}
+        {/* Zamknięcie — tylko mobile */}
         {onClose && (
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 md:hidden">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1 md:hidden">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -78,56 +130,27 @@ export default function Sidebar({ onClose }) {
         )}
       </div>
 
-      {/* Menu */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {MENU_ITEMS.map(item => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors relative group ` +
-              (isActive
-                ? 'bg-slate-700 text-white'
-                : 'text-slate-400 hover:bg-slate-700/60 hover:text-slate-100')
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-400 rounded-r-full" />
-                )}
-                <span className={isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'}>
-                  {ICONS[item.icon]}
-                </span>
-                {item.label}
-              </>
-            )}
-          </NavLink>
+      {/* Menu pogrupowane */}
+      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-6">
+        {MENU_GROUPS.map(group => (
+          <div key={group.title}>
+            <p className="px-3 mb-1.5 text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+              {group.title}
+            </p>
+            <div className="space-y-0.5">
+              {group.items.map(item => (
+                <MenuLink key={item.path} item={item} onClose={onClose} />
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 
-      {/* Stopka sidebar — profil + wylogowanie */}
-      <div className="px-4 py-4 border-t border-slate-700">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {initials(user)}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-100 truncate">{user?.companyName || 'Moje konto'}</p>
-            <p className="text-xs text-slate-400 truncate">{PLAN_LABELS[user?.plan] || 'Plan Free'}</p>
-          </div>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          Wyloguj
-        </button>
+      {/* Dół — Ustawienia / Profil */}
+      <div className="px-3 py-3 border-t border-slate-200 space-y-0.5">
+        {MENU_BOTTOM.map(item => (
+          <MenuLink key={item.path} item={item} onClose={onClose} />
+        ))}
       </div>
     </aside>
   )

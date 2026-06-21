@@ -38,7 +38,7 @@ export default function HowItWorksSection() {
         {/* CTA pod krokami */}
         <div className="text-center mt-12">
           <a
-            href="/app/dashboard"
+            href="/app"
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-md shadow-blue-100 transition-all hover:-translate-y-0.5"
           >
             Wypróbuj za darmo

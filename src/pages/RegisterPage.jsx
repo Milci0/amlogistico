@@ -28,7 +28,7 @@ export default function RegisterPage() {
         companyName: form.companyName,
         vatNumber: form.vatNumber.trim() || undefined,
       })
-      navigate('/app/dashboard', { replace: true })
+      navigate('/app', { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setError('Konto z tym adresem email już istnieje. Zaloguj się.')
@@ -52,7 +52,7 @@ export default function RegisterPage() {
       footer={
         <>
           Masz już konto?{' '}
-          <Link to="/login" className="text-blue-600 font-medium hover:underline">
+          <Link to="/login" className="text-emerald-600 font-medium hover:underline">
             Zaloguj się
           </Link>
         </>

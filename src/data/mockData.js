@@ -31,13 +31,43 @@ export const COUNTRIES = [
   { code: 'GR', name: 'Grecja', flag: '🇬🇷' },
 ]
 
-export const MENU_ITEMS = [
-  { label: 'Dashboard', path: '/app/dashboard', icon: 'grid' },
-  { label: 'Nowy dokument', path: '/app/new-document', icon: 'plus' },
-  { label: 'Historia', path: '/app/history', icon: 'clock' },
-  { label: 'Moje firmy', path: '/app/companies', icon: 'building' },
-  { label: 'Abonament', path: '/app/subscription', icon: 'credit-card' },
+// Pogrupowane menu boczne (układ wg projektu — GŁÓWNE / NARZĘDZIA / WIEDZA)
+export const MENU_GROUPS = [
+  {
+    title: 'Główne',
+    items: [
+      { label: 'Strona główna', path: '/app', icon: 'home' },
+      { label: 'Wycena', path: '/app/new-document', icon: 'calculator', badge: 'Core' },
+      { label: 'Dokumentacja', path: '/app/history', icon: 'document', badge: 'Core' },
+      { label: 'Wersje robocze', path: '/app/drafts', icon: 'pencil', badge: '3' },
+    ],
+  },
+  {
+    title: 'Narzędzia',
+    items: [
+      { label: 'Ubezpieczenia', path: '/app/insurance', icon: 'shield' },
+      { label: 'Trasy handlowe', path: '/app/routes', icon: 'map' },
+    ],
+  },
+  {
+    title: 'Wiedza',
+    items: [
+      { label: 'Incoterms', path: '/app/incoterms', icon: 'globe' },
+    ],
+  },
+]
+
+// Dolne pozycje sidebara
+export const MENU_BOTTOM = [
   { label: 'Ustawienia', path: '/app/settings', icon: 'cog' },
+  { label: 'Profil', path: '/app/profile', icon: 'user' },
+]
+
+// Statystyki na stronie głównej (hero)
+export const HOME_STATS = [
+  { value: '3', label: 'Wersje robocze' },
+  { value: '12', label: 'Dokumenty' },
+  { value: '5', label: 'Wyceny' },
 ]
 
 export const PRICING_PLANS = [

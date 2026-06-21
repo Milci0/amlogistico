@@ -39,6 +39,23 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 - **Step 4 wizarda** — lista Wymagane/Opcjonalne, przycisk PDF przy każdym dokumencie,
   stany idle/loading/done/error, 2 przyciski zbiorcze: "Generuj wymagane" + "Generuj wszystkie"
 - **Branding:** logo `AMLogistico` (Navbar, Sidebar, AppShell, Footer)
+- **Nowy layout aplikacji (`/app`)** — jasny motyw z zielonym akcentem (emerald):
+  - `Sidebar` przepisany: jasny, pogrupowane sekcje (GŁÓWNE/NARZĘDZIA/WIEDZA) z `MENU_GROUPS`,
+    badge `Core`/licznik, dół: Ustawienia + Profil (`MENU_BOTTOM` w `data/mockData.js`)
+  - `Topbar` (nowy `components/layout/Topbar.jsx`) — dzwonek, menu „…" z wylogowaniem (dropdown),
+    ciemny avatar; hamburger mobilny przeniesiony tutaj
+  - `AppShell` — aplikacja w zaokrąglonej karcie-„oknie" (border, shadow) na szarym tle
+  - **Dashboard usunięty.** Indeks `/app` = `HomePage` (hero „Strona główna": label → nagłówek →
+    podtytuł → „Rozpocznij" → 3 karty statystyk `HOME_STATS` → strzałka w dół)
+  - **Layout publiczny:** `AppShell` nie jest już za `RequireAuth` — sam wygląd (sidebar/topbar/hero)
+    widać też bez logowania. `/` → redirect na `/app`. `RequireAuth` chroni tylko funkcje
+    (new-document, history, companies, subscription, settings + placeholdery).
+    Topbar: niezalogowany widzi „Zaloguj się/Zarejestruj się", zalogowany — dzwonek/menu/avatar.
+    `HomePage` „Rozpocznij": gość → `/login` (z `from`), zalogowany → kreator; gość ma podpowiedź
+  - „Rozpocznij" → `/app/new-document`, gdzie `NewDocumentPage` renderuje już realny
+    `DocumentWizard` (4-kroki) zamiast dawnej atrapy
+  - Stara marketingowa `LandingPage` nie jest już routowana (plik zostaje, niewykorzystany)
+  - `PlaceholderPage` + trasy dla nowych pozycji menu (profile/drafts/insurance/routes/incoterms)
 - Oryginalne szablony PDF (9 plików) w `public/templates/eu/` jako wzorzec wizualny
 - **Responsywność (RWD):** wizard działa na telefonie/tablecie
   - `WizardModal` — `min-h-0` na scrollowalnym body (naprawia brak przewijania na mobile —

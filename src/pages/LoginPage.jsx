@@ -9,7 +9,7 @@ export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = location.state?.from?.pathname || '/app/dashboard'
+  const from = location.state?.from?.pathname || '/app'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -43,7 +43,7 @@ export default function LoginPage() {
       footer={
         <>
           Nie masz konta?{' '}
-          <Link to="/register" className="text-blue-600 font-medium hover:underline">
+          <Link to="/register" className="text-emerald-600 font-medium hover:underline">
             Zarejestruj się
           </Link>
         </>
