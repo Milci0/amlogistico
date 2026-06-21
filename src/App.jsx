@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
+import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './auth/AuthContext'
 import RequireAuth from './components/auth/RequireAuth'
 import LoginPage from './pages/LoginPage'
@@ -16,9 +17,11 @@ import PlaceholderPage from './pages/PlaceholderPage'
 // Root layout — AuthProvider wewnątrz routera, by trasy/hooki miały kontekst sesji
 function RootLayout() {
   return (
-    <AuthProvider>
-      <Outlet />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Outlet />
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

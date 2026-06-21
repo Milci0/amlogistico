@@ -68,8 +68,8 @@ function Badge({ children }) {
       className={
         'ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full ' +
         (isCore
-          ? 'bg-emerald-50 text-emerald-700'
-          : 'bg-slate-100 text-slate-500')
+          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+          : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400')
       }
     >
       {children}
@@ -86,13 +86,13 @@ function MenuLink({ item, onClose }) {
       className={({ isActive }) =>
         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ' +
         (isActive
-          ? 'bg-emerald-50 text-emerald-700'
-          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900')
+          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100')
       }
     >
       {({ isActive }) => (
         <>
-          <span className={isActive ? 'text-emerald-600' : 'text-slate-400'}>
+          <span className={isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}>
             {ICONS[item.icon]}
           </span>
           <span className="truncate">{item.label}</span>
@@ -105,11 +105,11 @@ function MenuLink({ item, onClose }) {
 
 export default function Sidebar({ onClose }) {
   return (
-    <aside className="flex flex-col h-full w-64 bg-white border-r border-slate-200">
+    <aside className="flex flex-col h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700">
 
       {/* Logo */}
       <div className="flex items-center justify-between px-5 py-4">
-        <Link to="/" className="flex items-center gap-2.5 font-bold text-slate-900 text-lg">
+        <Link to="/" className="flex items-center gap-2.5 font-bold text-slate-900 dark:text-white text-lg">
           <span className="bg-emerald-500 text-white rounded-lg w-8 h-8 flex items-center justify-center shrink-0">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
@@ -134,7 +134,7 @@ export default function Sidebar({ onClose }) {
       <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-6">
         {MENU_GROUPS.map(group => (
           <div key={group.title}>
-            <p className="px-3 mb-1.5 text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+            <p className="px-3 mb-1.5 text-[11px] font-semibold tracking-wider uppercase text-slate-400 dark:text-slate-500">
               {group.title}
             </p>
             <div className="space-y-0.5">
@@ -147,7 +147,7 @@ export default function Sidebar({ onClose }) {
       </nav>
 
       {/* Dół — Ustawienia / Profil */}
-      <div className="px-3 py-3 border-t border-slate-200 space-y-0.5">
+      <div className="px-3 py-3 border-t border-slate-200 dark:border-slate-700 space-y-0.5">
         {MENU_BOTTOM.map(item => (
           <MenuLink key={item.path} item={item} onClose={onClose} />
         ))}

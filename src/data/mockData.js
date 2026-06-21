@@ -65,9 +65,10 @@ export const MENU_BOTTOM = [
 
 // Statystyki na stronie głównej (hero)
 export const HOME_STATS = [
-  { value: '3', label: 'Wersje robocze' },
-  { value: '12', label: 'Dokumenty' },
-  { value: '5', label: 'Wyceny' },
+  { value: '+150', label: 'krajów w bazie',             icon: 'pin',   color: 'teal'   },
+  { value: '+99',  label: 'dokumentów transportowych',  icon: 'docs',  color: 'blue'   },
+  { value: '4',    label: 'środki transportu',          icon: 'truck', color: 'orange' },
+  { value: '11',   label: 'warunków Incoterms',         icon: 'globe', color: 'red'    },
 ]
 
 export const PRICING_PLANS = [
