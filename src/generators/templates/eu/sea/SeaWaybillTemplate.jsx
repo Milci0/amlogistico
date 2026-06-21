@@ -1,3 +1,5 @@
+import { formatDocumentDate } from '../../../../utils/formatDate'
+
 export function SeaWaybillTemplate({ data }) {
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
@@ -69,7 +71,7 @@ export function SeaWaybillTemplate({ data }) {
         </div>
         <div style={{ width: '70px', padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>ETD:</div>
-          <div style={val}>{data.loadDate}</div>
+          <div style={val}>{formatDocumentDate(data.loadDate)}</div>
         </div>
         <div style={{ width: '70px', padding: '3px 5px', minHeight: '28px' }}>
           <div style={lbl}>ETA:</div>
@@ -105,7 +107,9 @@ export function SeaWaybillTemplate({ data }) {
           <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{row.desc}</div>
           <div style={{ width: '70px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{row.wt}</div>
           <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{row.cbm}</div>
-          <div style={{ width: '110px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '7px' }}>&#9634; Prepaid &nbsp; &#9634; Collect</div>
+          <div style={{ width: '110px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: i === 0 && data.sea?.freightTerms ? '8px' : '7px', fontWeight: i === 0 && data.sea?.freightTerms ? 'bold' : 'normal' }}>
+            {i === 0 && data.sea?.freightTerms ? data.sea.freightTerms : <span>&#9634; Prepaid &nbsp; &#9634; Collect</span>}
+          </div>
         </div>
       ))}
 
@@ -118,7 +122,7 @@ export function SeaWaybillTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date of Issue</div>
-          <div style={{ fontSize: '9px', marginTop: '2px' }}>{new Date().toLocaleDateString('pl-PL')}</div>
+          <div style={{ fontSize: '9px', marginTop: '2px' }}>{formatDocumentDate(new Date())}</div>
           <div style={{ flex: 1 }} />
           <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
         </div>

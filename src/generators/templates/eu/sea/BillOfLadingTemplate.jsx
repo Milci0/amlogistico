@@ -1,3 +1,5 @@
+import { formatDocumentDate } from '../../../../utils/formatDate'
+
 export function BillOfLadingTemplate({ data }) {
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
@@ -14,7 +16,7 @@ export function BillOfLadingTemplate({ data }) {
       ))}
     </div>
   )
-  const today = new Date().toLocaleDateString('pl-PL')
+  const today = formatDocumentDate(new Date())
 
   return (
     <div style={{ width: '794px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '8px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box', padding: '8px 10px' }}>
@@ -77,7 +79,9 @@ export function BillOfLadingTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
           <div style={lbl}>Freight Terms:</div>
-          <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Prepaid &nbsp; &#9634; Collect</div>
+          {data.sea?.freightTerms
+            ? <div style={{ fontSize: '8px', marginTop: '2px', fontWeight: 'bold' }}>{data.sea.freightTerms}</div>
+            : <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Prepaid &nbsp; &#9634; Collect</div>}
         </div>
       </div>
 
@@ -101,7 +105,7 @@ export function BillOfLadingTemplate({ data }) {
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>ETD:</div>
-          <div style={val}>{data.loadDate}</div>
+          <div style={val}>{formatDocumentDate(data.loadDate)}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>ETA:</div>
@@ -109,7 +113,7 @@ export function BillOfLadingTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
           <div style={lbl}>Booking No.:</div>
-          <div style={val} />
+          <div style={val}>{data.sea?.bookingNo || ''}</div>
         </div>
       </div>
 
@@ -135,7 +139,7 @@ export function BillOfLadingTemplate({ data }) {
         <div style={{ width: '110px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.containerNo}</div>
         <div style={{ width: '75px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.sealNo}</div>
         <div style={{ width: '60px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.containerType}</div>
-        <div style={{ width: '70px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
+        <div style={{ width: '70px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.marksNos || ''}</div>
         <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.name}</div>
         <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packages}</div>
         <div style={{ width: '75px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.weight}</div>

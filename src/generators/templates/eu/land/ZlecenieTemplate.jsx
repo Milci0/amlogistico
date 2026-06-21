@@ -1,9 +1,11 @@
+import { formatDocumentDate } from '../../../../utils/formatDate'
+
 export function ZlecenieTemplate({ data }) {
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
   const val = { fontSize: '9px', minHeight: '12px' }
   const secHdr = { backgroundColor: '#2c5fa8', color: '#fff', fontWeight: 'bold', fontSize: '8px', padding: '4px 6px' }
-  const today = new Date().toLocaleDateString('pl-PL')
+  const today = formatDocumentDate(new Date())
 
   return (
     <div style={{ width: '794px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '8px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box', padding: '8px 10px' }}>
@@ -45,8 +47,8 @@ export function ZlecenieTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '55px' }}>
           <div style={lbl}>Przewoźnik / Carrier:</div>
-          <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
-          <div style={val}>{data.receiver?.address}</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.carrier?.name}</div>
+          <div style={val}>{data.carrier?.address}</div>
         </div>
       </div>
 
@@ -58,7 +60,7 @@ export function ZlecenieTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
           <div style={lbl}>NIP / VAT:</div>
-          <div style={val}>{data.receiver?.vat}</div>
+          <div style={val}>{data.carrier?.vatNumber}</div>
         </div>
       </div>
 
@@ -98,7 +100,7 @@ export function ZlecenieTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '40px' }}>
           <div style={lbl}>Data i godzina załadunku / Loading date &amp; time:</div>
-          <div style={{ ...val, marginTop: '2px' }}>{data.loadDate}</div>
+          <div style={{ ...val, marginTop: '2px' }}>{formatDocumentDate(data.loadDate)}</div>
         </div>
       </div>
 
@@ -166,19 +168,25 @@ export function ZlecenieTemplate({ data }) {
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '36px' }}>
           <div style={lbl}>Typ pojazdu / Vehicle type:</div>
-          <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Plandeka &nbsp; &#9634; Chłodnia &nbsp; &#9634; Mroźnia</div>
+          {data.vehicle?.type
+            ? <div style={{ ...val, fontWeight: 'bold', marginTop: '2px' }}>{data.vehicle.type}</div>
+            : <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Plandeka &nbsp; &#9634; Chłodnia &nbsp; &#9634; Mroźnia</div>}
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '36px' }}>
           <div style={lbl}>Temperatura / Temp. (°C):</div>
-          <div style={{ fontSize: '8px', marginTop: '2px' }}>Od: &nbsp;&nbsp;&nbsp; Do:</div>
+          {(data.vehicle?.tempFrom || data.vehicle?.tempTo)
+            ? <div style={{ fontSize: '8px', marginTop: '2px' }}>Od: {data.vehicle.tempFrom}°C &nbsp; Do: {data.vehicle.tempTo}°C</div>
+            : <div style={{ fontSize: '8px', marginTop: '2px' }}>Od: &nbsp;&nbsp;&nbsp; Do:</div>}
         </div>
         <div style={{ width: '90px', padding: '3px 5px', borderRight: b, minHeight: '36px' }}>
-          <div style={lbl}>&#9634; ADR:</div>
-          <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Tak &nbsp; &#9634; Nie</div>
+          <div style={lbl}>ADR:</div>
+          {data.vehicle?.adr !== undefined
+            ? <div style={{ fontSize: '8px', marginTop: '2px', fontWeight: 'bold' }}>{data.vehicle.adr ? '✓ Tak' : '✗ Nie'}</div>
+            : <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Tak &nbsp; &#9634; Nie</div>}
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '36px' }}>
           <div style={lbl}>Klasa ADR / UN Nr:</div>
-          <div style={val} />
+          <div style={val}>{data.vehicle?.adrClass || ''}</div>
         </div>
       </div>
 
@@ -186,15 +194,15 @@ export function ZlecenieTemplate({ data }) {
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
           <div style={lbl}>Cena frachtu / Freight price:</div>
-          <div style={val} />
+          <div style={val}>{data.terms?.freightPrice || ''}</div>
         </div>
         <div style={{ width: '80px', padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
           <div style={lbl}>Waluta / Currency:</div>
-          <div style={val}>{data.cargo?.currency}</div>
+          <div style={val}>{data.terms?.freightCurrency || data.cargo?.currency}</div>
         </div>
         <div style={{ width: '130px', padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
           <div style={lbl}>Termin płatności / Payment terms (dni):</div>
-          <div style={val} />
+          <div style={val}>{data.terms?.paymentDays || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '32px' }}>
           <div style={lbl}>Podstawa faktury / Invoice basis:</div>

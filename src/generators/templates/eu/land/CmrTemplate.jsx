@@ -1,5 +1,7 @@
+import { formatDocumentDate } from '../../../../utils/formatDate'
+
 export function CmrTemplate({ data }) {
-  const today = new Date().toLocaleDateString('pl-PL')
+  const today = formatDocumentDate(new Date())
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
   const val = { fontSize: '9px', minHeight: '11px' }
@@ -78,6 +80,9 @@ export function CmrTemplate({ data }) {
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '58px' }}>
           <div style={lbl}>3. Przewoźnik (Carrier / Frachtführer / Transporteur)</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.carrier?.name}</div>
+          <div style={val}>{data.carrier?.address}</div>
+          {data.carrier?.vatNumber && <div style={val}>VAT: {data.carrier.vatNumber}</div>}
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '58px' }}>
           <div style={lbl}>16. Przewoźnik następny (Successive carrier)</div>
@@ -89,7 +94,7 @@ export function CmrTemplate({ data }) {
         <div style={{ flex: 2, padding: '3px 5px', borderRight: b, minHeight: '48px' }}>
           <div style={lbl}>4. Miejsce i data załadunku (Place &amp; date of loading)</div>
           <div style={val}>{data.fromCity}, {data.fromCountry}</div>
-          <div style={val}>{data.loadDate}</div>
+          <div style={val}>{formatDocumentDate(data.loadDate)}</div>
         </div>
         <div style={{ flex: 2, padding: '3px 5px', borderRight: b, minHeight: '48px' }}>
           <div style={lbl}>5. Miejsce dostawy (Place of delivery)</div>
@@ -151,13 +156,16 @@ export function CmrTemplate({ data }) {
       {/* ── INCOTERMS / REJESTRACJA ───────────────────────────── */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ width: '120px', padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
-          <span style={lbl}>Incoterms:</span>
+          <div style={lbl}>Incoterms:</div>
+          <div style={{ ...val, fontWeight: 'bold' }}>{data.cargo?.incoterms || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
-          <span style={lbl}>Nr rejestracyjny pojazdu (Vehicle registration):</span>
+          <div style={lbl}>Nr rejestracyjny pojazdu (Vehicle registration):</div>
+          <div style={val}>{data.vehicle?.reg || ''}</div>
         </div>
         <div style={{ width: '130px', padding: '3px 5px', minHeight: '32px' }}>
-          <span style={lbl}>Kraj pojazdu:</span>
+          <div style={lbl}>Kraj pojazdu:</div>
+          <div style={val}>{data.vehicle?.reg ? data.fromCountry : ''}</div>
         </div>
       </div>
 

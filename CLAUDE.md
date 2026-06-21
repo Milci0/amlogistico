@@ -56,6 +56,34 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     `DocumentWizard` (4-kroki) zamiast dawnej atrapy
   - Stara marketingowa `LandingPage` nie jest już routowana (plik zostaje, niewykorzystany)
   - `PlaceholderPage` + trasy dla nowych pozycji menu (profile/drafts/insurance/routes/incoterms)
+- **Spójność generatora PDF — GOTOWE (2026-06-22):**
+  - `src/utils/formatDate.js` — `formatDocumentDate(date, includeTime?)`: jedyna funkcja dat,
+    format DD.MM.RRRR (pl-PL), obsługuje Date / ISO string "YYYY-MM-DD" / datetime z godziną;
+    zastąpiła wszystkie `new Date().toLocaleDateString('pl-PL')` i surowe `data.loadDate`
+    we wszystkich 9 szablonach
+  - `data.carrier` — single source of truth dla przewoźnika w CMR, Zleceniu i POD
+    (`{ name, address, vatNumber, contact, phone }`); wypełniany z Kroku 3 wizarda (sekcja "Przewoźnik")
+  - `data.carrierLegs.{preCarriage,mainCarriage,onCarriage}` — osobna struktura dla
+    Multimodal Transport Document; kolumna Carrier wypełniana per-etap trasy
+  - Sanity check w trybie DEV: `console.log` carrier przy każdym generowaniu (Step4)
+- **Rozszerzony formularz wizarda — GOTOWE (2026-06-22):**
+  - **Krok 3 "Strony"** — dodana sekcja „Przewoźnik" (wymagana, te same pola co Nadawca/Odbiorca);
+    walidacja: przejście do Kroku 4 wymaga wypełnienia nazwy dla wszystkich trzech stron
+  - **Krok 2 "Towar"** — trzy nowe sekcje:
+    - „Warunki przewozu" (oba typy) — Incoterms (dropdown), koszt frachtu + waluta, termin płatności
+    - „Pojazd i warunki drogowe" (tylko `road`) — typ pojazdu (Plandeka/Chłodnia/Mroźnia), temperatura
+      od/do (pokazuje się gdy Chłodnia/Mroźnia), checkbox ADR + klasa ADR/UN (gdy ADR=tak),
+      nr rejestracyjny pojazdu (opcjonalne)
+    - „Szczegóły kontenera i rejsu" (tylko `sea`) — typ kontenera, Container No., Seal No.,
+      Marks & Nos, Vessel, Voyage No., Booking No., warunki frachtu (Prepaid/Collect)
+  - **Nowe slajsy stanu** w root komponencie: `road` (initRoad), `sea` (initSea), `terms` (initTerms)
+  - **Nowe pola w formData** (Step 4 → szablony):
+    - `data.vehicle.{type,tempFrom,tempTo,adr,adrClass,reg}` → CMR (Incoterms + nr rej.), Zlecenie
+    - `data.sea.{bookingNo,freightTerms}` → BillOfLading (Booking No., Freight Terms), SeaWaybill
+    - `data.cargo.{incoterms,containerType,containerNo,sealNo,marksNos,vessel,voyageNo}` → szablony morskie
+    - `data.terms.{freightPrice,freightCurrency,paymentDays}` → Zlecenie, FakturaHandlowa, FakturaProforma
+  - **Zaktualizowane szablony:** CmrTemplate, ZlecenieTemplate, BillOfLadingTemplate,
+    SeaWaybillTemplate, FakturaHandlowaTemplate, FakturaProformaTemplate
 - Oryginalne szablony PDF (9 plików) w `public/templates/eu/` jako wzorzec wizualny
 - **Responsywność (RWD):** wizard działa na telefonie/tablecie
   - `WizardModal` — `min-h-0` na scrollowalnym body (naprawia brak przewijania na mobile —
@@ -82,6 +110,8 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 - Panel abonamentu (integracja ze Stripe)
 - Podmiana `NewDocumentPage` na `DocumentWizard`
 - Deploy autoryzacji na Vercel (env vary DATABASE_URL/DIRECT_URL/JWT_SECRET) — patrz niżej
+- Tabela `companies` w bazie — typ `carrier` (do wyboru z listy zapisanych firm, jak Nadawca/Odbiorca)
+- Opcjonalne: dedykowany krok wizarda „Przewoźnik" po wdrożeniu bazy firm
 
 ### Backend: auth gotowy (serverless `/api`)
 - `api/index.js` — Express 5 (lokalnie `npm run server` na `:3001`, na Vercelu funkcja serverless)

@@ -1,3 +1,5 @@
+import { formatDocumentDate } from '../../../../utils/formatDate'
+
 export function FakturaProformaTemplate({ data }) {
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
@@ -7,8 +9,8 @@ export function FakturaProformaTemplate({ data }) {
     fontSize: '7px', fontWeight: 'bold', color: '#fff',
     backgroundColor: '#2c5fa8', verticalAlign: 'top',
   }
-  const today = new Date().toLocaleDateString('pl-PL')
-  const validUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pl-PL')
+  const today = formatDocumentDate(new Date())
+  const validUntil = formatDocumentDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
   const emptyRow = (
     <div style={{ display: 'flex', minHeight: '20px' }}>
       {[30, null, 65, 50, 45, 80, 80].map((w, i) => (
@@ -136,7 +138,7 @@ export function FakturaProformaTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '30px' }}>
           <div style={lbl}>Szac. koszt transportu / Est. freight:</div>
-          <div style={val} />
+          <div style={val}>{data.terms?.freightPrice ? `${data.terms.freightPrice} ${data.terms.freightCurrency || data.cargo?.currency}` : ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '30px', backgroundColor: '#fffbe6' }}>
           <div style={{ ...lbl, fontWeight: 'bold' }}>WARTOŚĆ CELNA / CUSTOMS VALUE:</div>

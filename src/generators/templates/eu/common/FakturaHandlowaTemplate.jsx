@@ -1,3 +1,5 @@
+import { formatDocumentDate } from '../../../../utils/formatDate'
+
 export function FakturaHandlowaTemplate({ data }) {
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
@@ -62,7 +64,7 @@ export function FakturaHandlowaTemplate({ data }) {
         </div>
         <div style={{ width: '160px', padding: '3px 5px', minHeight: '24px' }}>
           <div style={lbl}>Data wystawienia / Issue date:</div>
-          <div style={val}>{new Date().toLocaleDateString('pl-PL')}</div>
+          <div style={val}>{formatDocumentDate(new Date())}</div>
         </div>
       </div>
 
@@ -82,7 +84,7 @@ export function FakturaHandlowaTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>Warunki płatności / Payment terms:</div>
-          <div style={val} />
+          <div style={val}>{data.terms?.paymentDays ? `${data.terms.paymentDays} dni` : ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
           <div style={lbl}>Kraj pochodzenia / Country of origin:</div>
@@ -131,7 +133,7 @@ export function FakturaHandlowaTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '30px' }}>
           <div style={lbl}>Koszt transportu / Freight:</div>
-          <div style={val} />
+          <div style={val}>{data.terms?.freightPrice ? `${data.terms.freightPrice} ${data.terms.freightCurrency || data.cargo?.currency}` : ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '30px' }}>
           <div style={lbl}>Ubezpieczenie / Insurance:</div>

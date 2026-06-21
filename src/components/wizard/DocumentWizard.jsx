@@ -6,15 +6,18 @@ import { getDocsList, generateDocument } from '../../generators/documents'
 
 const STEPS = ['Trasa', 'Towar', 'Strony', 'Dokumenty']
 const CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF']
+const INCOTERMS_OPTIONS = ['', 'EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP']
+const CONTAINER_TYPES = ['', '20ft', '40ft', '40ft HC', 'LCL']
+const VEHICLE_TYPES = ['Plandeka', 'Chłodnia', 'Mroźnia']
 const EU_CODES = ['PL','DE','FR','NL','BE','CZ','SK','AT','IT','ES','PT','SE','DK','FI','HU','RO','BG','HR','GR','EE','LV','LT']
 
 const cls = {
-  input: 'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-colors',
+  input: 'w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-colors',
 }
 
 function StepBar({ current }) {
   return (
-    <div className="grid grid-cols-4 border border-gray-200 rounded-xl overflow-hidden mb-6">
+    <div className="grid grid-cols-4 border border-gray-200 rounded-xl overflow-hidden mb-6 bg-white">
       {STEPS.map((name, i) => {
         const num = i + 1
         const done = num < current
@@ -25,7 +28,7 @@ function StepBar({ current }) {
             className={`flex items-center justify-center sm:justify-start gap-2 px-1.5 sm:px-4 py-3${i < STEPS.length - 1 ? ' border-r border-gray-200' : ''}`}
           >
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0
-              ${done ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+              ${done ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-400'}`}>
               {done ? (
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -43,15 +46,15 @@ function StepBar({ current }) {
 }
 
 function SectionLabel({ children }) {
-  return <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">{children}</p>
+  return <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-400 mb-3">{children}</p>
 }
 
 function Field({ label, hint, children }) {
   return (
     <div>
-      <label className="block text-sm text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm text-gray-700 dark:text-slate-200 mb-1">{label}</label>
       {children}
-      {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+      {hint && <p className="text-xs text-gray-400 dark:text-slate-400 mt-1">{hint}</p>}
     </div>
   )
 }
@@ -191,8 +194,10 @@ function Step1({ data, setData, onNext }) {
 
 // ── Step 2: Towar ──────────────────────────────────────────────────────────────
 
-function Step2({ data, setData, onNext, onBack }) {
+function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, transport, onNext, onBack }) {
+  const needsTemp = road.vehicleType === 'Chłodnia' || road.vehicleType === 'Mroźnia'
   const canNext = !!data.cargoName.trim()
+
   return (
     <div>
       <BackButton onClick={onBack} />
@@ -230,15 +235,165 @@ function Step2({ data, setData, onNext, onBack }) {
         </Field>
       </div>
 
-      <Field label="Uwagi / instrukcje">
-        <textarea
-          className={`${cls.input} resize-none`}
-          rows={3}
-          placeholder="np. towar kruchy, trzymać w pozycji pionowej"
-          value={data.notes}
-          onChange={e => setData(d => ({ ...d, notes: e.target.value }))}
-        />
-      </Field>
+      <div className="mb-6">
+        <Field label="Uwagi / instrukcje">
+          <textarea
+            className={`${cls.input} resize-none`}
+            rows={3}
+            placeholder="np. towar kruchy, trzymać w pozycji pionowej"
+            value={data.notes}
+            onChange={e => setData(d => ({ ...d, notes: e.target.value }))}
+          />
+        </Field>
+      </div>
+
+      {/* ── Warunki przewozu (oba typy) ─────────────────────────── */}
+      <div className="border border-gray-200 rounded-xl p-5 mb-4">
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Warunki przewozu</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+          <Field label="Incoterms">
+            <select className={cls.input} value={terms.incoterms} onChange={e => setTerms(t => ({ ...t, incoterms: e.target.value }))}>
+              {INCOTERMS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt || '— wybierz —'}</option>)}
+            </select>
+          </Field>
+          <Field label="Koszt frachtu">
+            <input type="number" className={cls.input} placeholder="850" value={terms.freightPrice} onChange={e => setTerms(t => ({ ...t, freightPrice: e.target.value }))} />
+          </Field>
+          <Field label="Waluta frachtu">
+            <select className={cls.input} value={terms.freightCurrency} onChange={e => setTerms(t => ({ ...t, freightCurrency: e.target.value }))}>
+              {CURRENCIES.map(c => <option key={c}>{c}</option>)}
+            </select>
+          </Field>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Termin płatności (dni)">
+            <input type="number" className={cls.input} placeholder="30" value={terms.paymentDays} onChange={e => setTerms(t => ({ ...t, paymentDays: e.target.value }))} />
+          </Field>
+        </div>
+      </div>
+
+      {/* ── Sekcja: Transport Drogowy ────────────────────────────── */}
+      {transport === 'road' && (
+        <div className="border border-gray-200 rounded-xl p-5 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Pojazd i warunki drogowe</p>
+
+          <div className="mb-4">
+            <p className="block text-sm text-gray-700 mb-2">Typ pojazdu</p>
+            <div className="flex flex-wrap gap-2">
+              {VEHICLE_TYPES.map(vt => (
+                <button
+                  key={vt}
+                  type="button"
+                  onClick={() => setRoad(r => ({ ...r, vehicleType: r.vehicleType === vt ? '' : vt }))}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors
+                    ${road.vehicleType === vt
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
+                >
+                  {vt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {needsTemp && (
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <Field label="Temperatura od (°C)">
+                <input type="number" className={cls.input} placeholder="-18" value={road.tempFrom} onChange={e => setRoad(r => ({ ...r, tempFrom: e.target.value }))} />
+              </Field>
+              <Field label="Temperatura do (°C)">
+                <input type="number" className={cls.input} placeholder="-15" value={road.tempTo} onChange={e => setRoad(r => ({ ...r, tempTo: e.target.value }))} />
+              </Field>
+            </div>
+          )}
+
+          <div className="mb-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-400"
+                checked={road.adr}
+                onChange={e => setRoad(r => ({ ...r, adr: e.target.checked, adrClass: e.target.checked ? r.adrClass : '' }))}
+              />
+              <span className="text-sm text-gray-700">ADR — towary niebezpieczne</span>
+            </label>
+          </div>
+
+          {road.adr && (
+            <div className="mb-4">
+              <Field label="Klasa ADR / Numer UN">
+                <input className={cls.input} placeholder="np. Klasa 3 / UN 1203" value={road.adrClass} onChange={e => setRoad(r => ({ ...r, adrClass: e.target.value }))} />
+              </Field>
+            </div>
+          )}
+
+          <Field label="Nr rejestracyjny pojazdu (opcjonalne)">
+            <input className={cls.input} placeholder="np. WA 12345" value={road.vehicleReg} onChange={e => setRoad(r => ({ ...r, vehicleReg: e.target.value }))} />
+          </Field>
+        </div>
+      )}
+
+      {/* ── Sekcja: Transport Morski ─────────────────────────────── */}
+      {transport === 'sea' && (
+        <div className="border border-gray-200 rounded-xl p-5 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Szczegóły kontenera i rejsu</p>
+          <p className="text-xs text-gray-400 mb-4">Pola opcjonalne — dane nadawane przez armatora. Możesz uzupełnić je później.</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <Field label="Typ kontenera">
+              <select className={cls.input} value={sea.containerType} onChange={e => setSea(s => ({ ...s, containerType: e.target.value }))}>
+                {CONTAINER_TYPES.map(ct => <option key={ct} value={ct}>{ct || '— wybierz —'}</option>)}
+              </select>
+            </Field>
+            <Field label="Numer kontenera (Container No.)">
+              <input className={cls.input} placeholder="np. MSCU1234567" value={sea.containerNo} onChange={e => setSea(s => ({ ...s, containerNo: e.target.value }))} />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <Field label="Numer plomby (Seal No.)">
+              <input className={cls.input} placeholder="np. 123456" value={sea.sealNo} onChange={e => setSea(s => ({ ...s, sealNo: e.target.value }))} />
+            </Field>
+            <Field label="Znaki i numery (Marks & Nos)">
+              <input className={cls.input} placeholder="np. ABC/001-024" value={sea.marksNos} onChange={e => setSea(s => ({ ...s, marksNos: e.target.value }))} />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <Field label="Statek (Vessel)">
+              <input className={cls.input} placeholder="np. MSC ANNA" value={sea.vessel} onChange={e => setSea(s => ({ ...s, vessel: e.target.value }))} />
+            </Field>
+            <Field label="Nr rejsu (Voyage No.)">
+              <input className={cls.input} placeholder="np. 241N" value={sea.voyageNo} onChange={e => setSea(s => ({ ...s, voyageNo: e.target.value }))} />
+            </Field>
+          </div>
+
+          <div className="mb-4">
+            <Field label="Numer rezerwacji (Booking No.)">
+              <input className={cls.input} placeholder="np. MSC-BKG-2024-001" value={sea.bookingNo} onChange={e => setSea(s => ({ ...s, bookingNo: e.target.value }))} />
+            </Field>
+          </div>
+
+          <div>
+            <p className="block text-sm text-gray-700 mb-2">Warunki frachtu</p>
+            <div className="flex gap-3">
+              {['Prepaid', 'Collect'].map(ft => (
+                <button
+                  key={ft}
+                  type="button"
+                  onClick={() => setSea(s => ({ ...s, freightTerms: ft }))}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors
+                    ${sea.freightTerms === ft
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
+                >
+                  {ft}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <NextButton onClick={onNext} disabled={!canNext} />
     </div>
@@ -247,24 +402,26 @@ function Step2({ data, setData, onNext, onBack }) {
 
 // ── Step 3: Strony ─────────────────────────────────────────────────────────────
 
-function PartySection({ title, data, onChange }) {
+function PartySection({ title, subtitle, data, onChange }) {
   const upd = (key, val) => onChange({ ...data, [key]: val })
   return (
     <div className="border border-gray-200 rounded-xl p-5 mb-4">
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">{title}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">{title}</p>
+      {subtitle && <p className="text-xs text-gray-400 mb-4">{subtitle}</p>}
+      {!subtitle && <div className="mb-4" />}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <Field label="Nazwa firmy">
-          <input className={cls.input} placeholder={title === 'Nadawca' ? 'np. ABC Sp. z o.o.' : 'np. Schmidt GmbH'} value={data.name} onChange={e => upd('name', e.target.value)} />
+          <input className={cls.input} placeholder="np. ABC Sp. z o.o." value={data.name} onChange={e => upd('name', e.target.value)} />
         </Field>
         <Field label="NIP / VAT">
-          <input className={cls.input} placeholder={title === 'Nadawca' ? 'PL1234567890' : 'DE123456789'} value={data.vat} onChange={e => upd('vat', e.target.value)} />
+          <input className={cls.input} placeholder="PL1234567890" value={data.vat} onChange={e => upd('vat', e.target.value)} />
         </Field>
       </div>
       <div className="mb-3">
         <Field label="Adres">
           <input
             className={cls.input}
-            placeholder={title === 'Nadawca' ? 'ul. Przykładowa 1, 00-001 Warszawa' : 'Musterstraße 1, 10115 Berlin'}
+            placeholder="ul. Przykładowa 1, 00-001 Warszawa"
             value={data.address}
             onChange={e => upd('address', e.target.value)}
           />
@@ -272,10 +429,10 @@ function PartySection({ title, data, onChange }) {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Osoba kontaktowa">
-          <input className={cls.input} placeholder={title === 'Nadawca' ? 'Jan Kowalski' : 'Hans Schmidt'} value={data.contact} onChange={e => upd('contact', e.target.value)} />
+          <input className={cls.input} placeholder="Jan Kowalski" value={data.contact} onChange={e => upd('contact', e.target.value)} />
         </Field>
         <Field label="Telefon">
-          <input className={cls.input} placeholder={title === 'Nadawca' ? '+48 500 000 000' : '+49 30 000 0000'} value={data.phone} onChange={e => upd('phone', e.target.value)} />
+          <input className={cls.input} placeholder="+48 500 000 000" value={data.phone} onChange={e => upd('phone', e.target.value)} />
         </Field>
       </div>
     </div>
@@ -283,12 +440,27 @@ function PartySection({ title, data, onChange }) {
 }
 
 function Step3({ data, setData, onNext, onBack }) {
+  const canNext = !!(data.sender.name.trim() && data.receiver.name.trim() && data.carrier.name.trim())
   return (
     <div>
       <BackButton onClick={onBack} />
-      <PartySection title="Nadawca" data={data.sender} onChange={s => setData(d => ({ ...d, sender: s }))} />
-      <PartySection title="Odbiorca" data={data.receiver} onChange={r => setData(d => ({ ...d, receiver: r }))} />
-      <NextButton onClick={onNext} />
+      <PartySection
+        title="Nadawca"
+        data={data.sender}
+        onChange={s => setData(d => ({ ...d, sender: s }))}
+      />
+      <PartySection
+        title="Odbiorca"
+        data={data.receiver}
+        onChange={r => setData(d => ({ ...d, receiver: r }))}
+      />
+      <PartySection
+        title="Przewoźnik"
+        subtitle="Wymagane — pojawia się w CMR, Zleceniu Transportowym i POD"
+        data={data.carrier}
+        onChange={c => setData(d => ({ ...d, carrier: c }))}
+      />
+      <NextButton onClick={onNext} disabled={!canNext} />
     </div>
   )
 }
@@ -337,7 +509,7 @@ function DocDownloadButton({ status, onClick }) {
   )
 }
 
-function Step4({ routeData, cargoData, partiesData, onBack }) {
+function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData, onBack }) {
   const fromCountry = COUNTRIES.find(c => c.code === routeData.fromCountry)
   const toCountry = COUNTRIES.find(c => c.code === routeData.toCountry)
   const bothEU = !!(fromCountry && toCountry && EU_CODES.includes(fromCountry.code) && EU_CODES.includes(toCountry.code))
@@ -357,6 +529,8 @@ function Step4({ routeData, cargoData, partiesData, onBack }) {
     ['Waga', cargoData.weight ? `${cargoData.weight} kg` : '—'],
     ['Wartość', cargoData.value ? `${cargoData.value} ${cargoData.currency}` : '—'],
     ['Cel. wymagana odprawa', fromCountry && toCountry ? (bothEU ? 'Nie — ruch wewnątrz UE' : 'Tak') : '—'],
+    ...(termsData.incoterms ? [['Incoterms', termsData.incoterms]] : []),
+    ...(partiesData.carrier.name ? [['Przewoźnik', partiesData.carrier.name]] : []),
   ]
 
   const formData = {
@@ -375,9 +549,55 @@ function Step4({ routeData, cargoData, partiesData, onBack }) {
       value: cargoData.value,
       currency: cargoData.currency,
       notes: cargoData.notes,
+      incoterms: termsData.incoterms,
+      // Sea container fields — used by BillOfLading, SeaWaybill
+      containerType: seaData.containerType,
+      containerNo: seaData.containerNo,
+      sealNo: seaData.sealNo,
+      marksNos: seaData.marksNos,
+      vessel: seaData.vessel,
+      voyageNo: seaData.voyageNo,
     },
     sender: { ...partiesData.sender, country: routeData.fromCountry },
     receiver: { ...partiesData.receiver, country: routeData.toCountry },
+    // carrier — single source of truth for CMR / Zlecenie / POD
+    carrier: {
+      name: partiesData.carrier.name,
+      address: partiesData.carrier.address,
+      vatNumber: partiesData.carrier.vat,
+      contact: partiesData.carrier.contact,
+      phone: partiesData.carrier.phone,
+    },
+    carrierLegs: {
+      preCarriage:  { name: '', address: '', vatNumber: '' },
+      mainCarriage: { name: '', address: '', vatNumber: '' },
+      onCarriage:   { name: '', address: '', vatNumber: '' },
+    },
+    // Road-specific vehicle data — used by CMR, Zlecenie
+    vehicle: {
+      type: roadData.vehicleType,
+      tempFrom: roadData.tempFrom,
+      tempTo: roadData.tempTo,
+      adr: roadData.adr,
+      adrClass: roadData.adrClass,
+      reg: roadData.vehicleReg,
+    },
+    // Sea-specific shipping details — used by BillOfLading, SeaWaybill
+    sea: {
+      bookingNo: seaData.bookingNo,
+      freightTerms: seaData.freightTerms,
+    },
+    // Payment / freight terms — used by Zlecenie, invoices
+    terms: {
+      freightPrice: termsData.freightPrice,
+      freightCurrency: termsData.freightCurrency,
+      paymentDays: termsData.paymentDays,
+    },
+  }
+
+  if (import.meta.env.DEV) {
+    const c = formData.carrier
+    console.log('[carrier sanity] CMR / Zlecenie / POD używają: carrier =', c)
   }
 
   async function downloadOne(doc) {
@@ -500,18 +720,22 @@ function Step4({ routeData, cargoData, partiesData, onBack }) {
 
 // ── Root component ─────────────────────────────────────────────────────────────
 
-const initRoute = { transport: 'road', fromCountry: 'PL', fromCity: '', toCountry: 'DE', toCity: '', loadDate: '' }
-const initCargo = { cargoName: '', hsCode: '', weight: '', volume: '', packages: '', value: '', currency: 'EUR', notes: '' }
-const initParty = { name: '', vat: '', address: '', contact: '', phone: '' }
+const initRoute  = { transport: 'road', fromCountry: 'PL', fromCity: '', toCountry: 'DE', toCity: '', loadDate: '' }
+const initCargo  = { cargoName: '', hsCode: '', weight: '', volume: '', packages: '', value: '', currency: 'EUR', notes: '' }
+const initParty  = { name: '', vat: '', address: '', contact: '', phone: '' }
+const initRoad   = { vehicleType: '', tempFrom: '', tempTo: '', adr: false, adrClass: '', vehicleReg: '' }
+const initSea    = { containerType: '', containerNo: '', sealNo: '', marksNos: '', vessel: '', voyageNo: '', bookingNo: '', freightTerms: 'Prepaid' }
+const initTerms  = { incoterms: '', freightPrice: '', freightCurrency: 'EUR', paymentDays: '' }
 
 export default function DocumentWizard() {
-  const [step, setStep] = useState(1)
-  const [route, setRoute] = useState(initRoute)
-  const [cargo, setCargo] = useState(initCargo)
-  const [parties, setParties] = useState({ sender: { ...initParty }, receiver: { ...initParty } })
+  const [step, setStep]       = useState(1)
+  const [route, setRoute]     = useState(initRoute)
+  const [cargo, setCargo]     = useState(initCargo)
+  const [parties, setParties] = useState({ sender: { ...initParty }, receiver: { ...initParty }, carrier: { ...initParty } })
+  const [road, setRoad]       = useState(initRoad)
+  const [sea, setSea]         = useState(initSea)
+  const [terms, setTerms]     = useState(initTerms)
 
-  // Wczytaj bibliotekę PDF z góry, żeby kliknięcie „Pobierz" działało od razu
-  // (skraca okno async — istotne dla pobierania na urządzeniach mobilnych).
   useEffect(() => { preloadHtml2Pdf() }, [])
 
   const next = () => setStep(s => Math.min(s + 1, 4))
@@ -521,9 +745,28 @@ export default function DocumentWizard() {
     <div>
       <StepBar current={step} />
       {step === 1 && <Step1 data={route} setData={setRoute} onNext={next} />}
-      {step === 2 && <Step2 data={cargo} setData={setCargo} onNext={next} onBack={back} />}
+      {step === 2 && (
+        <Step2
+          data={cargo} setData={setCargo}
+          road={road} setRoad={setRoad}
+          sea={sea} setSea={setSea}
+          terms={terms} setTerms={setTerms}
+          transport={route.transport}
+          onNext={next} onBack={back}
+        />
+      )}
       {step === 3 && <Step3 data={parties} setData={setParties} onNext={next} onBack={back} />}
-      {step === 4 && <Step4 routeData={route} cargoData={cargo} partiesData={parties} onBack={back} />}
+      {step === 4 && (
+        <Step4
+          routeData={route}
+          cargoData={cargo}
+          partiesData={parties}
+          roadData={road}
+          seaData={sea}
+          termsData={terms}
+          onBack={back}
+        />
+      )}
     </div>
   )
 }
