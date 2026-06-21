@@ -46,9 +46,9 @@ export default function HomePage() {
 
   function handleStart() {
     if (user) {
-      navigate('/app/new-document')
+      navigate('/new-document')
     } else {
-      navigate('/login', { state: { from: { pathname: '/app/new-document' } } })
+      navigate('/login', { state: { from: { pathname: '/new-document' } } })
     }
   }
 
@@ -76,7 +76,7 @@ export default function HomePage() {
             Rozpocznij
           </button>
           <button
-            onClick={() => navigate('/app/incoterms')}
+            onClick={() => navigate('/incoterms')}
             className="px-6 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
           >
             Dowiedz się więcej

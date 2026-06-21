@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 
-// Chroni trasy /app/* — niezalogowanego odsyła do /login (zapamiętując dokąd chciał wejść)
+// Chroni chronione trasy — niezalogowanego odsyła do /login (zapamiętując dokąd chciał wejść)
 export default function RequireAuth() {
   const { user, loading } = useAuth()
   const location = useLocation()

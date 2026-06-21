@@ -36,31 +36,31 @@ export const MENU_GROUPS = [
   {
     title: 'Główne',
     items: [
-      { label: 'Strona główna', path: '/app', icon: 'home' },
-      { label: 'Wycena', path: '/app/new-document', icon: 'calculator', badge: 'Core' },
-      { label: 'Dokumentacja', path: '/app/history', icon: 'document', badge: 'Core' },
-      { label: 'Wersje robocze', path: '/app/drafts', icon: 'pencil', badge: '3' },
+      { label: 'Strona główna', path: '/', icon: 'home' },
+      { label: 'Wycena', path: '/new-document', icon: 'calculator', badge: 'Core' },
+      { label: 'Dokumentacja', path: '/history', icon: 'document', badge: 'Core' },
+      { label: 'Wersje robocze', path: '/drafts', icon: 'pencil', badge: '3' },
     ],
   },
   {
     title: 'Narzędzia',
     items: [
-      { label: 'Ubezpieczenia', path: '/app/insurance', icon: 'shield' },
-      { label: 'Trasy handlowe', path: '/app/routes', icon: 'map' },
+      { label: 'Ubezpieczenia', path: '/insurance', icon: 'shield' },
+      { label: 'Trasy handlowe', path: '/routes', icon: 'map' },
     ],
   },
   {
     title: 'Wiedza',
     items: [
-      { label: 'Incoterms', path: '/app/incoterms', icon: 'globe' },
+      { label: 'Incoterms', path: '/incoterms', icon: 'globe' },
     ],
   },
 ]
 
 // Dolne pozycje sidebara
 export const MENU_BOTTOM = [
-  { label: 'Ustawienia', path: '/app/settings', icon: 'cog' },
-  { label: 'Profil', path: '/app/profile', icon: 'user' },
+  { label: 'Ustawienia', path: '/settings', icon: 'cog' },
+  { label: 'Profil', path: '/profile', icon: 'user' },
 ]
 
 // Statystyki na stronie głównej (hero)

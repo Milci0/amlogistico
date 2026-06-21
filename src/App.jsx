@@ -30,14 +30,12 @@ const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
-      // Strona główna = publiczny layout aplikacji (widoczny też bez logowania)
-      { path: '/', element: <Navigate to="/app" replace /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
       { path: '/calibrate', element: <CalibratePage /> },
 
       {
-        path: '/app',
+        path: '/',
         element: <AppShell />, // layout publiczny — sam wygląd nie wymaga logowania
         children: [
           { index: true, element: <HomePage /> }, // hero dostępny dla każdego

@@ -28,7 +28,7 @@ export default function RegisterPage() {
         companyName: form.companyName,
         vatNumber: form.vatNumber.trim() || undefined,
       })
-      navigate('/app', { replace: true })
+      navigate('/', { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setError('Konto z tym adresem email już istnieje. Zaloguj się.')
