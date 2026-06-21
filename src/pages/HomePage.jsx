@@ -64,7 +64,7 @@ export default function HomePage() {
 
         <p className="text-slate-500 dark:text-slate-400 mt-5 text-base leading-relaxed max-w-lg mx-auto">
           Wyceny frachtu, ubezpieczenia cargo, trasy handlowe, dokumentacja
-          i faktury — <span className="text-slate-700 dark:text-slate-200">generowane automatycznie</span>
+          i faktury <span className="text-slate-700 dark:text-white font-semibold">wygenerowane automatycznie</span>
         </p>
 
         {/* Przyciski */}

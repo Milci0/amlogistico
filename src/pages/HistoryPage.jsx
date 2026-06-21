@@ -5,8 +5,8 @@ export default function HistoryPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Historia dokumentów</h1>
-        <p className="text-gray-500 text-sm mt-1">Wszystkie wygenerowane dokumenty.</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Historia dokumentów</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Wszystkie wygenerowane dokumenty.</p>
       </div>
 
       <div className="flex flex-col gap-2">

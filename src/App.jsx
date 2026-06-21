@@ -13,6 +13,7 @@ import SubscriptionPage from './pages/SubscriptionPage'
 import SettingsPage from './pages/SettingsPage'
 import CalibratePage from './pages/CalibratePage'
 import PlaceholderPage from './pages/PlaceholderPage'
+import IncotermsPage from './pages/IncotermsPage'
 
 // Root layout — AuthProvider wewnątrz routera, by trasy/hooki miały kontekst sesji
 function RootLayout() {
@@ -54,7 +55,7 @@ const router = createBrowserRouter([
               { path: 'drafts', element: <PlaceholderPage title="Wersje robocze" description="Niedokończone dokumenty i zapisane szkice." /> },
               { path: 'insurance', element: <PlaceholderPage title="Ubezpieczenia" description="Polisy i ubezpieczenia ładunków." /> },
               { path: 'routes', element: <PlaceholderPage title="Trasy handlowe" description="Planowanie i analiza tras transportowych." /> },
-              { path: 'incoterms', element: <PlaceholderPage title="Incoterms" description="Reguły handlowe Incoterms 2020." /> },
+              { path: 'incoterms', element: <IncotermsPage /> },
             ],
           },
         ],

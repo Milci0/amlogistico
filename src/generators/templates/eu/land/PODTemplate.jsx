@@ -1,3 +1,5 @@
+import { formatDocumentDate } from '../../../../utils/formatDate'
+
 export function PODTemplate({ data }) {
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
@@ -39,7 +41,7 @@ export function PODTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>Data i godzina dostawy / Delivery date &amp; time:</div>
-          <div style={val}>{new Date().toLocaleDateString('pl-PL')}</div>
+          <div style={val}>{formatDocumentDate(new Date())}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
           <div style={lbl}>Nr CMR / Transport order No.:</div>
@@ -57,8 +59,8 @@ export function PODTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '45px' }}>
           <div style={lbl}>Przewoźnik / Carrier:</div>
-          <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
-          <div style={val}>{data.sender?.address}</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.carrier?.name}</div>
+          <div style={val}>{data.carrier?.address}</div>
         </div>
       </div>
 

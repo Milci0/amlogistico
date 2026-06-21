@@ -1,3 +1,5 @@
+import { formatDocumentDate } from '../../../../utils/formatDate'
+
 export function PackingListTemplate({ data }) {
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
@@ -66,7 +68,7 @@ export function PackingListTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>Data wysyłki / Shipment date:</div>
-          <div style={val}>{data.loadDate}</div>
+          <div style={val}>{formatDocumentDate(data.loadDate)}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>Incoterms:</div>

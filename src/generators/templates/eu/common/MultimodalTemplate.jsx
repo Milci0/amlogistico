@@ -1,3 +1,5 @@
+import { formatDocumentDate } from '../../../../utils/formatDate'
+
 export function MultimodalTemplate({ data }) {
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
@@ -8,7 +10,7 @@ export function MultimodalTemplate({ data }) {
     fontSize: '7px', fontWeight: 'bold', color: '#fff',
     backgroundColor: '#2c5fa8', verticalAlign: 'top',
   }
-  const today = new Date().toLocaleDateString('pl-PL')
+  const today = formatDocumentDate(new Date())
   const emptyCargoRow = (
     <div style={{ display: 'flex', minHeight: '20px' }}>
       {[30, null, 65, 50, 45, 70, 80].map((w, i) => (
@@ -82,7 +84,7 @@ export function MultimodalTemplate({ data }) {
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.carrierLegs?.preCarriage?.name}</div>
         <div style={{ width: '80px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
       </div>
 
@@ -94,7 +96,7 @@ export function MultimodalTemplate({ data }) {
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.fromCity}</div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.toCity}</div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.toCity}, {data.toCountry}</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.carrierLegs?.mainCarriage?.name}</div>
         <div style={{ width: '80px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
       </div>
 
@@ -106,7 +108,7 @@ export function MultimodalTemplate({ data }) {
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.toCity}</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
+        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.carrierLegs?.onCarriage?.name}</div>
         <div style={{ width: '80px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
       </div>
 
