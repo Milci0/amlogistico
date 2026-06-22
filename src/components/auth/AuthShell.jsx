@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 // Wspólny wygląd stron logowania/rejestracji — jasne tło, wyśrodkowana karta, logo
 export default function AuthShell({ title, subtitle, children, footer }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-emerald-50 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center justify-center px-4 py-10">
+    <div className="min-h-dvh bg-gradient-to-b from-slate-50 to-emerald-50 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center justify-center px-4 py-10">
       <Link to="/" className="flex items-center gap-2 font-bold text-2xl text-gray-900 dark:text-white mb-6">
         <span className="bg-emerald-500 text-white rounded-lg w-9 h-9 flex items-center justify-center text-base font-black">A</span>
         <span>AM<span className="text-emerald-600">Logistico</span></span>

@@ -7,7 +7,7 @@ export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="h-screen bg-slate-100 dark:bg-slate-950 md:p-4">
+    <div className="h-dvh bg-slate-100 dark:bg-slate-950 md:p-4">
       <div className="flex h-full overflow-hidden bg-white dark:bg-slate-900 md:rounded-2xl md:border md:border-slate-200 dark:md:border-slate-700 md:shadow-sm">
 
         {/* Sidebar desktop */}

@@ -33,7 +33,7 @@ export default function CalibratePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-dvh bg-gray-50 p-8">
       <div className="max-w-xl mx-auto">
 
         {/* Nagłówek */}
