@@ -161,6 +161,7 @@ export function MultimodalTemplate({ data }) {
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>MTO / Operator</div>
+          <div style={{ fontSize: '9px', marginTop: '2px' }}>{data.carrier?.name}</div>
           <div style={{ flex: 1 }} />
           <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
         </div>

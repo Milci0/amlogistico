@@ -13,7 +13,8 @@ export function FakturaProformaTemplate({ data }) {
     backgroundColor: '#2c5fa8', verticalAlign: 'top',
   }
   const today = formatDocumentDate(new Date())
-  const validUntil = formatDocumentDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
+  const etd = data.loadDate ? new Date(data.loadDate) : new Date()
+  const validUntil = formatDocumentDate(new Date(etd.getTime() + 30 * 24 * 60 * 60 * 1000))
   const emptyRow = (
     <div style={{ display: 'flex', minHeight: '20px' }}>
       {[30, null, 65, 50, 45, 80, 80].map((w, i) => (
