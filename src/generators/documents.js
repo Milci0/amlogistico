@@ -21,6 +21,7 @@ import { SeaWaybillTemplate } from './templates/eu/sea/SeaWaybillTemplate'
 //   name/desc/icon – metadane do listy w kroku 4
 //   filename  – nazwa pobieranego pliku PDF
 //   template  – komponent szablonu (React → HTML)
+//   blankFile – ścieżka do gotowego pustego PDF w /public (do pobrania bez generowania)
 //
 // Kolejność tablicy = kolejność wyświetlania na liście.
 export const DOCUMENTS = [
@@ -28,47 +29,56 @@ export const DOCUMENTS = [
     key: 'cmr', transport: ['road'], required: true,
     name: 'CMR — list przewozowy', desc: 'Podstawowy dokument transportu drogowego',
     icon: 'doc', filename: 'CMR.pdf', template: CmrTemplate,
+    blankFile: '/templates/eu/land/01_CMR_List_Przewozowy.pdf',
   },
   {
     key: 'bol', transport: ['sea'], required: true,
     name: 'Bill of Lading', desc: 'Konosament morski — negocjowalny dokument tytułowy',
     icon: 'doc', filename: 'Bill_of_Lading.pdf', template: BillOfLadingTemplate,
+    blankFile: '/templates/eu/sea/05_Bill_of_Lading.pdf',
   },
   {
     key: 'packing', transport: ['road', 'sea'], required: true,
     name: 'Packing List', desc: 'Szczegółowy wykaz zawartości przesyłki',
     icon: 'list', filename: 'Packing_List.pdf', template: PackingListTemplate,
+    blankFile: '/templates/eu/common/02_Packing_List.pdf',
   },
   {
     key: 'faktura', transport: ['road', 'sea'], required: true,
     name: 'Faktura handlowa', desc: 'Dokument rozliczeniowy między sprzedającym a kupującym',
     icon: 'doc', filename: 'Faktura_Handlowa.pdf', template: FakturaHandlowaTemplate,
+    blankFile: '/templates/eu/common/03_Faktura_Handlowa.pdf',
   },
   {
     key: 'proforma', transport: ['road', 'sea'], required: true, show: ({ bothEU }) => !bothEU,
     name: 'Faktura Proforma', desc: 'Dokument celny do odprawy eksportowej',
     icon: 'doc', filename: 'Faktura_Proforma.pdf', template: FakturaProformaTemplate,
+    blankFile: '/templates/eu/common/04_Faktura_Proforma.pdf',
   },
   {
     key: 'zlecenie', transport: ['road'], required: false,
     name: 'Zlecenie transportowe', desc: 'Umowa między zleceniodawcą a przewoźnikiem',
     icon: 'clipboard', filename: 'Zlecenie_Transportowe.pdf', template: ZlecenieTemplate,
+    blankFile: '/templates/eu/land/09_Zlecenie_Transportowe.pdf',
   },
   {
     key: 'pod', transport: ['road'], required: false,
     name: 'Protokół odbioru (POD)', desc: 'Potwierdzenie dostarczenia towaru przez odbiorcę',
     icon: 'sign', filename: 'Protokol_Odbioru_POD.pdf', template: PODTemplate,
+    blankFile: '/templates/eu/land/10_Protokol_Odbioru_POD.pdf',
   },
   {
     key: 'seawaybill', transport: ['sea'], required: false,
     name: 'Sea Waybill', desc: 'Morski list przewozowy — szybszy odbiór niż B/L',
     icon: 'doc', filename: 'Sea_Waybill.pdf', template: SeaWaybillTemplate,
+    blankFile: '/templates/eu/sea/26_Sea_Waybill.pdf',
   },
   {
     key: 'multimodal', transport: ['road', 'sea'],
     required: ({ multimodal }) => !!multimodal,
     name: 'Multimodal Transport Document', desc: 'Dokument transportu multimodalnego (kilka środków transportu)',
     icon: 'doc', filename: 'Multimodal_Transport_Document.pdf', template: MultimodalTemplate,
+    blankFile: '/templates/eu/common/28_Multimodal_Transport_Document.pdf',
   },
 ]
 

@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
+import { NewsProvider } from '../../context/NewsContext'
 
 export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
+    <NewsProvider>
     <div className="h-dvh bg-slate-100 dark:bg-slate-950 md:p-4">
       <div className="flex h-full overflow-hidden bg-white dark:bg-slate-900 md:rounded-2xl md:border md:border-slate-200 dark:md:border-slate-700 md:shadow-sm">
 
@@ -37,5 +39,6 @@ export default function AppShell() {
         </div>
       </div>
     </div>
+    </NewsProvider>
   )
 }

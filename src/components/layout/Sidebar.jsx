@@ -1,5 +1,6 @@
 import { NavLink, Link } from 'react-router-dom'
 import { MENU_GROUPS, MENU_BOTTOM } from '../../data/mockData'
+import { useNews } from '../../context/NewsContext'
 
 const ICONS = {
   home: (
@@ -53,6 +54,20 @@ const ICONS = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   ),
+  template: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2zM12 3v6h6" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M9 13h6M9 17h4" />
+    </svg>
+  ),
+  news: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+    </svg>
+  ),
   user: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
@@ -77,7 +92,7 @@ function Badge({ children }) {
   )
 }
 
-function MenuLink({ item, onClose }) {
+function MenuLink({ item, onClose, dot }) {
   return (
     <NavLink
       to={item.path}
@@ -96,7 +111,8 @@ function MenuLink({ item, onClose }) {
             {ICONS[item.icon]}
           </span>
           <span className="truncate">{item.label}</span>
-          {item.badge && <Badge>{item.badge}</Badge>}
+          {dot && <span className="ml-auto w-2 h-2 rounded-full bg-red-500 shrink-0" />}
+          {item.badge && !dot && <Badge>{item.badge}</Badge>}
         </>
       )}
     </NavLink>
@@ -104,6 +120,7 @@ function MenuLink({ item, onClose }) {
 }
 
 export default function Sidebar({ onClose }) {
+  const { hasUnread } = useNews()
   return (
     <aside className="flex flex-col h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700">
 
@@ -139,7 +156,7 @@ export default function Sidebar({ onClose }) {
             </p>
             <div className="space-y-0.5">
               {group.items.map(item => (
-                <MenuLink key={item.path} item={item} onClose={onClose} />
+                <MenuLink key={item.path} item={item} onClose={onClose} dot={item.path === '/news' && hasUnread} />
               ))}
             </div>
           </div>

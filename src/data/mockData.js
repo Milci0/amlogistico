@@ -47,11 +47,13 @@ export const MENU_GROUPS = [
     items: [
       { label: 'Ubezpieczenia', path: '/insurance', icon: 'shield' },
       { label: 'Trasy handlowe', path: '/routes', icon: 'map' },
+      { label: 'Puste szablony', path: '/blank-templates', icon: 'template' },
     ],
   },
   {
     title: 'Wiedza',
     items: [
+      { label: 'Newsy', path: '/news', icon: 'news' },
       { label: 'Incoterms', path: '/incoterms', icon: 'globe' },
     ],
   },
