@@ -1,9 +1,14 @@
+import { Helmet } from 'react-helmet-async'
 import DocumentCard from '../components/ui/DocumentCard'
 import { MOCK_DOCUMENTS } from '../data/mockData'
 
 export default function HistoryPage() {
   return (
     <div className="max-w-3xl mx-auto">
+      <Helmet>
+        <title>Historia dokumentów | AMLogistico</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Historia dokumentów</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Wszystkie wygenerowane dokumenty.</p>

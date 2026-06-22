@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async'
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -37,8 +38,13 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthShell
-      title="Zaloguj się"
+    <>
+      <Helmet>
+        <title>Zaloguj się | AMLogistico</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
+      <AuthShell
+        title="Zaloguj się"
       subtitle="Wejdź do panelu AMLogistico"
       footer={
         <>
@@ -84,6 +90,7 @@ export default function LoginPage() {
           {loading ? 'Logowanie…' : 'Zaloguj się'}
         </button>
       </form>
-    </AuthShell>
+      </AuthShell>
+    </>
   )
 }

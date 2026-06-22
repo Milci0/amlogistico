@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -46,10 +47,15 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthShell
-      title="Załóż konto"
-      subtitle="Zacznij generować dokumenty spedycyjne"
-      footer={
+    <>
+      <Helmet>
+        <title>Rejestracja | AMLogistico</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
+      <AuthShell
+        title="Załóż konto"
+        subtitle="Zacznij generować dokumenty spedycyjne"
+        footer={
         <>
           Masz już konto?{' '}
           <Link to="/login" className="text-emerald-600 font-medium hover:underline">
@@ -124,6 +130,7 @@ export default function RegisterPage() {
           {loading ? 'Tworzenie konta…' : 'Załóż konto'}
         </button>
       </form>
-    </AuthShell>
+      </AuthShell>
+    </>
   )
 }

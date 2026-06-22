@@ -1,6 +1,12 @@
+import { Helmet } from 'react-helmet-async'
+
 export default function PlaceholderPage({ title, description }) {
   return (
     <div className="max-w-5xl mx-auto">
+      <Helmet>
+        <title>{title} | AMLogistico</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{title}</h1>
       {description && <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{description}</p>}
 

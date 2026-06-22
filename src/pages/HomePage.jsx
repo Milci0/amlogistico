@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { HOME_STATS } from '../data/mockData'
@@ -54,6 +55,10 @@ export default function HomePage() {
 
   return (
     <div className="min-h-full flex flex-col items-center justify-center text-center py-12 px-4">
+      <Helmet>
+        <title>AMLogistico - generator dokumentów transportowych online</title>
+        <meta name="description" content="Generuj CMR, Packing List, Fakturę handlową, Sea Waybill i inne dokumenty spedycyjne automatycznie. Wypełnij formularz i pobierz PDF w kilka sekund." />
+      </Helmet>
       <div className="max-w-2xl w-full">
 
         {/* Nagłówek */}

@@ -1,8 +1,13 @@
+import { Helmet } from 'react-helmet-async'
 import { PRICING_PLANS } from '../data/mockData'
 
 export default function SubscriptionPage() {
   return (
     <div className="max-w-4xl mx-auto">
+      <Helmet>
+        <title>Abonament | AMLogistico</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Abonament</h1>
         <p className="text-gray-500 text-sm mt-1">Aktualny plan: <strong>Free</strong>. Wybierz plan dopasowany do Twoich potrzeb.</p>

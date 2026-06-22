@@ -1,8 +1,13 @@
+import { Helmet } from 'react-helmet-async'
 import AlertBox from '../components/ui/AlertBox'
 
 export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto">
+      <Helmet>
+        <title>Ustawienia | AMLogistico</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Ustawienia</h1>
         <p className="text-gray-500 text-sm mt-1">Zarządzaj swoim kontem i preferencjami.</p>

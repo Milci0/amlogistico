@@ -1,3 +1,5 @@
+import { Helmet } from 'react-helmet-async'
+
 export default function CompaniesPage() {
   const companies = [
     { name: 'Firma ABC Sp. z o.o.', nip: '123-456-78-90', country: '🇵🇱 Polska', role: 'Nadawca' },
@@ -7,6 +9,10 @@ export default function CompaniesPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
+      <Helmet>
+        <title>Moje firmy | AMLogistico</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Moje firmy</h1>
