@@ -47,7 +47,7 @@ export function SeaWaybillTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '30px' }}>
           <div style={lbl}>Issuing Carrier / Armator:</div>
-          <div style={val} />
+          <div style={val}>{data.carrier?.name}</div>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ export function SeaWaybillTemplate({ data }) {
         </div>
         <div style={{ width: '70px', padding: '3px 5px', minHeight: '28px' }}>
           <div style={lbl}>ETA:</div>
-          <div style={val} />
+          <div style={val}>{data.sea?.eta ? formatDocumentDate(data.sea.eta) : ''}</div>
         </div>
       </div>
 
@@ -89,6 +89,7 @@ export function SeaWaybillTemplate({ data }) {
         <div style={{ ...thStyle, width: '110px' }}>Container No.</div>
         <div style={{ ...thStyle, width: '75px' }}>Seal No.</div>
         <div style={{ ...thStyle, width: '60px' }}>Type</div>
+        <div style={{ ...thStyle, width: '70px' }}>Marks &amp; Nos</div>
         <div style={{ ...thStyle, flex: 1 }}>Description of Goods</div>
         <div style={{ ...thStyle, width: '70px' }}>Gross Wt (kg)</div>
         <div style={{ ...thStyle, width: '55px' }}>CBM</div>
@@ -97,13 +98,14 @@ export function SeaWaybillTemplate({ data }) {
 
       {/* 4 wiersze z danymi + checkboxami */}
       {[
-        { containerNo: data.cargo?.containerNo, sealNo: data.cargo?.sealNo, type: data.cargo?.containerType, desc: data.cargo?.name, wt: data.cargo?.weight, cbm: data.cargo?.volume },
+        { containerNo: data.cargo?.containerNo, sealNo: data.cargo?.sealNo, type: data.cargo?.containerType, marksNos: data.cargo?.marksNos, desc: data.cargo?.name, wt: data.cargo?.weight, cbm: data.cargo?.volume },
         {}, {}, {},
       ].map((row, i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '28px' }}>
           <div style={{ width: '110px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{row.containerNo}</div>
           <div style={{ width: '75px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{row.sealNo}</div>
           <div style={{ width: '60px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{row.type}</div>
+          <div style={{ width: '70px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{row.marksNos}</div>
           <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{row.desc}</div>
           <div style={{ width: '70px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{row.wt}</div>
           <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{row.cbm}</div>

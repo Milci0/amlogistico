@@ -1,6 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { COUNTRIES } from '../../data/mockData'
 
+function FlagImg({ code, size = 20 }) {
+  return (
+    <img
+      src={`https://flagcdn.com/w${size}/${code.toLowerCase()}.png`}
+      srcSet={`https://flagcdn.com/w${size * 2}/${code.toLowerCase()}.png 2x`}
+      width={size}
+      height={size * 0.75}
+      alt={code}
+      className="rounded-sm object-cover flex-shrink-0"
+    />
+  )
+}
+
 export default function CountrySelect({ value, onChange, placeholder = 'Wybierz kraj...' }) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -29,7 +42,7 @@ export default function CountrySelect({ value, onChange, placeholder = 'Wybierz 
       >
         {selected ? (
           <>
-            <span className="text-xl leading-none">{selected.flag}</span>
+            <FlagImg code={selected.code} size={20} />
             <span className="text-sm text-gray-800 flex-1">{selected.name}</span>
           </>
         ) : (
@@ -71,7 +84,7 @@ export default function CountrySelect({ value, onChange, placeholder = 'Wybierz 
                     ${country.code === value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'}`}
                   onClick={() => { onChange(country.code); setOpen(false); setQuery('') }}
                 >
-                  <span className="text-lg leading-none">{country.flag}</span>
+                  <FlagImg code={country.code} size={20} />
                   <span>{country.name}</span>
                   <span className="ml-auto text-xs text-gray-400">{country.code}</span>
                 </button>

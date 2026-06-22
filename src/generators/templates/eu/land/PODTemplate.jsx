@@ -41,7 +41,7 @@ export function PODTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>Data i godzina dostawy / Delivery date &amp; time:</div>
-          <div style={val}>{formatDocumentDate(new Date())}</div>
+          <div style={val}>{formatDocumentDate(data.loadDate)}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
           <div style={lbl}>Nr CMR / Transport order No.:</div>

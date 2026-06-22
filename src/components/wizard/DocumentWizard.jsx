@@ -159,6 +159,19 @@ function Step1({ data, setData, onNext }) {
         })}
       </div>
 
+      <label className="flex items-start gap-3 p-3.5 mb-5 border border-gray-200 rounded-xl cursor-pointer bg-white hover:bg-gray-50 transition-colors">
+        <input
+          type="checkbox"
+          className="mt-0.5 w-4 h-4 accent-blue-600 cursor-pointer flex-shrink-0"
+          checked={!!data.multimodal}
+          onChange={e => setData(d => ({ ...d, multimodal: e.target.checked }))}
+        />
+        <div>
+          <p className="text-sm font-medium text-gray-800">Transport multimodalny</p>
+          <p className="text-xs text-gray-400 mt-0.5">Towar jedzie kilkoma środkami transportu (np. ciężarówka + statek). Generuje dodatkowy dokument MTD.</p>
+        </div>
+      </label>
+
       <div className="mb-5">
         <SectionLabel>Skąd</SectionLabel>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -212,9 +225,12 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
         </Field>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-        <Field label="Waga (kg)">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <Field label="Waga brutto (kg)">
           <input type="number" className={cls.input} placeholder="1500" value={data.weight} onChange={e => setData(d => ({ ...d, weight: e.target.value }))} />
+        </Field>
+        <Field label="Waga netto (kg)">
+          <input type="number" className={cls.input} placeholder="1400" value={data.weightNet} onChange={e => setData(d => ({ ...d, weightNet: e.target.value }))} />
         </Field>
         <Field label="Objętość (m³)">
           <input type="number" className={cls.input} placeholder="6.5" value={data.volume} onChange={e => setData(d => ({ ...d, volume: e.target.value }))} />
@@ -368,9 +384,18 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
             </Field>
           </div>
 
-          <div className="mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <Field label="Numer rezerwacji (Booking No.)">
               <input className={cls.input} placeholder="np. MSC-BKG-2024-001" value={sea.bookingNo} onChange={e => setSea(s => ({ ...s, bookingNo: e.target.value }))} />
+            </Field>
+            <Field label="Bandera (Flag)">
+              <input className={cls.input} placeholder="np. Panama" value={sea.flag} onChange={e => setSea(s => ({ ...s, flag: e.target.value }))} />
+            </Field>
+          </div>
+
+          <div className="mb-4">
+            <Field label="ETA — planowana data przybycia">
+              <input type="date" className={cls.input} value={sea.eta} onChange={e => setSea(s => ({ ...s, eta: e.target.value }))} />
             </Field>
           </div>
 
@@ -402,7 +427,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
 
 // ── Step 3: Strony ─────────────────────────────────────────────────────────────
 
-function PartySection({ title, subtitle, data, onChange }) {
+function PartySection({ title, subtitle, data, onChange, showBank = false }) {
   const upd = (key, val) => onChange({ ...data, [key]: val })
   return (
     <div className="border border-gray-200 rounded-xl p-5 mb-4">
@@ -435,6 +460,22 @@ function PartySection({ title, subtitle, data, onChange }) {
           <input className={cls.input} placeholder="+48 500 000 000" value={data.phone} onChange={e => upd('phone', e.target.value)} />
         </Field>
       </div>
+      {showBank && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Dane bankowe</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <Field label="IBAN">
+              <input className={cls.input} placeholder="PL61 1090 1014 0000 0712 1981 2874" value={data.iban} onChange={e => upd('iban', e.target.value)} />
+            </Field>
+            <Field label="BIC / SWIFT">
+              <input className={cls.input} placeholder="WBKPPLPP" value={data.swift} onChange={e => upd('swift', e.target.value)} />
+            </Field>
+          </div>
+          <Field label="Nazwa banku">
+            <input className={cls.input} placeholder="np. Santander Bank Polska" value={data.bank} onChange={e => upd('bank', e.target.value)} />
+          </Field>
+        </div>
+      )}
     </div>
   )
 }
@@ -448,6 +489,7 @@ function Step3({ data, setData, onNext, onBack }) {
         title="Nadawca"
         data={data.sender}
         onChange={s => setData(d => ({ ...d, sender: s }))}
+        showBank
       />
       <PartySection
         title="Odbiorca"
@@ -513,7 +555,7 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
   const fromCountry = COUNTRIES.find(c => c.code === routeData.fromCountry)
   const toCountry = COUNTRIES.find(c => c.code === routeData.toCountry)
   const bothEU = !!(fromCountry && toCountry && EU_CODES.includes(fromCountry.code) && EU_CODES.includes(toCountry.code))
-  const docsList = getDocsList(routeData.transport, bothEU)
+  const docsList = getDocsList(routeData.transport, bothEU, routeData.multimodal)
 
   const [statuses, setStatuses] = useState(() =>
     Object.fromEntries(docsList.map(d => [d.key, 'idle']))
@@ -524,7 +566,7 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
 
   const summary = [
     ['Typ transportu', routeData.transport === 'road' ? 'Drogowy (TIR)' : 'Morski (Kontener)'],
-    ['Trasa', fromCountry && toCountry ? `${fromCountry.flag} ${fromCountry.name} → ${toCountry.flag} ${toCountry.name}` : '—'],
+    ['Trasa', fromCountry && toCountry ? `${fromCountry.name} → ${toCountry.name}` : '—'],
     ['Towar', cargoData.cargoName || '—'],
     ['Waga', cargoData.weight ? `${cargoData.weight} kg` : '—'],
     ['Wartość', cargoData.value ? `${cargoData.value} ${cargoData.currency}` : '—'],
@@ -535,6 +577,7 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
 
   const formData = {
     transport: routeData.transport,
+    multimodal: routeData.multimodal,
     fromCountry: routeData.fromCountry,
     fromCity: routeData.fromCity,
     toCountry: routeData.toCountry,
@@ -544,6 +587,7 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
       name: cargoData.cargoName,
       hsCode: cargoData.hsCode,
       weight: cargoData.weight,
+      weightNet: cargoData.weightNet,
       volume: cargoData.volume,
       packages: cargoData.packages,
       value: cargoData.value,
@@ -570,7 +614,7 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
     },
     carrierLegs: {
       preCarriage:  { name: '', address: '', vatNumber: '' },
-      mainCarriage: { name: '', address: '', vatNumber: '' },
+      mainCarriage: { name: partiesData.carrier.name, address: partiesData.carrier.address, vatNumber: partiesData.carrier.vat },
       onCarriage:   { name: '', address: '', vatNumber: '' },
     },
     // Road-specific vehicle data — used by CMR, Zlecenie
@@ -586,6 +630,8 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
     sea: {
       bookingNo: seaData.bookingNo,
       freightTerms: seaData.freightTerms,
+      eta: seaData.eta,
+      flag: seaData.flag,
     },
     // Payment / freight terms — used by Zlecenie, invoices
     terms: {
@@ -632,11 +678,11 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
       <BackButton onClick={onBack} />
 
       <div className="border border-gray-200 rounded-xl overflow-hidden mb-6">
-        <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
+        <div className="px-5 py-3 bg-white border-b border-gray-100">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Podsumowanie zlecenia</p>
         </div>
         {summary.map(([label, value]) => (
-          <div key={label} className="flex items-center justify-between px-5 py-3 border-b border-gray-100 last:border-b-0">
+          <div key={label} className="flex items-center justify-between px-5 py-3 border-b border-gray-100 last:border-b-0 bg-white">
             <span className="text-sm text-gray-500">{label}</span>
             <span className={`text-sm font-medium ${label === 'Cel. wymagana odprawa' && bothEU ? 'text-green-600' : 'text-gray-900'}`}>
               {value}
@@ -720,11 +766,11 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
 
 // ── Root component ─────────────────────────────────────────────────────────────
 
-const initRoute  = { transport: 'road', fromCountry: 'PL', fromCity: '', toCountry: 'DE', toCity: '', loadDate: '' }
-const initCargo  = { cargoName: '', hsCode: '', weight: '', volume: '', packages: '', value: '', currency: 'EUR', notes: '' }
-const initParty  = { name: '', vat: '', address: '', contact: '', phone: '' }
+const initRoute  = { transport: 'road', fromCountry: 'PL', fromCity: '', toCountry: 'DE', toCity: '', loadDate: '', multimodal: false }
+const initCargo  = { cargoName: '', hsCode: '', weight: '', weightNet: '', volume: '', packages: '', value: '', currency: 'EUR', notes: '' }
+const initParty  = { name: '', vat: '', address: '', contact: '', phone: '', iban: '', swift: '', bank: '' }
 const initRoad   = { vehicleType: '', tempFrom: '', tempTo: '', adr: false, adrClass: '', vehicleReg: '' }
-const initSea    = { containerType: '', containerNo: '', sealNo: '', marksNos: '', vessel: '', voyageNo: '', bookingNo: '', freightTerms: 'Prepaid' }
+const initSea    = { containerType: '', containerNo: '', sealNo: '', marksNos: '', vessel: '', voyageNo: '', bookingNo: '', freightTerms: 'Prepaid', eta: '', flag: '' }
 const initTerms  = { incoterms: '', freightPrice: '', freightCurrency: 'EUR', paymentDays: '' }
 
 export default function DocumentWizard() {

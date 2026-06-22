@@ -147,9 +147,11 @@ export function CmrTemplate({ data }) {
         </div>
         <div style={{ flex: 2, padding: '3px 5px', borderRight: b, minHeight: '80px' }}>
           <div style={lbl}>15. Fracht (Freight)</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.terms?.freightPrice || ''}</div>
         </div>
         <div style={{ width: '90px', padding: '3px 5px', minHeight: '80px' }}>
           <div style={lbl}>15a. Waluta (Currency)</div>
+          <div style={{ ...val, marginTop: '2px' }}>{data.terms?.freightCurrency || data.cargo?.currency || ''}</div>
         </div>
       </div>
 

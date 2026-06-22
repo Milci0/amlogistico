@@ -1,6 +1,9 @@
 import { formatDocumentDate } from '../../../../utils/formatDate'
 
 export function FakturaProformaTemplate({ data }) {
+  const unitPrice = (data.cargo?.value && data.cargo?.packages)
+    ? (parseFloat(data.cargo.value) / parseFloat(data.cargo.packages)).toFixed(2)
+    : data.cargo?.value
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
   const val = { fontSize: '9px', minHeight: '12px' }
@@ -122,7 +125,7 @@ export function FakturaProformaTemplate({ data }) {
         <div style={{ width: '65px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.hsCode}</div>
         <div style={{ width: '50px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packages}</div>
         <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>szt.</div>
-        <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'right' }}>{data.cargo?.value}</div>
+        <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'right' }}>{unitPrice}</div>
         <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'right' }}>{data.cargo?.value}</div>
       </div>
 

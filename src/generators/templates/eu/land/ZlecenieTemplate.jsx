@@ -68,11 +68,11 @@ export function ZlecenieTemplate({ data }) {
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
           <div style={lbl}>Osoba kontaktowa:</div>
-          <div style={val} />
+          <div style={val}>{data.sender?.contact}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
           <div style={lbl}>Osoba kontaktowa / kierowca:</div>
-          <div style={val} />
+          <div style={val}>{data.carrier?.contact}</div>
         </div>
       </div>
 
@@ -80,11 +80,11 @@ export function ZlecenieTemplate({ data }) {
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
           <div style={lbl}>Tel.:</div>
-          <div style={val} />
+          <div style={val}>{data.sender?.phone}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
           <div style={lbl}>Tel. kierowcy / Driver phone:</div>
-          <div style={val} />
+          <div style={val}>{data.carrier?.phone}</div>
         </div>
       </div>
 

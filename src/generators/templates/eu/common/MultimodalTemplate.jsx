@@ -55,7 +55,7 @@ export function MultimodalTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
           <div style={lbl}>MTO (Multimodal Transport Operator):</div>
-          <div style={val} />
+          <div style={val}>{data.carrier?.name}</div>
         </div>
       </div>
 

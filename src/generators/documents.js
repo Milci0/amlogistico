@@ -64,26 +64,23 @@ export const DOCUMENTS = [
     name: 'Sea Waybill', desc: 'Morski list przewozowy — szybszy odbiór niż B/L',
     icon: 'doc', filename: 'Sea_Waybill.pdf', template: SeaWaybillTemplate,
   },
-  // Multimodal — szablon istnieje, ale na razie NIE jest oferowany w wizardzie
-  // (tak jak dotychczas). Aby go włączyć, odkomentuj wpis i dobierz transport:
-  // {
-  //   key: 'multimodal', transport: ['road', 'sea'], required: false,
-  //   name: 'Multimodal Transport Document', desc: 'Dokument transportu multimodalnego',
-  //   icon: 'doc', filename: 'Multimodal_Transport_Document.pdf', template: MultimodalTemplate,
-  // },
+  {
+    key: 'multimodal', transport: ['road', 'sea'],
+    required: ({ multimodal }) => !!multimodal,
+    name: 'Multimodal Transport Document', desc: 'Dokument transportu multimodalnego (kilka środków transportu)',
+    icon: 'doc', filename: 'Multimodal_Transport_Document.pdf', template: MultimodalTemplate,
+  },
 ]
 
-// Import zachowany, by szablon był „żywy" mimo zakomentowanego wpisu powyżej.
-void MultimodalTemplate
-
 // Lista dokumentów dla danej trasy i statusu UE (1:1 z poprzednią logiką wizardu).
-export function getDocsList(transport, bothEU) {
+export function getDocsList(transport, bothEU, multimodal = false) {
+  const ctx = { bothEU, multimodal }
   return DOCUMENTS
     .filter(d => d.transport.includes(transport))
-    .filter(d => !d.show || d.show({ bothEU }))
+    .filter(d => !d.show || d.show(ctx))
     .map(d => ({
       ...d,
-      required: typeof d.required === 'function' ? d.required({ bothEU }) : d.required,
+      required: typeof d.required === 'function' ? d.required(ctx) : d.required,
     }))
 }
 

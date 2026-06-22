@@ -75,7 +75,7 @@ export function BillOfLadingTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>Flag / Bandera:</div>
-          <div style={val} />
+          <div style={val}>{data.sea?.flag}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
           <div style={lbl}>Freight Terms:</div>
@@ -109,7 +109,7 @@ export function BillOfLadingTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>ETA:</div>
-          <div style={val} />
+          <div style={val}>{data.sea?.eta ? formatDocumentDate(data.sea.eta) : ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
           <div style={lbl}>Booking No.:</div>
@@ -165,17 +165,26 @@ export function BillOfLadingTemplate({ data }) {
           <div style={val}>{data.fromCity}</div>
         </div>
       </div>
-      {[['Freight'], ['B/L Fee'], ['TOTAL']].map(([label], i) => (
-        <div key={i} style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
-          <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px', fontSize: '8px', fontWeight: i === 2 ? 'bold' : 'normal' }}>{label}</div>
-          <div style={{ width: '110px', padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-            {i === 1 && <div style={{ ...lbl }}>Date of issue / Data wystawienia:</div>}
-            {i === 1 && <div style={val}>{today}</div>}
+      {(() => {
+        const fv = data.terms?.freightPrice
+          ? `${data.terms.freightPrice} ${data.terms.freightCurrency || data.cargo?.currency || ''}`
+          : ''
+        const isPrepaid = !data.sea?.freightTerms || data.sea.freightTerms === 'Prepaid'
+        return [['Freight'], ['B/L Fee'], ['TOTAL']].map(([label], i) => (
+          <div key={i} style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
+            <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px', fontSize: '8px', fontWeight: i === 2 ? 'bold' : 'normal' }}>{label}</div>
+            <div style={{ width: '110px', padding: '3px 5px', borderRight: b, minHeight: '22px', fontSize: '9px' }}>
+              {i === 0 && isPrepaid && fv}
+              {i === 1 && <div style={lbl}>Date of issue / Data wystawienia:</div>}
+              {i === 1 && <div style={val}>{today}</div>}
+            </div>
+            <div style={{ width: '110px', padding: '3px 5px', borderRight: b, minHeight: '22px', fontSize: '9px' }}>
+              {i === 0 && !isPrepaid && fv}
+            </div>
+            <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }} />
           </div>
-          <div style={{ width: '110px', padding: '3px 5px', borderRight: b, minHeight: '22px' }} />
-          <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }} />
-        </div>
-      ))}
+        ))
+      })()}
 
       {/* PODPIS */}
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '3px 5px', minHeight: '50px' }}>
