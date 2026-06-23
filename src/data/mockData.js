@@ -29,6 +29,117 @@ export const COUNTRIES = [
   { code: 'EE', name: 'Estonia', flag: '🇪🇪' },
   { code: 'RS', name: 'Serbia', flag: '🇷🇸' },
   { code: 'GR', name: 'Grecja', flag: '🇬🇷' },
+
+  // ── Ameryka Płn. i Płd. ──────────────────────────────────────────
+  { code: 'CA', name: 'Kanada', flag: '🇨🇦' },
+  { code: 'MX', name: 'Meksyk', flag: '🇲🇽' },
+  { code: 'BR', name: 'Brazylia', flag: '🇧🇷' },
+  { code: 'AR', name: 'Argentyna', flag: '🇦🇷' },
+  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+  { code: 'CO', name: 'Kolumbia', flag: '🇨🇴' },
+  { code: 'PE', name: 'Peru', flag: '🇵🇪' },
+  { code: 'EC', name: 'Ekwador', flag: '🇪🇨' },
+
+  // ── Azja i Pacyfik ───────────────────────────────────────────────
+  { code: 'JP', name: 'Japonia', flag: '🇯🇵' },
+  { code: 'KR', name: 'Korea Południowa', flag: '🇰🇷' },
+  { code: 'IN', name: 'Indie', flag: '🇮🇳' },
+  { code: 'SG', name: 'Singapur', flag: '🇸🇬' },
+  { code: 'MY', name: 'Malezja', flag: '🇲🇾' },
+  { code: 'ID', name: 'Indonezja', flag: '🇮🇩' },
+  { code: 'VN', name: 'Wietnam', flag: '🇻🇳' },
+  { code: 'TH', name: 'Tajlandia', flag: '🇹🇭' },
+  { code: 'PH', name: 'Filipiny', flag: '🇵🇭' },
+  { code: 'MM', name: 'Mjanma (Birma)', flag: '🇲🇲' },
+  { code: 'KH', name: 'Kambodża', flag: '🇰🇭' },
+  { code: 'BD', name: 'Bangladesz', flag: '🇧🇩' },
+  { code: 'LK', name: 'Sri Lanka', flag: '🇱🇰' },
+  { code: 'PK', name: 'Pakistan', flag: '🇵🇰' },
+  { code: 'AU', name: 'Australia', flag: '🇦🇺' },
+  { code: 'NZ', name: 'Nowa Zelandia', flag: '🇳🇿' },
+
+  // ── Bliski Wschód i Azja Środkowa ────────────────────────────────
+  { code: 'SA', name: 'Arabia Saudyjska', flag: '🇸🇦' },
+  { code: 'AE', name: 'Zjednoczone Emiraty Arabskie', flag: '🇦🇪' },
+  { code: 'JO', name: 'Jordania', flag: '🇯🇴' },
+  { code: 'IL', name: 'Izrael', flag: '🇮🇱' },
+  { code: 'IQ', name: 'Irak', flag: '🇮🇶' },
+  { code: 'LB', name: 'Liban', flag: '🇱🇧' },
+  { code: 'KZ', name: 'Kazachstan', flag: '🇰🇿' },
+  { code: 'UZ', name: 'Uzbekistan', flag: '🇺🇿' },
+  { code: 'GE', name: 'Gruzja', flag: '🇬🇪' },
+
+  // ── Afryka ───────────────────────────────────────────────────────
+  { code: 'ZA', name: 'Republika Południowej Afryki', flag: '🇿🇦' },
+  { code: 'NG', name: 'Nigeria', flag: '🇳🇬' },
+  { code: 'KE', name: 'Kenia', flag: '🇰🇪' },
+  { code: 'EG', name: 'Egipt', flag: '🇪🇬' },
+  { code: 'MA', name: 'Maroko', flag: '🇲🇦' },
+  { code: 'DZ', name: 'Algieria', flag: '🇩🇿' },
+  { code: 'TN', name: 'Tunezja', flag: '🇹🇳' },
+  { code: 'GH', name: 'Ghana', flag: '🇬🇭' },
+  { code: 'SN', name: 'Senegal', flag: '🇸🇳' },
+  { code: 'TZ', name: 'Tanzania', flag: '🇹🇿' },
+  { code: 'ET', name: 'Etiopia', flag: '🇪🇹' },
+
+  // ── UE — pozostałe państwa członkowskie ──────────────────────────
+  { code: 'IE', name: 'Irlandia', flag: '🇮🇪' },
+  { code: 'LU', name: 'Luksemburg', flag: '🇱🇺' },
+  { code: 'SI', name: 'Słowenia', flag: '🇸🇮' },
+  { code: 'CY', name: 'Cypr', flag: '🇨🇾' },
+  { code: 'MT', name: 'Malta', flag: '🇲🇹' },
+
+  // ── EFTA / EOG ───────────────────────────────────────────────────
+  { code: 'IS', name: 'Islandia', flag: '🇮🇸' },
+  { code: 'LI', name: 'Liechtenstein', flag: '🇱🇮' },
+
+  // ── EAEU (Euroazjatycka Unia Gospodarcza) ────────────────────────
+  { code: 'RU', name: 'Rosja', flag: '🇷🇺' },
+  { code: 'BY', name: 'Białoruś', flag: '🇧🇾' },
+  { code: 'AM', name: 'Armenia', flag: '🇦🇲' },
+  { code: 'KG', name: 'Kirgistan', flag: '🇰🇬' },
+  { code: 'AZ', name: 'Azerbejdżan', flag: '🇦🇿' },
+  { code: 'MD', name: 'Mołdawia', flag: '🇲🇩' },
+
+  // ── Zatoka Perska (GCC) i Bliski Wschód ──────────────────────────
+  { code: 'KW', name: 'Kuwejt', flag: '🇰🇼' },
+  { code: 'QA', name: 'Katar', flag: '🇶🇦' },
+  { code: 'BH', name: 'Bahrajn', flag: '🇧🇭' },
+  { code: 'OM', name: 'Oman', flag: '🇴🇲' },
+  { code: 'IR', name: 'Iran', flag: '🇮🇷' },
+  { code: 'SY', name: 'Syria', flag: '🇸🇾' },
+  { code: 'YE', name: 'Jemen', flag: '🇾🇪' },
+  { code: 'PS', name: 'Palestyna', flag: '🇵🇸' },
+
+  // ── Azja Płd.-Wsch. (ASEAN) ──────────────────────────────────────
+  { code: 'BN', name: 'Brunei', flag: '🇧🇳' },
+  { code: 'LA', name: 'Laos', flag: '🇱🇦' },
+
+  // ── Ameryka Płd. (Mercosur) ──────────────────────────────────────
+  { code: 'PY', name: 'Paragwaj', flag: '🇵🇾' },
+  { code: 'UY', name: 'Urugwaj', flag: '🇺🇾' },
+
+  // ── Afryka ───────────────────────────────────────────────────────
+  { code: 'CI', name: 'Wybrzeże Kości Słoniowej', flag: '🇨🇮' },
+  { code: 'ML', name: 'Mali', flag: '🇲🇱' },
+  { code: 'BF', name: 'Burkina Faso', flag: '🇧🇫' },
+  { code: 'NE', name: 'Niger', flag: '🇳🇪' },
+  { code: 'GN', name: 'Gwinea', flag: '🇬🇳' },
+  { code: 'TG', name: 'Togo', flag: '🇹🇬' },
+  { code: 'BJ', name: 'Benin', flag: '🇧🇯' },
+  { code: 'SL', name: 'Sierra Leone', flag: '🇸🇱' },
+  { code: 'LR', name: 'Liberia', flag: '🇱🇷' },
+  { code: 'GM', name: 'Gambia', flag: '🇬🇲' },
+  { code: 'GW', name: 'Gwinea Bissau', flag: '🇬🇼' },
+  { code: 'CV', name: 'Republika Zielonego Przylądka', flag: '🇨🇻' },
+  { code: 'MR', name: 'Mauretania', flag: '🇲🇷' },
+  { code: 'UG', name: 'Uganda', flag: '🇺🇬' },
+  { code: 'RW', name: 'Rwanda', flag: '🇷🇼' },
+  { code: 'BI', name: 'Burundi', flag: '🇧🇮' },
+  { code: 'SS', name: 'Sudan Południowy', flag: '🇸🇸' },
+  { code: 'LY', name: 'Libia', flag: '🇱🇾' },
+  { code: 'MZ', name: 'Mozambik', flag: '🇲🇿' },
+  { code: 'CM', name: 'Kamerun', flag: '🇨🇲' },
 ]
 
 // Pogrupowane menu boczne (układ wg projektu — GŁÓWNE / NARZĘDZIA / WIEDZA)

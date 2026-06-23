@@ -105,6 +105,32 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   - `App.jsx` — root layout z `AuthProvider`, trasy `/login` `/register`, guard na `/app`
   - Navbar: przyciski → `/login` i `/register`; Sidebar: profil z danymi usera + „Wyloguj"
   - Dev: proxy `/api` → `:3001` w `vite.config.js`; `vercel.json` routuje `/api/*` do funkcji
+- **Dobór i pobieranie pustych formularzy PDF — GOTOWE (2026-06-23):**
+  - `src/data/documentCatalog.js` — katalog dokumentów (klucze typu `"44_India_Import"`,
+    pola `{name_pl, name_en, path, available}`). UWAGA: numer w kluczu ≠ numer pliku PDF —
+    `path` mapowany wg ZNACZENIA (kraju), nie prefiksu. Wszystkie wpisy `available:true`;
+    `22_China_Import` → fallback na `07` (brak pliku importowego CN); dodano `105_FDA`
+  - `src/utils/documentEngine.js` — `getDocuments(origin, destination, mode, cargoCategory, flags)`
+    → `{required, conditional, warnings}` (6 warstw: transport / handlowe / eksport / import /
+    kategoria towaru / reguły specjalne). Helpery `getRouteLabel`, `isCrossCustoms`
+  - **Strona „Puste szablony" przerobiona** (`src/pages/BlankTemplatesPage.jsx`, trasa
+    `/blank-templates`): formularz trasa + środek transportu (road/sea/air/rail/multimodal) +
+    kategoria towaru (12 opcji) + 4 flagi (woodenPackaging/temporaryExport/transhipment/reExport)
+    → sekcje Wymagane (czerwona) / Warunkowe (żółta) / ostrzeżenia (`AlertBox`). Każdy dokument:
+    „Pobierz" (`window.open(path)`) lub „Wkrótce" (gdy `available:false`)
+  - „Pobierz wszystkie jako ZIP" — `jszip` + `file-saver`: fetch dostępnych dokumentów wymaganych,
+    paczka `dokumenty_${origin}_${destination}.zip`
+  - **Tranzyt poza UE (2026-06-23):** w formularzu (tylko `mode==='road'`) toggle TAK/NIE
+    „Czy transport przejeżdża przez kraje spoza UE?" → stan `transitNonEU`, przekazywany do silnika
+    jako `flags.transitNonEU`. Warstwa 6: TIR (`117`) + Transit (`116`) są teraz **required** gdy
+    `road && transitNonEU` (zastąpiło stary warunek oparty na isEU origin/destination)
+  - **Rozszerzono warstwę 4 (import) o 33 kraje** z dedykowanymi plikami (MX, TR, ZA, KE, EG, SG,
+    MY, ID, VN, TH, AR, CL, CO, PE, EC, PK, BD, LK, PH, MM, KH, GH, SN, TZ, ET, JO, IL, IQ, LB, KZ,
+    UZ, GE, NZ) + odpowiadające wpisy w `documentCatalog.js` (path zweryfikowany na dysku)
+  - **Uwaga:** większość nowych krajów importowych NIE jest jeszcze w liście `COUNTRIES`
+    (`src/data/mockData.js`), więc nie da się ich wybrać w dropdownie — reguły działają, ale do
+    użycia trzeba dodać kraje do `COUNTRIES`. Pozostałe PDF-y z `public/templates/` bez warunku
+    w silniku można podpiąć analogicznie wg specyfikacji
 
 **Do zrobienia:**
 - Panel abonamentu (integracja ze Stripe)
