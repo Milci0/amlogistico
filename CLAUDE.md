@@ -145,6 +145,47 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 - `api/lib/auth.js` — JWT (jsonwebtoken) w **httpOnly cookie** (`sameSite:lax`, `secure` na prod),
   middleware `requireAuth` gotowe pod kolejne trasy; `api/lib/prisma.js` — singleton
 - `api/validation/auth.js` — Zod 4; hasła bcryptjs (salt 12)
+- **Newsy na backendzie — GOTOWE (2026-06-23):** `api/routes/news.js` + `api/lib/rss.js`
+  - `GET /api/news` — agreguje RSS po stronie serwera (browser User-Agent omija część
+    blokad), kategoryzuje (geo/transport), wykrywa alerty, dedupe + sort. Cache w pamięci
+    15 min (stale-while-revalidate). Zwraca `{ articles, ticker, updatedAt }`.
+    `?refresh=1` → wymusza świeże pobranie z pominięciem cache (używa przycisk „Odśwież")
+  - `api/lib/rss.js` — tylko parser RSS 2.0/Atom (regex, bez zależności): `fetchText`,
+    `parseFeed`, `mapLimit`. **Kod obrazów (og:image, image-proxy, weserv) USUNIĘTY** —
+    zdjęć nie pokazujemy (prawa autorskie), artykuł nie ma już pola `image`
+  - **TRYB NAJBEZPIECZNIEJSZY (2026-06-23):** artykuł zwiera tylko **tytuł + link** (geo/transport/
+    isAlert/source) — **bez fragmentu opisu** (`description` usunięte z payloadu; w feedzie czytane
+    tylko wewnętrznie do detekcji alertów). Linkujemy do oryginału. Cel: minimalizacja reprodukcji tekstu
+  - **Źródła: WYŁĄCZNIE bezpośrednie feedy RSS wydawców** (`SOURCES` w news.js,
+    `MAX_PER_SOURCE = 18`, ~108 artykułów). Google News RSS USUNIĘTE — patrz niżej.
+    - Morski/Świat: FreightWaves, The Loadstar, Splash247, Supply Chain Dive
+    - Morski/Polska: **Namiary** (namiary.pl) — Polska×Morski
+    - Drogowy/Polska: Truck.pl, **40ton** (40ton.net)
+    - Cła: Customs Today, **Global Trade** (globaltrademag.com), Trade.gov (świeżość >rok → 0 art.)
+    - **USUNIĘTE (komentarz w news.js):** Lloyd's List („personal, non-commercial use only"),
+      JOC (S&P Global — zakaz republikowania), Reuters (ToS zakazuje komercyjnej redystrybucji),
+      oraz **wszystkie źródła przez Google News RSS** (Trans.info, Eurologistics, Cła PL) —
+      sprawdzone u źródła: nota `<copyright>` feedu = „personal, non-commercial use only" +
+      `news.google.com/robots.txt` blokuje `/rss` → komercyjne pobieranie łamie ToS Google
+  - **Puste kombinacje** (brak bezpośredniego feedu): **Polska×Cła** i **Świat×Drogowy** —
+    front pokazuje `AlertBox` „Brak artykułów dla wybranego filtra" (nie błąd)
+  - **Stopka /news** — nota: „Artykuły są własnością ich wydawców. AMLogistico wyświetla
+    wyłącznie nagłówki i linki do oryginalnych źródeł RSS."
+  - **Ticker:** WYŁĄCZNIE kursy NBP na żywo (EUR/PLN, USD/PLN, EUR/USD). Indeksy WCI/BDI/SCFI
+    i Diesel EU **usunięte** z `buildTicker()` — były zahardkodowane i mylące obok „Na żywo".
+    WCI (Drewry)/BDI (Baltic Exchange)/SCFI (Shanghai) są licencjonowane — nie pokazywać bez
+    licencji/oficjalnego API. Diesel: TODO EC Oil Bulletin (.xlsx, brak prostego JSON).
+    „Na żywo" w UI pokazuje się tylko gdy ticker ma dane (NBP)
+  - **Zdjęcia: NIE pokazujemy cudzych zdjęć z RSS** (prawa autorskie/licencje agencji).
+    `NewsImage` renderuje kolorowy placeholder z ikoną kategorii: Morski `bg-blue-900`+statek,
+    Drogowy `bg-green-900`+ciężarówka, Cła `bg-yellow-900`+dokument, Alert `bg-red-900`+trójkąt,
+    default `bg-gray-800`+gazeta (inline SVG, bez lucide-react)
+  - **Front:** `src/pages/NewsPage.jsx` woła wyłącznie `/api/news` (usunięto kliencki
+    rss2json + CORS-proxy + og). Przycisk „Odśwież" → `/api/news?refresh=1` (pomija 15-min
+    cache serwera). `NewsContext` kropki „nieprzeczytane" też przez `/api/news`.
+    **WAŻNE: news wymaga uruchomionego backendu** — lokalnie `npm run dev:full` (front+API)
+    lub osobno `npm run server`. Vercel: `/api/news` jako serverless (uwaga na 10s timeout
+    przy zimnym cache — rozważyć cron warming)
 - Endpointy documents/companies/subscription, Stripe, rate-limiting — jeszcze nie zaczęte
 - **Uwaga env:** firmowy proxy → `npm` wymaga `NODE_OPTIONS=--use-system-ca`.
   Prisma przypięta do **6.x** (Prisma 7 usunęło `url=env()` w schemacie — wymaga driver-adapterów)

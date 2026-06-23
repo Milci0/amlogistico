@@ -23,16 +23,16 @@ export function NewsProvider({ children }) {
 
     ;(async () => {
       try {
-        const res = await fetch(
-          `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://www.truck.pl/feed/')}`
-        )
+        const res = await fetch('/api/news')
+        if (!res.ok) return
         const json = await res.json()
-        if (json.status !== 'ok' || !json.items?.[0]) return
+        const latest = json.articles?.[0]?.pubDate
+        if (!latest) return
         localStorage.setItem(LS_CHECK, Date.now().toString())
-        const latestDate = new Date(json.items[0].pubDate)
+        const latestDate = new Date(latest)
         const seen = localStorage.getItem(LS_SEEN)
         if (!seen || latestDate > new Date(seen)) {
-          localStorage.setItem(LS_LATEST, json.items[0].pubDate)
+          localStorage.setItem(LS_LATEST, latest)
           setHasUnread(true)
         }
       } catch {}

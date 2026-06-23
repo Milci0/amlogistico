@@ -1,31 +1,22 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNews } from '../context/NewsContext'
+import AlertBox from '../components/ui/AlertBox'
 
-// ── Sources ───────────────────────────────────────────────────────────────────
-
-const RSS = [
-  { id: 'freightwaves', name: 'FreightWaves', url: 'https://www.freightwaves.com/news/feed',         geo: ['swiat'], transport: ['morski'] },
-  { id: 'loadstar',     name: 'The Loadstar', url: 'https://theloadstar.com/feed/',                  geo: ['swiat'], transport: ['morski'] },
-  { id: 'splash247',    name: 'Splash247',    url: 'https://splash247.com/feed/',                    geo: ['swiat'], transport: ['morski'] },
-  { id: 'joc',          name: 'JOC',          url: 'https://www.joc.com/rss/all',                    geo: ['swiat'], transport: ['morski'] },
-  { id: 'transinfo',    name: 'Trans.info',   url: 'https://trans.info/pl/feed/',                    geo: ['polska', 'swiat'], transport: ['drogowy'] },
-  { id: 'truckpl',      name: 'Truck.pl',     url: 'https://www.truck.pl/feed/',                     geo: ['polska'], transport: ['drogowy'] },
-  { id: 'eurologistics',name: 'Eurologistics',url: 'https://eurologistics.pl/feed/',                 geo: ['polska'], transport: [] },
-  { id: 'reuters',      name: 'Reuters',      url: 'https://feeds.reuters.com/reuters/businessNews', geo: ['swiat'], transport: ['cla'] },
-  { id: 'customstoday', name: 'Customs Today',url: 'https://customstoday.com.pk/feed/',              geo: ['swiat'], transport: ['cla'] },
-]
+// Dane (artykuły + ticker) pochodzą z backendu /api/news — serwer agreguje RSS.
+// Zdjęć nie pokazujemy (prawa autorskie) — karty mają placeholder z ikoną kategorii.
 
 const SRC_COLOR = {
   freightwaves:  'bg-purple-100 text-purple-700',
   loadstar:      'bg-blue-100 text-blue-700',
   splash247:     'bg-teal-100 text-teal-700',
-  joc:           'bg-indigo-100 text-indigo-700',
-  transinfo:     'bg-amber-100 text-amber-700',
+  supplychain:   'bg-slate-200 text-slate-700',
+  namiary:       'bg-cyan-100 text-cyan-800',
   truckpl:       'bg-orange-100 text-orange-700',
-  eurologistics: 'bg-emerald-100 text-emerald-700',
-  reuters:       'bg-red-100 text-red-700',
+  '40ton':       'bg-rose-100 text-rose-700',
   customstoday:  'bg-yellow-100 text-yellow-800',
+  globaltrade:   'bg-lime-100 text-lime-700',
+  tradegov:      'bg-cyan-100 text-cyan-700',
 }
 
 const TRANSPORT_COLOR = {
@@ -33,22 +24,7 @@ const TRANSPORT_COLOR = {
   drogowy: 'bg-amber-100 text-amber-700',
   cla:     'bg-violet-100 text-violet-700',
 }
-
 const TRANSPORT_LABEL = { morski: 'Morski', drogowy: 'Drogowy', cla: 'Cła' }
-
-const ALERT_KW = [
-  'strike', 'strajk', 'disruption', 'shortage', 'crisis', 'attack', 'blockade',
-  'closure', 'sanction', 'embargo', 'ban ', 'conflict', 'war ',
-  'ograniczen', 'opóźni', 'zakaz', 'sankcj', 'kryzys', 'blokad', 'awaria', 'wypadek',
-]
-
-const MOCK_TICKER = [
-  { label: 'WCI Shanghai→Rotterdam', value: '$3 240', delta: +3.2 },
-  { label: 'WCI LA→Rotterdam',       value: '$2 186', delta: -1.1 },
-  { label: 'BDI',                    value: '1 847 pkt', delta: +2.4 },
-  { label: 'SCFI',                   value: '1 623 pkt', delta: +1.8 },
-  { label: 'Diesel EU',              value: '€1.48/l',   delta: -0.5 },
-]
 
 const MAIN_TABS = [
   { id: 'all',    label: 'Wszystkie' },
@@ -57,7 +33,8 @@ const MAIN_TABS = [
   { id: 'alerty', label: 'Alerty', isAlert: true },
 ]
 
-// SVG icons for sub-tabs — same stroke style as BlankTemplatesPage / Sidebar
+// ── Ikony (styl strokeWidth 1.5 jak w BlankTemplatesPage / Sidebar) ───────────
+
 function IconSea({ cls = 'w-3.5 h-3.5' }) {
   return (
     <svg className={cls} fill="none" stroke="currentColor" strokeWidth={1.5}
@@ -105,16 +82,10 @@ const SUB_TABS = [
   { id: 'alerty', label: 'Alerty',           Icon: IconAlert },
 ]
 
-const CACHE_KEY = 'am_news_v3'
-const CACHE_TTL = 15 * 60 * 1000
-const ONE_YEAR  = new Date(Date.now() - 365 * 24 * 3_600_000)
-const RSS_API   = 'https://api.rss2json.com/v1/api.json?rss_url='
+const CACHE_KEY = 'am_news_api_v1'
+const CACHE_TTL = 10 * 60 * 1000
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function stripHtml(h = '') {
-  return h.replace(/<[^>]*>/g, '').replace(/&[a-zA-Z#0-9]+;/g, ' ').replace(/\s+/g, ' ').trim()
-}
 
 function timeAgo(d) {
   if (!d) return ''
@@ -122,29 +93,12 @@ function timeAgo(d) {
   if (isNaN(dt)) return ''
   const h = Math.floor((Date.now() - dt) / 3_600_000)
   const hhmm = dt.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
-  if (h < 24)  return `Dziś, ${hhmm}`
-  if (h < 48)  return 'Wczoraj'
+  if (h < 24) return `Dziś, ${hhmm}`
+  if (h < 48) return 'Wczoraj'
   return dt.toLocaleDateString('pl-PL', { day: '2-digit', month: 'short' })
 }
 
-function detectAlert(title = '', desc = '') {
-  const text = `${title} ${desc}`.toLowerCase()
-  return ALERT_KW.some(kw => text.includes(kw))
-}
-
-async function loadRates() {
-  try {
-    const [r1, r2] = await Promise.all([
-      fetch('https://api.nbp.pl/api/exchangerates/rates/a/eur/?format=json').then(r => r.json()),
-      fetch('https://api.nbp.pl/api/exchangerates/rates/a/usd/?format=json').then(r => r.json()),
-    ])
-    const eurPln = r1.rates[0].mid
-    const usdPln = r2.rates[0].mid
-    return { eurPln, usdPln, eurUsd: +(eurPln / usdPln).toFixed(4) }
-  } catch { return null }
-}
-
-// ── Transport icons ───────────────────────────────────────────────────────────
+// ── Ikony transportu (duże, do tła kart) ──────────────────────────────────────
 
 function ShipIcon({ className }) {
   return (
@@ -154,7 +108,6 @@ function ShipIcon({ className }) {
     </svg>
   )
 }
-
 function TruckIcon({ className }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.2} viewBox="0 0 24 24">
@@ -163,7 +116,6 @@ function TruckIcon({ className }) {
     </svg>
   )
 }
-
 function DocIcon({ className }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.2} viewBox="0 0 24 24">
@@ -172,7 +124,6 @@ function DocIcon({ className }) {
     </svg>
   )
 }
-
 function NewsIcon({ className }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.2} viewBox="0 0 24 24">
@@ -181,7 +132,6 @@ function NewsIcon({ className }) {
     </svg>
   )
 }
-
 function TransportIcon({ type, className }) {
   if (type === 'morski')  return <ShipIcon className={className} />
   if (type === 'drogowy') return <TruckIcon className={className} />
@@ -191,13 +141,8 @@ function TransportIcon({ type, className }) {
 
 // ── Ticker ────────────────────────────────────────────────────────────────────
 
-function Ticker({ rates }) {
-  const items = [
-    ...MOCK_TICKER,
-    rates ? { label: 'EUR/PLN', value: rates.eurPln?.toFixed(4) } : null,
-    rates ? { label: 'USD/PLN', value: rates.usdPln?.toFixed(4) } : null,
-  ].filter(Boolean)
-
+function Ticker({ items }) {
+  if (!items?.length) return null
   const track = (
     <span className="inline-flex items-stretch h-8">
       {items.map((it, i) => (
@@ -213,16 +158,13 @@ function Ticker({ rates }) {
       ))}
     </span>
   )
-
   return (
     <div className="flex h-8 bg-slate-800 shrink-0 overflow-hidden">
       <div className="flex items-center px-3 bg-emerald-600 shrink-0">
         <span className="text-[10px] font-black tracking-[0.18em] text-white uppercase">Fracht</span>
       </div>
       <div className="overflow-hidden flex-1">
-        <div className="ticker-track inline-flex">
-          {track}{track}
-        </div>
+        <div className="ticker-track inline-flex">{track}{track}</div>
       </div>
     </div>
   )
@@ -237,7 +179,7 @@ function SkeletonCards() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="bg-slate-100 rounded-xl overflow-hidden">
-            <div className="h-28 bg-slate-200" />
+            <div className="h-44 bg-slate-200" />
             <div className="p-4 space-y-2">
               <div className="flex gap-2">
                 <div className="h-4 w-16 bg-slate-200 rounded-full" />
@@ -253,8 +195,6 @@ function SkeletonCards() {
   )
 }
 
-// ── Tag ───────────────────────────────────────────────────────────────────────
-
 function Tag({ children, cls }) {
   return (
     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${cls}`}>
@@ -263,33 +203,40 @@ function Tag({ children, cls }) {
   )
 }
 
-// ── Featured card ─────────────────────────────────────────────────────────────
+// ── Placeholder kategorii ─────────────────────────────────────────────────────
+// Świadomie NIE pokazujemy cudzych zdjęć z RSS (prawa autorskie/licencje agencji) —
+// zamiast miniaturki renderujemy kolorowy placeholder z ikoną dopasowaną do kategorii.
 
-const FEATURED_BG = {
-  morski:  'from-blue-950 via-slate-900 to-slate-900',
-  drogowy: 'from-amber-950 via-slate-900 to-slate-900',
-  cla:     'from-violet-950 via-slate-900 to-slate-900',
+const CATEGORY_PLACEHOLDER = {
+  morski:  'bg-blue-900',
+  drogowy: 'bg-green-900',
+  cla:     'bg-yellow-900',
+  alert:   'bg-red-900',
+  default: 'bg-gray-800',
 }
+
+function NewsImage({ transport, isAlert, featured }) {
+  const key = isAlert ? 'alert' : (CATEGORY_PLACEHOLDER[transport] ? transport : 'default')
+  const bg = CATEGORY_PLACEHOLDER[key]
+  const h = featured ? 'h-56 sm:h-72' : 'h-44'
+  const iconCls = featured ? 'w-24 h-24 text-white/40' : 'w-12 h-12 text-white/40'
+  return (
+    <div className={`relative ${h} ${bg} flex items-center justify-center overflow-hidden`}>
+      {isAlert
+        ? <IconAlert cls={iconCls} />
+        : <TransportIcon type={transport} className={iconCls} />}
+    </div>
+  )
+}
+
+// ── Karty ─────────────────────────────────────────────────────────────────────
 
 function FeaturedCard({ a }) {
   const t = a.transport[0]
-  const [imgOk, setImgOk] = useState(!!a.thumbnail)
   return (
     <a href={a.link} target="_blank" rel="noopener noreferrer"
        className="group block rounded-xl overflow-hidden bg-slate-900 mb-4 hover:opacity-95 transition-opacity">
-      <div className={`relative h-48 sm:h-56 ${!imgOk ? `bg-gradient-to-br ${FEATURED_BG[t] || 'from-slate-800 to-slate-900'}` : 'bg-slate-900'} flex items-center justify-center overflow-hidden`}>
-        {imgOk ? (
-          <img
-            src={a.thumbnail}
-            alt=""
-            onError={() => setImgOk(false)}
-            className="absolute inset-0 w-full h-full object-cover opacity-80"
-          />
-        ) : (
-          <TransportIcon type={t} className="w-24 h-24 text-white opacity-10" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
-      </div>
+      <NewsImage transport={t} isAlert={a.isAlert} featured />
       <div className="px-5 pb-5 pt-3">
         <div className="flex flex-wrap gap-2 mb-3 items-center">
           {a.isAlert && <Tag cls="bg-red-500 text-white">Alert</Tag>}
@@ -299,46 +246,21 @@ function FeaturedCard({ a }) {
           <Tag cls={SRC_COLOR[a.sourceId] || 'bg-slate-700 text-slate-200'}>{a.sourceName}</Tag>
           <span className="text-slate-500 text-xs">· {timeAgo(a.pubDate)}</span>
         </div>
-        <h2 className="text-white font-bold text-lg leading-snug mb-2 line-clamp-3 group-hover:text-emerald-300 transition-colors">
+        <h2 className="text-white font-bold text-lg leading-snug mb-4 line-clamp-3 group-hover:text-emerald-300 transition-colors">
           {a.title}
         </h2>
-        {a.description && (
-          <p className="text-slate-400 text-sm leading-relaxed line-clamp-2 mb-4">
-            {stripHtml(a.description)}
-          </p>
-        )}
         <span className="text-emerald-400 text-sm font-semibold">Czytaj więcej →</span>
       </div>
     </a>
   )
 }
 
-// ── Article card ──────────────────────────────────────────────────────────────
-
-const CARD_BG = {
-  morski:  'from-blue-900 to-slate-800',
-  drogowy: 'from-amber-900 to-slate-800',
-  cla:     'from-violet-900 to-slate-800',
-}
-
 function ArticleCard({ a }) {
   const t = a.transport[0]
-  const [imgOk, setImgOk] = useState(!!a.thumbnail)
   return (
     <a href={a.link} target="_blank" rel="noopener noreferrer"
        className="group block bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md hover:border-slate-300 transition-all">
-      <div className={`relative h-28 ${!imgOk ? `bg-gradient-to-br ${CARD_BG[t] || 'from-slate-700 to-slate-800'}` : 'bg-slate-100'} flex items-center justify-center overflow-hidden`}>
-        {imgOk ? (
-          <img
-            src={a.thumbnail}
-            alt=""
-            onError={() => setImgOk(false)}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        ) : (
-          <TransportIcon type={t} className="w-10 h-10 text-white opacity-20" />
-        )}
-      </div>
+      <NewsImage transport={t} isAlert={a.isAlert} />
       <div className="p-4">
         <div className="flex flex-wrap gap-1.5 mb-2 items-center">
           {a.isAlert && <Tag cls="bg-red-100 text-red-700">Alert</Tag>}
@@ -355,63 +277,43 @@ function ArticleCard({ a }) {
   )
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── Strona ────────────────────────────────────────────────────────────────────
 
 export default function NewsPage() {
   const [articles, setArticles] = useState([])
+  const [ticker, setTicker]     = useState([])
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
-  const [rates, setRates]       = useState(null)
   const [mainTab, setMainTab]   = useState('all')
   const [subTab, setSubTab]     = useState('all')
   const { markRead, notifyNewArticles } = useNews()
 
-  const loadNews = useCallback(async () => {
+  const loadNews = useCallback(async (force = false) => {
     setLoading(true)
     setError(null)
     try {
-      const cached = sessionStorage.getItem(CACHE_KEY)
-      if (cached) {
-        const { ts, data } = JSON.parse(cached)
-        if (Date.now() - ts < CACHE_TTL) {
-          setArticles(data)
-          setLoading(false)
-          return
+      if (!force) {
+        const cached = sessionStorage.getItem(CACHE_KEY)
+        if (cached) {
+          const { ts, data } = JSON.parse(cached)
+          if (Date.now() - ts < CACHE_TTL) {
+            setArticles(data.articles || [])
+            setTicker(data.ticker || [])
+            setLoading(false)
+            return
+          }
         }
       }
-
-      const results = await Promise.allSettled(
-        RSS.map(async src => {
-          const res  = await fetch(`${RSS_API}${encodeURIComponent(src.url)}`)
-          const json = await res.json()
-          if (json.status !== 'ok') return []
-          return json.items
-            .filter(it => new Date(it.pubDate) > ONE_YEAR)
-            .map(it => ({
-              title:       it.title || '',
-              link:        it.link  || '#',
-              pubDate:     it.pubDate,
-              description: it.description || '',
-              thumbnail:   it.thumbnail || it.enclosure?.link || '',
-              geo:         [...src.geo],
-              transport:   [...src.transport],
-              isAlert:     detectAlert(it.title, it.description),
-              sourceId:    src.id,
-              sourceName:  src.name,
-            }))
-        })
-      )
-
-      const merged = results
-        .filter(r => r.status === 'fulfilled')
-        .flatMap(r => r.value)
-        .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
-
-      notifyNewArticles(merged[0]?.pubDate)
-      sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: merged }))
-      setArticles(merged)
+      // force → ?refresh=1 pomija 15-min cache serwera i czeka na świeże feedy
+      const res = await fetch(force ? '/api/news?refresh=1' : '/api/news')
+      if (!res.ok) throw new Error('bad status')
+      const data = await res.json()
+      setArticles(data.articles || [])
+      setTicker(data.ticker || [])
+      notifyNewArticles(data.articles?.[0]?.pubDate)
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }))
     } catch {
-      setError('Nie udało się pobrać newsów. Sprawdź połączenie.')
+      setError('Nie udało się pobrać newsów. Sprawdź połączenie lub backend (/api/news).')
     } finally {
       setLoading(false)
     }
@@ -420,7 +322,6 @@ export default function NewsPage() {
   useEffect(() => {
     markRead()
     loadNews()
-    loadRates().then(setRates)
   }, [])
 
   const filtered = articles.filter(a => {
@@ -433,21 +334,14 @@ export default function NewsPage() {
   const alertCount = articles.filter(a => a.isAlert).length
   const featured   = filtered[0]
   const rest       = filtered.slice(1)
-
-  const mainLabel = MAIN_TABS.find(t => t.id === mainTab)?.label
-  const subLabel  = SUB_TABS.find(t => t.id === subTab)?.label
+  const mainLabel  = MAIN_TABS.find(t => t.id === mainTab)?.label
+  const subLabel   = SUB_TABS.find(t => t.id === subTab)?.label
 
   return (
     <div className="h-full flex flex-col rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
       <style>{`
-        @keyframes ticker-scroll {
-          0%   { transform: translateX(0) }
-          100% { transform: translateX(-50%) }
-        }
-        .ticker-track {
-          animation: ticker-scroll 55s linear infinite;
-          will-change: transform;
-        }
+        @keyframes ticker-scroll { 0% { transform: translateX(0) } 100% { transform: translateX(-50%) } }
+        .ticker-track { animation: ticker-scroll 55s linear infinite; will-change: transform; }
         .ticker-track:hover { animation-play-state: paused }
       `}</style>
 
@@ -460,12 +354,15 @@ export default function NewsPage() {
       <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 shrink-0">
         <h1 className="text-base font-bold text-slate-900">Newsy transportowe</h1>
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 text-xs font-medium text-orange-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-            Na żywo
-          </span>
+          {/* „Na żywo" tylko gdy ticker ma realne dane na żywo (kursy NBP) */}
+          {ticker.length > 0 && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-orange-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+              Na żywo
+            </span>
+          )}
           <button
-            onClick={() => { sessionStorage.removeItem(CACHE_KEY); loadNews() }}
+            onClick={() => { sessionStorage.removeItem(CACHE_KEY); loadNews(true) }}
             disabled={loading}
             className="text-xs text-slate-500 hover:text-slate-700 border border-slate-200 rounded-md px-2.5 py-1 transition-colors disabled:opacity-40"
           >
@@ -474,8 +371,7 @@ export default function NewsPage() {
         </div>
       </div>
 
-      {/* Ticker */}
-      <Ticker rates={rates} />
+      <Ticker items={ticker} />
 
       {/* Main tabs */}
       <div className="flex border-b border-slate-200 px-2 shrink-0 bg-white">
@@ -525,7 +421,7 @@ export default function NewsPage() {
         )}
       </div>
 
-      {/* Scrollable articles */}
+      {/* Lista */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         {loading && <SkeletonCards />}
 
@@ -534,7 +430,7 @@ export default function NewsPage() {
             <span className="text-4xl">📡</span>
             <p className="text-slate-500 text-sm">{error}</p>
             <button
-              onClick={loadNews}
+              onClick={() => loadNews(true)}
               className="px-4 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
             >
               Spróbuj ponownie
@@ -543,10 +439,10 @@ export default function NewsPage() {
         )}
 
         {!loading && !error && filtered.length === 0 && (
-          <div className="flex flex-col items-center gap-3 py-16 text-center px-4">
-            <span className="text-4xl">📰</span>
-            <p className="text-slate-700 text-sm font-medium">Brak artykułów w tej kategorii</p>
-            <p className="text-slate-400 text-xs">Zmień filtry lub kliknij Odśwież</p>
+          <div className="p-4 md:p-5">
+            <AlertBox type="info" title="Brak artykułów dla wybranego filtra">
+              Wybierz inną zakładkę lub kliknij „Odśwież".
+            </AlertBox>
           </div>
         )}
 
@@ -562,6 +458,14 @@ export default function NewsPage() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Stopka — nota prawna */}
+      <div className="shrink-0 border-t border-slate-200 px-5 py-2.5 bg-slate-50">
+        <p className="text-[11px] leading-relaxed text-slate-400 text-center">
+          Artykuły są własnością ich wydawców. AMLogistico wyświetla wyłącznie nagłówki i linki
+          do oryginalnych źródeł RSS.
+        </p>
       </div>
     </div>
   )
