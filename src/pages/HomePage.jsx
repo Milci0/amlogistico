@@ -47,9 +47,9 @@ export default function HomePage() {
 
   function handleStart() {
     if (user) {
-      navigate('/new-document')
+      navigate('/blank-templates')
     } else {
-      navigate('/login', { state: { from: { pathname: '/new-document' } } })
+      navigate('/login', { state: { from: { pathname: '/blank-templates' } } })
     }
   }
 

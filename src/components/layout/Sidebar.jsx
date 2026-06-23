@@ -62,6 +62,12 @@ const ICONS = {
         d="M9 13h6M9 17h4" />
     </svg>
   ),
+  forms: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    </svg>
+  ),
   news: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
@@ -78,13 +84,16 @@ const ICONS = {
 
 function Badge({ children }) {
   const isCore = children === 'Core'
+  const isBeta = children === 'Beta'
   return (
     <span
       className={
         'ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full ' +
         (isCore
           ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-          : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400')
+          : isBeta
+            ? 'bg-violet-50 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400'
+            : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400')
       }
     >
       {children}

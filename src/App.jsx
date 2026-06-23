@@ -47,6 +47,7 @@ const router = createBrowserRouter([
             element: <RequireAuth />,
             children: [
               { path: 'new-document', element: <NewDocumentPage /> },
+              { path: 'quotation', element: <PlaceholderPage title="Wycena" description="Wycena frachtu i kosztów transportu." /> },
               { path: 'history', element: <HistoryPage /> },
               { path: 'companies', element: <CompaniesPage /> },
               { path: 'subscription', element: <SubscriptionPage /> },

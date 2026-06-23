@@ -148,7 +148,7 @@ export const MENU_GROUPS = [
     title: 'Główne',
     items: [
       { label: 'Strona główna', path: '/', icon: 'home' },
-      { label: 'Wycena', path: '/new-document', icon: 'calculator', badge: 'Core' },
+      { label: 'Wycena', path: '/quotation', icon: 'calculator', badge: 'Core' },
       { label: 'Dokumentacja', path: '/history', icon: 'document', badge: 'Core' },
       { label: 'Wersje robocze', path: '/drafts', icon: 'pencil', badge: '3' },
     ],
@@ -156,6 +156,7 @@ export const MENU_GROUPS = [
   {
     title: 'Narzędzia',
     items: [
+      { label: 'Gotowe formularze', path: '/new-document', icon: 'forms', badge: 'Beta' },
       { label: 'Ubezpieczenia', path: '/insurance', icon: 'shield' },
       { label: 'Trasy handlowe', path: '/routes', icon: 'map' },
       { label: 'Puste szablony', path: '/blank-templates', icon: 'template' },
