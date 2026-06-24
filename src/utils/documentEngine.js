@@ -159,9 +159,9 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
   }
 
   // ── WARSTWA 4: IMPORT ────────────────────────────────────────────
-  if (isEU(destination) && !isEU(origin)) {
-    required.add("07_EAD"); // SAD importowy po stronie UE
-  }
+  // 07_EAD to deklaracja eksportowa z UE — NIE dodajemy jej tutaj.
+  // Import do UE (CN→PL, US→DE itp.) obsługuje importer przez AIS;
+  // gdy pojawi się szablon EU Import Declaration, dodaj nowy klucz.
 
   if (inGroup(destination, "UK")) {
     required.add("21_UK_Import");
