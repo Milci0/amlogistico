@@ -174,8 +174,27 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   - **Ticker:** WYŁĄCZNIE kursy NBP na żywo (EUR/PLN, USD/PLN, EUR/USD). Indeksy WCI/BDI/SCFI
     i Diesel EU **usunięte** z `buildTicker()` — były zahardkodowane i mylące obok „Na żywo".
     WCI (Drewry)/BDI (Baltic Exchange)/SCFI (Shanghai) są licencjonowane — nie pokazywać bez
-    licencji/oficjalnego API. Diesel: TODO EC Oil Bulletin (.xlsx, brak prostego JSON).
-    „Na żywo" w UI pokazuje się tylko gdy ticker ma dane (NBP)
+    licencji/oficjalnego API.
+    „Na żywo" w UI pokazuje się tylko gdy ticker ma dane (NBP/diesel)
+  - **Cena diesla EU na pasku — GOTOWE (2026-06-24):** osobny endpoint `api/routes/diesel.js`
+    (mount `/api/diesel-price`). Pobiera plik „Prices History" z EC Weekly Oil Bulletin
+    (link stały + fallback skanujący stronę biuletynu), parsuje przez **SheetJS (`xlsx`)**:
+    arkusz „Prices with taxes", kolumna `EU_price_with_tax_diesel` (ważona średnia EU-27,
+    z podatkami), najnowszy tydzień, EUR/1000L → EUR/L. Zwraca
+    `{ value, date, unit:'EUR/L', source:'EC Oil Bulletin' }` lub `{ value:null, error:'unavailable' }`.
+    Fetch 8 s timeout, cache w pamięci 6 h (dane tygodniowe). Front (`NewsPage`): `useEffect` →
+    `/api/diesel-price`, dokłada element „⛽ Diesel EU: 1,73 EUR/L (DD.MM.RRRR)" do paska
+    (ukryty gdy `value:null`), atrybucja CC BY 4.0 w stopce. Pasek = seamless marquee
+    (dwie grupy `min-w-full` + `justify-around`, translateX 0→-100%, 60s linear, pauza na hover,
+    separator „ · ") — bez pustej luki niezależnie od liczby elementów
+  - **Stopa EBC na pasku — GOTOWE (2026-06-24):** endpoint `api/routes/ecb.js` (`/api/ecb-rate`).
+    ECB SDMX (`FM.B.U2.EUR.4F.KR.MRR_FR.LEV`, csvdata, bez klucza) →
+    `{value,date,unit:'%',source:'ECB'}`. Fetch 8 s timeout, cache 6 h, try/catch z console.error.
+    Front (`NewsPage`): fetch w useEffect, element „Stopa EBC: 2,40% (DD.MM.RRRR)" (ukryty gdy
+    `value:null`), atrybucja EBC (CC BY 4.0) w stopce.
+    (Brent z EIA był zaczęty, ale USUNIĘTY — klucz „DEMO" zwraca 403, a brak gotowego
+    bezklucztowego źródła o czystej licencji komercyjnej. Do ewentualnego powrotu: EIA v2
+    seria RBRTE + darmowy klucz w env `EIA_API_KEY`.)
   - **Zdjęcia: NIE pokazujemy cudzych zdjęć z RSS** (prawa autorskie/licencje agencji).
     `NewsImage` renderuje kolorowy placeholder z ikoną kategorii: Morski `bg-blue-900`+statek,
     Drogowy `bg-green-900`+ciężarówka, Cła `bg-yellow-900`+dokument, Alert `bg-red-900`+trójkąt,

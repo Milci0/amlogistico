@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNews } from '../context/NewsContext'
 import AlertBox from '../components/ui/AlertBox'
@@ -87,6 +87,13 @@ const CACHE_TTL = 10 * 60 * 1000
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+// "2026-06-22" → "22.06.2026" (format DD.MM.RRRR, jak w generatorze PDF)
+function fmtIsoDate(iso) {
+  if (!iso) return ''
+  const [y, m, d] = iso.split('-')
+  return y && m && d ? `${d}.${m}.${y}` : iso
+}
+
 function timeAgo(d) {
   if (!d) return ''
   const dt = new Date(d)
@@ -143,10 +150,13 @@ function TransportIcon({ type, className }) {
 
 function Ticker({ items }) {
   if (!items?.length) return null
-  const track = (
-    <span className="inline-flex items-stretch h-8">
+  // Jedna „grupa" elementów. Renderujemy ją dwa razy obok siebie; obie przewijają się
+  // o -100% własnej szerokości. `min-w-full` + `justify-around` gwarantują, że grupa
+  // wypełnia cały pasek (brak pustej luki, gdy elementów jest mało) — seamless loop.
+  const group = (hidden) => (
+    <div className="ticker-group items-center h-8" aria-hidden={hidden || undefined}>
       {items.map((it, i) => (
-        <span key={i} className="inline-flex items-center gap-2 px-4 border-r border-slate-600/40 text-xs whitespace-nowrap">
+        <span key={i} className="inline-flex items-center gap-2 px-4 text-xs whitespace-nowrap">
           <span className="text-slate-400 font-medium">{it.label}</span>
           <span className="font-bold text-white">{it.value}</span>
           {it.delta != null && (
@@ -154,17 +164,20 @@ function Ticker({ items }) {
               {it.delta >= 0 ? '▲' : '▼'} {Math.abs(it.delta).toFixed(1)}%
             </span>
           )}
+          {/* separator " · " między elementami */}
+          <span className="pl-4 text-slate-600">·</span>
         </span>
       ))}
-    </span>
+    </div>
   )
   return (
     <div className="flex h-8 bg-slate-800 shrink-0 overflow-hidden">
       <div className="flex items-center px-3 bg-emerald-600 shrink-0">
         <span className="text-[10px] font-black tracking-[0.18em] text-white uppercase">Fracht</span>
       </div>
-      <div className="overflow-hidden flex-1">
-        <div className="ticker-track inline-flex">{track}{track}</div>
+      <div className="ticker-lane flex flex-1 overflow-hidden">
+        {group(false)}
+        {group(true)}
       </div>
     </div>
   )
@@ -282,6 +295,8 @@ function ArticleCard({ a }) {
 export default function NewsPage() {
   const [articles, setArticles] = useState([])
   const [ticker, setTicker]     = useState([])
+  const [diesel, setDiesel]     = useState(null)
+  const [ecb, setEcb]           = useState(null)
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
   const [mainTab, setMainTab]   = useState('all')
@@ -324,6 +339,47 @@ export default function NewsPage() {
     loadNews()
   }, [])
 
+  // Cena diesla EU (EC Oil Bulletin) — niezależnie od newsów; gdy niedostępna → element ukryty
+  useEffect(() => {
+    let alive = true
+    fetch('/api/diesel-price')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (alive && d && d.value != null) setDiesel(d) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [])
+
+  // Stopa EBC — pobierana przy mount; fetch z timeoutem 8 s
+  useEffect(() => {
+    let alive = true
+    const fetchJson = async (url) => {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 8000)
+      try {
+        const r = await fetch(url, { signal: ctrl.signal })
+        return r.ok ? await r.json() : null
+      } catch (e) {
+        console.error('Błąd pobierania', url, e)
+        return null
+      } finally {
+        clearTimeout(timer)
+      }
+    }
+    fetchJson('/api/ecb-rate').then(e => {
+      if (alive && e && e.value != null) setEcb(e)
+    })
+    return () => { alive = false }
+  }, [])
+
+  // Konwertery walut (z /api/news) + diesel / stopa EBC jako dodatkowe elementy paska
+  const tickerItems = useMemo(() => {
+    const num = v => v.toFixed(2).replace('.', ',') // 1.73 → "1,73"
+    const extra = []
+    if (diesel) extra.push({ label: 'Diesel EU:',  value: `${num(diesel.value)} ${diesel.unit} (${fmtIsoDate(diesel.date)})` })
+    if (ecb)    extra.push({ label: 'Stopa EBC:',   value: `${num(ecb.value)}% (${fmtIsoDate(ecb.date)})` })
+    return [...ticker, ...extra]
+  }, [ticker, diesel, ecb])
+
   const filtered = articles.filter(a => {
     if (mainTab === 'alerty' || subTab === 'alerty') return a.isAlert
     const geoOk = mainTab === 'all' || a.geo.includes(mainTab)
@@ -340,9 +396,17 @@ export default function NewsPage() {
   return (
     <div className="h-full flex flex-col rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
       <style>{`
-        @keyframes ticker-scroll { 0% { transform: translateX(0) } 100% { transform: translateX(-50%) } }
-        .ticker-track { animation: ticker-scroll 55s linear infinite; will-change: transform; }
-        .ticker-track:hover { animation-play-state: paused }
+        @keyframes ticker-scroll { from { transform: translateX(0) } to { transform: translateX(-100%) } }
+        .ticker-group {
+          display: flex;
+          flex: none;
+          min-width: 100%;
+          justify-content: space-around;
+          animation: ticker-scroll 60s linear infinite;
+          will-change: transform;
+        }
+        /* pauza obu kopii naraz, gdy kursor jest nad paskiem (inaczej rozjechałyby się) */
+        .ticker-lane:hover .ticker-group { animation-play-state: paused; }
       `}</style>
 
       <Helmet>
@@ -354,8 +418,8 @@ export default function NewsPage() {
       <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 shrink-0">
         <h1 className="text-base font-bold text-slate-900">Newsy transportowe</h1>
         <div className="flex items-center gap-3">
-          {/* „Na żywo" tylko gdy ticker ma realne dane na żywo (kursy NBP) */}
-          {ticker.length > 0 && (
+          {/* „Na żywo" tylko gdy ticker ma realne dane na żywo (kursy NBP / diesel) */}
+          {tickerItems.length > 0 && (
             <span className="flex items-center gap-1.5 text-xs font-medium text-orange-500">
               <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
               Na żywo
@@ -371,7 +435,7 @@ export default function NewsPage() {
         </div>
       </div>
 
-      <Ticker items={ticker} />
+      <Ticker items={tickerItems} />
 
       {/* Main tabs */}
       <div className="flex border-b border-slate-200 px-2 shrink-0 bg-white">
@@ -466,6 +530,18 @@ export default function NewsPage() {
           Artykuły są własnością ich wydawców. AMLogistico wyświetla wyłącznie nagłówki i linki
           do oryginalnych źródeł RSS.
         </p>
+        {diesel && (
+          <p className="text-[11px] leading-relaxed text-slate-400 text-center mt-1">
+            Cena diesla: „Weekly Oil Bulletin" © European Commission — licencja{' '}
+            <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener"
+               className="underline hover:text-slate-600">CC BY 4.0</a>
+          </p>
+        )}
+        {ecb && (
+          <p className="text-[11px] leading-relaxed text-slate-400 text-center mt-1">
+            Stopa EBC: © European Central Bank (CC BY 4.0)
+          </p>
+        )}
       </div>
     </div>
   )

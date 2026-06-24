@@ -79,9 +79,8 @@ async function loadSource(src) {
 // Nie wyświetlaj ich bez wykupionej licencji lub oficjalnego API partnera.
 // (Wcześniej były zahardkodowane obok napisu „Na żywo" — usunięte jako mylące.)
 //
-// TODO: Diesel EU — EC Oil Bulletin API. Oficjalne dane to plik .xlsx
-//       (https://ec.europa.eu/energy/observatory/reports/Oil_Bulletin_Prices_History.xlsx),
-//       brak prostego JSON-a → na razie NIE pokazujemy diesla, by nie mylić.
+// Diesel EU (EC Oil Bulletin) jest dostarczany osobnym endpointem GET /api/diesel-price
+// (parsuje .xlsx przez SheetJS) i dokładany do paska po stronie frontu — patrz routes/diesel.js.
 
 async function buildTicker() {
   const ticker = []
