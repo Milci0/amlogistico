@@ -21,6 +21,21 @@ const GROUPS = {
   BR: ["BR"],
   IN: ["IN"],
   EAEU: ["RU","KZ","BY","AM","KG"],
+  TR: ["TR"],
+  ZA: ["ZA"],
+  AR: ["AR"],
+  CL: ["CL"],
+  PK: ["PK"],
+  PH: ["PH"],
+  VN: ["VN"],
+  ID: ["ID"],
+  TH: ["TH"],
+  MY: ["MY"],
+  NG: ["NG"],
+  KE: ["KE"],
+  MA: ["MA"],
+  UZ: ["UZ"],
+  GE: ["GE"],
   GCC: ["SA","AE","KW","QA","BH","OM"],
   ASEAN: ["SG","MY","TH","ID","VN","PH","MM","KH","LA","BN"],
   MERCOSUR: ["BR","AR","PY","UY"],
@@ -38,7 +53,7 @@ const GROUPS = {
                     "MA","TN","JO","LB","EG","IL","TR","MX","CL","CO","PE"],
   EUR_MED: ["MA","DZ","TN","JO","LB","EG","IL","PS"],
   GSP: ["IN","VN","PH","ID","TH","PK","BD","LK","KH","MM","KE","TZ","GH",
-        "SN","NG","ET","MZ","MA","EG","JO","UA","GE","MD","AZ","AM","UZ","KZ"],
+        "SN","NG","ET","MZ","MA","EG","JO","GE","MD","AZ","AM","UZ","KZ"],
 };
 
 const inGroup = (country, groupName) => GROUPS[groupName]?.includes(country) ?? false;
@@ -158,6 +173,14 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     }
   }
 
+  if (inGroup(origin, "TR") && !inGroup(destination, "TR")) required.add("40_Turkey_Export");
+  if (inGroup(origin, "ZA") && !inGroup(destination, "ZA")) required.add("41_SouthAfrica_Export");
+  if (inGroup(origin, "AR") && !inGroup(destination, "AR")) required.add("97_Argentina_Export");
+  if (inGroup(origin, "CL") && !inGroup(destination, "CL")) required.add("98_Chile_Export");
+  if (inGroup(origin, "PK") && !inGroup(destination, "PK")) required.add("99_Pakistan_Export");
+  if (inGroup(origin, "PH") && !inGroup(destination, "PH")) required.add("100_Philippines_Export");
+  // TODO: VN, ID, TH, MY, NG, KE, MA — brak pliku PDF szablonu eksportowego
+
   // ── WARSTWA 4: IMPORT ────────────────────────────────────────────
   // 07_EAD to deklaracja eksportowa z UE — NIE dodajemy jej tutaj.
   // Import do UE (CN→PL, US→DE itp.) obsługuje importer przez AIS;
@@ -249,8 +272,8 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
   if (destination === "GE") required.add("96_Georgia_Import");
   if (destination === "NZ") required.add("43_NewZealand_Import");
 
-  // GSP dla krajów beneficjentów gdy eksport z EU
-  if (isEU(origin) && inGroup(destination, "GSP")) {
+  // GSP — Form A wystawiany przez kraj rozwijający się przy eksporcie DO UE
+  if (!isEU(origin) && isEU(destination) && inGroup(origin, "GSP")) {
     conditional.add("103_Form_A");
   }
 
@@ -281,10 +304,18 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
       required.add("69_MSDS");
       if (mode === "road") {
         required.add("118_ADR");
+        conditional.add("14_ADR"); // starsza deklaracja ADR per-przesyłka
+      }
+      if (mode === "sea") {
+        required.add("15_IMDG");
       }
       if (mode === "air") {
         required.add("64_IATA_DGR");
         required.add("109_IATA_Packing");
+      }
+      if (mode === "rail") {
+        // Brak szablonu RID — TODO: dodać plik RID gdy będzie dostępny
+        warnings.push("Transport kolejowy towarów niebezpiecznych podlega Regulaminowi RID. Wymagane: DG Manifest + MSDS + dokumenty RID od przewoźnika kolejowego.");
       }
       break;
 
@@ -296,6 +327,8 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     case "electronics":
       if (isEU(destination)) {
         required.add("106_CE");
+      } else {
+        conditional.add("106_CE");
       }
       break;
 
@@ -338,9 +371,10 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     required.add("13_ATA");
   }
 
-  // Blacklist Certificate (kraje GCC i bliskowschodnie)
+  // Blacklist Certificate (kraje GCC i bliskowschodnie) — warunkowy, zależy od towaru/podmiotu
   if (inGroup(destination, "BLACKLIST_CERT")) {
-    required.add("70_Blacklist");
+    conditional.add("70_Blacklist");
+    warnings.push("Blacklist Certificate może być wymagany przez urząd celny kraju docelowego. Skonsultuj z lokalnym agentem celnym.");
     warnings.push("Faktura i CoO wymagają legalizacji przez KIG i ambasadę — planuj 7–10 dni roboczych.");
   }
 
@@ -350,10 +384,20 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     warnings.push("PSI (inspekcja przedwysyłkowa) wymagana — planuj 3–5 dni roboczych.");
   }
 
-  // T2L — transport morski wewnątrz UE
+  // T2L — dowód unijnego statusu przy morskim EU→EU
   if (mode === "sea" && isEU(origin) && isEU(destination)) {
     required.add("104_T2L");
     warnings.push("T2L wymagany przy morskim transporcie wewnątrz UE — bez niego towar traktowany jako import spoza UE w porcie docelowym.");
+  }
+
+  // T2L — EU→EU tranzytem przez non-EU (np. IE→PL przez UK)
+  if (isEU(origin) && isEU(destination) && flags.transitNonEU) {
+    conditional.add("104_T2L");
+  }
+
+  // Fumigation — dla food_plant lub drewniane opakowania do krajów ISPM15
+  if ((cargoCategory === "food_plant" || flags.woodenPackaging) && inGroup(destination, "ISPM15_REQUIRED")) {
+    conditional.add("65_Fumigation");
   }
 
   // TIR Carnet i Transit Declaration — transport drogowy przez non-EU
@@ -370,6 +414,42 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
   // Przeładunek morski
   if (flags.transhipment && mode === "sea") {
     required.add("115_Transhipment");
+  }
+
+  // ── WARSTWA 7: SANKCJE I OSTRZEŻENIA KRYTYCZNE ──────────────────
+
+  // Sankcje UE — Rosja i Białoruś (Rozp. 833/2014 i 765/2006)
+  if (destination === "RU" || destination === "BY") {
+    warnings.push("UWAGA SANKCJE: Trasa do Rosji/Białorusi podlega sankcjom UE. Sprawdź listę towarów zakazanych: Rozporządzenie UE 833/2014 (Rosja) i 765/2006 (Białoruś) przed wysyłką. Wiele kategorii towarów jest zakazanych lub wymaga specjalnego zezwolenia eksportowego.");
+  }
+  if (origin === "RU" || origin === "BY") {
+    warnings.push("UWAGA SANKCJE: Import z Rosji/Białorusi do UE podlega sankcjom UE. Sprawdź listę zakazanych importów przed zawarciem kontraktu.");
+  }
+
+  // CHED-P/TRACES — pre-notyfikacja przy imporcie żywności do UE
+  if (isEU(destination) && !isEU(origin) && (cargoCategory === "food_animal" || cargoCategory === "food_plant")) {
+    warnings.push("Import żywności do UE wymaga pre-notyfikacji CHED-P w systemie TRACES NT minimum 24h przed przybyciem do portu. Obowiązek spoczywa na importerze UE. Kontrola weterynaryjna na Border Control Post (BCP) jest obowiązkowa — brak CHED-P = zatrzymanie towaru.");
+  }
+
+  // ATP — łańcuch chłodniczy dla żywności (Konwencja ATP)
+  if (cargoCategory === "food_animal" || cargoCategory === "food_plant") {
+    warnings.push("Żywność wymaga zachowania łańcucha chłodniczego: mrożona max −18°C, schłodzona 0–4°C. Transport musi spełniać wymagania Konwencji ATP. Dołącz zapis temperatury z rejestratora danych.");
+  }
+
+  // EU-Mercosur iTA (od 01.05.2026) — obie strony handlu
+  if ((inGroup(origin, "MERCOSUR") && isEU(destination)) ||
+      (isEU(origin) && inGroup(destination, "MERCOSUR"))) {
+    warnings.push("Od 01.05.2026 obowiązuje Umowa EU-Mercosur (iTA). Sprawdź wymagania dotyczące nowych certyfikatów pochodzenia — EC Notice 2026/875. Może być wymagany zaktualizowany format COO.");
+  }
+
+  // Import do UE — zgłoszenie celne SAD/H1
+  if (!isEU(origin) && isEU(destination)) {
+    warnings.push("Import do UE wymaga złożenia zgłoszenia celnego (SAD/H1) do wolnego obrotu przez importera lub licencjonowanego agenta celnego w kraju przeznaczenia. Cło i VAT naliczane przy odprawie celnej.");
+  }
+
+  // EOG (NO/IS/LI) — poza obszarem celnym UE
+  if (inGroup(destination, "EEA")) {
+    warnings.push("Norwegia/Islandia/Liechtenstein należą do EOG, ale nie do obszaru celnego UE. EAD wymagana jak przy eksporcie poza UE. Brak ceł dzięki umowie EOG — formalności celne są jednak obowiązkowe.");
   }
 
   // ── DEDUPLIKACJA: usuń z conditional to co już jest w required ────

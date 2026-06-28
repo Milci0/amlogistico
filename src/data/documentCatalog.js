@@ -163,6 +163,42 @@ export const documentCatalog = {
     path: "/templates/global/export/39_Saudi_Arabia_Export_Declaration.pdf",
     available: true,
   },
+  "40_Turkey_Export": {
+    name_pl: "Deklaracja Eksportowa Turcja",
+    name_en: "Turkey Export Declaration",
+    path: "/templates/global/export/40_Turkey_Export_Declaration.pdf",
+    available: true,
+  },
+  "41_SouthAfrica_Export": {
+    name_pl: "Deklaracja Eksportowa RPA (DA 550)",
+    name_en: "South Africa Export Declaration (DA 550)",
+    path: "/templates/global/export/41_South_Africa_Export_DA550.pdf",
+    available: true,
+  },
+  "97_Argentina_Export": {
+    name_pl: "Deklaracja Eksportowa Argentyna",
+    name_en: "Argentina Export Declaration",
+    path: "/templates/global/export/97_Argentina_Export_Declaration.pdf",
+    available: true,
+  },
+  "98_Chile_Export": {
+    name_pl: "Deklaracja Eksportowa Chile",
+    name_en: "Chile Export Declaration",
+    path: "/templates/global/export/98_Chile_Export_Declaration.pdf",
+    available: true,
+  },
+  "99_Pakistan_Export": {
+    name_pl: "Deklaracja Eksportowa Pakistan",
+    name_en: "Pakistan Export Declaration",
+    path: "/templates/global/export/99_Pakistan_Export_Declaration.pdf",
+    available: true,
+  },
+  "100_Philippines_Export": {
+    name_pl: "Deklaracja Eksportowa Filipiny",
+    name_en: "Philippines Export Declaration",
+    path: "/templates/global/export/100_Philippines_Export_Declaration.pdf",
+    available: true,
+  },
 
   // ─── IMPORT ──────────────────────────────────────────────────────
   "08_ISF": {
@@ -518,6 +554,12 @@ export const documentCatalog = {
   },
 
   // ─── TOWARY NIEBEZPIECZNE ─────────────────────────────────────────
+  "15_IMDG": {
+    name_pl: "IMDG — Deklaracja Towarów Niebezpiecznych (Morska)",
+    name_en: "IMDG Dangerous Goods Declaration",
+    path: "/templates/global/cargo/15_IMDG_Towary_Niebezpieczne_Morze.pdf",
+    available: true,
+  },
   "29_DG_Manifest": {
     name_pl: "Dangerous Goods Manifest",
     name_en: "Dangerous Goods Manifest",
@@ -528,6 +570,15 @@ export const documentCatalog = {
     name_pl: "MSDS — Karta Charakterystyki",
     name_en: "MSDS Safety Data Sheet",
     path: "/templates/global/cargo/69_MSDS_Karta_Charakterystyki.pdf",
+    available: true,
+  },
+  // VERIFIED: 14_ADR = stara deklaracja ADR per-przesyłka (consignment note);
+  // 118_ADR = aktualny Road DG Manifest (manifest pojazdu) — różne dokumenty, oba w użyciu.
+  // 49_UAE_Import = nazwa pliku PDF dla klucza 51_UAE_Import (rozbieżność numeracji) — brak duplikatu.
+  "14_ADR": {
+    name_pl: "ADR — Deklaracja Towarów Niebezpiecznych (Drogowa)",
+    name_en: "ADR Dangerous Goods Declaration (Road)",
+    path: "/templates/global/cargo/14_ADR_Towary_Niebezpieczne_Droga.pdf",
     available: true,
   },
   "118_ADR": {
@@ -566,6 +617,12 @@ export const documentCatalog = {
     name_pl: "ISPM 15 — Certyfikat Opakowań Drewnianych",
     name_en: "ISPM 15 Wood Packaging Certificate",
     path: "/templates/global/cargo/19_ISPM15_Opakowania_Drewniane.pdf",
+    available: true,
+  },
+  "65_Fumigation": {
+    name_pl: "Certyfikat Fumigacji",
+    name_en: "Fumigation Certificate",
+    path: "/templates/global/cargo/65_Fumigation_Certificate.pdf",
     available: true,
   },
   "63_Insurance": {
