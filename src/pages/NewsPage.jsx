@@ -82,8 +82,25 @@ const SUB_TABS = [
   { id: 'alerty', label: 'Alerty',           Icon: IconAlert },
 ]
 
-const CACHE_KEY = 'am_news_api_v1'
-const CACHE_TTL = 10 * 60 * 1000
+const CACHE_KEY        = 'am_news_api_v1'
+const CACHE_TTL        = 10 * 60 * 1000
+const DIESEL_CACHE_KEY = 'am_diesel_v1'
+const ECB_CACHE_KEY    = 'am_ecb_v1'
+const RATES_CACHE_TTL  = 6 * 60 * 60 * 1000 // 6h — pokrywa czas zycia cache backendu
+
+function readRatesCache(key) {
+  try {
+    const raw = sessionStorage.getItem(key)
+    if (!raw) return null
+    const { ts, data } = JSON.parse(raw)
+    if (Date.now() - ts < RATES_CACHE_TTL) return data
+  } catch {}
+  return null
+}
+
+function writeRatesCache(key, data) {
+  try { sessionStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })) } catch {}
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -295,8 +312,8 @@ function ArticleCard({ a }) {
 export default function NewsPage() {
   const [articles, setArticles] = useState([])
   const [ticker, setTicker]     = useState([])
-  const [diesel, setDiesel]     = useState(null)
-  const [ecb, setEcb]           = useState(null)
+  const [diesel, setDiesel]     = useState(() => readRatesCache(DIESEL_CACHE_KEY))
+  const [ecb, setEcb]           = useState(() => readRatesCache(ECB_CACHE_KEY))
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
   const [mainTab, setMainTab]   = useState('all')
@@ -344,7 +361,12 @@ export default function NewsPage() {
     let alive = true
     fetch('/api/diesel-price')
       .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (alive && d && d.value != null) setDiesel(d) })
+      .then(d => {
+        if (alive && d && d.value != null) {
+          setDiesel(d)
+          writeRatesCache(DIESEL_CACHE_KEY, d)
+        }
+      })
       .catch(() => {})
     return () => { alive = false }
   }, [])
@@ -366,7 +388,10 @@ export default function NewsPage() {
       }
     }
     fetchJson('/api/ecb-rate').then(e => {
-      if (alive && e && e.value != null) setEcb(e)
+      if (alive && e && e.value != null) {
+        setEcb(e)
+        writeRatesCache(ECB_CACHE_KEY, e)
+      }
     })
     return () => { alive = false }
   }, [])
