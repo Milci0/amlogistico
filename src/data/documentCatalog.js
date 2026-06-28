@@ -271,10 +271,17 @@ export const documentCatalog = {
     path: "/templates/global/import/50_Saudi_Arabia_Import_Declaration.pdf",
     available: true,
   },
+  "49_UAE_Import": {
+    name_pl: "Deklaracja Importowa ZEA",
+    name_en: "UAE Import Declaration",
+    path: "/templates/global/import/49_UAE_Import_Declaration.pdf",
+    available: true,
+  },
+  // "51_UAE_Import" — stary klucz, zastapiony przez "49_UAE_Import" (zgodny z nr pliku PDF).
+  // Zostawiony dla wstecznej zgodnosci; silnik nie uzywa juz tego klucza.
   "51_UAE_Import": {
     name_pl: "Deklaracja Importowa ZEA",
     name_en: "UAE Import Declaration",
-    // Plik ZEA ma numer 49 (rozjazd numeracji klucz↔plik).
     path: "/templates/global/import/49_UAE_Import_Declaration.pdf",
     available: true,
   },

@@ -54,6 +54,15 @@ const GROUPS = {
   EUR_MED: ["MA","DZ","TN","JO","LB","EG","IL","PS"],
   GSP: ["IN","VN","PH","ID","TH","PK","BD","LK","KH","MM","KE","TZ","GH",
         "SN","NG","ET","MZ","MA","EG","JO","GE","MD","AZ","AM","UZ","KZ"],
+  // Common Transit Convention (poza UE) - tranzyt przez nie = deklaracja T1/T2 w NCTS,
+  // TIR NIE jest wymagany. Zrodlo: EUR-Lex / EC Taxation & Customs Union, 2026.
+  CTC_NON_EU: ["CH","NO","IS","LI","GB","RS","MK","TR","UA","GE","MD","ME"],
+  // Partnerzy, dla ktorych pochodzenie deklaruje sie na fakturze (REX / origin declaration),
+  // a NIE przez EUR.1. Zrodlo: EC Taxation & Customs Union (Proof of origin / REX).
+  REX_FTA: ["CA","JP","VN","GB","KR","SG","NZ"],
+  // Strefa Pan-Euro-Med / umowy nadal oparte o EUR.1 (lub EUR-MED).
+  EUR1_APPLICABLE: ["CH","NO","IS","LI","EG","MA","TN","JO","LB","IL","DZ","PS",
+                    "RS","MK","ME","AL","BA","XK","FO","UA","GE","MD"],
 };
 
 const inGroup = (country, groupName) => GROUPS[groupName]?.includes(country) ?? false;
@@ -80,6 +89,13 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
   const required = new Set();
   const conditional = new Set();
   const warnings = [];
+
+  // Normalizacja krajow tranzytowych (nowe zrodlo prawdy) + wstecznosc
+  const transitCountries = Array.isArray(flags.transitCountries) ? flags.transitCountries : [];
+  const tc = classifyTransit(transitCountries);
+  // transitNonEU: jezeli podano kraje tranzytowe, wyliczamy automatycznie;
+  // w przeciwnym razie honorujemy stary, reczny flag (wstecznosc).
+  const transitNonEU = transitCountries.length > 0 ? tc.transitNonEU : !!flags.transitNonEU;
 
   // ── WARSTWA 1: TRANSPORT ──────────────────────────────────────────
   switch (mode) {
@@ -117,16 +133,36 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
   if (isEU(origin) && !isEU(destination)) {
     required.add("07_EAD");
 
-    // EUR.1 gdy cel ma FTA z UE
-    if (inGroup(destination, "EU_FTA_PARTNERS")) {
+    // Certificate of Origin - zawsze sensowny jako warunkowy przy eksporcie poza UE
+    conditional.add("06_COO");
+
+    // EUR.1 / EUR-MED - tylko dla partnerow, ktorych umowa nadal je przewiduje (strefa PEM itd.)
+    if (inGroup(destination, "EUR1_APPLICABLE")) {
       conditional.add("12_EUR1");
     }
-    // EUR-MED dla krajów śródziemnomorskich
     if (inGroup(destination, "EUR_MED")) {
       conditional.add("102_EUR_MED");
     }
-    // Certificate of Origin gdy cel poza UE
-    conditional.add("06_COO");
+
+    // REX / deklaracja pochodzenia na fakturze - nowoczesne FTA (CETA, Japonia, Wietnam, UK, Korea...)
+    // Tu NIE wystawia sie EUR.1. Informujemy uzytkownika zamiast podsuwac zly dokument.
+    if (inGroup(destination, "REX_FTA")) {
+      warnings.push(
+        "Eksport do " + destination + ": preferencyjne pochodzenie deklaruje sie na fakturze " +
+        "(system REX / deklaracja pochodzenia), a nie przez EUR.1. Do 6000 EUR moze ja wystawic " +
+        "kazdy eksporter; powyzej - tylko zarejestrowany/upowazniony eksporter (REX)."
+      );
+    }
+
+    // Turcja - UNIA CELNA: dla towarow przemyslowych wlasciwy jest A.TR, nie EUR.1.
+    // Szablonu A.TR brak w systemie -> ostrzezenie.
+    if (destination === "TR") {
+      warnings.push(
+        "Eksport do Turcji (unia celna UE-TR): dla towarow przemyslowych w wolnym obrocie wymagane " +
+        "swiadectwo A.TR (status wolnego obrotu, stawka 0%). EUR.1/EUR-MED dotyczy tylko produktow " +
+        "rolnych oraz wegla i stali. UWAGA: szablon A.TR nie jest jeszcze dostepny w systemie."
+      );
+    }
   }
 
   if (inGroup(origin, "UK") && !inGroup(destination, "UK")) {
@@ -228,7 +264,7 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
   }
 
   if (destination === "SA") required.add("50_Saudi_Import");
-  if (destination === "AE") required.add("51_UAE_Import");
+  if (destination === "AE") required.add("49_UAE_Import");
   if (destination === "NG") {
     required.add("53_Nigeria_Import");
     warnings.push("Form M (Nigeria) musi być uzyskany przez importera PRZED wysyłką.");
@@ -272,9 +308,13 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
   if (destination === "GE") required.add("96_Georgia_Import");
   if (destination === "NZ") required.add("43_NewZealand_Import");
 
-  // GSP — Form A wystawiany przez kraj rozwijający się przy eksporcie DO UE
+  // GSP — Form A wystawiany przez kraj rozwijajacy sie przy eksporcie DO UE
   if (!isEU(origin) && isEU(destination) && inGroup(origin, "GSP")) {
     conditional.add("103_Form_A");
+    warnings.push(
+      "GSP: Form A jest stopniowo zastepowany przez oswiadczenie o pochodzeniu w systemie REX. " +
+      "Sprawdz, czy kraj wysylki nadal wystawia Form A, czy juz przeszedl na REX."
+    );
   }
 
   // ── WARSTWA 5: KATEGORIA TOWARU ──────────────────────────────────
@@ -390,8 +430,8 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     warnings.push("T2L wymagany przy morskim transporcie wewnątrz UE — bez niego towar traktowany jako import spoza UE w porcie docelowym.");
   }
 
-  // T2L — EU→EU tranzytem przez non-EU (np. IE→PL przez UK)
-  if (isEU(origin) && isEU(destination) && flags.transitNonEU) {
+  // T2L — EU→EU tranzytem przez non-EU (np. IE→PL przez UK/CH)
+  if (isEU(origin) && isEU(destination) && transitNonEU) {
     conditional.add("104_T2L");
   }
 
@@ -400,10 +440,25 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     conditional.add("65_Fumigation");
   }
 
-  // TIR Carnet i Transit Declaration — transport drogowy przez non-EU
-  if (mode === "road" && flags.transitNonEU) {
-    required.add("117_TIR");
+  // Tranzyt drogowy przez kraj spoza UE
+  if (mode === "road" && transitNonEU) {
+    // Deklaracja tranzytowa T1/T2 (NCTS) wymagana zawsze przy tranzycie poza UE
     required.add("116_Transit");
+    // TIR tylko gdy na trasie jest kraj spoza UE I spoza CTC (np. RU, KZ, Azja Srodkowa,
+    // Bliski Wschod, Balkany poza CTC). Dla krajow CTC (CH, NO, RS, TR, UA, GB...) T1/T2 wystarcza.
+    if (tc.needsTIR) {
+      required.add("117_TIR");
+      warnings.push(
+        "Trasa przez kraj spoza Konwencji o wspolnej procedurze tranzytowej (" +
+        tc.nonCTC.join(", ") + "). Wymagany Karnet TIR (transport drogowy, pojazd zatwierdzony TIR, gwarancja celna). " +
+        "TIR nie obejmuje alkoholu i wyrobow tytoniowych."
+      );
+    } else if (tc.ctc.length > 0) {
+      warnings.push(
+        "Tranzyt przez kraj CTC (" + tc.ctc.join(", ") + "). Wystarcza deklaracja tranzytowa T1/T2 w NCTS " +
+        "z zabezpieczeniem celnym; Karnet TIR nie jest konieczny."
+      );
+    }
   }
 
   // Re-eksport
@@ -472,6 +527,28 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
 // ─── HELPER: czy trasa przekracza granicę celną ───────────────────────────────
 export function isCrossCustoms(origin, destination) {
   return !(isEU(origin) && isEU(destination));
+}
+
+// ─── HELPER: publiczny alias isEU dla formularza ─────────────────────────────
+export const isEUCountry = (country) => isEU(country);
+
+/**
+ * Klasyfikuje kraje tranzytowe.
+ * @param {string[]} transitCountries - kody ISO, np. ["BG","RS"]
+ * @returns {{ eu: string[], nonEU: string[], ctc: string[], nonCTC: string[],
+ *             transitNonEU: boolean, needsTIR: boolean }}
+ */
+export function classifyTransit(transitCountries = []) {
+  const eu = transitCountries.filter(c => isEU(c));
+  const nonEU = transitCountries.filter(c => !isEU(c));
+  const ctc = nonEU.filter(c => inGroup(c, "CTC_NON_EU"));
+  const nonCTC = nonEU.filter(c => !inGroup(c, "CTC_NON_EU"));
+  return {
+    eu, nonEU, ctc, nonCTC,
+    transitNonEU: nonEU.length > 0,
+    // TIR wlasciwy tylko gdy na trasie jest kraj spoza UE i spoza CTC
+    needsTIR: nonCTC.length > 0,
+  };
 }
 
 // ─── HELPER: etykieta grupy dla UI ──────────────────────────────────────────

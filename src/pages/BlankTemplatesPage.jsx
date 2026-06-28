@@ -3,7 +3,8 @@ import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import CountrySelect from '../components/ui/CountrySelect'
 import AlertBox from '../components/ui/AlertBox'
-import { getDocuments, getRouteLabel } from '../utils/documentEngine'
+import { getDocuments, getRouteLabel, classifyTransit } from '../utils/documentEngine'
+import TransitCountryPicker from '../components/TransitCountryPicker'
 
 // ── Opcje formularza ────────────────────────────────────────────────────────────
 
@@ -159,7 +160,7 @@ export default function BlankTemplatesPage() {
   const [destination, setDestination] = useState('US')
   const [mode, setMode] = useState('road')
   const [cargoCategory, setCargoCategory] = useState('general')
-  const [transitNonEU, setTransitNonEU] = useState(false)
+  const [transitCountries, setTransitCountries] = useState([])
   const [flags, setFlags] = useState({
     woodenPackaging: false,
     temporaryExport: false,
@@ -173,10 +174,10 @@ export default function BlankTemplatesPage() {
   useEffect(() => {
     setResult(null)
     setZipState('idle')
-  }, [origin, destination, mode, cargoCategory, flags, transitNonEU])
+  }, [origin, destination, mode, cargoCategory, flags, transitCountries])
 
   function handleGenerate() {
-    setResult(getDocuments(origin, destination, mode, cargoCategory, { ...flags, transitNonEU }))
+    setResult(getDocuments(origin, destination, mode, cargoCategory, { ...flags, transitCountries }))
   }
 
   const downloadableRequired = result
@@ -230,38 +231,26 @@ export default function BlankTemplatesPage() {
           </div>
         </div>
 
-        {/* Tranzyt przez kraje spoza UE — tylko transport drogowy */}
-        {mode === 'road' && (
-          <div>
-            <label className="block text-sm text-gray-700 mb-2">
-              Czy transport przejeżdża przez kraje spoza UE?
-            </label>
-            <div className="flex gap-2">
-              {[
-                { val: true, label: 'TAK' },
-                { val: false, label: 'NIE' },
-              ].map(opt => {
-                const active = transitNonEU === opt.val
-                return (
-                  <button
-                    key={opt.label}
-                    type="button"
-                    onClick={() => setTransitNonEU(opt.val)}
-                    className={`px-5 py-2 rounded-lg text-sm font-medium border transition-colors
-                      ${active
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
-                  >
-                    {opt.label}
-                  </button>
-                )
-              })}
+        {/* Kraje tranzytowe */}
+        <TransitCountryPicker
+          value={transitCountries}
+          onChange={setTransitCountries}
+          excludeCountries={[origin, destination].filter(Boolean)}
+        />
+        {(() => {
+          const tc = classifyTransit(transitCountries)
+          if (!tc.transitNonEU) return null
+          return (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              <p className="font-medium mb-0.5">Wykryto trase poza UE</p>
+              <p>
+                {tc.needsTIR
+                  ? `Na trasie jest kraj spoza CTC (${tc.nonCTC.join(', ')}). System doda Karnet TIR oraz deklaracje tranzytowa T1.`
+                  : `Na trasie jest kraj CTC (${tc.ctc.join(', ')}). System doda deklaracje tranzytowa T1/T2 (NCTS).`}
+              </p>
             </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Przejazd przez np. Ukrainę, Serbię, Turcję wymaga Karnetu TIR i deklaracji tranzytowej.
-            </p>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Środek transportu */}
         <div>
