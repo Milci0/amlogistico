@@ -502,6 +502,19 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     warnings.push("Import do UE wymaga złożenia zgłoszenia celnego (SAD/H1) do wolnego obrotu przez importera lub licencjonowanego agenta celnego w kraju przeznaczenia. Cło i VAT naliczane przy odprawie celnej.");
   }
 
+  // REX / deklaracja pochodzenia przy imporcie do UE z krajow FTA
+  // Importer moze ubiegac sie o preferencyjne stawki celne jezeli
+  // eksporter doslaczy deklaracje pochodzenia na fakturze (REX).
+  if (isEU(destination) && !isEU(origin) && inGroup(origin, "REX_FTA")) {
+    warnings.push(
+      "Import z " + origin + " do UE: importer moze ubiegac sie o preferencyjna " +
+      "stawke celna na podstawie umowy FTA. Eksporter musi dolaczyc deklaracje " +
+      "pochodzenia na fakturze (system REX / statement on origin). " +
+      "Do 6000 EUR moze ja wystawic kazdy eksporter; powyzej — tylko zarejestrowany " +
+      "eksporter REX lub upowazniony eksporter (AE)."
+    );
+  }
+
   // EOG (NO/IS/LI) — poza obszarem celnym UE
   if (inGroup(destination, "EEA")) {
     warnings.push("Norwegia/Islandia/Liechtenstein należą do EOG, ale nie do obszaru celnego UE. EAD wymagana jak przy eksporcie poza UE. Brak ceł dzięki umowie EOG — formalności celne są jednak obowiązkowe.");
