@@ -30,7 +30,7 @@ export default function TransitCountryPicker({ value = [], onChange, excludeCoun
         <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">opcjonalne</span>
       </div>
       <p className="text-xs text-gray-400 mb-3">
-        Dodaj kraje, przez ktore przejezdza transport. System sam rozpozna, czy trasa wychodzi poza UE.
+        Dodaj kraje, przez ktore przejezdza transport.
       </p>
 
       {value.length > 0 && (
