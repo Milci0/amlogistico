@@ -47,9 +47,9 @@ export default function HomePage() {
 
   function handleStart() {
     if (user) {
-      navigate('/blank-templates')
+      navigate('/wybor-sciezki')
     } else {
-      navigate('/login', { state: { from: { pathname: '/blank-templates' } } })
+      navigate('/login', { state: { from: { pathname: '/wybor-sciezki' } } })
     }
   }
 

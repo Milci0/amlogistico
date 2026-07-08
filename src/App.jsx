@@ -6,6 +6,7 @@ import { AuthProvider } from './auth/AuthContext'
 import RequireAuth from './components/auth/RequireAuth'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import PathSelectPage from './pages/PathSelectPage'
 import AppShell from './components/layout/AppShell'
 import HomePage from './pages/HomePage'
 import NewDocumentPage from './pages/NewDocumentPage'
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
+      { path: '/wybor-sciezki', element: <PathSelectPage /> },
       { path: '/calibrate', element: <CalibratePage /> },
 
       {

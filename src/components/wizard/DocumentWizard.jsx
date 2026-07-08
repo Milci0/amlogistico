@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { COUNTRIES } from '../../data/mockData'
 import CountrySelect from '../ui/CountrySelect'
+import CitySelect from '../ui/CitySelect'
 import { preloadHtml2Pdf } from '../../generators/generatePdf'
 import { getDocsList, generateDocument } from '../../generators/documents'
 
@@ -179,7 +180,7 @@ function Step1({ data, setData, onNext }) {
             <CountrySelect value={data.fromCountry} onChange={v => setData(d => ({ ...d, fromCountry: v }))} />
           </Field>
           <Field label="Miasto / port">
-            <input className={cls.input} placeholder="np. Warszawa" value={data.fromCity} onChange={e => setData(d => ({ ...d, fromCity: e.target.value }))} />
+            <CitySelect country={data.fromCountry} value={data.fromCity} onChange={v => setData(d => ({ ...d, fromCity: v }))} placeholder="np. Warszawa" />
           </Field>
         </div>
       </div>
@@ -191,7 +192,7 @@ function Step1({ data, setData, onNext }) {
             <CountrySelect value={data.toCountry} onChange={v => setData(d => ({ ...d, toCountry: v }))} />
           </Field>
           <Field label="Miasto / port">
-            <input className={cls.input} placeholder="np. Berlin" value={data.toCity} onChange={e => setData(d => ({ ...d, toCity: e.target.value }))} />
+            <CitySelect country={data.toCountry} value={data.toCity} onChange={v => setData(d => ({ ...d, toCity: v }))} placeholder="np. Berlin" />
           </Field>
         </div>
       </div>
