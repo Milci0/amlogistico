@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { Package, UtensilsCrossed, FlaskConical, PawPrint, Boxes, Info, ShieldCheck, ArrowRight } from 'lucide-react'
 import { COUNTRIES } from '../../data/mockData'
 import CountrySelect from '../ui/CountrySelect'
 import CitySelect from '../ui/CitySelect'
@@ -7,10 +9,56 @@ import { getDocsList, generateDocument } from '../../generators/documents'
 
 const STEPS = ['Trasa', 'Towar', 'Strony', 'Dokumenty']
 const CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF']
-const INCOTERMS_OPTIONS = ['', 'EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP']
 const CONTAINER_TYPES = ['', '20ft', '40ft', '40ft HC', 'LCL']
 const VEHICLE_TYPES = ['Plandeka', 'Chłodnia', 'Mroźnia']
 const EU_CODES = ['PL','DE','FR','NL','BE','CZ','SK','AT','IT','ES','PT','SE','DK','FI','HU','RO','BG','HR','GR','EE','LV','LT']
+
+const CARGO_TYPES = [
+  {
+    id: 'general',
+    label: 'Ogólny',
+    icon: Package,
+    hint: 'Ładunek standardowy — zwykle wystarczą podstawowe dokumenty transportowe (CMR/B&L, faktura, packing list). Brak dodatkowych certyfikatów.',
+  },
+  {
+    id: 'food',
+    label: 'Żywność',
+    icon: UtensilsCrossed,
+    hint: 'Może być wymagane świadectwo fitosanitarne (towary roślinne) lub certyfikat zdrowia / HACCP — zależnie od towaru i kraju docelowego.',
+  },
+  {
+    id: 'chemicals',
+    label: 'Chemia / ADR',
+    icon: FlaskConical,
+    hint: 'Wymagana karta charakterystyki substancji niebezpiecznej (MSDS/SDS) oraz dokumenty ADR — instrukcja pisemna, zaświadczenie ADR kierowcy.',
+  },
+  {
+    id: 'animal',
+    label: 'Pochodzenia zwierzęcego',
+    icon: PawPrint,
+    hint: 'Wymagane świadectwo weterynaryjne (health certificate) oraz zgłoszenie w systemie TRACES przy imporcie/eksporcie z/do UE.',
+  },
+  {
+    id: 'other',
+    label: 'Inne',
+    icon: Boxes,
+    hint: 'Rodzaj dodatkowych dokumentów zależy od konkretnego towaru — warto skonsultować się z agencją celną.',
+  },
+]
+
+const INCOTERMS = [
+  { code: 'EXW', label: 'Ex Works', desc: 'Sprzedający udostępnia towar w swoim zakładzie — kupujący organizuje cały transport i ponosi ryzyko od tego momentu.' },
+  { code: 'FCA', label: 'Free Carrier', desc: 'Sprzedający dostarcza towar do przewoźnika wskazanego przez kupującego — ryzyko przechodzi po załadunku.' },
+  { code: 'FAS', label: 'Free Alongside Ship', desc: 'Sprzedający dostarcza towar wzdłuż burty statku w porcie załadunku. Tylko transport morski.' },
+  { code: 'FOB', label: 'Free On Board', desc: 'Sprzedający dostarcza towar na pokład statku — ryzyko przechodzi po przejściu burty statku. Tylko transport morski.' },
+  { code: 'CFR', label: 'Cost and Freight', desc: 'Sprzedający opłaca fracht do portu przeznaczenia — ryzyko przechodzi już po załadunku na statek. Tylko transport morski.' },
+  { code: 'CIF', label: 'Cost, Insurance and Freight', desc: 'Jak CFR, dodatkowo sprzedający opłaca ubezpieczenie towaru. Tylko transport morski.' },
+  { code: 'CPT', label: 'Carriage Paid To', desc: 'Sprzedający opłaca przewóz do miejsca przeznaczenia — ryzyko przechodzi po przekazaniu towaru pierwszemu przewoźnikowi.' },
+  { code: 'CIP', label: 'Carriage and Insurance Paid To', desc: 'Jak CPT, dodatkowo sprzedający opłaca ubezpieczenie towaru na czas całego transportu.' },
+  { code: 'DAP', label: 'Delivered At Place', desc: 'Sprzedający dostarcza towar gotowy do rozładunku w uzgodnionym miejscu przeznaczenia.' },
+  { code: 'DPU', label: 'Delivered at Place Unloaded', desc: 'Jak DAP, ale sprzedający odpowiada również za rozładunek towaru w miejscu przeznaczenia.' },
+  { code: 'DDP', label: 'Delivered Duty Paid', desc: 'Sprzedający dostarcza towar odprawiony celnie, z opłaconym cłem i podatkami, gotowy do rozładunku.' },
+]
 
 const cls = {
   input: 'w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-colors',
@@ -211,6 +259,8 @@ function Step1({ data, setData, onNext }) {
 function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, transport, onNext, onBack }) {
   const needsTemp = road.vehicleType === 'Chłodnia' || road.vehicleType === 'Mroźnia'
   const canNext = !!data.cargoName.trim()
+  const selectedCargoType = CARGO_TYPES.find(ct => ct.id === data.cargoType)
+  const selectedIncoterm = INCOTERMS.find(it => it.code === terms.incoterms)
 
   return (
     <div>
@@ -224,6 +274,34 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
         <Field label="Kod celny (HS/CN)" hint="8-cyfrowy kod CN towaru">
           <input className={cls.input} placeholder="np. 8542.31" value={data.hsCode} onChange={e => setData(d => ({ ...d, hsCode: e.target.value }))} />
         </Field>
+      </div>
+
+      <div className="mb-4">
+        <p className="block text-sm text-gray-700 mb-2">Rodzaj ładunku</p>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          {CARGO_TYPES.map(ct => {
+            const Icon = ct.icon
+            const active = data.cargoType === ct.id
+            return (
+              <button
+                key={ct.id}
+                type="button"
+                onClick={() => setData(d => ({ ...d, cargoType: d.cargoType === ct.id ? '' : ct.id }))}
+                className={`flex flex-col items-center gap-1.5 p-3 border-2 rounded-xl text-center transition-all
+                  ${active ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+              >
+                <Icon className={active ? 'w-5 h-5 text-blue-500' : 'w-5 h-5 text-gray-400'} strokeWidth={1.5} />
+                <span className={`text-xs font-medium ${active ? 'text-blue-700' : 'text-gray-700'}`}>{ct.label}</span>
+              </button>
+            )
+          })}
+        </div>
+        {selectedCargoType && (
+          <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-blue-50 border border-blue-100 rounded-lg">
+            <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" strokeWidth={1.5} />
+            <p className="text-xs text-blue-700">{selectedCargoType.hint}</p>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
@@ -267,12 +345,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
       {/* ── Warunki przewozu (oba typy) ─────────────────────────── */}
       <div className="border border-gray-200 rounded-xl p-5 mb-4">
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Warunki przewozu</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-          <Field label="Incoterms">
-            <select className={cls.input} value={terms.incoterms} onChange={e => setTerms(t => ({ ...t, incoterms: e.target.value }))}>
-              {INCOTERMS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt || '— wybierz —'}</option>)}
-            </select>
-          </Field>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Field label="Koszt frachtu">
             <input type="number" className={cls.input} placeholder="850" value={terms.freightPrice} onChange={e => setTerms(t => ({ ...t, freightPrice: e.target.value }))} />
           </Field>
@@ -281,8 +354,6 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
               {CURRENCIES.map(c => <option key={c}>{c}</option>)}
             </select>
           </Field>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Termin płatności (dni)">
             <input type="number" className={cls.input} placeholder="30" value={terms.paymentDays} onChange={e => setTerms(t => ({ ...t, paymentDays: e.target.value }))} />
           </Field>
@@ -421,6 +492,37 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
         </div>
       )}
 
+      {/* ── Incoterms — na końcu, wymaga już pełnego obrazu przesyłki ───── */}
+      <div className="border border-gray-200 rounded-xl p-5 mb-4">
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Incoterms</p>
+        <p className="text-xs text-gray-400 mb-4">Reguła handlowa określająca podział kosztów i ryzyka między nadawcą a odbiorcą</p>
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          {INCOTERMS.map(it => {
+            const active = terms.incoterms === it.code
+            return (
+              <button
+                key={it.code}
+                type="button"
+                onClick={() => setTerms(t => ({ ...t, incoterms: t.incoterms === it.code ? '' : it.code }))}
+                className={`px-3 py-2.5 rounded-lg text-sm font-semibold border transition-colors
+                  ${active ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
+              >
+                {it.code}
+              </button>
+            )
+          })}
+        </div>
+        {selectedIncoterm && (
+          <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-blue-50 border border-blue-100 rounded-lg">
+            <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" strokeWidth={1.5} />
+            <div>
+              <p className="text-xs font-semibold text-blue-700 mb-0.5">{selectedIncoterm.code} — {selectedIncoterm.label}</p>
+              <p className="text-xs text-blue-700">{selectedIncoterm.desc}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
       <NextButton onClick={onNext} disabled={!canNext} />
     </div>
   )
@@ -439,8 +541,8 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
         <Field label="Nazwa firmy">
           <input className={cls.input} placeholder="np. ABC Sp. z o.o." value={data.name} onChange={e => upd('name', e.target.value)} />
         </Field>
-        <Field label="NIP / VAT">
-          <input className={cls.input} placeholder="PL1234567890" value={data.vat} onChange={e => upd('vat', e.target.value)} />
+        <Field label="NIP / VAT lub Tax ID" hint="Krajowy numer identyfikacji podatkowej">
+          <input className={cls.input} placeholder="np. PL1234567890" value={data.vat} onChange={e => upd('vat', e.target.value)} />
         </Field>
       </div>
       <div className="mb-3">
@@ -510,45 +612,69 @@ function Step3({ data, setData, onNext, onBack }) {
 
 // ── Step 4: Dokumenty ──────────────────────────────────────────────────────────
 
-function DocDownloadButton({ status, onClick }) {
+function DocStatusBadge({ status }) {
   if (status === 'loading') {
     return (
-      <button disabled className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed">
-        <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-        </svg>
-        Generuję…
-      </button>
+      <svg className="w-4 h-4 animate-spin text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+      </svg>
     )
   }
   if (status === 'done') {
     return (
-      <button onClick={onClick} className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors">
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-green-600">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
         </svg>
-        Pobrano
-      </button>
+        Gotowe
+      </span>
     )
   }
   if (status === 'error') {
     return (
-      <button onClick={onClick} className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors">
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-red-600">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
         </svg>
-        Ponów
-      </button>
+        Błąd
+      </span>
     )
   }
+  return null
+}
+
+function DocCard({ doc, checked, locked, status, onToggle }) {
   return (
-    <button onClick={onClick} className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors">
-      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-      </svg>
-      Pobierz PDF
-    </button>
+    <div
+      onClick={locked ? undefined : onToggle}
+      className={`flex items-center gap-3 px-4 py-3.5 border rounded-xl transition-colors
+        ${checked ? 'border-blue-200 bg-blue-50/50' : 'border-gray-200 bg-white'}
+        ${locked ? '' : 'cursor-pointer hover:border-blue-300'}`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={locked}
+        readOnly={locked}
+        onChange={locked ? undefined : onToggle}
+        onClick={e => e.stopPropagation()}
+        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-400 shrink-0 disabled:opacity-70"
+      />
+      <DocIcon type={doc.icon} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-sm font-medium text-gray-900">{doc.name}</p>
+          {locked && (
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">
+              Wymagany
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-gray-400 mt-0.5">{doc.desc}</p>
+      </div>
+      <DocStatusBadge status={status} />
+    </div>
   )
 }
 
@@ -561,9 +687,13 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
   const [statuses, setStatuses] = useState(() =>
     Object.fromEntries(docsList.map(d => [d.key, 'idle']))
   )
+  const [selected, setSelected] = useState(() =>
+    Object.fromEntries(docsList.map(d => [d.key, !!d.required]))
+  )
 
   const isAnyLoading = Object.values(statuses).some(s => s === 'loading')
   const doneCount = Object.values(statuses).filter(s => s === 'done').length
+  const selectedDocs = docsList.filter(d => selected[d.key])
 
   const summary = [
     ['Typ transportu', routeData.transport === 'road' ? 'Drogowy (TIR)' : 'Morski (Kontener)'],
@@ -571,8 +701,10 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
     ['Towar', cargoData.cargoName || '—'],
     ['Waga', cargoData.weight ? `${cargoData.weight} kg` : '—'],
     ['Wartość', cargoData.value ? `${cargoData.value} ${cargoData.currency}` : '—'],
-    ['Cel. wymagana odprawa', fromCountry && toCountry ? (bothEU ? 'Nie — ruch wewnątrz UE' : 'Tak') : '—'],
     ...(termsData.incoterms ? [['Incoterms', termsData.incoterms]] : []),
+    ['Cel. wymagana odprawa', fromCountry && toCountry ? (bothEU ? 'Nie — ruch wewnątrz UE' : 'Tak') : '—'],
+    ...(partiesData.sender.name ? [['Nadawca', partiesData.sender.name]] : []),
+    ...(partiesData.receiver.name ? [['Odbiorca', partiesData.receiver.name]] : []),
     ...(partiesData.carrier.name ? [['Przewoźnik', partiesData.carrier.name]] : []),
   ]
 
@@ -587,6 +719,7 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
     cargo: {
       name: cargoData.cargoName,
       hsCode: cargoData.hsCode,
+      cargoType: cargoData.cargoType,
       weight: cargoData.weight,
       weightNet: cargoData.weightNet,
       volume: cargoData.volume,
@@ -647,15 +780,8 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
     console.log('[carrier sanity] CMR / Zlecenie / POD używają: carrier =', c)
   }
 
-  async function downloadOne(doc) {
-    setStatuses(s => ({ ...s, [doc.key]: 'loading' }))
-    try {
-      await generateDocument(doc, formData)
-      setStatuses(s => ({ ...s, [doc.key]: 'done' }))
-    } catch (err) {
-      console.error(err)
-      setStatuses(s => ({ ...s, [doc.key]: 'error' }))
-    }
+  function toggleDoc(key) {
+    setSelected(s => ({ ...s, [key]: !s[key] }))
   }
 
   async function generateBatch(docs) {
@@ -692,24 +818,31 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
         ))}
       </div>
 
+      <Link
+        to="/insurance"
+        className="flex items-center gap-4 p-5 mb-6 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 hover:border-emerald-300 transition-colors group"
+      >
+        <div className="shrink-0 w-11 h-11 rounded-full bg-emerald-100 flex items-center justify-center">
+          <ShieldCheck className="w-5 h-5 text-emerald-600" strokeWidth={1.75} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-emerald-900">Ubezpiecz swoją przesyłkę</p>
+          <p className="text-xs text-emerald-700 mt-0.5">Chroń towar na czas transportu przed uszkodzeniem, kradzieżą i zagubieniem.</p>
+        </div>
+        <ArrowRight className="w-4 h-4 text-emerald-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+      </Link>
+
       <div className="flex items-center justify-between mb-3">
         <SectionLabel>Dokumenty</SectionLabel>
         {doneCount > 0 && (
-          <span className="text-xs text-green-600 font-medium">{doneCount}/{docsList.length} pobrano</span>
+          <span className="text-xs text-green-600 font-medium">{doneCount}/{selectedDocs.length} wygenerowano</span>
         )}
       </div>
 
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Wymagane</p>
       <div className="space-y-2 mb-4">
         {requiredDocs.map(doc => (
-          <div key={doc.key} className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl bg-white">
-            <DocIcon type={doc.icon} />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900">{doc.name}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{doc.desc}</p>
-            </div>
-            <DocDownloadButton status={statuses[doc.key]} onClick={() => downloadOne(doc)} />
-          </div>
+          <DocCard key={doc.key} doc={doc} checked locked status={statuses[doc.key]} />
         ))}
       </div>
 
@@ -718,49 +851,36 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Opcjonalne</p>
           <div className="space-y-2 mb-6">
             {optionalDocs.map(doc => (
-              <div key={doc.key} className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl bg-white">
-                <DocIcon type={doc.icon} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{doc.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{doc.desc}</p>
-                </div>
-                <DocDownloadButton status={statuses[doc.key]} onClick={() => downloadOne(doc)} />
-              </div>
+              <DocCard
+                key={doc.key}
+                doc={doc}
+                checked={!!selected[doc.key]}
+                status={statuses[doc.key]}
+                onToggle={() => toggleDoc(doc.key)}
+              />
             ))}
           </div>
         </>
       )}
       {optionalDocs.length === 0 && <div className="mb-6" />}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button
-          onClick={() => generateBatch(requiredDocs)}
-          disabled={isAnyLoading}
-          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
-        >
-          {isAnyLoading ? (
-            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-            </svg>
-          ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          )}
-          Generuj wymagane
-        </button>
-        <button
-          onClick={() => generateBatch(docsList)}
-          disabled={isAnyLoading}
-          className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-900 disabled:bg-gray-500 text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
-        >
+      <button
+        onClick={() => generateBatch(selectedDocs)}
+        disabled={isAnyLoading || selectedDocs.length === 0}
+        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
+      >
+        {isAnyLoading ? (
+          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          </svg>
+        ) : (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
-          Generuj wszystkie
-        </button>
-      </div>
+        )}
+        Generuj dokumenty
+      </button>
     </div>
   )
 }
@@ -768,7 +888,7 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
 // ── Root component ─────────────────────────────────────────────────────────────
 
 const initRoute  = { transport: 'road', fromCountry: 'PL', fromCity: '', toCountry: 'DE', toCity: '', loadDate: '', multimodal: false }
-const initCargo  = { cargoName: '', hsCode: '', weight: '', weightNet: '', volume: '', packages: '', value: '', currency: 'EUR', notes: '' }
+const initCargo  = { cargoName: '', hsCode: '', cargoType: '', weight: '', weightNet: '', volume: '', packages: '', value: '', currency: 'EUR', notes: '' }
 const initParty  = { name: '', vat: '', address: '', contact: '', phone: '', iban: '', swift: '', bank: '' }
 const initRoad   = { vehicleType: '', tempFrom: '', tempTo: '', adr: false, adrClass: '', vehicleReg: '' }
 const initSea    = { containerType: '', containerNo: '', sealNo: '', marksNos: '', vessel: '', voyageNo: '', bookingNo: '', freightTerms: 'Prepaid', eta: '', flag: '' }
