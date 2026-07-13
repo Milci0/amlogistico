@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
+import TemplateSearch from './TemplateSearch'
 
 function initials(user) {
   const src = (user?.companyName || user?.email || 'OK').trim()
@@ -53,6 +54,11 @@ export default function Topbar({ onOpenSidebar }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
+
+      {/* Wyszukiwarka szablonów — wyśrodkowana między logo (Sidebar) a dzwonkiem/avatarem */}
+      <div className="hidden sm:flex flex-1 justify-center px-2">
+        <TemplateSearch />
+      </div>
 
       {/* Niezalogowany */}
       {!loading && !user && (
