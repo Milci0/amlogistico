@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import TemplateSearch from './TemplateSearch'
@@ -25,6 +25,8 @@ export default function Topbar({ onOpenSidebar }) {
   const { user, loading, logout } = useAuth()
   const { dark, toggle } = useTheme()
   const navigate = useNavigate()
+  const location = useLocation()
+  const isDocumentationTab = location.pathname === '/history'
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
 
@@ -55,10 +57,13 @@ export default function Topbar({ onOpenSidebar }) {
         </svg>
       </button>
 
-      {/* Wyszukiwarka szablonów — wyśrodkowana między logo (Sidebar) a dzwonkiem/avatarem */}
-      <div className="hidden sm:flex flex-1 justify-center px-2">
-        <TemplateSearch />
-      </div>
+      {/* Wyszukiwarka szablonów — tylko na zakładce "Dokumentacja" (/history),
+          wyśrodkowana między logo (Sidebar) a dzwonkiem/avatarem */}
+      {isDocumentationTab && (
+        <div className="hidden sm:flex flex-1 justify-center px-2">
+          <TemplateSearch />
+        </div>
+      )}
 
       {/* Niezalogowany */}
       {!loading && !user && (
