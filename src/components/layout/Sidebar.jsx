@@ -1,6 +1,7 @@
 import { NavLink, Link } from 'react-router-dom'
 import { MENU_GROUPS, MENU_BOTTOM } from '../../data/mockData'
 import { useNews } from '../../context/NewsContext'
+import useDocuments from '../../hooks/useDocuments'
 
 const ICONS = {
   home: (
@@ -130,6 +131,9 @@ function MenuLink({ item, onClose, dot }) {
 
 export default function Sidebar({ onClose }) {
   const { hasUnread } = useNews()
+  const { documents } = useDocuments()
+  const draftCount = documents.filter(d => d.status === 'draft').length
+
   return (
     <aside className="flex flex-col h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700">
 
@@ -164,9 +168,15 @@ export default function Sidebar({ onClose }) {
               {group.title}
             </p>
             <div className="space-y-0.5">
-              {group.items.map(item => (
-                <MenuLink key={item.path} item={item} onClose={onClose} dot={item.path === '/news' && hasUnread} />
-              ))}
+              {group.items.map(item => {
+                const isHistory = item.path === '/history'
+                const resolvedItem = isHistory
+                  ? { ...item, badge: draftCount > 0 ? String(draftCount) : undefined }
+                  : item
+                return (
+                  <MenuLink key={item.path} item={resolvedItem} onClose={onClose} dot={item.path === '/news' && hasUnread} />
+                )
+              })}
             </div>
           </div>
         ))}

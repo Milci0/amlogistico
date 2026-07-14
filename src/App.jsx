@@ -57,7 +57,6 @@ const router = createBrowserRouter([
               { path: 'subscription', element: <SubscriptionPage /> },
               { path: 'settings', element: <SettingsPage /> },
               { path: 'profile', element: <PlaceholderPage title="Profil" description="Twoje dane konta i ustawienia profilu." /> },
-              { path: 'drafts', element: <PlaceholderPage title="Wersje robocze" description="Niedokończone dokumenty i zapisane szkice." /> },
               { path: 'insurance', element: <PlaceholderPage title="Ubezpieczenia" description="Polisy i ubezpieczenia ładunków." /> },
               { path: 'routes', element: <PlaceholderPage title="Trasy handlowe" description="Planowanie i analiza tras transportowych." /> },
               { path: 'news', element: <NewsPage /> },

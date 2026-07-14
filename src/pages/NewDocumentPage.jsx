@@ -2,6 +2,8 @@ import { Helmet } from 'react-helmet-async'
 import DocumentWizard from '../components/wizard/DocumentWizard'
 
 export default function NewDocumentPage() {
+  // TODO: gdy trasa zawiera ?draftId=..., wczytać dane draftu z documentsRepository
+  // (src/services/documentsRepository.js) i wstępnie wypełnić DocumentWizard.
   return (
     <div className="max-w-2xl mx-auto">
       <Helmet>
