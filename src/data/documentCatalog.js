@@ -734,4 +734,36 @@ export const documentCatalog = {
     path: "/templates/global/special/24_Dual_Use_Licencja_Eksportowa.pdf",
     available: true,
   },
+
+  // ─── DODATKOWE (odblokowane po ustaleniu kluczy) ──────────────────
+  "25_CITES_Permit": {
+    name_pl: "Zezwolenie CITES (Eksport/Import/Reeksport)",
+    name_en: "CITES Permit (Export/Import/Re-export)",
+    path: "/templates/global/cargo/25_CITES_Zezwolenie.pdf",
+    available: true,
+  },
+  "61_LC": {
+    name_pl: "Akredytywa (Letter of Credit)",
+    name_en: "Letter of Credit (L/C)",
+    path: "/templates/global/special/61_Letter_of_Credit_LC.pdf",
+    available: true,
+  },
+  "62_BankGuarantee": {
+    name_pl: "Gwarancja Bankowa",
+    name_en: "Bank Guarantee",
+    path: "/templates/global/special/62_Bank_Guarantee.pdf",
+    available: true,
+  },
+  "66_WeightCertificate": {
+    name_pl: "Świadectwo Wagi",
+    name_en: "Weight Certificate",
+    path: "/templates/global/cargo/66_Weight_Certificate.pdf",
+    available: true,
+  },
+  "67_QualityInspection": {
+    name_pl: "Świadectwo Kontroli Jakości",
+    name_en: "Quality Inspection Certificate",
+    path: "/templates/global/cargo/67_Quality_Inspection_Certificate.pdf",
+    available: true,
+  },
 };
