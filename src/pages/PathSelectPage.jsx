@@ -62,6 +62,7 @@ export default function PathSelectPage() {
   const { user, logout } = useAuth()
 
   function handleSelect(path) {
+    // Nawigacja w tej samej karcie przeglądarki (bez otwierania nowej karty).
     navigate(`/new-document?path=${path}`)
   }
 

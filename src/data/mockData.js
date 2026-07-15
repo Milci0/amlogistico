@@ -250,7 +250,6 @@ export const MENU_GROUPS = [
   {
     title: 'Narzędzia',
     items: [
-      { label: 'Gotowe formularze', path: '/new-document', icon: 'forms', badge: 'Beta' },
       { label: 'Ubezpieczenia', path: '/insurance', icon: 'shield' },
       { label: 'Trasy handlowe', path: '/routes', icon: 'map' },
       { label: 'Puste szablony', path: '/blank-templates', icon: 'template' },

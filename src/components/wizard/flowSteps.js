@@ -12,42 +12,61 @@
 
 const nonEmpty = (v) => !!(v && String(v).trim())
 
+// Walidatory wspólnych kroków — JEDNA definicja dzielona między ścieżki, żeby
+// reguły „Trasa" / „Towar" / „Strony" nie rozjechały się między flow.
+const validateRoute = (s) =>
+  nonEmpty(s.route.transport) &&
+  nonEmpty(s.route.fromCountry) &&
+  nonEmpty(s.route.fromCity) &&
+  nonEmpty(s.route.toCountry) &&
+  nonEmpty(s.route.toCity) &&
+  nonEmpty(s.route.loadDate)
+
+const validateCargo = (s) => nonEmpty(s.cargo.cargoName)
+
+const validateParties = (s) =>
+  nonEmpty(s.parties.sender.name) &&
+  nonEmpty(s.parties.receiver.name) &&
+  nonEmpty(s.parties.carrier.name)
+
 export const FLOWS = {
   have_transport: {
     flowType: 'have_transport',
     label: 'Mam już transport',
     steps: [
-      {
-        key: 'route',
-        label: 'Trasa',
-        validate: (s) =>
-          nonEmpty(s.route.transport) &&
-          nonEmpty(s.route.fromCountry) &&
-          nonEmpty(s.route.fromCity) &&
-          nonEmpty(s.route.toCountry) &&
-          nonEmpty(s.route.toCity) &&
-          nonEmpty(s.route.loadDate),
-      },
-      {
-        key: 'cargo',
-        label: 'Towar',
-        validate: (s) => nonEmpty(s.cargo.cargoName),
-      },
-      {
-        key: 'parties',
-        label: 'Strony',
-        validate: (s) =>
-          nonEmpty(s.parties.sender.name) &&
-          nonEmpty(s.parties.receiver.name) &&
-          nonEmpty(s.parties.carrier.name),
-      },
-      {
-        key: 'docs',
-        label: 'Dokumenty',
-        validate: () => true,
-      },
+      { key: 'route', label: 'Trasa', validate: validateRoute },
+      { key: 'cargo', label: 'Towar', validate: validateCargo },
+      { key: 'parties', label: 'Strony', validate: validateParties },
+      { key: 'docs', label: 'Dokumenty', validate: () => true },
     ],
   },
+  find_transport: {
+    flowType: 'find_transport',
+    label: 'Szukam transportu',
+    steps: [
+      { key: 'route', label: 'Trasa', validate: validateRoute },
+      { key: 'cargo', label: 'Towar', validate: validateCargo },
+      { key: 'parties', label: 'Strony', validate: validateParties },
+      { key: 'forwarders', label: 'Spedytorzy', validate: () => true },
+      { key: 'quote', label: 'Wycena', validate: () => true },
+      { key: 'docs', label: 'Dokumenty', validate: () => true },
+    ],
+  },
+  // Nie jest ścieżką kreatora (nie ma stron w wizardzie) — istnieje wyłącznie po to,
+  // żeby DocumentCard/getFlowLabel pokazywały poprawną etykietę dla wpisów historii
+  // pochodzących z /blank-templates (patrz kind:'blank' w documentSetsRepo).
+  blank_templates: {
+    flowType: 'blank_templates',
+    label: 'Puste szablony',
+    steps: [{ key: 'result', label: 'Wynik', validate: () => true }],
+  },
+}
+
+// Mapowanie parametru ?path= na flowType — trzymane obok rejestru, żeby nie
+// dublować literałów 'A'/'B' w warstwie stron.
+export const PATH_TO_FLOW = {
+  A: 'have_transport',
+  B: 'find_transport',
 }
 
 export const DEFAULT_FLOW_TYPE = 'have_transport'

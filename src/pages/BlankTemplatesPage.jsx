@@ -1,19 +1,15 @@
 import { useState, useEffect } from 'react'
-import JSZip from 'jszip'
-import { saveAs } from 'file-saver'
 import CountrySelect from '../components/ui/CountrySelect'
 import AlertBox from '../components/ui/AlertBox'
-import { getDocuments, getRouteLabel, classifyTransit } from '../utils/documentEngine'
-import TransitCountryPicker from '../components/TransitCountryPicker'
+import { getDocuments, getRouteLabel } from '../utils/documentEngine'
+import { downloadBlankFile, downloadBlankZip } from '../utils/blankDocuments'
+import { completeSet } from '../services/documentSetsRepo'
 
 // ── Opcje formularza ────────────────────────────────────────────────────────────
 
 const TRANSPORT_MODES = [
   { id: 'road', label: 'Drogowy', sub: 'TIR, ciężarówka' },
   { id: 'sea', label: 'Morski', sub: 'Kontener FCL/LCL' },
-  { id: 'air', label: 'Lotniczy', sub: 'AWB' },
-  { id: 'rail', label: 'Kolejowy', sub: 'CIM' },
-  { id: 'multimodal', label: 'Multimodalny', sub: 'Kilka środków' },
 ]
 
 // value = klucz silnika (ang.), label = polska nazwa
@@ -40,14 +36,14 @@ const FLAG_OPTIONS = [
 ]
 
 const cls = {
-  input: 'w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-colors',
+  input: 'w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 transition-colors',
 }
 
 // ── Ikony ───────────────────────────────────────────────────────────────────────
 
 function PdfIcon() {
   return (
-    <svg className="w-5 h-5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
@@ -81,27 +77,6 @@ function ModeIcon({ id }) {
         <path d="M12 2H9" />
       </>
     ),
-    air: (
-      <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
-    ),
-    rail: (
-      <>
-        <rect width="16" height="16" x="4" y="3" rx="2" />
-        <path d="M4 11h16" />
-        <path d="M12 3v8" />
-        <path d="m8 19-2 3" />
-        <path d="m18 22-2-3" />
-        <path d="M8 15h.01" />
-        <path d="M16 15h.01" />
-      </>
-    ),
-    multimodal: (
-      <>
-        <circle cx="6" cy="19" r="3" />
-        <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" />
-        <circle cx="18" cy="5" r="3" />
-      </>
-    ),
   }
   return (
     <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5}
@@ -109,16 +84,6 @@ function ModeIcon({ id }) {
       {paths[id]}
     </svg>
   )
-}
-
-// Wymusza pobranie pliku zamiast otwierania go w nowej karcie.
-function downloadFile(path) {
-  const a = document.createElement('a')
-  a.href = path
-  a.download = path.split('/').pop() // oryginalna nazwa pliku PDF
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
 }
 
 // ── Wiersz dokumentu ──────────────────────────────────────────────────────────
@@ -135,8 +100,8 @@ function DocRow({ doc }) {
       </div>
       {doc.available ? (
         <button
-          onClick={() => downloadFile(doc.path)}
-          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
+          onClick={() => downloadBlankFile(doc.path, doc.name_pl)}
+          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
         >
           <DownloadIcon />
           Pobierz
@@ -160,7 +125,6 @@ export default function BlankTemplatesPage() {
   const [destination, setDestination] = useState('US')
   const [mode, setMode] = useState('road')
   const [cargoCategory, setCargoCategory] = useState('general')
-  const [transitCountries, setTransitCountries] = useState([])
   const [flags, setFlags] = useState({
     woodenPackaging: false,
     temporaryExport: false,
@@ -174,10 +138,49 @@ export default function BlankTemplatesPage() {
   useEffect(() => {
     setResult(null)
     setZipState('idle')
-  }, [origin, destination, mode, cargoCategory, flags, transitCountries])
+  }, [origin, destination, mode, cargoCategory, flags])
+
+  // Zapis do historii dokumentów — jeden wpis (kind:'blank') na każde kliknięcie
+  // „Generuj dokumenty", ten sam mechanizm co completeSet w kroku 4 kreatora.
+  // Best-effort: błąd zapisu (np. brak miejsca) nie może zablokować pokazania wyników.
+  function saveToHistory(res) {
+    const downloadable = [...res.required, ...res.conditional].filter(d => d.available && d.path)
+    if (downloadable.length === 0) return
+    try {
+      completeSet({
+        kind: 'blank',
+        flowType: 'blank_templates',
+        totalSteps: 1,
+        formData: { origin, destination, mode, cargoCategory, flags },
+        engineResult: {
+          docs: downloadable.map(d => ({
+            key: d.id,
+            name: d.name_pl,
+            desc: d.name_en,
+            icon: 'doc',
+            path: d.path,
+            required: res.required.some(r => r.id === d.id),
+          })),
+          warnings: res.warnings,
+        },
+        selectedDocs: downloadable.map(d => d.id),
+        meta: {
+          routeFrom: origin,
+          routeTo: destination,
+          transportMode: mode,
+          cargoDescription: CARGO_CATEGORIES.find(c => c.value === cargoCategory)?.label || cargoCategory,
+          transportDate: null,
+        },
+      })
+    } catch (err) {
+      console.error('Błąd zapisu pustych szablonów w historii:', err)
+    }
+  }
 
   function handleGenerate() {
-    setResult(getDocuments(origin, destination, mode, cargoCategory, { ...flags, transitCountries }))
+    const res = getDocuments(origin, destination, mode, cargoCategory, flags)
+    setResult(res)
+    saveToHistory(res)
   }
 
   const downloadableRequired = result
@@ -188,19 +191,10 @@ export default function BlankTemplatesPage() {
     if (downloadableRequired.length === 0) return
     setZipState('loading')
     try {
-      const zip = new JSZip()
-      await Promise.all(
-        downloadableRequired.map(async doc => {
-          const res = await fetch(doc.path)
-          if (!res.ok) throw new Error(`Nie udało się pobrać ${doc.path} (${res.status})`)
-          const blob = await res.blob()
-          // nazwa wewnątrz ZIP = oryginalna nazwa pliku PDF
-          const filename = doc.path.split('/').pop()
-          zip.file(filename, blob)
-        }),
+      await downloadBlankZip(
+        downloadableRequired.map(d => ({ path: d.path, name: d.name_pl })),
+        `dokumenty_${origin}_${destination}.zip`
       )
-      const content = await zip.generateAsync({ type: 'blob' })
-      saveAs(content, `dokumenty_${origin}_${destination}.zip`)
       setZipState('idle')
     } catch (err) {
       console.error(err)
@@ -231,27 +225,6 @@ export default function BlankTemplatesPage() {
           </div>
         </div>
 
-        {/* Kraje tranzytowe */}
-        <TransitCountryPicker
-          value={transitCountries}
-          onChange={setTransitCountries}
-          excludeCountries={[origin, destination].filter(Boolean)}
-        />
-        {(() => {
-          const tc = classifyTransit(transitCountries)
-          if (!tc.transitNonEU) return null
-          return (
-            <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-              <p className="font-medium mb-0.5">Wykryto trase poza UE</p>
-              <p>
-                {tc.needsTIR
-                  ? `Na trasie jest kraj spoza CTC (${tc.nonCTC.join(', ')}). System doda Karnet TIR oraz deklaracje tranzytowa T1.`
-                  : `Na trasie jest kraj CTC (${tc.ctc.join(', ')}). System doda deklaracje tranzytowa T1/T2 (NCTS).`}
-              </p>
-            </div>
-          )
-        })()}
-
         {/* Środek transportu */}
         <div>
           <label className="block text-sm text-gray-700 mb-2">Środek transportu</label>
@@ -266,7 +239,7 @@ export default function BlankTemplatesPage() {
                   title={m.sub}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors
                     ${active
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                       : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
                 >
                   <ModeIcon id={m.id} />
@@ -302,7 +275,7 @@ export default function BlankTemplatesPage() {
               >
                 <input
                   type="checkbox"
-                  className="w-4 h-4 accent-blue-600 cursor-pointer shrink-0"
+                  className="w-4 h-4 accent-emerald-600 cursor-pointer shrink-0"
                   checked={flags[f.key]}
                   onChange={e => setFlags(prev => ({ ...prev, [f.key]: e.target.checked }))}
                 />
@@ -315,7 +288,7 @@ export default function BlankTemplatesPage() {
         {/* Przycisk generowania */}
         <button
           onClick={handleGenerate}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+          className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -330,7 +303,7 @@ export default function BlankTemplatesPage() {
       {/* Etykieta trasy */}
       <div className="flex items-center gap-2 mb-4">
         <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Charakter trasy</span>
-        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
           {getRouteLabel(origin, destination)}
         </span>
       </div>
@@ -365,7 +338,7 @@ export default function BlankTemplatesPage() {
             <button
               onClick={downloadZip}
               disabled={zipState === 'loading' || downloadableRequired.length === 0}
-              className="mt-3 w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+              className="mt-3 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors text-sm"
             >
               {zipState === 'loading' ? (
                 <>

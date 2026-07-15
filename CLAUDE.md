@@ -145,12 +145,28 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     generateDocuments/buildEngineResult/buildMeta` (bez duplikacji logiki PDF; używa Step4 i „Pobierz").
   - `src/services/currentUser.js` — mostek `userId` (AuthContext → repo). Brak usera = `local-user`.
   - **Kreator na kontekście:** `WizardContext.jsx` (`WizardProvider`, tryby `create|resume|edit`,
-    `isDirty` przez porównanie z baseline, autozapis co 1500 ms do
-    `amlogistico:v1:${userId}:wizardAutosave`). `DocumentWizard.jsx` przepisany na kontekst,
-    dynamiczny StepBar (klikalny do `maxStepReached`), Step4 zapisuje po udanym generowaniu.
+    `isDirty` przez porównanie z baseline, autozapis co 1500 ms). `DocumentWizard.jsx` przepisany
+    na kontekst, dynamiczny StepBar (klikalny do `maxStepReached`), Step4 zapisuje po udanym generowaniu.
+  - **Autozapis per ścieżka (2026-07-15):** klucz `amlogistico:v1:${userId}:wizardAutosave:${flowType}`
+    (osobny slot dla A i B — obie ścieżki mogą być otwarte w dwóch zakładkach naraz i nie nadpisują
+    sobie postępu). `readAutosave/clearAutosave` przyjmują `flowType`; jednorazowa migracja starego
+    klucza bez sufiksu → `…:wizardAutosave:have_transport`.
   - **Definicje kroków w jednym miejscu:** `src/components/wizard/flowSteps.js` (`FLOWS`,
-    `totalSteps` z definicji, walidacja per krok). Obecnie tylko `have_transport` (4 kroki);
-    `find_transport` (6 kroków) NIE istnieje — architektura flowType-ready, dodanie B = nowy wpis.
+    `totalSteps` z definicji, walidacja per krok, walidatory route/cargo/parties wyciągnięte do
+    współdzielonych stałych). **Dwie ścieżki (2026-07-15):** `have_transport` (4 kroki: Trasa, Towar,
+    Strony, Dokumenty) i `find_transport` (6 kroków: + Spedytorzy, Wycena przed Dokumentami).
+    `PATH_TO_FLOW = { A→have_transport, B→find_transport }` mapuje parametr `?path=`.
+    `DEFAULT_FLOW_TYPE` = `have_transport`.
+  - **Render kreatora wg `key` kroku (2026-07-15):** `DocumentWizard` renderuje po
+    `flow.steps[currentStep-1].key` (`route/cargo/parties/forwarders/quote/docs`), nie po numerze —
+    ta sama sekwencja obsługuje 4 i 6 kroków. `ForwardersStep`/`QuoteStep` to **placeholdery**
+    (nagłówek + „Ten krok będzie dostępny wkrótce" + Wstecz/Dalej, „Dalej" zawsze aktywny; zero pól
+    i zapisu do `formData`) — realna lista spedytorów i wycena to osobny zakres.
+  - **Wybór ścieżki:** `PathSelectPage` (`/wybor-sciezki`) — karty A/B otwierają
+    `/new-document?path=A|B` w **nowej zakładce** (`window.open`, strona wyboru zostaje).
+    `NewDocumentPage` czyta `?path=`; priorytet flowType: wczytany zestaw (edit/resume/restore) →
+    `?path=` (tylko create) → `have_transport`. Wpis „Gotowe formularze" usunięty z sidebara
+    (trasa `/new-document` została — obsługuje `?editId=`/`?draftId=`/`?path=`).
   - **Ochrona formularza (ETAP 7):** `UnsavedChangesGuard.jsx` — `useBlocker` (data router) +
     `beforeunload`; modal Zapisz/Odrzuć/Anuluj. Autozapis czyszczony po generowaniu/zapisie/odrzuceniu.
   - **UI:** `DocumentCard` na nowy kształt (badge ścieżki, dynamiczne kroki, „Pobierz/Edytuj/Usuń",
@@ -163,7 +179,8 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 
 **Do zrobienia:**
 - Panel abonamentu (integracja ze Stripe)
-- Ścieżka B kreatora „Szukam transportu" (6 kroków: wyszukiwanie spedytora + wycena) — nie istnieje
+- Ścieżka B kreatora „Szukam transportu" — szkielet 6 kroków gotowy; kroki „Spedytorzy" i „Wycena"
+  to placeholdery (do zaimplementowania: lista spedytorów, wycena frachtu, ubezpieczenie)
 - Deploy autoryzacji na Vercel (env vary DATABASE_URL/DIRECT_URL/JWT_SECRET) — patrz niżej
 - Tabela `companies` w bazie — typ `carrier` (do wyboru z listy zapisanych firm, jak Nadawca/Odbiorca)
 - Opcjonalne: dedykowany krok wizarda „Przewoźnik" po wdrożeniu bazy firm

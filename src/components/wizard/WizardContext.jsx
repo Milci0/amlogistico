@@ -5,32 +5,55 @@ import { buildMeta } from '../../services/documentGeneration'
 import { getFlow } from './flowSteps'
 import { createEmptySnapshot, cloneSnapshot } from './wizardState'
 
-// ── Autozapis (ETAP 7c) — osobny slot, NIE pojawia się na liście draftów ───────
+// ── Autozapis (ETAP 7c) — osobny slot per flowType, NIE pojawia się na draftach ──
+// Klucz zawiera flowType, bo obie ścieżki (A/B) mogą być otwarte w osobnych
+// zakładkach jednocześnie i nie mogą sobie nadpisywać autozapisu.
 
-function autosaveKey() {
+function autosaveKey(flowType) {
+  return `amlogistico:v1:${getCurrentUserId()}:wizardAutosave:${flowType}`
+}
+
+function legacyAutosaveKey() {
   return `amlogistico:v1:${getCurrentUserId()}:wizardAutosave`
 }
 
-export function readAutosave() {
+// Jednorazowa migracja starego (bez sufiksu) klucza → ...:wizardAutosave:have_transport.
+let legacyMigrated = false
+function migrateLegacyAutosave() {
+  if (legacyMigrated) return
+  legacyMigrated = true
   try {
-    const raw = localStorage.getItem(autosaveKey())
+    const legacy = localStorage.getItem(legacyAutosaveKey())
+    if (legacy == null) return
+    const target = autosaveKey('have_transport')
+    if (localStorage.getItem(target) == null) localStorage.setItem(target, legacy)
+    localStorage.removeItem(legacyAutosaveKey())
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readAutosave(flowType) {
+  migrateLegacyAutosave()
+  try {
+    const raw = localStorage.getItem(autosaveKey(flowType))
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
   }
 }
 
-function writeAutosave(payload) {
+function writeAutosave(flowType, payload) {
   try {
-    localStorage.setItem(autosaveKey(), JSON.stringify(payload))
+    localStorage.setItem(autosaveKey(flowType), JSON.stringify(payload))
   } catch {
     // Autozapis jest best-effort — brak miejsca nie może przerwać pracy w kreatorze.
   }
 }
 
-export function clearAutosave() {
+export function clearAutosave(flowType) {
   try {
-    localStorage.removeItem(autosaveKey())
+    localStorage.removeItem(autosaveKey(flowType))
   } catch {
     /* ignore */
   }
@@ -86,7 +109,7 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
   useEffect(() => {
     if (!isDirty) return
     const t = setTimeout(() => {
-      writeAutosave({
+      writeAutosave(flowType, {
         flowType,
         step,
         maxStepReached,
@@ -127,7 +150,7 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
   // dzięki czemu guard nie blokuje nawigacji, a autozapis przestaje pisać.
   function markSaved() {
     setBaseline(cloneSnapshot(snapshot))
-    clearAutosave()
+    clearAutosave(flowType)
   }
 
   function reset() {
@@ -136,7 +159,7 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
     setBaseline(cloneSnapshot(empty))
     setStep(1)
     setMaxStepReached(1)
-    clearAutosave()
+    clearAutosave(flowType)
   }
 
   // Guard: „Zapisz wersję roboczą". W edit → NOWY draft z derivedFromId=oryginał
@@ -154,14 +177,14 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
     }
     const saved = saveDraft(partial)
     setBaseline(cloneSnapshot(snapshot))
-    clearAutosave()
+    clearAutosave(flowType)
     return saved
   }
 
   // Guard: „Odrzuć zmiany" — nic nie zapisujemy, gasimy isDirty i autozapis.
   function discard() {
     setBaseline(cloneSnapshot(snapshot))
-    clearAutosave()
+    clearAutosave(flowType)
   }
 
   // Pozwól najbliższej nawigacji przejść bez pytania (używane po completeSet,

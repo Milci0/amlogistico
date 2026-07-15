@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useSearchParams } from 'react-router-dom'
 import DocumentWizard from '../components/wizard/DocumentWizard'
-import { WizardProvider, UnsavedChangesGuard, readAutosave, clearAutosave } from '../components/wizard'
+import { WizardProvider, UnsavedChangesGuard, readAutosave, clearAutosave, PATH_TO_FLOW } from '../components/wizard'
 import { getSet } from '../services/documentSetsRepo'
 import AlertBox from '../components/ui/AlertBox'
 import { formatDocumentDate } from '../utils/formatDate'
@@ -11,6 +11,11 @@ export default function NewDocumentPage() {
   const [params] = useSearchParams()
   const editId = params.get('editId')
   const draftId = params.get('draftId')
+  const pathParam = params.get('path')
+
+  // ?path= wybiera ścieżkę tylko przy świeżym starcie (create). 'A'→have_transport,
+  // 'B'→find_transport, brak/inne → null (fallback niżej).
+  const pathFlow = PATH_TO_FLOW[pathParam] || null
 
   // Zestaw źródłowy (edit = gotowy oryginał, resume = draft) — z repozytorium.
   const sourceSet = useMemo(() => {
@@ -21,10 +26,15 @@ export default function NewDocumentPage() {
 
   const mode = editId ? 'edit' : draftId ? 'resume' : 'create'
 
-  // Autozapis do przywrócenia — tylko przy czystym starcie (bez edit/draft).
+  // Flow dla świeżego kreatora — potrzebne już do odczytu właściwego autozapisu
+  // (autozapis jest per flowType).
+  const createFlowType = mode === 'create' ? pathFlow || 'have_transport' : null
+
+  // Autozapis do przywrócenia — tylko przy czystym starcie (bez edit/draft),
+  // czytany dla flow wynikającego z ?path=.
   const autosave = useMemo(
-    () => (mode === 'create' ? readAutosave() : null),
-    [mode]
+    () => (mode === 'create' ? readAutosave(createFlowType) : null),
+    [mode, createFlowType]
   )
   const [restore, setRestore] = useState(null) // null | 'fresh' | 'restored'
 
@@ -58,7 +68,7 @@ export default function NewDocumentPage() {
               Przywróć
             </button>
             <button
-              onClick={() => { clearAutosave(); setRestore('fresh') }}
+              onClick={() => { clearAutosave(createFlowType); setRestore('fresh') }}
               className="text-sm font-semibold text-slate-600 border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-50 transition-colors"
             >
               Zacznij od nowa
@@ -81,8 +91,11 @@ export default function NewDocumentPage() {
       : null
 
   const initialSet = sourceSet || restoredSet
-  const flowType = initialSet?.flowType || 'have_transport'
-  const providerKey = editId || draftId || (restore === 'restored' ? 'restored' : 'new')
+  // Priorytet flowType: 1) wczytany zestaw (edit/resume/restore) wygrywa zawsze,
+  // 2) ?path= dla świeżego create, 3) fallback have_transport.
+  const flowType = initialSet?.flowType || pathFlow || 'have_transport'
+  // flowType w kluczu remountu — inaczej zmiana ścieżki nie zresetowałaby wizarda.
+  const providerKey = `${editId || draftId || (restore === 'restored' ? 'restored' : 'new')}:${flowType}`
 
   return (
     <div className="max-w-2xl mx-auto">

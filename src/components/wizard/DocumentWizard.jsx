@@ -68,7 +68,7 @@ const INCOTERMS = [
 ]
 
 const cls = {
-  input: 'w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-colors',
+  input: 'w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 transition-colors',
 }
 
 // Pasek kroków — dynamiczny (liczba kroków z definicji ścieżki) i klikalny do
@@ -77,7 +77,7 @@ function StepBar({ steps, current, maxReached, onStepClick }) {
   const total = steps.length
   return (
     <div
-      className="grid border border-gray-200 rounded-xl overflow-hidden mb-6 bg-white"
+      className="grid gap-1 sm:gap-1.5 mb-6"
       style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}
     >
       {steps.map((name, i) => {
@@ -91,19 +91,19 @@ function StepBar({ steps, current, maxReached, onStepClick }) {
             type="button"
             disabled={!reachable}
             onClick={() => reachable && onStepClick(num)}
-            className={`flex items-center justify-center sm:justify-start gap-2 px-1.5 sm:px-4 py-3 text-left
-              ${i < total - 1 ? 'border-r border-gray-200' : ''}
-              ${reachable ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default'}`}
+            className={`flex items-center justify-center gap-1 sm:gap-1.5 px-1 sm:px-2 py-2.5 rounded-xl border transition-colors
+              ${active ? 'border-emerald-400 bg-emerald-50' : done ? 'border-emerald-300 bg-white' : 'border-gray-200 bg-white'}
+              ${reachable ? 'cursor-pointer hover:bg-emerald-50/60' : 'cursor-default'}`}
           >
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0
-              ${done ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-400'}`}>
+              ${done ? 'bg-emerald-500 text-white' : active ? 'bg-emerald-700 text-white' : 'bg-white border border-gray-300 text-gray-400'}`}>
               {done ? (
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               ) : num}
             </div>
-            <span className={`hidden sm:inline text-sm font-medium ${active ? 'text-gray-900' : done ? 'text-gray-700' : 'text-gray-400'}`}>
+            <span className={`hidden sm:inline text-[11px] md:text-xs font-medium leading-tight ${active ? 'text-emerald-800' : done ? 'text-gray-900' : 'text-gray-400'}`}>
               {name}
             </span>
           </button>
@@ -129,22 +129,22 @@ function Field({ label, hint, children }) {
 
 function DocIcon({ type }) {
   if (type === 'list') return (
-    <svg className="w-5 h-5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h10" />
     </svg>
   )
   if (type === 'clipboard') return (
-    <svg className="w-5 h-5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
     </svg>
   )
   if (type === 'sign') return (
-    <svg className="w-5 h-5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-9 9H9v-3z" />
     </svg>
   )
   return (
-    <svg className="w-5 h-5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
   )
@@ -166,7 +166,7 @@ function NextButton({ onClick, disabled, label = 'Dalej →' }) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className="mt-6 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
+      className="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
     >
       {label}
     </button>
@@ -186,7 +186,7 @@ function Step1({ data, setData, onNext, canNext }) {
             label: 'Drogowy',
             sub: 'TIR, ciężarówka',
             svg: (active) => (
-              <svg className={`w-7 h-7 ${active ? 'text-blue-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg className={`w-7 h-7 ${active ? 'text-emerald-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3h1.4a2 2 0 0 1 1.7.9l1.7 2.6a2 2 0 0 1 .3 1V17h-2" />
                 <circle cx="7.5" cy="17.5" r="2.5" />
                 <circle cx="17.5" cy="17.5" r="2.5" />
@@ -198,7 +198,7 @@ function Step1({ data, setData, onNext, canNext }) {
             label: 'Morski',
             sub: 'Kontener FCL/LCL',
             svg: (active) => (
-              <svg className={`w-7 h-7 ${active ? 'text-blue-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg className={`w-7 h-7 ${active ? 'text-emerald-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M2 21c.6.5 1.2 1 2.5 1C7 22 7 20 9.5 20c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
                 <path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.2.5 4.3 1.62 6" />
                 <path d="M12 10V2" />
@@ -213,12 +213,12 @@ function Step1({ data, setData, onNext, canNext }) {
               key={id}
               onClick={() => setData(d => ({ ...d, transport: id }))}
               className={`flex items-center gap-3 p-4 border-2 rounded-xl text-left transition-all
-                ${active ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                ${active ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
             >
               {svg(active)}
               <div>
-                <p className={`text-sm font-semibold ${active ? 'text-blue-700' : 'text-gray-800'}`}>{label}</p>
-                <p className={`text-xs mt-0.5 ${active ? 'text-blue-400' : 'text-gray-400'}`}>{sub}</p>
+                <p className={`text-sm font-semibold ${active ? 'text-emerald-700' : 'text-gray-800'}`}>{label}</p>
+                <p className={`text-xs mt-0.5 ${active ? 'text-emerald-400' : 'text-gray-400'}`}>{sub}</p>
               </div>
             </button>
           )
@@ -228,7 +228,7 @@ function Step1({ data, setData, onNext, canNext }) {
       <label className="flex items-start gap-3 p-3.5 mb-5 border border-gray-200 rounded-xl cursor-pointer bg-white hover:bg-gray-50 transition-colors">
         <input
           type="checkbox"
-          className="mt-0.5 w-4 h-4 accent-blue-600 cursor-pointer flex-shrink-0"
+          className="mt-0.5 w-4 h-4 accent-emerald-600 cursor-pointer flex-shrink-0"
           checked={!!data.multimodal}
           onChange={e => setData(d => ({ ...d, multimodal: e.target.checked }))}
         />
@@ -304,18 +304,18 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
                 type="button"
                 onClick={() => setData(d => ({ ...d, cargoType: d.cargoType === ct.id ? '' : ct.id }))}
                 className={`flex flex-col items-center gap-1.5 p-3 border-2 rounded-xl text-center transition-all
-                  ${active ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                  ${active ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
               >
-                <Icon className={active ? 'w-5 h-5 text-blue-500' : 'w-5 h-5 text-gray-400'} strokeWidth={1.5} />
-                <span className={`text-xs font-medium ${active ? 'text-blue-700' : 'text-gray-700'}`}>{ct.label}</span>
+                <Icon className={active ? 'w-5 h-5 text-emerald-500' : 'w-5 h-5 text-gray-400'} strokeWidth={1.5} />
+                <span className={`text-xs font-medium ${active ? 'text-emerald-700' : 'text-gray-700'}`}>{ct.label}</span>
               </button>
             )
           })}
         </div>
         {selectedCargoType && (
-          <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-blue-50 border border-blue-100 rounded-lg">
-            <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" strokeWidth={1.5} />
-            <p className="text-xs text-blue-700">{selectedCargoType.hint}</p>
+          <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+            <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.5} />
+            <p className="text-xs text-emerald-700">{selectedCargoType.hint}</p>
           </div>
         )}
       </div>
@@ -391,7 +391,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
                   onClick={() => setRoad(r => ({ ...r, vehicleType: r.vehicleType === vt ? '' : vt }))}
                   className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors
                     ${road.vehicleType === vt
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                       : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
                 >
                   {vt}
@@ -415,7 +415,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-400"
+                className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-400"
                 checked={road.adr}
                 onChange={e => setRoad(r => ({ ...r, adr: e.target.checked, adrClass: e.target.checked ? r.adrClass : '' }))}
               />
@@ -497,7 +497,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
                   onClick={() => setSea(s => ({ ...s, freightTerms: ft }))}
                   className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors
                     ${sea.freightTerms === ft
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                       : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
                 >
                   {ft}
@@ -521,7 +521,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
                 type="button"
                 onClick={() => setTerms(t => ({ ...t, incoterms: t.incoterms === it.code ? '' : it.code }))}
                 className={`px-3 py-2.5 rounded-lg text-sm font-semibold border transition-colors
-                  ${active ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
+                  ${active ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
               >
                 {it.code}
               </button>
@@ -529,11 +529,11 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
           })}
         </div>
         {selectedIncoterm && (
-          <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-blue-50 border border-blue-100 rounded-lg">
-            <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" strokeWidth={1.5} />
+          <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+            <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.5} />
             <div>
-              <p className="text-xs font-semibold text-blue-700 mb-0.5">{selectedIncoterm.code} — {selectedIncoterm.label}</p>
-              <p className="text-xs text-blue-700">{selectedIncoterm.desc}</p>
+              <p className="text-xs font-semibold text-emerald-700 mb-0.5">{selectedIncoterm.code} — {selectedIncoterm.label}</p>
+              <p className="text-xs text-emerald-700">{selectedIncoterm.desc}</p>
             </div>
           </div>
         )}
@@ -625,12 +625,38 @@ function Step3({ data, setData, onNext, onBack, canNext }) {
   )
 }
 
+// ── Kroki ścieżki B (placeholder) — Spedytorzy / Wycena ─────────────────────────
+// Zawartość dojdzie w osobnym zakresie. Na razie tylko nagłówek + informacja i
+// nawigacja (Dalej zawsze aktywny). Zero pól i zero zapisu do formData.
+
+function ForwardersStep({ onNext, onBack }) {
+  return (
+    <div>
+      <BackButton onClick={onBack} />
+      <SectionLabel>Spedytorzy</SectionLabel>
+      <p className="text-sm text-gray-400 dark:text-slate-400">Ten krok będzie dostępny wkrótce.</p>
+      <NextButton onClick={onNext} />
+    </div>
+  )
+}
+
+function QuoteStep({ onNext, onBack }) {
+  return (
+    <div>
+      <BackButton onClick={onBack} />
+      <SectionLabel>Wycena</SectionLabel>
+      <p className="text-sm text-gray-400 dark:text-slate-400">Ten krok będzie dostępny wkrótce.</p>
+      <NextButton onClick={onNext} />
+    </div>
+  )
+}
+
 // ── Step 4: Dokumenty ──────────────────────────────────────────────────────────
 
 function DocStatusBadge({ status }) {
   if (status === 'loading') {
     return (
-      <svg className="w-4 h-4 animate-spin text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24">
+      <svg className="w-4 h-4 animate-spin text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24">
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
       </svg>
@@ -664,8 +690,8 @@ function DocCard({ doc, checked, locked, status, onToggle }) {
     <div
       onClick={locked ? undefined : onToggle}
       className={`flex items-center gap-3 px-4 py-3.5 border rounded-xl transition-colors
-        ${checked ? 'border-blue-200 bg-blue-50/50' : 'border-gray-200 bg-white'}
-        ${locked ? '' : 'cursor-pointer hover:border-blue-300'}`}
+        ${checked ? 'border-emerald-200 bg-emerald-50/50' : 'border-gray-200 bg-white'}
+        ${locked ? '' : 'cursor-pointer hover:border-emerald-300'}`}
     >
       <input
         type="checkbox"
@@ -674,14 +700,14 @@ function DocCard({ doc, checked, locked, status, onToggle }) {
         readOnly={locked}
         onChange={locked ? undefined : onToggle}
         onClick={e => e.stopPropagation()}
-        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-400 shrink-0 disabled:opacity-70"
+        className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-400 shrink-0 disabled:opacity-70"
       />
       <DocIcon type={doc.icon} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <p className="text-sm font-medium text-gray-900">{doc.name}</p>
           {locked && (
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
               Wymagany
             </span>
           )}
@@ -891,7 +917,7 @@ function Step4({ onBack }) {
       <button
         onClick={handleGenerate}
         disabled={isAnyLoading || selectedDocs.length === 0}
-        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
+        className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
       >
         {isAnyLoading ? (
           <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -926,16 +952,19 @@ export default function DocumentWizard() {
 
   const canNext = wiz.validateStep(currentStep)
   const stepLabels = flow.steps.map(s => s.label)
+  // Render sterowany rejestrem flow (klucz kroku), nie numerem — dzięki temu ta
+  // sama sekwencja obsługuje 4 kroki ścieżki A i 6 kroków ścieżki B.
+  const stepKey = flow.steps[currentStep - 1]?.key
 
   useEffect(() => { preloadHtml2Pdf() }, [])
 
   return (
     <div>
       <StepBar steps={stepLabels} current={currentStep} maxReached={maxStepReached} onStepClick={goToStep} />
-      {currentStep === 1 && (
+      {stepKey === 'route' && (
         <Step1 data={snapshot.route} setData={setRoute} onNext={next} canNext={canNext} />
       )}
-      {currentStep === 2 && (
+      {stepKey === 'cargo' && (
         <Step2
           data={snapshot.cargo} setData={setCargo}
           road={snapshot.road} setRoad={setRoad}
@@ -945,10 +974,12 @@ export default function DocumentWizard() {
           onNext={next} onBack={prev} canNext={canNext}
         />
       )}
-      {currentStep === 3 && (
+      {stepKey === 'parties' && (
         <Step3 data={snapshot.parties} setData={setParties} onNext={next} onBack={prev} canNext={canNext} />
       )}
-      {currentStep === 4 && <Step4 onBack={prev} />}
+      {stepKey === 'forwarders' && <ForwardersStep onNext={next} onBack={prev} />}
+      {stepKey === 'quote' && <QuoteStep onNext={next} onBack={prev} />}
+      {stepKey === 'docs' && <Step4 onBack={prev} />}
     </div>
   )
 }

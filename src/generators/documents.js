@@ -94,7 +94,11 @@ export function getDocsList(transport, bothEU, multimodal = false) {
     }))
 }
 
+// Prefiks nazwy pliku dla dokumentów wygenerowanych z danymi — odróżnia je od
+// pustych formularzy („Pusty_”, patrz src/utils/blankDocuments.js).
+const FILLED_PREFIX = 'Wypelniony_'
+
 // Generyczny dispatcher — zastępuje wszystkie pliki fill*.js
 export function generateDocument(doc, data) {
-  return generatePdf(doc.template, data, doc.filename)
+  return generatePdf(doc.template, data, `${FILLED_PREFIX}${doc.filename}`)
 }

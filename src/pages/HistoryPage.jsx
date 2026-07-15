@@ -9,6 +9,7 @@ import AlertBox from '../components/ui/AlertBox'
 import useDocumentSets from '../hooks/useDocumentSets'
 import { listSets, getSet } from '../services/documentSetsRepo'
 import { generateDocuments } from '../services/documentGeneration'
+import { downloadBlankFile, downloadBlankZip } from '../utils/blankDocuments'
 import { formatDocumentDate } from '../utils/formatDate'
 
 const SORT_OPTIONS = [
@@ -49,13 +50,48 @@ export default function HistoryPage() {
     setDownloadError(null)
     setDownloadingId(set.id)
     try {
-      const { failed } = await generateDocuments(set.formData, set.selectedDocs || [])
-      if (failed.length > 0) setDownloadError('Nie udało się wygenerować części dokumentów.')
+      if (set.kind === 'blank') {
+        // Puste szablony — statyczne pliki PDF, nie regenerowane z formData.
+        const docs = (set.selectedDocs || [])
+          .map((key) => set.engineResult?.docs?.find((d) => d.key === key))
+          .filter(Boolean)
+        await downloadBlankZip(docs, `dokumenty_${set.meta?.routeFrom}_${set.meta?.routeTo}.zip`)
+      } else {
+        const { failed } = await generateDocuments(set.formData, set.selectedDocs || [])
+        if (failed.length > 0) setDownloadError('Nie udało się wygenerować części dokumentów.')
+      }
     } catch (err) {
-      console.error('Błąd generowania PDF:', err)
-      setDownloadError('Nie udało się wygenerować dokumentów.')
+      console.error('Błąd pobierania dokumentów:', err)
+      setDownloadError('Nie udało się pobrać dokumentów.')
     } finally {
       setDownloadingId(null)
+    }
+  }
+
+  // Pobranie pojedynczego dokumentu z rozwiniętej karty — status idzie do wiersza
+  // dokumentu (onStatus), nie do globalnego downloadingId karty.
+  async function handleDownloadOne(set, key, onStatus) {
+    setDownloadError(null)
+    if (set.kind === 'blank') {
+      const doc = set.engineResult?.docs?.find((d) => d.key === key)
+      if (!doc) return
+      onStatus?.(key, 'loading')
+      try {
+        downloadBlankFile(doc.path, doc.name)
+        onStatus?.(key, 'done')
+      } catch (err) {
+        console.error('Błąd pobierania pliku:', err)
+        onStatus?.(key, 'error')
+        setDownloadError('Nie udało się pobrać dokumentu.')
+      }
+      return
+    }
+    try {
+      const { failed } = await generateDocuments(set.formData, [key], onStatus)
+      if (failed.length > 0) setDownloadError('Nie udało się wygenerować dokumentu.')
+    } catch (err) {
+      console.error('Błąd generowania PDF:', err)
+      setDownloadError('Nie udało się wygenerować dokumentu.')
     }
   }
 
@@ -123,6 +159,7 @@ export default function HistoryPage() {
               downloading={downloadingId === set.id}
               derivedFromDate={derivedDate(set)}
               onDownload={handleDownload}
+              onDownloadOne={handleDownloadOne}
               onEdit={handleEdit}
               onRemove={setToDelete}
             />
