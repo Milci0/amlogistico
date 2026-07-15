@@ -132,9 +132,38 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     użycia trzeba dodać kraje do `COUNTRIES`. Pozostałe PDF-y z `public/templates/` bez warunku
     w silniku można podpiąć analogicznie wg specyfikacji
 
+- **Historia dokumentów + wersje robocze z pełną ścieżką audytową — GOTOWE (2026-07-15):**
+  - **Zasada:** PDF-ów NIE trzymamy. Trzymamy `formData` (migawka kreatora) + `engineResult`
+    (wynik `getDocsList`); każde „Pobierz" to regeneracja z zapisanych danych tą samą funkcją
+    co kreator. Każdy realnie wygenerowany komplet = OSOBNY, nieusuwalny-przez-edycję wpis
+    (completed). Edycja NIGDY nie nadpisuje — tworzy nowy wpis z `derivedFromId` = oryginał.
+  - `src/services/documentSetsRepo.js` — **jedyna** warstwa persystencji (klucz
+    `amlogistico:v1:${userId}:documentSets`). API = kontrakt przyszłego REST:
+    `listSets/getSet/saveDraft(upsert)/completeSet(zawsze nowy id)/deleteSet/countByStatus`.
+    `StorageQuotaError` z czytelnym komunikatem. Wymiana localStorage→REST = zmiana tego pliku.
+  - `src/services/documentGeneration.js` — współdzielone `buildGeneratorData/getDocsForSnapshot/
+    generateDocuments/buildEngineResult/buildMeta` (bez duplikacji logiki PDF; używa Step4 i „Pobierz").
+  - `src/services/currentUser.js` — mostek `userId` (AuthContext → repo). Brak usera = `local-user`.
+  - **Kreator na kontekście:** `WizardContext.jsx` (`WizardProvider`, tryby `create|resume|edit`,
+    `isDirty` przez porównanie z baseline, autozapis co 1500 ms do
+    `amlogistico:v1:${userId}:wizardAutosave`). `DocumentWizard.jsx` przepisany na kontekst,
+    dynamiczny StepBar (klikalny do `maxStepReached`), Step4 zapisuje po udanym generowaniu.
+  - **Definicje kroków w jednym miejscu:** `src/components/wizard/flowSteps.js` (`FLOWS`,
+    `totalSteps` z definicji, walidacja per krok). Obecnie tylko `have_transport` (4 kroki);
+    `find_transport` (6 kroków) NIE istnieje — architektura flowType-ready, dodanie B = nowy wpis.
+  - **Ochrona formularza (ETAP 7):** `UnsavedChangesGuard.jsx` — `useBlocker` (data router) +
+    `beforeunload`; modal Zapisz/Odrzuć/Anuluj. Autozapis czyszczony po generowaniu/zapisie/odrzuceniu.
+  - **UI:** `DocumentCard` na nowy kształt (badge ścieżki, dynamiczne kroki, „Pobierz/Edytuj/Usuń",
+    etykieta „na podstawie zestawu z…"; BEZ „Duplikuj"). `HistoryPage`/`DraftsPage`/`Sidebar`
+    przełączone na `useDocumentSets` + `documentSetsRepo`. Modale `ConfirmDialog`.
+  - **Uwaga:** stare `src/hooks/useDocuments.js` + `src/services/documentsRepository.js` (z seedem)
+    są teraz osierocone (nic ich nie importuje) — do usunięcia przy sprzątaniu.
+  - Zweryfikowane: build zielony + 19/19 niezmienników repo (nieusuwalność completed, derivedFromId,
+    resume-delete, namespace per-user, quota). Testy interaktywne guarda/kreatora — do sprawdzenia w przeglądarce.
+
 **Do zrobienia:**
 - Panel abonamentu (integracja ze Stripe)
-- Podmiana `NewDocumentPage` na `DocumentWizard`
+- Ścieżka B kreatora „Szukam transportu" (6 kroków: wyszukiwanie spedytora + wycena) — nie istnieje
 - Deploy autoryzacji na Vercel (env vary DATABASE_URL/DIRECT_URL/JWT_SECRET) — patrz niżej
 - Tabela `companies` w bazie — typ `carrier` (do wyboru z listy zapisanych firm, jak Nadawca/Odbiorca)
 - Opcjonalne: dedykowany krok wizarda „Przewoźnik" po wdrożeniu bazy firm

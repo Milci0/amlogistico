@@ -244,6 +244,7 @@ export const MENU_GROUPS = [
       { label: 'Strona główna', path: '/', icon: 'home' },
       { label: 'Wycena', path: '/quotation', icon: 'calculator', badge: 'Core' },
       { label: 'Dokumentacja', path: '/history', icon: 'document', badge: 'Core' },
+      { label: 'Wersje robocze', path: '/wersje-robocze', icon: 'pencil' },
     ],
   },
   {

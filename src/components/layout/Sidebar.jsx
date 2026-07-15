@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { NavLink, Link } from 'react-router-dom'
 import { MENU_GROUPS, MENU_BOTTOM } from '../../data/mockData'
 import { useNews } from '../../context/NewsContext'
-import useDocuments from '../../hooks/useDocuments'
+import useDocumentSets from '../../hooks/useDocumentSets'
+import { countByStatus } from '../../services/documentSetsRepo'
 
 const ICONS = {
   home: (
@@ -131,8 +133,9 @@ function MenuLink({ item, onClose, dot }) {
 
 export default function Sidebar({ onClose }) {
   const { hasUnread } = useNews()
-  const { documents } = useDocuments()
-  const draftCount = documents.filter(d => d.status === 'draft').length
+  const { version } = useDocumentSets()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const draftCount = useMemo(() => countByStatus().draft, [version])
 
   return (
     <aside className="flex flex-col h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700">
@@ -169,8 +172,8 @@ export default function Sidebar({ onClose }) {
             </p>
             <div className="space-y-0.5">
               {group.items.map(item => {
-                const isHistory = item.path === '/history'
-                const resolvedItem = isHistory
+                const isDrafts = item.path === '/wersje-robocze'
+                const resolvedItem = isDrafts
                   ? { ...item, badge: draftCount > 0 ? String(draftCount) : undefined }
                   : item
                 return (

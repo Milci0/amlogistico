@@ -1,66 +1,48 @@
 import { useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import DocumentCard from '../components/ui/DocumentCard'
 import DocumentFilterBar from '../components/documents/DocumentFilterBar'
 import DocumentsEmptyState from '../components/documents/DocumentsEmptyState'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
-import AlertBox from '../components/ui/AlertBox'
 import useDocumentSets from '../hooks/useDocumentSets'
-import { listSets, getSet } from '../services/documentSetsRepo'
-import { generateDocuments } from '../services/documentGeneration'
-import { formatDocumentDate } from '../utils/formatDate'
+import { listSets } from '../services/documentSetsRepo'
 
 const SORT_OPTIONS = [
   { key: 'newest', label: 'Najnowsze' },
   { key: 'oldest', label: 'Najstarsze' },
   { key: 'name-asc', label: 'Nazwa A-Z' },
+  { key: 'last-edited', label: 'Ostatnio edytowane' },
 ]
 
 const TRANSPORT_LABEL = { road: 'Drogowy', sea: 'Morski' }
 
-export default function HistoryPage() {
+export default function DraftsPage() {
   const { version, remove } = useDocumentSets()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
-  const [downloadingId, setDownloadingId] = useState(null)
-  const [downloadError, setDownloadError] = useState(null)
   const [toDelete, setToDelete] = useState(null)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const allCompleted = useMemo(
-    () => listSets({ status: 'completed', search: query, sort: sortBy }),
+  const allDrafts = useMemo(
+    () => listSets({ status: 'draft', search: query, sort: sortBy }),
     [version, query, sortBy]
   )
 
   const types = useMemo(() => {
-    const present = new Set(allCompleted.map((s) => TRANSPORT_LABEL[s.meta?.transportMode]).filter(Boolean))
+    const present = new Set(allDrafts.map((s) => TRANSPORT_LABEL[s.meta?.transportMode]).filter(Boolean))
     return [...present].sort()
-  }, [allCompleted])
+  }, [allDrafts])
 
   const visibleSets = useMemo(() => {
-    if (typeFilter === 'all') return allCompleted
-    return allCompleted.filter((s) => TRANSPORT_LABEL[s.meta?.transportMode] === typeFilter)
-  }, [allCompleted, typeFilter])
+    if (typeFilter === 'all') return allDrafts
+    return allDrafts.filter((s) => TRANSPORT_LABEL[s.meta?.transportMode] === typeFilter)
+  }, [allDrafts, typeFilter])
 
-  async function handleDownload(set) {
-    setDownloadError(null)
-    setDownloadingId(set.id)
-    try {
-      const { failed } = await generateDocuments(set.formData, set.selectedDocs || [])
-      if (failed.length > 0) setDownloadError('Nie udało się wygenerować części dokumentów.')
-    } catch (err) {
-      console.error('Błąd generowania PDF:', err)
-      setDownloadError('Nie udało się wygenerować dokumentów.')
-    } finally {
-      setDownloadingId(null)
-    }
-  }
-
-  function handleEdit(set) {
-    navigate(`/new-document?editId=${set.id}`)
+  function handleContinue(set) {
+    navigate(`/new-document?draftId=${set.id}`)
   }
 
   function confirmRemove() {
@@ -68,24 +50,17 @@ export default function HistoryPage() {
     setToDelete(null)
   }
 
-  // Data oryginału dla etykiety „na podstawie zestawu z…" (może już nie istnieć).
-  function derivedDate(set) {
-    if (!set.derivedFromId) return null
-    const orig = getSet(set.derivedFromId)
-    return orig ? formatDocumentDate(orig.createdAt) : null
-  }
-
   return (
     <div className="max-w-3xl mx-auto">
       <Helmet>
-        <title>Historia dokumentów | AMLogistico</title>
+        <title>Wersje robocze | AMLogistico</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Historia dokumentów</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Wersje robocze</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Wszystkie Twoje gotowe dokumenty.
+          Dokumenty w trakcie tworzenia.
         </p>
       </div>
 
@@ -100,19 +75,23 @@ export default function HistoryPage() {
         sortOptions={SORT_OPTIONS}
       />
 
-      {downloadError && (
-        <div className="mb-4">
-          <AlertBox type="error" title="Błąd pobierania">{downloadError}</AlertBox>
-        </div>
-      )}
-
       <div className="flex flex-col gap-2">
         {visibleSets.length === 0 ? (
           <DocumentsEmptyState
             message={
               query.trim() || typeFilter !== 'all'
                 ? 'Brak dokumentów pasujących do filtrów.'
-                : 'Brak gotowych dokumentów.'
+                : 'Brak wersji roboczych.'
+            }
+            action={
+              !query.trim() && typeFilter === 'all' && (
+                <Link
+                  to="/new-document"
+                  className="inline-block text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  Rozpocznij nowy dokument
+                </Link>
+              )
             }
           />
         ) : (
@@ -120,10 +99,7 @@ export default function HistoryPage() {
             <DocumentCard
               key={set.id}
               set={set}
-              downloading={downloadingId === set.id}
-              derivedFromDate={derivedDate(set)}
-              onDownload={handleDownload}
-              onEdit={handleEdit}
+              onContinue={handleContinue}
               onRemove={setToDelete}
             />
           ))
@@ -132,8 +108,8 @@ export default function HistoryPage() {
 
       <ConfirmDialog
         open={!!toDelete}
-        title="Usunąć zestaw dokumentów?"
-        description="Tej operacji nie można cofnąć. Usuwany jest tylko ten wpis."
+        title="Usunąć wersję roboczą?"
+        description="Tej operacji nie można cofnąć."
         confirmLabel="Usuń"
         destructive
         onConfirm={confirmRemove}

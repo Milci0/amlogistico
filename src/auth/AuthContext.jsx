@@ -1,11 +1,19 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { api } from '../lib/api'
+import { setCurrentUserId } from '../services/currentUser'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true) // czy trwa początkowa hydratacja sesji
+
+  // Mostek do warstwy repozytorium (namespace danych per userId). Brak usera →
+  // 'local-user'. Zmiana emituje 'documentSets:changed', więc listy/liczniki
+  // przełączą się na dane właściwego konta.
+  useEffect(() => {
+    setCurrentUserId(user?.id ?? 'local-user')
+  }, [user])
 
   // Na starcie aplikacji próbujemy odtworzyć sesję z httpOnly cookie
   useEffect(() => {

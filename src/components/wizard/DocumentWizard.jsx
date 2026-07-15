@@ -1,17 +1,24 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Package, UtensilsCrossed, FlaskConical, PawPrint, Boxes, Info, ShieldCheck, ArrowRight } from 'lucide-react'
 import { COUNTRIES } from '../../data/mockData'
 import CountrySelect from '../ui/CountrySelect'
 import CitySelect from '../ui/CitySelect'
+import AlertBox from '../ui/AlertBox'
 import { preloadHtml2Pdf } from '../../generators/generatePdf'
-import { getDocsList, generateDocument } from '../../generators/documents'
+import { useWizard } from './WizardContext'
+import {
+  getDocsForSnapshot,
+  computeBothEU,
+  generateDocuments,
+  buildEngineResult,
+  buildMeta,
+} from '../../services/documentGeneration'
+import { completeSet, deleteSet } from '../../services/documentSetsRepo'
 
-const STEPS = ['Trasa', 'Towar', 'Strony', 'Dokumenty']
 const CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF']
 const CONTAINER_TYPES = ['', '20ft', '40ft', '40ft HC', 'LCL']
 const VEHICLE_TYPES = ['Plandeka', 'Chłodnia', 'Mroźnia']
-const EU_CODES = ['PL','DE','FR','NL','BE','CZ','SK','AT','IT','ES','PT','SE','DK','FI','HU','RO','BG','HR','GR','EE','LV','LT']
 
 const CARGO_TYPES = [
   {
@@ -64,17 +71,29 @@ const cls = {
   input: 'w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-colors',
 }
 
-function StepBar({ current }) {
+// Pasek kroków — dynamiczny (liczba kroków z definicji ścieżki) i klikalny do
+// najdalej odwiedzonego kroku (w trybie edit odblokowany w całości).
+function StepBar({ steps, current, maxReached, onStepClick }) {
+  const total = steps.length
   return (
-    <div className="grid grid-cols-4 border border-gray-200 rounded-xl overflow-hidden mb-6 bg-white">
-      {STEPS.map((name, i) => {
+    <div
+      className="grid border border-gray-200 rounded-xl overflow-hidden mb-6 bg-white"
+      style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}
+    >
+      {steps.map((name, i) => {
         const num = i + 1
         const done = num < current
         const active = num === current
+        const reachable = num <= maxReached
         return (
-          <div
+          <button
             key={name}
-            className={`flex items-center justify-center sm:justify-start gap-2 px-1.5 sm:px-4 py-3${i < STEPS.length - 1 ? ' border-r border-gray-200' : ''}`}
+            type="button"
+            disabled={!reachable}
+            onClick={() => reachable && onStepClick(num)}
+            className={`flex items-center justify-center sm:justify-start gap-2 px-1.5 sm:px-4 py-3 text-left
+              ${i < total - 1 ? 'border-r border-gray-200' : ''}
+              ${reachable ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default'}`}
           >
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0
               ${done ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-400'}`}>
@@ -87,7 +106,7 @@ function StepBar({ current }) {
             <span className={`hidden sm:inline text-sm font-medium ${active ? 'text-gray-900' : done ? 'text-gray-700' : 'text-gray-400'}`}>
               {name}
             </span>
-          </div>
+          </button>
         )
       })}
     </div>
@@ -156,9 +175,7 @@ function NextButton({ onClick, disabled, label = 'Dalej →' }) {
 
 // ── Step 1: Trasa ──────────────────────────────────────────────────────────────
 
-function Step1({ data, setData, onNext }) {
-  const canNext = data.transport && data.fromCountry && data.fromCity && data.toCountry && data.toCity && data.loadDate
-
+function Step1({ data, setData, onNext, canNext }) {
   return (
     <div>
       <SectionLabel>Typ transportu</SectionLabel>
@@ -256,9 +273,8 @@ function Step1({ data, setData, onNext }) {
 
 // ── Step 2: Towar ──────────────────────────────────────────────────────────────
 
-function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, transport, onNext, onBack }) {
+function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, transport, onNext, onBack, canNext }) {
   const needsTemp = road.vehicleType === 'Chłodnia' || road.vehicleType === 'Mroźnia'
-  const canNext = !!data.cargoName.trim()
   const selectedCargoType = CARGO_TYPES.find(ct => ct.id === data.cargoType)
   const selectedIncoterm = INCOTERMS.find(it => it.code === terms.incoterms)
 
@@ -583,8 +599,7 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
   )
 }
 
-function Step3({ data, setData, onNext, onBack }) {
-  const canNext = !!(data.sender.name.trim() && data.receiver.name.trim() && data.carrier.name.trim())
+function Step3({ data, setData, onNext, onBack, canNext }) {
   return (
     <div>
       <BackButton onClick={onBack} />
@@ -678,11 +693,15 @@ function DocCard({ doc, checked, locked, status, onToggle }) {
   )
 }
 
-function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData, onBack }) {
-  const fromCountry = COUNTRIES.find(c => c.code === routeData.fromCountry)
-  const toCountry = COUNTRIES.find(c => c.code === routeData.toCountry)
-  const bothEU = !!(fromCountry && toCountry && EU_CODES.includes(fromCountry.code) && EU_CODES.includes(toCountry.code))
-  const docsList = getDocsList(routeData.transport, bothEU, routeData.multimodal)
+function Step4({ onBack }) {
+  const wiz = useWizard()
+  const navigate = useNavigate()
+  const { snapshot, mode, setId, flowType, totalSteps, derivedFromId, originalEngineResult } = wiz
+
+  const docsList = useMemo(() => getDocsForSnapshot(snapshot), [snapshot])
+  const bothEU = computeBothEU(snapshot.route)
+  const fromCountry = COUNTRIES.find(c => c.code === snapshot.route.fromCountry)
+  const toCountry = COUNTRIES.find(c => c.code === snapshot.route.toCountry)
 
   const [statuses, setStatuses] = useState(() =>
     Object.fromEntries(docsList.map(d => [d.key, 'idle']))
@@ -690,119 +709,124 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
   const [selected, setSelected] = useState(() =>
     Object.fromEntries(docsList.map(d => [d.key, !!d.required]))
   )
+  const [saveError, setSaveError] = useState(null)
+  const [savedSetId, setSavedSetId] = useState(null)
 
   const isAnyLoading = Object.values(statuses).some(s => s === 'loading')
   const doneCount = Object.values(statuses).filter(s => s === 'done').length
   const selectedDocs = docsList.filter(d => selected[d.key])
 
+  // ETAP 5 — w trybie edit sygnalizujemy, że dobór dokumentów zmienił się względem
+  // oryginału (engine liczony NA NOWO z aktualnego formData, nie z zapisanego).
+  const docsChanged = useMemo(() => {
+    if (mode !== 'edit' || !originalEngineResult?.docs) return false
+    const sig = (arr) => arr.map(d => `${d.key}:${d.required ? 1 : 0}`).sort().join(',')
+    return sig(docsList) !== sig(originalEngineResult.docs)
+  }, [mode, originalEngineResult, docsList])
+
   const summary = [
-    ['Typ transportu', routeData.transport === 'road' ? 'Drogowy (TIR)' : 'Morski (Kontener)'],
+    ['Typ transportu', snapshot.route.transport === 'road' ? 'Drogowy (TIR)' : 'Morski (Kontener)'],
     ['Trasa', fromCountry && toCountry ? `${fromCountry.name} → ${toCountry.name}` : '—'],
-    ['Towar', cargoData.cargoName || '—'],
-    ['Waga', cargoData.weight ? `${cargoData.weight} kg` : '—'],
-    ['Wartość', cargoData.value ? `${cargoData.value} ${cargoData.currency}` : '—'],
-    ...(termsData.incoterms ? [['Incoterms', termsData.incoterms]] : []),
+    ['Towar', snapshot.cargo.cargoName || '—'],
+    ['Waga', snapshot.cargo.weight ? `${snapshot.cargo.weight} kg` : '—'],
+    ['Wartość', snapshot.cargo.value ? `${snapshot.cargo.value} ${snapshot.cargo.currency}` : '—'],
+    ...(snapshot.terms.incoterms ? [['Incoterms', snapshot.terms.incoterms]] : []),
     ['Cel. wymagana odprawa', fromCountry && toCountry ? (bothEU ? 'Nie — ruch wewnątrz UE' : 'Tak') : '—'],
-    ...(partiesData.sender.name ? [['Nadawca', partiesData.sender.name]] : []),
-    ...(partiesData.receiver.name ? [['Odbiorca', partiesData.receiver.name]] : []),
-    ...(partiesData.carrier.name ? [['Przewoźnik', partiesData.carrier.name]] : []),
+    ...(snapshot.parties.sender.name ? [['Nadawca', snapshot.parties.sender.name]] : []),
+    ...(snapshot.parties.receiver.name ? [['Odbiorca', snapshot.parties.receiver.name]] : []),
+    ...(snapshot.parties.carrier.name ? [['Przewoźnik', snapshot.parties.carrier.name]] : []),
   ]
-
-  const formData = {
-    transport: routeData.transport,
-    multimodal: routeData.multimodal,
-    fromCountry: routeData.fromCountry,
-    fromCity: routeData.fromCity,
-    toCountry: routeData.toCountry,
-    toCity: routeData.toCity,
-    loadDate: routeData.loadDate,
-    cargo: {
-      name: cargoData.cargoName,
-      hsCode: cargoData.hsCode,
-      cargoType: cargoData.cargoType,
-      weight: cargoData.weight,
-      weightNet: cargoData.weightNet,
-      volume: cargoData.volume,
-      packages: cargoData.packages,
-      value: cargoData.value,
-      currency: cargoData.currency,
-      notes: cargoData.notes,
-      incoterms: termsData.incoterms,
-      // Sea container fields — used by BillOfLading, SeaWaybill
-      containerType: seaData.containerType,
-      containerNo: seaData.containerNo,
-      sealNo: seaData.sealNo,
-      marksNos: seaData.marksNos,
-      vessel: seaData.vessel,
-      voyageNo: seaData.voyageNo,
-    },
-    sender: { ...partiesData.sender, country: routeData.fromCountry },
-    receiver: { ...partiesData.receiver, country: routeData.toCountry },
-    // carrier — single source of truth for CMR / Zlecenie / POD
-    carrier: {
-      name: partiesData.carrier.name,
-      address: partiesData.carrier.address,
-      vatNumber: partiesData.carrier.vat,
-      contact: partiesData.carrier.contact,
-      phone: partiesData.carrier.phone,
-    },
-    carrierLegs: {
-      preCarriage:  { name: '', address: '', vatNumber: '' },
-      mainCarriage: { name: partiesData.carrier.name, address: partiesData.carrier.address, vatNumber: partiesData.carrier.vat },
-      onCarriage:   { name: '', address: '', vatNumber: '' },
-    },
-    // Road-specific vehicle data — used by CMR, Zlecenie
-    vehicle: {
-      type: roadData.vehicleType,
-      tempFrom: roadData.tempFrom,
-      tempTo: roadData.tempTo,
-      adr: roadData.adr,
-      adrClass: roadData.adrClass,
-      reg: roadData.vehicleReg,
-    },
-    // Sea-specific shipping details — used by BillOfLading, SeaWaybill
-    sea: {
-      bookingNo: seaData.bookingNo,
-      freightTerms: seaData.freightTerms,
-      eta: seaData.eta,
-      flag: seaData.flag,
-    },
-    // Payment / freight terms — used by Zlecenie, invoices
-    terms: {
-      freightPrice: termsData.freightPrice,
-      freightCurrency: termsData.freightCurrency,
-      paymentDays: termsData.paymentDays,
-    },
-  }
-
-  if (import.meta.env.DEV) {
-    const c = formData.carrier
-    console.log('[carrier sanity] CMR / Zlecenie / POD używają: carrier =', c)
-  }
 
   function toggleDoc(key) {
     setSelected(s => ({ ...s, [key]: !s[key] }))
   }
 
-  async function generateBatch(docs) {
-    for (const doc of docs) {
-      setStatuses(s => ({ ...s, [doc.key]: 'loading' }))
-      try {
-        await generateDocument(doc, formData)
-        setStatuses(s => ({ ...s, [doc.key]: 'done' }))
-      } catch (err) {
-        console.error(err)
-        setStatuses(s => ({ ...s, [doc.key]: 'error' }))
-      }
+  // ETAP 4 — zapis DOPIERO po udanym wygenerowaniu kompletu. Błąd → nic nie zapisujemy.
+  //   create → nowy wpis (derivedFromId = null)
+  //   resume → nowy wpis + usunięcie draftu (setId)
+  //   edit   → nowy wpis z derivedFromId = oryginał (setId); oryginał nietknięty
+  async function handleGenerate() {
+    setSaveError(null)
+    const keys = selectedDocs.map(d => d.key)
+    const { failed } = await generateDocuments(snapshot, keys, (k, st) =>
+      setStatuses(s => ({ ...s, [k]: st }))
+    )
+    if (failed.length > 0) return
+
+    const base = {
+      flowType,
+      totalSteps,
+      // resume: zachowaj powiązanie draftu z oryginałem (edit ustawia je przez
+      // sourceCompletedId); create: null.
+      derivedFromId,
+      formData: snapshot,
+      engineResult: buildEngineResult(snapshot),
+      selectedDocs: keys,
+      meta: buildMeta(snapshot),
+      lastStep: totalSteps,
+      maxStepReached: totalSteps,
     }
+
+    let saved
+    try {
+      if (mode === 'resume') {
+        saved = completeSet(base)
+        deleteSet(setId)
+      } else if (mode === 'edit') {
+        saved = completeSet({ ...base, sourceCompletedId: setId })
+      } else {
+        saved = completeSet(base)
+      }
+    } catch (err) {
+      setSaveError(err.message || 'Nie udało się zapisać zestawu w historii.')
+      return
+    }
+
+    wiz.allowNextNavigation()
+    wiz.markSaved()
+    setSavedSetId(saved.id)
   }
 
   const requiredDocs = docsList.filter(d => d.required)
   const optionalDocs = docsList.filter(d => !d.required)
+  const generateLabel = mode === 'edit' ? 'Wygeneruj jako nowy dokument' : 'Generuj dokumenty'
 
   return (
     <div>
       <BackButton onClick={onBack} />
+
+      {mode === 'edit' && (
+        <div className="mb-4">
+          <AlertBox type="info" title="Edytujesz istniejący zestaw">
+            Wygenerowanie utworzy <strong>nowy</strong> dokument w historii. Oryginał pozostanie
+            niezmieniony.
+          </AlertBox>
+        </div>
+      )}
+
+      {docsChanged && (
+        <div className="mb-4">
+          <AlertBox type="warning" title="Zmienił się zestaw dokumentów">
+            Po Twoich zmianach lista wymaganych/opcjonalnych dokumentów różni się od pierwotnej.
+            Sprawdź zaznaczenia przed wygenerowaniem.
+          </AlertBox>
+        </div>
+      )}
+
+      {saveError && (
+        <div className="mb-4">
+          <AlertBox type="error" title="Nie udało się zapisać">{saveError}</AlertBox>
+        </div>
+      )}
+
+      {savedSetId && (
+        <div className="mb-4">
+          <AlertBox type="success" title="Zapisano w historii">
+            Zestaw dokumentów został zapisany.{' '}
+            <Link to="/history" className="font-semibold underline">Przejdź do historii dokumentów</Link>.
+          </AlertBox>
+        </div>
+      )}
 
       <div className="border border-gray-200 rounded-xl overflow-hidden mb-6">
         <div className="px-5 py-3 bg-white border-b border-gray-100">
@@ -865,7 +889,7 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
       {optionalDocs.length === 0 && <div className="mb-6" />}
 
       <button
-        onClick={() => generateBatch(selectedDocs)}
+        onClick={handleGenerate}
         disabled={isAnyLoading || selectedDocs.length === 0}
         className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
       >
@@ -879,61 +903,52 @@ function Step4({ routeData, cargoData, partiesData, roadData, seaData, termsData
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
         )}
-        Generuj dokumenty
+        {generateLabel}
       </button>
     </div>
   )
 }
 
 // ── Root component ─────────────────────────────────────────────────────────────
-
-const initRoute  = { transport: 'road', fromCountry: 'PL', fromCity: '', toCountry: 'DE', toCity: '', loadDate: '', multimodal: false }
-const initCargo  = { cargoName: '', hsCode: '', cargoType: '', weight: '', weightNet: '', volume: '', packages: '', value: '', currency: 'EUR', notes: '' }
-const initParty  = { name: '', vat: '', address: '', contact: '', phone: '', iban: '', swift: '', bank: '' }
-const initRoad   = { vehicleType: '', tempFrom: '', tempTo: '', adr: false, adrClass: '', vehicleReg: '' }
-const initSea    = { containerType: '', containerNo: '', sealNo: '', marksNos: '', vessel: '', voyageNo: '', bookingNo: '', freightTerms: 'Prepaid', eta: '', flag: '' }
-const initTerms  = { incoterms: '', freightPrice: '', freightCurrency: 'EUR', paymentDays: '' }
+// Stan trzyma WizardProvider (WizardContext). Ten komponent tylko mapuje kontekst
+// na istniejące Stepy i renderuje właściwy krok wg definicji ścieżki (flowSteps).
 
 export default function DocumentWizard() {
-  const [step, setStep]       = useState(1)
-  const [route, setRoute]     = useState(initRoute)
-  const [cargo, setCargo]     = useState(initCargo)
-  const [parties, setParties] = useState({ sender: { ...initParty }, receiver: { ...initParty }, carrier: { ...initParty } })
-  const [road, setRoad]       = useState(initRoad)
-  const [sea, setSea]         = useState(initSea)
-  const [terms, setTerms]     = useState(initTerms)
+  const wiz = useWizard()
+  const { snapshot, currentStep, maxStepReached, flow, next, prev, goToStep } = wiz
+
+  const setRoute   = (u) => wiz.setStepData('route', u)
+  const setCargo   = (u) => wiz.setStepData('cargo', u)
+  const setParties = (u) => wiz.setStepData('parties', u)
+  const setRoad    = (u) => wiz.setStepData('road', u)
+  const setSea     = (u) => wiz.setStepData('sea', u)
+  const setTerms   = (u) => wiz.setStepData('terms', u)
+
+  const canNext = wiz.validateStep(currentStep)
+  const stepLabels = flow.steps.map(s => s.label)
 
   useEffect(() => { preloadHtml2Pdf() }, [])
 
-  const next = () => setStep(s => Math.min(s + 1, 4))
-  const back = () => setStep(s => Math.max(s - 1, 1))
-
   return (
     <div>
-      <StepBar current={step} />
-      {step === 1 && <Step1 data={route} setData={setRoute} onNext={next} />}
-      {step === 2 && (
+      <StepBar steps={stepLabels} current={currentStep} maxReached={maxStepReached} onStepClick={goToStep} />
+      {currentStep === 1 && (
+        <Step1 data={snapshot.route} setData={setRoute} onNext={next} canNext={canNext} />
+      )}
+      {currentStep === 2 && (
         <Step2
-          data={cargo} setData={setCargo}
-          road={road} setRoad={setRoad}
-          sea={sea} setSea={setSea}
-          terms={terms} setTerms={setTerms}
-          transport={route.transport}
-          onNext={next} onBack={back}
+          data={snapshot.cargo} setData={setCargo}
+          road={snapshot.road} setRoad={setRoad}
+          sea={snapshot.sea} setSea={setSea}
+          terms={snapshot.terms} setTerms={setTerms}
+          transport={snapshot.route.transport}
+          onNext={next} onBack={prev} canNext={canNext}
         />
       )}
-      {step === 3 && <Step3 data={parties} setData={setParties} onNext={next} onBack={back} />}
-      {step === 4 && (
-        <Step4
-          routeData={route}
-          cargoData={cargo}
-          partiesData={parties}
-          roadData={road}
-          seaData={sea}
-          termsData={terms}
-          onBack={back}
-        />
+      {currentStep === 3 && (
+        <Step3 data={snapshot.parties} setData={setParties} onNext={next} onBack={prev} canNext={canNext} />
       )}
+      {currentStep === 4 && <Step4 onBack={prev} />}
     </div>
   )
 }

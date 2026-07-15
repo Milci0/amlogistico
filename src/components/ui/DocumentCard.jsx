@@ -1,17 +1,33 @@
 import { formatDocumentDate } from '../../utils/formatDate'
+import { COUNTRIES } from '../../data/mockData'
+import { getStepLabel, getFlowLabel } from '../wizard/flowSteps'
 
-const TYPE_COLORS = {
-  CMR: 'bg-blue-100 text-blue-700',
-  'Packing List': 'bg-emerald-100 text-emerald-700',
-  Faktura: 'bg-amber-100 text-amber-700',
-  'Sea Waybill': 'bg-purple-100 text-purple-700',
+const TRANSPORT_LABEL = { road: 'Drogowy', sea: 'Morski' }
+
+function countryName(code) {
+  return COUNTRIES.find((c) => c.code === code)?.name || code || '—'
 }
 
-export default function DocumentCard({ doc, downloading, onDownload, onContinue, onDuplicate, onRemove }) {
-  const isDraft = doc.status === 'draft'
-  const typeColor = TYPE_COLORS[doc.type] || 'bg-gray-100 text-gray-600'
-  const route = `${doc.routeFrom} → ${doc.routeTo}`
-  const dateLabel = formatDocumentDate(isDraft ? doc.updatedAt : doc.createdAt)
+// Karta zestawu dokumentów (DocumentSet). Wspólna dla Historii (completed) i
+// Wersji roboczych (draft). Bez przycisku „Duplikuj" — edycja gotowego zestawu
+// tworzy nowy, niezależny wpis (patrz onEdit → tryb edit kreatora).
+export default function DocumentCard({
+  set,
+  downloading,
+  derivedFromDate,
+  onDownload,
+  onEdit,
+  onContinue,
+  onRemove,
+}) {
+  const isDraft = set.status === 'draft'
+  const meta = set.meta || {}
+  const title = meta.cargoDescription?.trim() || 'Zestaw dokumentów'
+  const route = `${countryName(meta.routeFrom)} → ${countryName(meta.routeTo)}`
+  const transportLabel = TRANSPORT_LABEL[meta.transportMode] || meta.transportMode || '—'
+  const flowLabel = getFlowLabel(set.flowType)
+  const dateLabel = formatDocumentDate(isDraft ? set.updatedAt : set.createdAt)
+  const docCount = set.selectedDocs?.length || 0
 
   return (
     <div
@@ -21,25 +37,40 @@ export default function DocumentCard({ doc, downloading, onDownload, onContinue,
       }
     >
       <div className="flex items-center gap-3 min-w-0">
-        <span className={`text-xs font-bold px-2 py-1 rounded-md shrink-0 ${typeColor}`}>
-          {doc.type}
+        <span className="text-xs font-bold px-2 py-1 rounded-md shrink-0 bg-blue-100 text-blue-700">
+          {transportLabel}
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">{doc.type}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-medium text-gray-900 truncate">{title}</p>
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+              {flowLabel}
+            </span>
+          </div>
+
           {isDraft ? (
             <div className="mt-1">
               <p className="text-xs text-gray-400">
-                {route} · Krok {doc.currentStep} z 4: {doc.stepLabel} · edytowano {dateLabel}
+                {route} · Krok {set.lastStep} z {set.totalSteps}: {getStepLabel(set.flowType, set.lastStep)} · edytowano {dateLabel}
               </p>
               <div className="w-32 h-1 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
                 <div
                   className="h-full bg-amber-400 rounded-full"
-                  style={{ width: `${(doc.currentStep / 4) * 100}%` }}
+                  style={{ width: `${(set.lastStep / set.totalSteps) * 100}%` }}
                 />
               </div>
             </div>
           ) : (
-            <p className="text-xs text-gray-400 mt-0.5">{route} · {dateLabel}</p>
+            <>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {route} · {docCount} {docCount === 1 ? 'dokument' : 'dokumentów'} · {dateLabel}
+              </p>
+              {set.derivedFromId && (
+                <p className="text-[11px] text-slate-400 mt-0.5 italic">
+                  na podstawie zestawu{derivedFromDate ? ` z ${derivedFromDate}` : ''}
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -56,7 +87,7 @@ export default function DocumentCard({ doc, downloading, onDownload, onContinue,
 
         {isDraft ? (
           <button
-            onClick={() => onContinue?.(doc)}
+            onClick={() => onContinue?.(set)}
             className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,7 +98,7 @@ export default function DocumentCard({ doc, downloading, onDownload, onContinue,
         ) : (
           <>
             <button
-              onClick={() => onDownload?.(doc)}
+              onClick={() => onDownload?.(set)}
               disabled={downloading}
               className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 disabled:opacity-60 px-2.5 py-1.5 rounded-lg transition-colors"
             >
@@ -77,18 +108,18 @@ export default function DocumentCard({ doc, downloading, onDownload, onContinue,
               {downloading ? 'Generuję…' : 'Pobierz'}
             </button>
             <button
-              onClick={() => onDuplicate?.(doc)}
+              onClick={() => onEdit?.(set)}
               className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              Ponownie
+              Edytuj
             </button>
           </>
         )}
         <button
-          onClick={() => onRemove?.(doc)}
+          onClick={() => onRemove?.(set)}
           className="flex items-center gap-1.5 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-colors"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -11,6 +11,7 @@ import AppShell from './components/layout/AppShell'
 import HomePage from './pages/HomePage'
 import NewDocumentPage from './pages/NewDocumentPage'
 import HistoryPage from './pages/HistoryPage'
+import DraftsPage from './pages/DraftsPage'
 import CompaniesPage from './pages/CompaniesPage'
 import SubscriptionPage from './pages/SubscriptionPage'
 import SettingsPage from './pages/SettingsPage'
@@ -53,6 +54,7 @@ const router = createBrowserRouter([
               { path: 'new-document', element: <NewDocumentPage /> },
               { path: 'quotation', element: <PlaceholderPage title="Wycena" description="Wycena frachtu i kosztów transportu." /> },
               { path: 'history', element: <HistoryPage /> },
+              { path: 'wersje-robocze', element: <DraftsPage /> },
               { path: 'companies', element: <CompaniesPage /> },
               { path: 'subscription', element: <SubscriptionPage /> },
               { path: 'settings', element: <SettingsPage /> },
