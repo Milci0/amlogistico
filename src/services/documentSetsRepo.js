@@ -1,99 +1,59 @@
 // ── Warstwa repozytorium zestawów dokumentów (DocumentSet) ─────────────────────
 //
-// JEDYNE miejsce z serializacją / try-catch / dostępem do localStorage. Wymiana
-// localStorage → REST API = zmiana wyłącznie tego pliku (sygnatury eksportów są
-// kontraktem przyszłego API — patrz komentarze przy funkcjach).
+// JEDYNE miejsce z dostępem do API zestawów. Wcześniej trzymała dane w localStorage;
+// od wpięcia backendu woła REST (/api/document-sets) — sygnatury eksportów zostały
+// TE SAME (kontrakt), zmieniło się tylko wnętrze i to, że funkcje są teraz `async`.
 //
 // Założenie audytowe: PDF-ów NIE trzymamy. Trzymamy formData + engineResult i
 // regenerujemy na żądanie. Każdy realnie wygenerowany komplet (completed) to
-// OSOBNY, nieusuwalny-przez-edycję rekord: completeSet zawsze tworzy nowy id.
-// Drafty MOGĄ być nadpisywane (saveDraft = upsert), bo nic nie zostało jeszcze
-// wygenerowane.
+// OSOBNY, nieusuwalny-przez-edycję rekord: completeSet zawsze tworzy nowy id na
+// backendzie (POST). Drafty MOGĄ być nadpisywane (saveDraft = upsert po id).
 //
-// Kształt DocumentSet:
-//   { id, userId, flowType, totalSteps, status:'draft'|'completed', derivedFromId,
-//     createdAt, updatedAt, completedAt, lastStep, maxStepReached,
-//     formData, engineResult, selectedDocs, meta }
+// Kształt DocumentSet (zwracany przez backend):
+//   { id, userId, status:'draft'|'completed', kind, flowType, totalSteps,
+//     derivedFromId, lastStep, maxStepReached, templateVersion,
+//     formData, engineResult, selectedDocs, meta, completedAt, createdAt, updatedAt }
 
-import { getCurrentUserId } from './currentUser'
+import { api } from '../lib/api'
+import { TEMPLATE_VERSION } from '../config/templateVersion'
 
-const NS = 'amlogistico:v1'
-
-function storageKey(userId) {
-  return `${NS}:${userId}:documentSets`
-}
-
-function genId() {
-  return typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `set-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-}
-
+// Powiadomienie o zmianie danych — listy/liczniki w różnych komponentach nasłuchują
+// i odświeżają się po zapisie/usunięciu (patrz useDocumentSets).
 function notifyChange() {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event('documentSets:changed'))
   }
 }
 
-function readAll() {
-  try {
-    const raw = localStorage.getItem(storageKey(getCurrentUserId()))
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    // Uszkodzony JSON nie może wywalić całej aplikacji — traktujemy jak brak danych.
-    return []
-  }
-}
-
-function isQuotaError(err) {
-  return (
-    err &&
-    (err.name === 'QuotaExceededError' ||
-      err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-      err.code === 22 ||
-      err.code === 1014)
-  )
-}
-
-// Rzucany przy braku miejsca — strony łapią i pokazują czytelny komunikat w AlertBox.
+// Zachowana dla zgodności wstecznej (dawniej rzucana przy braku miejsca w localStorage).
+// Backend nie ma limitu quota — klasa zostaje, by ewentualne importy nie padły.
 export class StorageQuotaError extends Error {
   constructor() {
-    super(
-      'Brak miejsca w pamięci przeglądarki. Usuń część zapisanych zestawów, aby zapisać nowy.'
-    )
+    super('Brak miejsca w pamięci.')
     this.name = 'StorageQuotaError'
   }
 }
 
-function writeAll(sets) {
-  try {
-    localStorage.setItem(storageKey(getCurrentUserId()), JSON.stringify(sets))
-  } catch (err) {
-    if (isQuotaError(err)) throw new StorageQuotaError()
-    throw err
+// Buduje ciało żądania wysyłane na backend z częściowego obiektu z UI.
+// TEMPLATE_VERSION doklejamy przy KAŻDYM secie (wymóg backendu + audyt wersji).
+function toBody(partial, status) {
+  return {
+    status,
+    kind: partial.kind ?? null,
+    flowType: partial.flowType || 'have_transport',
+    totalSteps: partial.totalSteps ?? 4,
+    templateVersion: TEMPLATE_VERSION,
+    formData: partial.formData ?? {},
+    engineResult: partial.engineResult ?? null,
+    selectedDocs: partial.selectedDocs ?? [],
+    meta: partial.meta ?? {},
+    lastStep: partial.lastStep ?? 1,
+    maxStepReached: partial.maxStepReached ?? 1,
+    derivedFromId: partial.derivedFromId ?? null,
   }
-  notifyChange()
 }
 
-// Uzupełnia brakujące pola wartościami domyślnymi. Wartości z `s` mają pierwszeństwo.
-function normalize(s) {
-  return {
-    userId: getCurrentUserId(),
-    flowType: 'have_transport',
-    totalSteps: 4,
-    derivedFromId: null,
-    lastStep: 1,
-    maxStepReached: 1,
-    formData: null,
-    engineResult: null,
-    selectedDocs: [],
-    meta: {},
-    completedAt: null,
-    ...s,
-  }
-}
+// ── Filtrowanie / sortowanie po stronie klienta (na metadanych z listy) ──────────
 
 function matchesSearch(set, q) {
   const m = set.meta || {}
@@ -128,84 +88,85 @@ function sortSets(sets, sort) {
   }
 }
 
-// listSets({ status, search, type, flowType, sort }) -> DocumentSet[]
-//   type = filtr po meta.transportMode ('road' | 'sea')
-export function listSets({ status, search, type, flowType, sort } = {}) {
-  let sets = readAll()
-  if (status) sets = sets.filter((s) => s.status === status)
-  if (flowType) sets = sets.filter((s) => s.flowType === flowType)
-  if (type && type !== 'all') sets = sets.filter((s) => s.meta?.transportMode === type)
+// ── API repozytorium (sygnatury = kontrakt; teraz async) ─────────────────────────
+
+// listSets({ status, search, type, flowType, sort }) -> Promise<DocumentSet[]>
+//   Backend zwraca metadane setów usera (bez formData); filtr search/type/flowType
+//   i sort robimy lokalnie na metadanych. type = filtr po meta.transportMode.
+export async function listSets({ status, search, type, flowType, sort } = {}) {
+  const qs = status ? `?status=${encodeURIComponent(status)}` : ''
+  const { sets } = await api.get(`/document-sets${qs}`)
+  let out = Array.isArray(sets) ? sets : []
+  if (flowType) out = out.filter((s) => s.flowType === flowType)
+  if (type && type !== 'all') out = out.filter((s) => s.meta?.transportMode === type)
   const q = (search || '').trim().toLowerCase()
-  if (q) sets = sets.filter((s) => matchesSearch(s, q))
-  return sortSets(sets, sort)
+  if (q) out = out.filter((s) => matchesSearch(s, q))
+  return sortSets(out, sort)
 }
 
-// getSet(id) -> DocumentSet | null
-export function getSet(id) {
-  return readAll().find((s) => s.id === id) || null
-}
-
-// saveDraft(partial) -> DocumentSet   (upsert po id — drafty można nadpisywać)
-export function saveDraft(partial) {
-  const sets = readAll()
-  const now = new Date().toISOString()
-
-  if (partial.id) {
-    const i = sets.findIndex((s) => s.id === partial.id)
-    if (i !== -1) {
-      const updated = { ...sets[i], ...partial, status: 'draft', updatedAt: now }
-      sets[i] = updated
-      writeAll(sets)
-      return updated
-    }
+// getSet(id) -> Promise<DocumentSet | null>   (pełny set z formData)
+export async function getSet(id) {
+  try {
+    const { set } = await api.get(`/document-sets/${id}`)
+    return set
+  } catch (err) {
+    if (err?.status === 404) return null // nie istnieje / nie należy do usera
+    throw err
   }
-
-  const created = normalize({
-    ...partial,
-    id: partial.id || genId(),
-    status: 'draft',
-    createdAt: now,
-    updatedAt: now,
-    completedAt: null,
-  })
-  sets.push(created)
-  writeAll(sets)
-  return created
 }
 
-// completeSet(partial) -> DocumentSet
-//   ZAWSZE nowy rekord (nowy id) — nigdy nie nadpisuje istniejącego completed.
+// saveDraft(partial) -> Promise<DocumentSet>   (upsert po id — drafty można nadpisywać)
+export async function saveDraft(partial) {
+  const body = toBody(partial, 'draft')
+  let set
+  if (partial.id) {
+    try {
+      const r = await api.patch(`/document-sets/${partial.id}`, body)
+      set = r.set
+    } catch (err) {
+      // Draft zniknął (np. usunięty na innym urządzeniu) — zakładamy nowy.
+      if (err?.status === 404) {
+        const r = await api.post('/document-sets', body)
+        set = r.set
+      } else throw err
+    }
+  } else {
+    const r = await api.post('/document-sets', body)
+    set = r.set
+  }
+  notifyChange()
+  return set
+}
+
+// completeSet(partial) -> Promise<DocumentSet>
+//   ZAWSZE nowy rekord (POST) — nigdy nie nadpisuje istniejącego completed.
 //   partial.sourceCompletedId (opcjonalny) → zapisywane jako derivedFromId.
-export function completeSet(partial) {
-  const sets = readAll()
-  const now = new Date().toISOString()
-  // Ignorujemy ewentualny przychodzący id — completed zawsze dostaje świeży.
+export async function completeSet(partial) {
+  // Ignorujemy ewentualny przychodzący id — completed zawsze dostaje świeży (backend).
   const { id: _ignored, sourceCompletedId, ...rest } = partial
-
-  const created = normalize({
-    ...rest,
-    id: genId(),
-    status: 'completed',
-    derivedFromId: sourceCompletedId ?? rest.derivedFromId ?? null,
-    createdAt: now,
-    updatedAt: now,
-    completedAt: now,
-  })
-  sets.push(created)
-  writeAll(sets)
-  return created
+  const body = toBody(rest, 'completed')
+  body.derivedFromId = sourceCompletedId ?? rest.derivedFromId ?? null
+  const { set } = await api.post('/document-sets', body)
+  notifyChange()
+  return set
 }
 
-// deleteSet(id) -> void   (usuwa tylko ten wpis; nie rusza rekordów z derivedFromId)
-export function deleteSet(id) {
-  writeAll(readAll().filter((s) => s.id !== id))
+// deleteSet(id) -> Promise<void>   (usuwa tylko ten wpis; nie rusza rekordów z derivedFromId)
+export async function deleteSet(id) {
+  try {
+    await api.del(`/document-sets/${id}`)
+  } catch (err) {
+    if (err?.status !== 404) throw err // 404 = już nie ma → traktujemy jak sukces
+  }
+  notifyChange()
 }
 
-// countByStatus() -> { draft, completed }
-export function countByStatus() {
-  const sets = readAll()
+// countByStatus() -> Promise<{ draft, completed }>
+export async function countByStatus() {
+  const { sets } = await api.get('/document-sets')
+  const list = Array.isArray(sets) ? sets : []
   return {
-    draft: sets.filter((s) => s.status === 'draft').length,
-    completed: sets.filter((s) => s.status === 'completed').length,
+    draft: list.filter((s) => s.status === 'draft').length,
+    completed: list.filter((s) => s.status === 'completed').length,
   }
 }

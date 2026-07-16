@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
+import { Package, UtensilsCrossed, FlaskConical, PawPrint, Boxes, Info } from 'lucide-react'
 import CountrySelect from '../components/ui/CountrySelect'
 import AlertBox from '../components/ui/AlertBox'
 import { getDocuments, getRouteLabel } from '../utils/documentEngine'
-import { downloadBlankFile, downloadBlankZip } from '../utils/blankDocuments'
+import { downloadBlankDocument, downloadBlankZip, hasBlankSource } from '../utils/blankDocuments'
 import { completeSet } from '../services/documentSetsRepo'
 
 // ── Opcje formularza ────────────────────────────────────────────────────────────
@@ -12,21 +13,52 @@ const TRANSPORT_MODES = [
   { id: 'sea', label: 'Morski', sub: 'Kontener FCL/LCL' },
 ]
 
-// value = klucz silnika (ang.), label = polska nazwa
-const CARGO_CATEGORIES = [
-  { value: 'general', label: 'Towar ogólny' },
-  { value: 'food_animal', label: 'Żywność pochodzenia zwierzęcego' },
-  { value: 'food_plant', label: 'Żywność pochodzenia roślinnego' },
-  { value: 'dangerous_goods', label: 'Towary niebezpieczne (ADR/IMDG)' },
-  { value: 'medicines', label: 'Leki / farmaceutyki' },
-  { value: 'electronics', label: 'Elektronika' },
-  { value: 'live_animals', label: 'Żywe zwierzęta' },
-  { value: 'organic', label: 'Żywność ekologiczna (organic)' },
-  { value: 'halal', label: 'Halal' },
-  { value: 'kosher', label: 'Kosher' },
-  { value: 'chemicals', label: 'Chemikalia' },
-  { value: 'weapons_dual_use', label: 'Broń / produkty podwójnego zastosowania' },
+// Ten sam widget co „Rodzaj ładunku” w kroku 2 kreatora (DocumentWizard.jsx) —
+// spójny wygląd i słownictwo w całej aplikacji.
+const CARGO_TYPES = [
+  {
+    id: 'general',
+    label: 'Ogólny',
+    icon: Package,
+    hint: 'Ładunek standardowy — zwykle wystarczą podstawowe dokumenty transportowe (CMR/B&L, faktura, packing list). Brak dodatkowych certyfikatów.',
+  },
+  {
+    id: 'food',
+    label: 'Żywność',
+    icon: UtensilsCrossed,
+    hint: 'Może być wymagane świadectwo fitosanitarne (towary roślinne) lub certyfikat zdrowia / HACCP — zależnie od towaru i kraju docelowego.',
+  },
+  {
+    id: 'chemicals',
+    label: 'Chemia / ADR',
+    icon: FlaskConical,
+    hint: 'Wymagana karta charakterystyki substancji niebezpiecznej (MSDS/SDS) oraz dokumenty ADR — instrukcja pisemna, zaświadczenie ADR kierowcy.',
+  },
+  {
+    id: 'animal',
+    label: 'Pochodzenia zwierzęcego',
+    icon: PawPrint,
+    hint: 'Wymagane świadectwo weterynaryjne (health certificate) oraz zgłoszenie w systemie TRACES przy imporcie/eksporcie z/do UE.',
+  },
+  {
+    id: 'other',
+    label: 'Inne',
+    icon: Boxes,
+    hint: 'Rodzaj dodatkowych dokumentów zależy od konkretnego towaru — warto skonsultować się z agencją celną.',
+  },
 ]
+
+// Mapowanie prostego wyboru użytkownika na szczegółową kategorię silnika doboru
+// dokumentów (documentEngine.js) — ten sam widget co w kreatorze ma tylko 5 opcji,
+// więc część rozróżnień silnika (np. halal/kosher/elektronika/leki) nie jest tu
+// osiągalna z UI; wybieramy najbliższy odpowiednik.
+const CARGO_TYPE_TO_ENGINE_CATEGORY = {
+  general: 'general',
+  food: 'food_plant',
+  chemicals: 'dangerous_goods',
+  animal: 'food_animal',
+  other: 'general',
+}
 
 const FLAG_OPTIONS = [
   { key: 'woodenPackaging', label: 'Drewniane opakowania (palety, skrzynie)' },
@@ -34,10 +66,6 @@ const FLAG_OPTIONS = [
   { key: 'transhipment', label: 'Przeładunek w porcie pośrednim' },
   { key: 'reExport', label: 'Re-eksport' },
 ]
-
-const cls = {
-  input: 'w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 transition-colors',
-}
 
 // ── Ikony ───────────────────────────────────────────────────────────────────────
 
@@ -89,6 +117,20 @@ function ModeIcon({ id }) {
 // ── Wiersz dokumentu ──────────────────────────────────────────────────────────
 
 function DocRow({ doc }) {
+  const [state, setState] = useState('idle') // idle | loading | error
+  const downloadable = doc.available && hasBlankSource(doc.id)
+
+  async function handleDownload() {
+    setState('loading')
+    try {
+      await downloadBlankDocument(doc.id, doc.name_pl)
+      setState('idle')
+    } catch (err) {
+      console.error('Błąd generowania pustego PDF:', err)
+      setState('error')
+    }
+  }
+
   return (
     <div className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl bg-white">
       <PdfIcon />
@@ -97,14 +139,16 @@ function DocRow({ doc }) {
         {doc.name_en && doc.name_en !== doc.name_pl && (
           <p className="text-xs text-gray-400 mt-0.5">{doc.name_en}</p>
         )}
+        {state === 'error' && <p className="text-xs text-red-600 mt-0.5">Nie udało się wygenerować pliku.</p>}
       </div>
-      {doc.available ? (
+      {downloadable ? (
         <button
-          onClick={() => downloadBlankFile(doc.path, doc.name_pl)}
-          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+          onClick={handleDownload}
+          disabled={state === 'loading'}
+          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-60 transition-colors"
         >
           <DownloadIcon />
-          Pobierz
+          {state === 'loading' ? 'Generuję…' : 'Pobierz'}
         </button>
       ) : (
         <button
@@ -124,7 +168,7 @@ export default function BlankTemplatesPage() {
   const [origin, setOrigin] = useState('PL')
   const [destination, setDestination] = useState('US')
   const [mode, setMode] = useState('road')
-  const [cargoCategory, setCargoCategory] = useState('general')
+  const [cargoType, setCargoType] = useState('general')
   const [flags, setFlags] = useState({
     woodenPackaging: false,
     temporaryExport: false,
@@ -134,31 +178,33 @@ export default function BlankTemplatesPage() {
   const [zipState, setZipState] = useState('idle') // idle | loading | error
   const [result, setResult] = useState(null) // null = jeszcze nie wygenerowano
 
+  const cargoCategory = CARGO_TYPE_TO_ENGINE_CATEGORY[cargoType]
+  const selectedCargoType = CARGO_TYPES.find(ct => ct.id === cargoType)
+
   // Po zmianie któregokolwiek pola chowamy poprzedni wynik — trzeba wygenerować ponownie.
   useEffect(() => {
     setResult(null)
     setZipState('idle')
-  }, [origin, destination, mode, cargoCategory, flags])
+  }, [origin, destination, mode, cargoType, flags])
 
   // Zapis do historii dokumentów — jeden wpis (kind:'blank') na każde kliknięcie
   // „Generuj dokumenty", ten sam mechanizm co completeSet w kroku 4 kreatora.
   // Best-effort: błąd zapisu (np. brak miejsca) nie może zablokować pokazania wyników.
-  function saveToHistory(res) {
-    const downloadable = [...res.required, ...res.conditional].filter(d => d.available && d.path)
+  async function saveToHistory(res) {
+    const downloadable = [...res.required, ...res.conditional].filter(d => d.available && hasBlankSource(d.id))
     if (downloadable.length === 0) return
     try {
-      completeSet({
+      await completeSet({
         kind: 'blank',
         flowType: 'blank_templates',
         totalSteps: 1,
-        formData: { origin, destination, mode, cargoCategory, flags },
+        formData: { origin, destination, mode, cargoType, flags },
         engineResult: {
           docs: downloadable.map(d => ({
             key: d.id,
             name: d.name_pl,
             desc: d.name_en,
             icon: 'doc',
-            path: d.path,
             required: res.required.some(r => r.id === d.id),
           })),
           warnings: res.warnings,
@@ -168,7 +214,7 @@ export default function BlankTemplatesPage() {
           routeFrom: origin,
           routeTo: destination,
           transportMode: mode,
-          cargoDescription: CARGO_CATEGORIES.find(c => c.value === cargoCategory)?.label || cargoCategory,
+          cargoDescription: selectedCargoType?.label || cargoType,
           transportDate: null,
         },
       })
@@ -184,7 +230,7 @@ export default function BlankTemplatesPage() {
   }
 
   const downloadableRequired = result
-    ? result.required.filter(d => d.available && d.path)
+    ? result.required.filter(d => d.available && hasBlankSource(d.id))
     : []
 
   async function downloadZip() {
@@ -192,7 +238,7 @@ export default function BlankTemplatesPage() {
     setZipState('loading')
     try {
       await downloadBlankZip(
-        downloadableRequired.map(d => ({ path: d.path, name: d.name_pl })),
+        downloadableRequired.map(d => ({ key: d.id, name: d.name_pl })),
         `dokumenty_${origin}_${destination}.zip`
       )
       setZipState('idle')
@@ -250,18 +296,33 @@ export default function BlankTemplatesPage() {
           </div>
         </div>
 
-        {/* Kategoria towaru */}
+        {/* Rodzaj ładunku */}
         <div>
-          <label className="block text-sm text-gray-700 mb-1">Kategoria towaru</label>
-          <select
-            className={cls.input}
-            value={cargoCategory}
-            onChange={e => setCargoCategory(e.target.value)}
-          >
-            {CARGO_CATEGORIES.map(c => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
+          <label className="block text-sm text-gray-700 mb-2">Rodzaj ładunku</label>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {CARGO_TYPES.map(ct => {
+              const Icon = ct.icon
+              const active = cargoType === ct.id
+              return (
+                <button
+                  key={ct.id}
+                  type="button"
+                  onClick={() => setCargoType(ct.id)}
+                  className={`flex flex-col items-center gap-1.5 p-3 border-2 rounded-xl text-center transition-all
+                    ${active ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                >
+                  <Icon className={active ? 'w-5 h-5 text-emerald-500' : 'w-5 h-5 text-gray-400'} strokeWidth={1.5} />
+                  <span className={`text-xs font-medium ${active ? 'text-emerald-700' : 'text-gray-700'}`}>{ct.label}</span>
+                </button>
+              )
+            })}
+          </div>
+          {selectedCargoType && (
+            <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+              <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.5} />
+              <p className="text-xs text-emerald-700">{selectedCargoType.hint}</p>
+            </div>
+          )}
         </div>
 
         {/* Flagi / warunki dodatkowe */}

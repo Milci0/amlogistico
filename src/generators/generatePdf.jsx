@@ -34,7 +34,9 @@ function triggerDownload(url, filename) {
   document.body.removeChild(a)
 }
 
-export async function generatePdf(TemplateComponent, data, filename) {
+// download:false zwraca sam blob bez uruchamiania pobierania w przeglądarce —
+// używane przy pakowaniu wielu dokumentów do jednego ZIP-a (patrz blankDocuments.js).
+export async function generatePdf(TemplateComponent, data, filename, { download = true } = {}) {
   // 1. Renderuj szablon do czystego HTML-a (synchronicznie, bez React DOM)
   const bodyHtml = renderToStaticMarkup(createElement(TemplateComponent, { data }))
 
@@ -108,14 +110,17 @@ export async function generatePdf(TemplateComponent, data, filename) {
       .output('blob')
 
     // 9. Pobierz w kontekście strony głównej
-    const pdfUrl = URL.createObjectURL(pdfBlob)
-    if (isMobileSafari()) {
-      const win = window.open(pdfUrl, '_blank')
-      if (!win) triggerDownload(pdfUrl, filename)
-    } else {
-      triggerDownload(pdfUrl, filename)
+    if (download) {
+      const pdfUrl = URL.createObjectURL(pdfBlob)
+      if (isMobileSafari()) {
+        const win = window.open(pdfUrl, '_blank')
+        if (!win) triggerDownload(pdfUrl, filename)
+      } else {
+        triggerDownload(pdfUrl, filename)
+      }
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 2000)
     }
-    setTimeout(() => URL.revokeObjectURL(pdfUrl), 2000)
+    return pdfBlob
   } finally {
     if (iframe.parentNode) document.body.removeChild(iframe)
     URL.revokeObjectURL(blobUrl)

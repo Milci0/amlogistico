@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useSearchParams } from 'react-router-dom'
 import DocumentWizard from '../components/wizard/DocumentWizard'
@@ -17,14 +17,29 @@ export default function NewDocumentPage() {
   // 'B'→find_transport, brak/inne → null (fallback niżej).
   const pathFlow = PATH_TO_FLOW[pathParam] || null
 
-  // Zestaw źródłowy (edit = gotowy oryginał, resume = draft) — z repozytorium.
-  const sourceSet = useMemo(() => {
-    if (editId) return getSet(editId)
-    if (draftId) return getSet(draftId)
-    return null
-  }, [editId, draftId])
-
   const mode = editId ? 'edit' : draftId ? 'resume' : 'create'
+  const sourceId = editId || draftId
+
+  // Zestaw źródłowy (edit = gotowy oryginał, resume = draft) — z repozytorium (async).
+  const [sourceSet, setSourceSet] = useState(null)
+  const [sourceLoading, setSourceLoading] = useState(!!sourceId)
+  const [sourceError, setSourceError] = useState(false)
+
+  useEffect(() => {
+    if (!sourceId) {
+      setSourceSet(null)
+      setSourceLoading(false)
+      return
+    }
+    let active = true
+    setSourceLoading(true)
+    setSourceError(false)
+    getSet(sourceId)
+      .then((s) => { if (active) setSourceSet(s) })
+      .catch(() => { if (active) setSourceError(true) })
+      .finally(() => { if (active) setSourceLoading(false) })
+    return () => { active = false }
+  }, [sourceId])
 
   // Flow dla świeżego kreatora — potrzebne już do odczytu właściwego autozapisu
   // (autozapis jest per flowType).
@@ -38,8 +53,30 @@ export default function NewDocumentPage() {
   )
   const [restore, setRestore] = useState(null) // null | 'fresh' | 'restored'
 
+  // Ładowanie zestawu źródłowego (edit/resume) — czekamy, zanim zdecydujemy o kreatorze.
+  if (sourceId && sourceLoading) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Helmet><title>Nowe zlecenie | AMLogistico</title></Helmet>
+        <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">Ładowanie zestawu…</p>
+      </div>
+    )
+  }
+
+  // Błąd sieci przy ładowaniu — inny komunikat niż „nie istnieje".
+  if (sourceId && sourceError) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Helmet><title>Nowe zlecenie | AMLogistico</title></Helmet>
+        <AlertBox type="error" title="Błąd ładowania">
+          Nie udało się wczytać zestawu. Odśwież stronę lub spróbuj ponownie później.
+        </AlertBox>
+      </div>
+    )
+  }
+
   // Nieznany identyfikator (np. rekord usunięty) — nie udajemy pustego kreatora.
-  if ((editId || draftId) && !sourceSet) {
+  if (sourceId && !sourceSet) {
     return (
       <div className="max-w-2xl mx-auto">
         <Helmet><title>Nowe zlecenie | AMLogistico</title></Helmet>

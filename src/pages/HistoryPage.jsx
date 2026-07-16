@@ -6,10 +6,9 @@ import DocumentFilterBar from '../components/documents/DocumentFilterBar'
 import DocumentsEmptyState from '../components/documents/DocumentsEmptyState'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import AlertBox from '../components/ui/AlertBox'
-import useDocumentSets from '../hooks/useDocumentSets'
-import { listSets, getSet } from '../services/documentSetsRepo'
+import useDocumentSets, { useDocumentSetList } from '../hooks/useDocumentSets'
 import { generateDocuments } from '../services/documentGeneration'
-import { downloadBlankFile, downloadBlankZip } from '../utils/blankDocuments'
+import { downloadBlankDocument, downloadBlankZip } from '../utils/blankDocuments'
 import { formatDocumentDate } from '../utils/formatDate'
 
 const SORT_OPTIONS = [
@@ -21,7 +20,7 @@ const SORT_OPTIONS = [
 const TRANSPORT_LABEL = { road: 'Drogowy', sea: 'Morski' }
 
 export default function HistoryPage() {
-  const { version, remove } = useDocumentSets()
+  const { remove } = useDocumentSets()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -30,11 +29,11 @@ export default function HistoryPage() {
   const [downloadError, setDownloadError] = useState(null)
   const [toDelete, setToDelete] = useState(null)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const allCompleted = useMemo(
-    () => listSets({ status: 'completed', search: query, sort: sortBy }),
-    [version, query, sortBy]
-  )
+  const { sets: allCompleted, loading, error } = useDocumentSetList({
+    status: 'completed',
+    search: query,
+    sort: sortBy,
+  })
 
   const types = useMemo(() => {
     const present = new Set(allCompleted.map((s) => TRANSPORT_LABEL[s.meta?.transportMode]).filter(Boolean))
@@ -51,7 +50,8 @@ export default function HistoryPage() {
     setDownloadingId(set.id)
     try {
       if (set.kind === 'blank') {
-        // Puste szablony — statyczne pliki PDF, nie regenerowane z formData.
+        // Puste szablony — generowane przez JSX (jak wypełnione), fallback na
+        // statyczny plik dla dokumentów bez jeszcze skonwertowanego szablonu.
         const docs = (set.selectedDocs || [])
           .map((key) => set.engineResult?.docs?.find((d) => d.key === key))
           .filter(Boolean)
@@ -77,7 +77,7 @@ export default function HistoryPage() {
       if (!doc) return
       onStatus?.(key, 'loading')
       try {
-        downloadBlankFile(doc.path, doc.name)
+        await downloadBlankDocument(doc.key, doc.name)
         onStatus?.(key, 'done')
       } catch (err) {
         console.error('Błąd pobierania pliku:', err)
@@ -99,15 +99,22 @@ export default function HistoryPage() {
     navigate(`/new-document?editId=${set.id}`)
   }
 
-  function confirmRemove() {
-    if (toDelete) remove(toDelete.id)
+  async function confirmRemove() {
+    if (!toDelete) return
+    try {
+      await remove(toDelete.id)
+    } catch {
+      setDownloadError('Nie udało się usunąć zestawu.')
+    }
     setToDelete(null)
   }
 
-  // Data oryginału dla etykiety „na podstawie zestawu z…" (może już nie istnieć).
+  // Data oryginału dla etykiety „na podstawie zestawu z…" — szukamy wśród już
+  // wczytanych gotowych setów (oryginał to również completed). Gdy odfiltrowany
+  // wyszukiwarką lub usunięty — brak etykiety (degradacja bez dodatkowego zapytania).
   function derivedDate(set) {
     if (!set.derivedFromId) return null
-    const orig = getSet(set.derivedFromId)
+    const orig = allCompleted.find((s) => s.id === set.derivedFromId)
     return orig ? formatDocumentDate(orig.createdAt) : null
   }
 
@@ -142,8 +149,18 @@ export default function HistoryPage() {
         </div>
       )}
 
+      {error && (
+        <div className="mb-4">
+          <AlertBox type="error" title="Błąd ładowania">
+            Nie udało się wczytać dokumentów. Odśwież stronę lub spróbuj ponownie później.
+          </AlertBox>
+        </div>
+      )}
+
       <div className="flex flex-col gap-2">
-        {visibleSets.length === 0 ? (
+        {loading ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">Ładowanie…</p>
+        ) : visibleSets.length === 0 ? (
           <DocumentsEmptyState
             message={
               query.trim() || typeFilter !== 'all'

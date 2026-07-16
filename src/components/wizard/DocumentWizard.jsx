@@ -273,7 +273,7 @@ function Step1({ data, setData, onNext, canNext }) {
 
 // ── Step 2: Towar ──────────────────────────────────────────────────────────────
 
-function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, transport, onNext, onBack, canNext }) {
+function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, transport, findMode, onNext, onBack, canNext }) {
   const needsTemp = road.vehicleType === 'Chłodnia' || road.vehicleType === 'Mroźnia'
   const selectedCargoType = CARGO_TYPES.find(ct => ct.id === data.cargoType)
   const selectedIncoterm = INCOTERMS.find(it => it.code === terms.incoterms)
@@ -358,23 +358,25 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
         </Field>
       </div>
 
-      {/* ── Warunki przewozu (oba typy) ─────────────────────────── */}
-      <div className="border border-gray-200 rounded-xl p-5 mb-4">
-        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Warunki przewozu</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field label="Koszt frachtu">
-            <input type="number" className={cls.input} placeholder="850" value={terms.freightPrice} onChange={e => setTerms(t => ({ ...t, freightPrice: e.target.value }))} />
-          </Field>
-          <Field label="Waluta frachtu">
-            <select className={cls.input} value={terms.freightCurrency} onChange={e => setTerms(t => ({ ...t, freightCurrency: e.target.value }))}>
-              {CURRENCIES.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </Field>
-          <Field label="Termin płatności (dni)">
-            <input type="number" className={cls.input} placeholder="30" value={terms.paymentDays} onChange={e => setTerms(t => ({ ...t, paymentDays: e.target.value }))} />
-          </Field>
+      {/* ── Warunki przewozu (oba typy; nieznane przy szukaniu transportu) ── */}
+      {!findMode && (
+        <div className="border border-gray-200 rounded-xl p-5 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Warunki przewozu</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Field label="Koszt frachtu">
+              <input type="number" className={cls.input} placeholder="850" value={terms.freightPrice} onChange={e => setTerms(t => ({ ...t, freightPrice: e.target.value }))} />
+            </Field>
+            <Field label="Waluta frachtu">
+              <select className={cls.input} value={terms.freightCurrency} onChange={e => setTerms(t => ({ ...t, freightCurrency: e.target.value }))}>
+                {CURRENCIES.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="Termin płatności (dni)">
+              <input type="number" className={cls.input} placeholder="30" value={terms.paymentDays} onChange={e => setTerms(t => ({ ...t, paymentDays: e.target.value }))} />
+            </Field>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Sekcja: Transport Drogowy ────────────────────────────── */}
       {transport === 'road' && (
@@ -437,8 +439,8 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
         </div>
       )}
 
-      {/* ── Sekcja: Transport Morski ─────────────────────────────── */}
-      {transport === 'sea' && (
+      {/* ── Sekcja: Transport Morski (szczegóły nieznane przy szukaniu transportu) ── */}
+      {!findMode && transport === 'sea' && (
         <div className="border border-gray-200 rounded-xl p-5 mb-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Szczegóły kontenera i rejsu</p>
           <p className="text-xs text-gray-400 mb-4">Pola opcjonalne — dane nadawane przez armatora. Możesz uzupełnić je później.</p>
@@ -599,7 +601,7 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
   )
 }
 
-function Step3({ data, setData, onNext, onBack, canNext }) {
+function Step3({ data, setData, findMode, onNext, onBack, canNext }) {
   return (
     <div>
       <BackButton onClick={onBack} />
@@ -614,12 +616,15 @@ function Step3({ data, setData, onNext, onBack, canNext }) {
         data={data.receiver}
         onChange={r => setData(d => ({ ...d, receiver: r }))}
       />
-      <PartySection
-        title="Przewoźnik"
-        subtitle="Wymagane — pojawia się w CMR, Zleceniu Transportowym i POD"
-        data={data.carrier}
-        onChange={c => setData(d => ({ ...d, carrier: c }))}
-      />
+      {/* Przewoźnik nieznany, dopóki użytkownik szuka transportu (ścieżka B). */}
+      {!findMode && (
+        <PartySection
+          title="Przewoźnik"
+          subtitle="Wymagane — pojawia się w CMR, Zleceniu Transportowym i POD"
+          data={data.carrier}
+          onChange={c => setData(d => ({ ...d, carrier: c }))}
+        />
+      )}
       <NextButton onClick={onNext} disabled={!canNext} />
     </div>
   )
@@ -796,12 +801,12 @@ function Step4({ onBack }) {
     let saved
     try {
       if (mode === 'resume') {
-        saved = completeSet(base)
-        deleteSet(setId)
+        saved = await completeSet(base)
+        await deleteSet(setId)
       } else if (mode === 'edit') {
-        saved = completeSet({ ...base, sourceCompletedId: setId })
+        saved = await completeSet({ ...base, sourceCompletedId: setId })
       } else {
-        saved = completeSet(base)
+        saved = await completeSet(base)
       }
     } catch (err) {
       setSaveError(err.message || 'Nie udało się zapisać zestawu w historii.')
@@ -955,6 +960,9 @@ export default function DocumentWizard() {
   // Render sterowany rejestrem flow (klucz kroku), nie numerem — dzięki temu ta
   // sama sekwencja obsługuje 4 kroki ścieżki A i 6 kroków ścieżki B.
   const stepKey = flow.steps[currentStep - 1]?.key
+  // Ścieżka B („Szukam transportu"): użytkownik nie zna jeszcze warunków przewozu,
+  // szczegółów kontenera/rejsu ani przewoźnika — te sekcje chowamy.
+  const findMode = flow.flowType === 'find_transport'
 
   useEffect(() => { preloadHtml2Pdf() }, [])
 
@@ -971,11 +979,12 @@ export default function DocumentWizard() {
           sea={snapshot.sea} setSea={setSea}
           terms={snapshot.terms} setTerms={setTerms}
           transport={snapshot.route.transport}
+          findMode={findMode}
           onNext={next} onBack={prev} canNext={canNext}
         />
       )}
       {stepKey === 'parties' && (
-        <Step3 data={snapshot.parties} setData={setParties} onNext={next} onBack={prev} canNext={canNext} />
+        <Step3 data={snapshot.parties} setData={setParties} findMode={findMode} onNext={next} onBack={prev} canNext={canNext} />
       )}
       {stepKey === 'forwarders' && <ForwardersStep onNext={next} onBack={prev} />}
       {stepKey === 'quote' && <QuoteStep onNext={next} onBack={prev} />}

@@ -5,8 +5,8 @@ import DocumentCard from '../components/ui/DocumentCard'
 import DocumentFilterBar from '../components/documents/DocumentFilterBar'
 import DocumentsEmptyState from '../components/documents/DocumentsEmptyState'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
-import useDocumentSets from '../hooks/useDocumentSets'
-import { listSets } from '../services/documentSetsRepo'
+import AlertBox from '../components/ui/AlertBox'
+import useDocumentSets, { useDocumentSetList } from '../hooks/useDocumentSets'
 
 const SORT_OPTIONS = [
   { key: 'newest', label: 'Najnowsze' },
@@ -18,18 +18,19 @@ const SORT_OPTIONS = [
 const TRANSPORT_LABEL = { road: 'Drogowy', sea: 'Morski' }
 
 export default function DraftsPage() {
-  const { version, remove } = useDocumentSets()
+  const { remove } = useDocumentSets()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [toDelete, setToDelete] = useState(null)
+  const [removeError, setRemoveError] = useState(null)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const allDrafts = useMemo(
-    () => listSets({ status: 'draft', search: query, sort: sortBy }),
-    [version, query, sortBy]
-  )
+  const { sets: allDrafts, loading, error } = useDocumentSetList({
+    status: 'draft',
+    search: query,
+    sort: sortBy,
+  })
 
   const types = useMemo(() => {
     const present = new Set(allDrafts.map((s) => TRANSPORT_LABEL[s.meta?.transportMode]).filter(Boolean))
@@ -45,8 +46,13 @@ export default function DraftsPage() {
     navigate(`/new-document?draftId=${set.id}`)
   }
 
-  function confirmRemove() {
-    if (toDelete) remove(toDelete.id)
+  async function confirmRemove() {
+    if (!toDelete) return
+    try {
+      await remove(toDelete.id)
+    } catch {
+      setRemoveError('Nie udało się usunąć wersji roboczej.')
+    }
     setToDelete(null)
   }
 
@@ -75,8 +81,18 @@ export default function DraftsPage() {
         sortOptions={SORT_OPTIONS}
       />
 
+      {(error || removeError) && (
+        <div className="mb-4">
+          <AlertBox type="error" title="Błąd">
+            {removeError || 'Nie udało się wczytać wersji roboczych. Spróbuj ponownie później.'}
+          </AlertBox>
+        </div>
+      )}
+
       <div className="flex flex-col gap-2">
-        {visibleSets.length === 0 ? (
+        {loading ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">Ładowanie…</p>
+        ) : visibleSets.length === 0 ? (
           <DocumentsEmptyState
             message={
               query.trim() || typeFilter !== 'all'

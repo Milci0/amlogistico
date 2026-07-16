@@ -1,17 +1,23 @@
 import express from 'express'
 import cookieParser from 'cookie-parser'
 import authRouter from './routes/auth.js'
+import documentSetsRouter from './routes/documentSets.js'
 import newsRouter from './routes/news.js'
 import dieselRouter from './routes/diesel.js'
 import ecbRouter from './routes/ecb.js'
 
 const app = express()
 
+// Za proxy Vercela — ufamy pierwszemu hopowi, by rate-limit widział realne IP
+// klienta (X-Forwarded-For), a nie jeden współdzielony adres proxy.
+app.set('trust proxy', 1)
+
 app.use(express.json())
 app.use(cookieParser())
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
 app.use('/api/auth', authRouter)
+app.use('/api/document-sets', documentSetsRouter)
 app.use('/api/news', newsRouter)
 app.use('/api/diesel-price', dieselRouter)
 app.use('/api/ecb-rate', ecbRouter)

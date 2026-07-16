@@ -164,7 +164,7 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
 
   // Guard: „Zapisz wersję roboczą". W edit → NOWY draft z derivedFromId=oryginał
   // (oryginał nietknięty). W resume → upsert tego samego draftu. W create → nowy.
-  function saveDraftAndMark() {
+  async function saveDraftAndMark() {
     const partial = {
       id: mode === 'resume' ? setId : undefined,
       flowType,
@@ -175,7 +175,8 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
       meta: buildMeta(snapshot),
       derivedFromId,
     }
-    const saved = saveDraft(partial)
+    // Await najpierw — przy błędzie zapisu nie gasimy isDirty ani autozapisu.
+    const saved = await saveDraft(partial)
     setBaseline(cloneSnapshot(snapshot))
     clearAutosave(flowType)
     return saved

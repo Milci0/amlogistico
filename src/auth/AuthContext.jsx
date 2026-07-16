@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { api } from '../lib/api'
 import { setCurrentUserId } from '../services/currentUser'
+import { migrateLocalSetsToBackend } from '../services/migrateLocalSets'
 
 const AuthContext = createContext(null)
 
@@ -13,6 +14,12 @@ export function AuthProvider({ children }) {
   // przełączą się na dane właściwego konta.
   useEffect(() => {
     setCurrentUserId(user?.id ?? 'local-user')
+    // Po zalogowaniu (świeżym lub z hydratacji sesji) przenieś jednorazowo stare
+    // zestawy z localStorage tego urządzenia na konto. Flaga w środku chroni przed
+    // powtórką. Best-effort — błąd nie może zablokować pracy aplikacji.
+    if (user?.id) {
+      migrateLocalSetsToBackend(user.id).catch(() => {})
+    }
   }, [user])
 
   // Na starcie aplikacji próbujemy odtworzyć sesję z httpOnly cookie

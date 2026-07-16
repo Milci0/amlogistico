@@ -1,9 +1,7 @@
-import { useMemo } from 'react'
 import { NavLink, Link } from 'react-router-dom'
 import { MENU_GROUPS, MENU_BOTTOM } from '../../data/mockData'
 import { useNews } from '../../context/NewsContext'
-import useDocumentSets from '../../hooks/useDocumentSets'
-import { countByStatus } from '../../services/documentSetsRepo'
+import { useDraftCount } from '../../hooks/useDocumentSets'
 
 const ICONS = {
   home: (
@@ -133,9 +131,7 @@ function MenuLink({ item, onClose, dot }) {
 
 export default function Sidebar({ onClose }) {
   const { hasUnread } = useNews()
-  const { version } = useDocumentSets()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const draftCount = useMemo(() => countByStatus().draft, [version])
+  const draftCount = useDraftCount()
 
   return (
     <aside className="flex flex-col h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700">

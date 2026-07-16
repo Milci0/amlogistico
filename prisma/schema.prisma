@@ -23,5 +23,45 @@ model User {
   stripeCustomerId String?   @map("stripe_customer_id")
   createdAt        DateTime  @default(now()) @map("created_at")
 
+  documentSets DocumentSet[]
+
   @@map("users")
+}
+
+// document_sets — zapisane komplety dokumentów (migawka formData, NIE pliki PDF).
+// Kształt kolumn odwzorowuje obiekt z src/services/documentSetsRepo.js, żeby
+// mapowanie repo ⇄ baza było 1:1. PDF-y regenerujemy z form_data na żądanie.
+model DocumentSet {
+  id             String  @id @default(uuid())
+  userId         String  @map("user_id")
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status         String  // "draft" | "completed"
+  kind           String? // np. "blank" dla setów z pustych szablonów (domyślnie null)
+  flowType       String  @map("flow_type") // have_transport | find_transport | blank_templates
+  totalSteps     Int     @map("total_steps")
+  derivedFromId  String? @map("derived_from_id") // edycja completed → id oryginału
+
+  lastStep       Int     @map("last_step")
+  maxStepReached Int     @map("max_step_reached")
+
+  templateVersion String @map("template_version") // wersja szablonów użyta przy secie
+
+  // Migawki serializowane jako JSON (repo trzyma je jako obiekty).
+  formData       Json    @map("form_data")     // cały snapshot kreatora
+  engineResult   Json?   @map("engine_result") // wynik doboru dokumentów
+  selectedDocs   Json    @map("selected_docs") // klucze wygenerowanych dokumentów
+  meta           Json    // metadane karty/wyszukiwarki (trasa, tryb, opis, data)
+
+  // Płaskie kolumny do szybkich zapytań listy (bez ładowania form_data).
+  transportMode  String? @map("transport_mode")
+  countryFrom    String? @map("country_from")
+  countryTo      String? @map("country_to")
+
+  completedAt    DateTime? @map("completed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId, status])
+  @@map("document_sets")
 }

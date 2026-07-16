@@ -8,8 +8,11 @@ i otrzymuje komplet PDF-ów dopasowany do trasy (UE / poza UE) i typu transportu
 
 ## Stack
 - **Frontend:** React.js + Tailwind CSS + React Router (w folderze `src/`)
-- **Backend:** Node.js + Express, REST API (w folderze `server/`) — nie zaczęty
-- **Baza danych:** PostgreSQL + Prisma — nie zaczęta
+- **Backend:** Node.js + Express 5 (serverless), REST API w folderze **`api/`** (NIE `server/`);
+  lokalnie `npm run server` (:3001), na Vercelu funkcja serverless. Gotowe: auth (+ rate-limit) +
+  zestawy dokumentów (news/diesel/ecb). Do zrobienia: companies, subscription/Stripe
+- **Baza danych:** PostgreSQL na **Neon** + Prisma 6. Tabele gotowe: `users`, `document_sets`.
+  Do zrobienia: `companies`, `payments`
 - **Generowanie PDF:** html2pdf.js (CDN, po stronie przeglądarki) — szablony JSX w `src/generators/`
 - **Płatności:** Stripe — nie zaczęte
 
@@ -172,8 +175,8 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   - **UI:** `DocumentCard` na nowy kształt (badge ścieżki, dynamiczne kroki, „Pobierz/Edytuj/Usuń",
     etykieta „na podstawie zestawu z…"; BEZ „Duplikuj"). `HistoryPage`/`DraftsPage`/`Sidebar`
     przełączone na `useDocumentSets` + `documentSetsRepo`. Modale `ConfirmDialog`.
-  - **Uwaga:** stare `src/hooks/useDocuments.js` + `src/services/documentsRepository.js` (z seedem)
-    są teraz osierocone (nic ich nie importuje) — do usunięcia przy sprzątaniu.
+  - **Posprzątane (2026-07-16):** stare `src/hooks/useDocuments.js` + `src/services/documentsRepository.js`
+    (osierocony seed) USUNIĘTE.
   - Zweryfikowane: build zielony + 19/19 niezmienników repo (nieusuwalność completed, derivedFromId,
     resume-delete, namespace per-user, quota). Testy interaktywne guarda/kreatora — do sprawdzenia w przeglądarce.
 
@@ -251,7 +254,39 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     **WAŻNE: news wymaga uruchomionego backendu** — lokalnie `npm run dev:full` (front+API)
     lub osobno `npm run server`. Vercel: `/api/news` jako serverless (uwaga na 10s timeout
     przy zimnym cache — rozważyć cron warming)
-- Endpointy documents/companies/subscription, Stripe, rate-limiting — jeszcze nie zaczęte
+- **Zestawy dokumentów w bazie — GOTOWE (2026-07-16):** persystencja Historii/Wersji roboczych
+  przeniesiona z localStorage do backendu, żeby działała cross-device (ten sam user, inne urządzenie).
+  ZASADA: baza trzyma `formData` (migawkę kreatora), NIE pliki PDF — regeneracja z tego samego
+  szablonu JSX na żądanie (bez zmian w silniku/szablonach).
+  - `api/routes/documentSets.js` — CRUD za `requireAuth`, `userId` ZAWSZE z tokenu (nigdy z body/query).
+    `GET /api/document-sets?status=` (metadane bez `formData`), `GET /:id` (pełny), `POST` (nowy set),
+    `PATCH /:id` (autosave draftu / promocja draft→completed), `DELETE /:id`. Cudzy/nieistniejący set = **404**
+    (nie 403 — nie ujawnia istnienia). `api/validation/documentSets.js` (Zod, `formData/meta` jako dowolny JSON).
+  - `src/config/templateVersion.js` — `TEMPLATE_VERSION = '1.0.0'` doklejane przy KAŻDYM secie (audyt wersji szablonów).
+  - **Repo bez zmiany kontraktu:** `src/services/documentSetsRepo.js` — te same nazwy eksportów
+    (`listSets/getSet/saveDraft/completeSet/deleteSet/countByStatus`), ale wnętrze woła REST i funkcje
+    są teraz **async**. `completeSet` = POST (zawsze nowy id), `saveDraft` = PATCH gdy jest id, inaczej POST.
+  - **Konsumenci na async:** hook `useDocumentSets` + nowe `useDocumentSetList`/`useDraftCount`
+    (fetch z loading/error, refetch po evencie `documentSets:changed`). `HistoryPage/DraftsPage`
+    (loading/error, `derivedDate` z załadowanej listy zamiast osobnego `getSet`), `Sidebar` (licznik draftów),
+    `NewDocumentPage` (async ładowanie zestawu źródłowego z bramką loading/błąd/404),
+    `WizardContext.saveDraftAndMark`/`UnsavedChangesGuard`/`DocumentWizard.handleGenerate`/
+    `BlankTemplatesPage.saveToHistory` — wszystkie `await`.
+  - **Migracja:** `src/services/migrateLocalSets.js` — przy pierwszym zalogowaniu przenosi stare sety
+    z localStorage (namespace usera + `local-user`) na konto przez POST, czyści klucze, flaga
+    `amlogistico_migrated:${userId}`. Wołane z `AuthContext` (po login/register i po hydratacji `/auth/me`).
+  - **UWAGA — cookie, nie Bearer:** wbrew pierwotnemu promptowi (który zakładał backend 0% + token
+    w localStorage) auth był już gotowy na **httpOnly cookie** — zostawiony bez zmian. Jedyne dozwolone
+    użycia localStorage: autozapis kreatora (per-tab best-effort, `WizardContext`) + flaga migracji.
+  - Zweryfikowane end-to-end (server na :3001): 401 bez auth, lista bez `formData`, pełny GET z `formData`,
+    izolacja kont (B nie widzi setów A → 404 na GET/PATCH/DELETE), identyczny komunikat login (złe hasło =
+    nieistniejący email), delete→404 na re-get, `completedAt` przy completed. Build frontendu zielony.
+- **Rate-limit `/auth/*` — GOTOWE (2026-07-16):** `api/lib/rateLimit.js` (`express-rate-limit`,
+  10 żądań / 15 min / IP) nałożony na `POST /auth/login` i `/auth/register` (wspólny bucket per IP).
+  **NIE** na `GET /auth/me` (wołane przy każdym starcie appki → limit by je zablokował).
+  `app.set('trust proxy', 1)` w `api/index.js` (realne IP za proxy Vercela). Store w pamięci =
+  best-effort na serverless (twardy limit → zewnętrzny store/Redis). Zweryfikowane: 10×401 → 429.
+- Endpointy companies/subscription, Stripe — jeszcze nie zaczęte
 - **Uwaga env:** firmowy proxy → `npm` wymaga `NODE_OPTIONS=--use-system-ca`.
   Prisma przypięta do **6.x** (Prisma 7 usunęło `url=env()` w schemacie — wymaga driver-adapterów)
 
@@ -259,7 +294,12 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 - `prisma/schema.prisma` — model `User` (`@@map("users")`, snake_case przez `@map`)
 - Hosting **Neon**; `.env`: `DATABASE_URL` (pooled, `-pooler`) + `DIRECT_URL` (direct, do migracji)
 - Schema wgrana przez `npx prisma db push`; podgląd `npx prisma studio`
-- Tabele companies/document_sets/payments — jeszcze nie zaczęte (schema w `docs/3.Baza danych.md`)
+- **Tabela `document_sets` — GOTOWA (2026-07-16):** model `DocumentSet` w `schema.prisma`
+  (relacja do `User`, `onDelete: Cascade`, `@@index([userId, status])`, kolumny odwzorowują obiekt
+  z `documentSetsRepo.js` + `templateVersion` + `kind` dla setów z pustych szablonów). Wgrana przez
+  `prisma db push` (additive). `prisma generate` wymaga zatrzymanego serwera (EPERM na query engine dll
+  gdy `npm run server` działa).
+- Tabele companies/payments — jeszcze nie zaczęte (schema w `docs/3.Baza danych.md`)
 
 ## Zasady pracy
 - Przed większymi zmianami przedstaw krótki plan

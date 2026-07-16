@@ -2,6 +2,7 @@ import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import { prisma } from '../lib/prisma.js'
 import { signToken, setAuthCookie, clearAuthCookie, requireAuth } from '../lib/auth.js'
+import { authLimiter } from '../lib/rateLimit.js'
 import { registerSchema, loginSchema, formatZodError } from '../validation/auth.js'
 
 const router = Router()
@@ -19,7 +20,7 @@ function publicUser(u) {
 }
 
 // POST /api/auth/register
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   const parsed = registerSchema.safeParse(req.body)
   if (!parsed.success) {
     return res.status(400).json({ error: 'Błąd walidacji', fields: formatZodError(parsed.error) })
@@ -57,7 +58,7 @@ router.post('/register', async (req, res) => {
 })
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   const parsed = loginSchema.safeParse(req.body)
   if (!parsed.success) {
     return res.status(400).json({ error: 'Błąd walidacji', fields: formatZodError(parsed.error) })

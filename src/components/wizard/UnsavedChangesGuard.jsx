@@ -33,11 +33,11 @@ export default function UnsavedChangesGuard() {
 
   if (blocker.state !== 'blocked') return null
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     try {
-      wiz.saveDraftAndMark()
+      await wiz.saveDraftAndMark()
     } catch (err) {
-      // np. StorageQuotaError — nie przechodzimy dalej, pokazujemy komunikat.
+      // Błąd zapisu (np. sieć/serwer) — nie przechodzimy dalej, pokazujemy komunikat.
       setSaveError(err.message || 'Nie udało się zapisać wersji roboczej.')
       return
     }

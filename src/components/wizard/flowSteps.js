@@ -29,6 +29,12 @@ const validateParties = (s) =>
   nonEmpty(s.parties.receiver.name) &&
   nonEmpty(s.parties.carrier.name)
 
+// Ścieżka „Szukam transportu" — przewoźnik jeszcze nieznany, więc go nie wymagamy
+// (sekcja „Przewoźnik" jest wtedy ukryta w kreatorze).
+const validatePartiesNoCarrier = (s) =>
+  nonEmpty(s.parties.sender.name) &&
+  nonEmpty(s.parties.receiver.name)
+
 export const FLOWS = {
   have_transport: {
     flowType: 'have_transport',
@@ -46,7 +52,7 @@ export const FLOWS = {
     steps: [
       { key: 'route', label: 'Trasa', validate: validateRoute },
       { key: 'cargo', label: 'Towar', validate: validateCargo },
-      { key: 'parties', label: 'Strony', validate: validateParties },
+      { key: 'parties', label: 'Strony', validate: validatePartiesNoCarrier },
       { key: 'forwarders', label: 'Spedytorzy', validate: () => true },
       { key: 'quote', label: 'Wycena', validate: () => true },
       { key: 'docs', label: 'Dokumenty', validate: () => true },
