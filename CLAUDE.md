@@ -250,6 +250,27 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     - Znana konsekwencja (zgodna ze specyfikacją): jeśli user wejdzie na krok dokumentów i porzuci
       kreator bez kliknięcia „Generuj", w „Gotowe dokumenty" zostaje rekord `completed` z 0
       dokumentami (`selectedDocs: []`) — to zamierzone zachowanie modelu „status = f(kroku)", nie bug.
+    - **WYCOFANE (2026-07-17):** automatyczny zapis „przy KAŻDEJ zmianie kroku" oraz toast „Zapisano
+      wersję roboczą" USUNIĘTE (na życzenie użytkownika — kliknięcie „Rozpocznij"/„Edytuj" nie może
+      tworzyć wpisów, a w trybie DEV `StrictMode` dublował zapis edit → 2 kopie). `WizardContext.jsx`
+      nie ma już `useEffect([step])`, `showToast` ani renderu `<Toast>`. Wersja robocza powstaje TYLKO
+      przez alert wyjścia (`UnsavedChangesGuard` → `saveDraftAndMark`, pojawia się wyłącznie gdy
+      `isDirty`, tj. gdy user coś wpisał), a `completed` — przez „Generuj" (`recordGenerated`).
+      Skutki: (1) wejście w „Edytuj" bez zmian NIE tworzy żadnego wpisu; (2) znika też opisana wyżej
+      „konsekwencja" z pustym `completed`. `persistProgress`/`upsertProgress`/`recordGenerated`
+      zostają bez zmian. Niewidoczny autozapis do `localStorage` (odzysk po zamknięciu karty) — bez
+      zmian, nie tworzy wpisu w historii i nie pokazuje toastu.
+    - **WYJĄTEK dodany (2026-07-17):** krok „Dokumenty" (ostatni) auto-zapisuje do historii
+      NATYCHMIAST przy wejściu — nie dopiero po kliknięciu przycisku pobierania. `Step4` w
+      `DocumentWizard.jsx` ma `useEffect` (raz na mount, `autoSavedRef`) wołający
+      `wiz.recordGenerated(Array.from(selected))` z domyślnym zaznaczeniem (wymagane dokumenty) —
+      zapisuje `completed` z pełnym `formData`, zanim user cokolwiek pobierze. Kliknięcie przycisku
+      pobierania później aktualizuje TEN SAM rekord realnie pobranym kompletem. **Wyłączone dla
+      `mode==='edit'`** (edit startuje już na tym kroku — auto-zapis od razu przy otwarciu utworzyłby
+      zbędną kopię bez żadnej zmiany usera; tam kopia powstaje tylko przy realnym pobraniu/edycji).
+      Przycisk przemianowany: „Generuj dokumenty"→„Pobierz wybrane dokumenty" (edit: „Wygeneruj jako
+      nowy dokument"→„Pobierz jako nowy dokument"), bo faktycznie generuje PDF-y i od razu je pobiera
+      (`html2pdf`) — nazwa „Generuj" myliła co do momentu zapisu.
   - **ETAP 7 — rozwijana lista w Historii/Wersjach roboczych:** `DocumentCard.jsx` — chevron zamieniony
     na `ChevronRight` z lucide-react (już używane w repo) zamiast ręcznego SVG, `aria-expanded` +
     `aria-label` „Pokaż/Ukryj dokumenty". **Nowość:** lista zestawów (`GET /document-sets`) nie niesie
@@ -289,6 +310,23 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     Tailwind **v4** (`@theme` w `index.css`, brak `tailwind.config.js`). Zweryfikowane: `npm run build`
     zielony; `git diff` bez zmian w `generators/templates`, `documentEngine.js`, `documentCatalog.js`.
     **Nie zweryfikowane interaktywnie w przeglądarce.**
+
+- **Poprawki UX kreatora/profilu/historii (2026-07-17):** wyłącznie warstwa UI/UX.
+  - **Podpowiedzi pól:** usunięte `hint` pod polami przy wypełnianiu (kreator: HS, NIP/VAT; profil:
+    email, EORI, „min. 8 znaków"). Zostawione info-boxy reagujące na wybór (rodzaj towaru, Incoterms)
+    i podpowiedzi na stronach z filtrami (Puste szablony, News).
+  - **Data załadunku / ETA:** klik w całe pole `type="date"` otwiera natywny kalendarz
+    (`openDatePicker` → `showPicker()`), nie tylko ikonka.
+  - **Historia — klik w kartę:** cała lewa część `DocumentCard` (strzałka+badge+tytuł) jest teraz
+    klikalna i rozwija listę dokumentów (chevron zmieniony z `<button>` na wizualny `<span>`, `role=
+    button`+klawiatura na wrapperze). Licznik „X dokumentów" był już wcześniej (`selectedDocs.length`);
+    wpisy z „0 dokumentów" to fantomy ze starego buga auto-zapisu edycji (patrz niżej) — nowe już nie
+    powstają, można je usunąć.
+  - **„Bez domyślnej waluty":** `ProfilePage` — nowa opcja „Nie ustawiaj (bez domyślnej waluty)"
+    (`value=""`), **domyślna** (`user.defaultCurrency || ''`; PATCH zamienia `''`→`null`). Gdy brak
+    domyślnej waluty, kreator NIC nie podpowiada: `createEmptySnapshot` ma teraz `currency:''` i
+    `freightCurrency:''`, selecty waluty w kroku „Towar" dostały pustą opcję „—", a `WizardProvider`
+    ustawia obie waluty tylko gdy profil ma `defaultCurrency` (wtedy wypełnia cargo+freight spójnie).
 
 **Do zrobienia:**
 - Panel abonamentu (integracja ze Stripe)

@@ -3,7 +3,6 @@ import { ChevronRight } from 'lucide-react'
 import { formatDocumentDate } from '../../utils/formatDate'
 import { COUNTRIES } from '../../data/mockData'
 import { getStepLabel, getFlowLabel } from '../wizard/flowSteps'
-import { getDocsForSnapshot } from '../../services/documentGeneration'
 import { getSet } from '../../services/documentSetsRepo'
 
 const TRANSPORT_LABEL = { road: 'Drogowy', sea: 'Morski' }
@@ -49,11 +48,11 @@ export default function DocumentCard({
   const flowLabel = getFlowLabel(set.flowType)
   const dateLabel = formatDocumentDate(isDraft ? set.updatedAt : set.createdAt)
   const docCount = set.selectedDocs?.length || 0
-  // Gotowe: wiadomo z metadanych listy (selectedDocs przeżywa okrojenie GET listy).
-  // Szkic: formData jeszcze nieznane na tym poziomie (lista nie niesie formData/
-  // engineResult — patrz toClientListItem na backendzie) — zakładamy, że da się
-  // rozwinąć, i sprawdzamy realnie dopiero po doładowaniu pełnego zestawu.
-  const canExpand = isDraft || docCount > 0
+  // Tylko gotowe zestawy z realnie wygenerowanym kompletem da się rozwinąć.
+  // Wersje robocze NIE mają jeszcze wybranego/wygenerowanego kompletu (krok
+  // „Dokumenty" nie był jeszcze odwiedzony) — pokazywanie projekcji na żywo
+  // sugerowało, że to już finalna lista, więc strzałka rozwijania jest tu myląca.
+  const canExpand = !isDraft && docCount > 0
 
   const [expanded, setExpanded] = useState(false)
   const [docStatuses, setDocStatuses] = useState({})
@@ -63,19 +62,14 @@ export default function DocumentCard({
   const [detailsLoading, setDetailsLoading] = useState(false)
   const [detailsError, setDetailsError] = useState(false)
 
-  // Pojedyncze dokumenty do rozwinięcia. Gotowe zestawy: z selectedDocs (dane
-  // opisowe z engineResult zapisanego przy generowaniu). Wersje robocze nie mają
-  // jeszcze wybranego kompletu (krok „Dokumenty" nie był jeszcze odwiedzony) —
-  // liczymy projekcję na żywo z formData tym samym silnikiem co krok 4/6 kreatora.
+  // Pojedyncze dokumenty do rozwinięcia — tylko gotowe zestawy (canExpand wyklucza
+  // drafty), więc zawsze z selectedDocs (dane opisowe z engineResult zapisanego
+  // przy generowaniu).
   const docsDetails = !fullSet
     ? []
-    : !isDraft
-      ? (fullSet.selectedDocs || [])
-          .map((key) => fullSet.engineResult?.docs?.find((d) => d.key === key))
-          .filter(Boolean)
-      : fullSet.formData
-        ? getDocsForSnapshot(fullSet.formData).map((d) => ({ key: d.key, name: d.name, desc: d.desc }))
-        : []
+    : (fullSet.selectedDocs || [])
+        .map((key) => fullSet.engineResult?.docs?.find((d) => d.key === key))
+        .filter(Boolean)
 
   async function toggleExpand() {
     const next = !expanded
@@ -106,17 +100,33 @@ export default function DocumentCard({
       }
     >
       <div className="flex items-center justify-between gap-4">
-      <div className="flex items-center gap-3 min-w-0">
+      {/* Cała lewa część (strzałka + badge + tytuł) jest klikalna — klik w okienko
+          rozwija listę dokumentów. Przyciski akcji są w osobnym bloku po prawej. */}
+      <div
+        className={'flex items-center gap-3 min-w-0 ' + (canExpand ? 'cursor-pointer' : '')}
+        onClick={canExpand ? toggleExpand : undefined}
+        role={canExpand ? 'button' : undefined}
+        tabIndex={canExpand ? 0 : undefined}
+        aria-expanded={canExpand ? expanded : undefined}
+        aria-label={canExpand ? (expanded ? 'Ukryj dokumenty' : 'Pokaż dokumenty') : undefined}
+        onKeyDown={
+          canExpand
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  toggleExpand()
+                }
+              }
+            : undefined
+        }
+      >
         {canExpand && (
-          <button
-            type="button"
-            onClick={toggleExpand}
-            aria-expanded={expanded}
-            aria-label={expanded ? 'Ukryj dokumenty' : 'Pokaż dokumenty'}
-            className="shrink-0 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+          <span
+            aria-hidden="true"
+            className="shrink-0 w-6 h-6 flex items-center justify-center text-gray-400"
           >
             <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? 'rotate-90' : ''}`} strokeWidth={2} />
-          </button>
+          </span>
         )}
         <span className="text-xs font-bold px-2 py-1 rounded-md shrink-0 bg-blue-100 text-blue-700">
           {transportLabel}

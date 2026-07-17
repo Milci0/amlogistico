@@ -4,7 +4,6 @@ import { upsertProgress } from '../../services/documentSetsRepo'
 import { buildMeta, buildEngineResult } from '../../services/documentGeneration'
 import { getFlow } from './flowSteps'
 import { createEmptySnapshot, cloneSnapshot } from './wizardState'
-import Toast from '../ui/Toast'
 
 // ── Autozapis (ETAP 7c) — osobny slot per flowType, NIE pojawia się na draftach ──
 // Klucz zawiera flowType, bo obie ścieżki (A/B) mogą być otwarte w osobnych
@@ -84,7 +83,12 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
   const initialSnapshot = useMemo(() => {
     if (initialSet?.formData) return cloneSnapshot(initialSet.formData)
     const empty = createEmptySnapshot()
-    if (mode === 'create' && defaultCurrency) empty.cargo.currency = defaultCurrency
+    // Waluty podpowiadamy TYLKO gdy użytkownik ustawił domyślną w profilu.
+    // „Bez domyślnej waluty" (defaultCurrency puste) → pola waluty zostają puste.
+    if (mode === 'create' && defaultCurrency) {
+      empty.cargo.currency = defaultCurrency
+      empty.terms.freightCurrency = defaultCurrency
+    }
     return empty
   }, [initialSet, mode, defaultCurrency])
 
@@ -106,36 +110,25 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
 
   const guardBypassRef = useRef(false)
 
-  // ── ETAP 6 — zapis powiązany z pozycją kroku ──────────────────────────────────
-  // Jeden rekord na sesję kreatora, upsertowany na KAŻDEJ zmianie kroku. Status
-  // wynika z pozycji: ostatni krok (docs) → 'completed', wcześniejsze → 'draft'.
-  // create  → rekord nie istnieje, dopóki user nie ruszy się z kroku 1 (activeRecordIdRef = null).
+  // ── Jeden rekord na sesję kreatora — zapisywany TYLKO na wyraźną akcję ────────
+  // Status wynika z pozycji kroku: ostatni krok (docs) → 'completed', wcześniej → 'draft'.
+  // create  → rekord nie istnieje, dopóki user nie zapisze (alert wyjścia) lub nie wygeneruje.
   // resume  → kontynuacja istniejącego draftu (activeRecordIdRef = setId).
-  // edit    → NOWA kopia (derivedFromId = oryginał) tworzona natychmiast po otwarciu
-  //           edytora (edit startuje już na ostatnim kroku — patrz niżej), więc
-  //           activeRecordIdRef startuje jako null i dostaje świeże id z pierwszego zapisu.
+  // edit    → wejście w „Edytuj” NIE tworzy kopii; NOWA kopia (derivedFromId = oryginał)
+  //           powstaje dopiero przy „Generuj” (recordGenerated) lub przy świadomym
+  //           zapisie z alertu wyjścia. Brak zmian → żaden nowy wpis nie powstaje.
   const activeRecordIdRef = useRef(mode === 'resume' ? setId : null)
-  // Ostatnio wygenerowany komplet dokumentów tej sesji — dopóki user nie kliknie
-  // Generuj, zapisy „przy zmianie kroku” nie mają czego wysłać (poza edit, który
-  // dziedziczy selectedDocs oryginału, dopóki nie wygeneruje na nowo).
+  // Ostatnio wygenerowany komplet dokumentów tej sesji (edit dziedziczy selectedDocs
+  // oryginału, dopóki nie wygeneruje na nowo).
   const generatedDocsRef = useRef(initialSet?.selectedDocs || [])
   const snapshotRef = useRef(snapshot)
   useEffect(() => {
     snapshotRef.current = snapshot
   }, [snapshot])
 
-  const [toast, setToast] = useState(null)
-  const toastTimerRef = useRef(null)
-  useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current) }, [])
-
-  function showToast(message, type = 'success') {
-    setToast({ message, type, key: Date.now() })
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-    toastTimerRef.current = setTimeout(() => setToast(null), 3000)
-  }
-
-  // Rdzeń zapisu — używany zarówno przez efekt „zmiana kroku”, jak i przez
-  // saveDraftAndMark (guard nawigacji) i recordGenerated (Krok 4/6 → Generuj).
+  // Rdzeń zapisu — używany przez saveDraftAndMark (guard wyjścia z formularza)
+  // i recordGenerated (Krok 4/6 → „Generuj”). NIE jest już wołany automatycznie
+  // przy zmianie kroku — zapis powstaje tylko na wyraźną akcję użytkownika.
   async function persistProgress(stepNumber, snap) {
     const status = stepNumber >= totalSteps ? 'completed' : 'draft'
     const partial = {
@@ -155,30 +148,17 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
     return { saved, status }
   }
 
-  // Efekt: przy KAŻDEJ zmianie kroku (Dalej/Wstecz/klik w StepBar) zapisz postęp.
-  // edit startuje na ostatnim kroku — pierwsze wywołanie (na mount) tworzy tam
-  // od razu kopię ze statusem 'completed' (patrz komentarz przy activeRecordIdRef).
-  const mountedRef = useRef(false)
-  useEffect(() => {
-    if (!mountedRef.current) {
-      mountedRef.current = true
-      if (mode !== 'edit') return
-    }
-    let cancelled = false
-    persistProgress(step, snapshotRef.current)
-      .then(({ status }) => {
-        if (cancelled) return
-        if (status === 'draft') showToast('Zapisano wersję roboczą')
-      })
-      .catch((err) => {
-        if (cancelled) return
-        showToast(err.message || 'Nie udało się zapisać postępu.', 'error')
-      })
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step])
+  // Brak automatycznego zapisu przy zmianie WCZEŚNIEJSZYCH kroków ani przy
+  // otwarciu kreatora (dawniej efekt na [step] tworzył wpis co krok i pokazywał
+  // toast „Zapisano wersję roboczą”). Kliknięcie „Rozpocznij” / wejście w kroki
+  // 1–3 (6 dla ścieżki B) nie tworzy żadnego wpisu — dla nich wersja robocza
+  // powstaje tylko gdy user wpisze dane i przy wyjściu potwierdzi zapis w alercie
+  // (UnsavedChangesGuard → saveDraftAndMark).
+  // WYJĄTEK — krok „Dokumenty" (ostatni): DocumentWizard.Step4 woła
+  // recordGenerated() automatycznie zaraz po wejściu na ten krok (zanim user
+  // kliknie „Pobierz”), więc zestaw trafia do historii jako 'completed' od razu.
+  // Wyłączone dla mode==='edit' (edit startuje już na tym kroku — auto-zapis od
+  // razu przy otwarciu edytora utworzyłby zbędną kopię bez żadnej zmiany usera).
 
   const isDirty = useMemo(
     () => JSON.stringify(snapshot) !== JSON.stringify(baseline),
@@ -300,7 +280,6 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
   return (
     <WizardCtx.Provider value={value}>
       {children}
-      {toast && <Toast key={toast.key} message={toast.message} type={toast.type} />}
     </WizardCtx.Provider>
   )
 }

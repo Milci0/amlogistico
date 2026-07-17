@@ -94,11 +94,11 @@ function PersonalTab({ user, updateUser }) {
         <Field label="Imię i nazwisko" htmlFor="fullName" error={fieldErrors.fullName}>
           <input id="fullName" className={inputCls} value={form.fullName} onChange={upd('fullName')} />
         </Field>
-        <Field label="Email" htmlFor="email" hint="Email służy do logowania — nie można go tu zmienić.">
+        <Field label="Email" htmlFor="email">
           <input id="email" className={inputCls + ' opacity-70 cursor-not-allowed'} value={user.email} readOnly />
         </Field>
         <Field label="Telefon" htmlFor="phone" error={fieldErrors.phone}>
-          <input id="phone" className={inputCls} value={form.phone} onChange={upd('phone')} placeholder="+48 500 600 700" />
+          <input id="phone" className={inputCls} value={form.phone} onChange={upd('phone')} />
         </Field>
         <SaveBar status={status} message={message} />
       </form>
@@ -122,36 +122,31 @@ function CompanyTab({ user, updateUser }) {
 
   return (
     <div className="space-y-4">
-      <AlertBox type="info" title="Te dane są opcjonalne — ale oszczędzą Ci czas">
-        Jeśli je uzupełnisz, przy każdym generowaniu dokumentów wypełnimy za Ciebie sekcję
-        „Nadawca" — nie będziesz musiał wpisywać ich ręcznie. Wszystko możesz w kreatorze zmienić
-        albo nadpisać. Jeśli wolisz wpisywać dane za każdym razem — po prostu pomiń ten krok.
-      </AlertBox>
       <Card>
         <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); save(form) }}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Nazwa firmy" htmlFor="companyName" error={fieldErrors.companyName}>
-              <input id="companyName" className={inputCls} value={form.companyName} onChange={upd('companyName')} placeholder="np. ABC Sp. z o.o." />
+              <input id="companyName" className={inputCls} value={form.companyName} onChange={upd('companyName')} />
             </Field>
             <Field label="NIP / VAT" htmlFor="vatNumber" error={fieldErrors.vatNumber}>
-              <input id="vatNumber" className={inputCls} value={form.vatNumber} onChange={upd('vatNumber')} placeholder="PL1234567890" />
+              <input id="vatNumber" className={inputCls} value={form.vatNumber} onChange={upd('vatNumber')} />
             </Field>
           </div>
-          <Field label="EORI" htmlFor="eoriNumber" hint="Numer rejestracyjny podmiotu w obrocie celnym" error={fieldErrors.eoriNumber}>
-            <input id="eoriNumber" className={inputCls} value={form.eoriNumber} onChange={upd('eoriNumber')} placeholder="PL1234567890000" />
+          <Field label="EORI" htmlFor="eoriNumber" error={fieldErrors.eoriNumber}>
+            <input id="eoriNumber" className={inputCls} value={form.eoriNumber} onChange={upd('eoriNumber')} />
           </Field>
           <Field label="Adres (ulica i nr)" htmlFor="address" error={fieldErrors.address}>
-            <input id="address" className={inputCls} value={form.address} onChange={upd('address')} placeholder="ul. Przykładowa 1" />
+            <input id="address" className={inputCls} value={form.address} onChange={upd('address')} />
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Field label="Kod pocztowy" htmlFor="postalCode" error={fieldErrors.postalCode}>
-              <input id="postalCode" className={inputCls} value={form.postalCode} onChange={upd('postalCode')} placeholder="00-001" />
+              <input id="postalCode" className={inputCls} value={form.postalCode} onChange={upd('postalCode')} />
             </Field>
             <Field label="Miasto" htmlFor="city" error={fieldErrors.city}>
-              <input id="city" className={inputCls} value={form.city} onChange={upd('city')} placeholder="Warszawa" />
+              <input id="city" className={inputCls} value={form.city} onChange={upd('city')} />
             </Field>
             <Field label="Kraj" htmlFor="country" error={fieldErrors.country}>
-              <input id="country" className={inputCls} value={form.country} onChange={upd('country')} placeholder="Polska" />
+              <input id="country" className={inputCls} value={form.country} onChange={upd('country')} />
             </Field>
           </div>
           <SaveBar status={status} message={message} />
@@ -165,7 +160,7 @@ function CompanyTab({ user, updateUser }) {
 function PreferencesTab({ user, updateUser }) {
   const { status, fieldErrors, message, save } = useProfileSave(updateUser)
   const [form, setForm] = useState({
-    defaultCurrency: user.defaultCurrency || 'EUR',
+    defaultCurrency: user.defaultCurrency || '',
     preferredLanguage: user.preferredLanguage || 'PL',
   })
   const upd = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -175,6 +170,7 @@ function PreferencesTab({ user, updateUser }) {
       <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); save(form) }}>
         <Field label="Domyślna waluta" htmlFor="defaultCurrency" error={fieldErrors.defaultCurrency}>
           <select id="defaultCurrency" className={inputCls} value={form.defaultCurrency} onChange={upd('defaultCurrency')}>
+            <option value="">Bez domyślnej waluty</option>
             {['EUR', 'PLN', 'USD', 'CHF'].map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </Field>
@@ -237,7 +233,7 @@ function SecurityTab() {
         <Field label="Aktualne hasło" htmlFor="currentPassword" error={fieldErrors.currentPassword}>
           <input id="currentPassword" type="password" autoComplete="current-password" className={inputCls} value={form.currentPassword} onChange={upd('currentPassword')} />
         </Field>
-        <Field label="Nowe hasło" htmlFor="newPassword" hint="min. 8 znaków" error={fieldErrors.newPassword}>
+        <Field label="Nowe hasło" htmlFor="newPassword" error={fieldErrors.newPassword}>
           <input id="newPassword" type="password" autoComplete="new-password" className={inputCls} value={form.newPassword} onChange={upd('newPassword')} />
         </Field>
         <Field label="Powtórz nowe hasło" htmlFor="confirmPassword" error={fieldErrors.confirmPassword}>

@@ -26,7 +26,7 @@ export function createEmptySnapshot() {
       volume: '',
       packages: '',
       value: '',
-      currency: 'EUR',
+      currency: '',
       notes: '',
     },
     parties: { sender: emptyParty(), receiver: emptyParty(), carrier: emptyParty() },
@@ -43,7 +43,7 @@ export function createEmptySnapshot() {
       eta: '',
       flag: '',
     },
-    terms: { incoterms: '', freightPrice: '', freightCurrency: 'EUR', paymentDays: '' },
+    terms: { incoterms: '', freightPrice: '', freightCurrency: '', paymentDays: '' },
   }
 }
 

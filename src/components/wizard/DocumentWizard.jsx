@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Package, UtensilsCrossed, FlaskConical, PawPrint, Boxes, Info, ShieldCheck, ArrowRight, Truck, Ship, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { COUNTRIES } from '../../data/mockData'
@@ -71,6 +71,13 @@ const cls = {
   input: 'w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 transition-colors',
 }
 
+// Kliknięcie w dowolne miejsce pola daty otwiera natywny kalendarz (nie tylko
+// ikonka). showPicker() jest wspierane w nowych przeglądarkach; starsze po prostu
+// zachowują domyślne działanie (klik w ikonę).
+const openDatePicker = (e) => {
+  try { e.currentTarget.showPicker?.() } catch { /* brak wsparcia / brak gestu */ }
+}
+
 // Pasek kroków — dynamiczny (liczba kroków z definicji ścieżki) i klikalny do
 // najdalej odwiedzonego kroku (w trybie edit odblokowany w całości).
 function StepBar({ steps, current, maxReached, onStepClick }) {
@@ -92,7 +99,7 @@ function StepBar({ steps, current, maxReached, onStepClick }) {
             disabled={!reachable}
             onClick={() => reachable && onStepClick(num)}
             className={`flex items-center justify-center gap-1 sm:gap-1.5 px-1 sm:px-2 py-2.5 rounded-xl border-[1.5px] transition-colors
-              ${active ? 'border-emerald-500 bg-emerald-50' : done ? 'border-gray-200 bg-white' : 'border-gray-200 bg-white'}
+              ${active ? 'border-emerald-500 bg-emerald-50' : done ? 'border-emerald-300 bg-white' : 'border-gray-200 bg-white'}
               ${reachable ? 'cursor-pointer hover:bg-emerald-50/60' : 'cursor-default'}`}
           >
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0
@@ -222,7 +229,7 @@ function Step1({ data, setData, onNext, canNext }) {
             <CountrySelect value={data.fromCountry} onChange={v => setData(d => ({ ...d, fromCountry: v }))} />
           </Field>
           <Field label="Miasto / port">
-            <CitySelect country={data.fromCountry} value={data.fromCity} onChange={v => setData(d => ({ ...d, fromCity: v }))} placeholder="np. Warszawa" />
+            <CitySelect country={data.fromCountry} value={data.fromCity} onChange={v => setData(d => ({ ...d, fromCity: v }))} />
           </Field>
         </div>
       </div>
@@ -234,13 +241,13 @@ function Step1({ data, setData, onNext, canNext }) {
             <CountrySelect value={data.toCountry} onChange={v => setData(d => ({ ...d, toCountry: v }))} />
           </Field>
           <Field label="Miasto / port">
-            <CitySelect country={data.toCountry} value={data.toCity} onChange={v => setData(d => ({ ...d, toCity: v }))} placeholder="np. Berlin" />
+            <CitySelect country={data.toCountry} value={data.toCity} onChange={v => setData(d => ({ ...d, toCity: v }))} />
           </Field>
         </div>
       </div>
 
       <Field label="Data załadunku">
-        <input type="date" className={cls.input} value={data.loadDate} onChange={e => setData(d => ({ ...d, loadDate: e.target.value }))} />
+        <input type="date" className={`${cls.input} cursor-pointer`} value={data.loadDate} onClick={openDatePicker} onChange={e => setData(d => ({ ...d, loadDate: e.target.value }))} />
       </Field>
 
       <NextButton onClick={onNext} disabled={!canNext} />
@@ -262,10 +269,10 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <Field label="Nazwa towaru">
-          <input className={cls.input} placeholder="np. części elektroniczne" value={data.cargoName} onChange={e => setData(d => ({ ...d, cargoName: e.target.value }))} />
+          <input className={cls.input} value={data.cargoName} onChange={e => setData(d => ({ ...d, cargoName: e.target.value }))} />
         </Field>
-        <Field label="Kod celny (HS/CN)" hint="8-cyfrowy kod CN towaru">
-          <input className={cls.input} placeholder="np. 8542.31" value={data.hsCode} onChange={e => setData(d => ({ ...d, hsCode: e.target.value }))} />
+        <Field label="Kod celny (HS/CN)">
+          <input className={cls.input} value={data.hsCode} onChange={e => setData(d => ({ ...d, hsCode: e.target.value }))} />
         </Field>
       </div>
 
@@ -299,25 +306,26 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <Field label="Waga brutto (kg)">
-          <input type="number" className={cls.input} placeholder="1500" value={data.weight} onChange={e => setData(d => ({ ...d, weight: e.target.value }))} />
+          <input type="number" className={cls.input} value={data.weight} onChange={e => setData(d => ({ ...d, weight: e.target.value }))} />
         </Field>
         <Field label="Waga netto (kg)">
-          <input type="number" className={cls.input} placeholder="1400" value={data.weightNet} onChange={e => setData(d => ({ ...d, weightNet: e.target.value }))} />
+          <input type="number" className={cls.input} value={data.weightNet} onChange={e => setData(d => ({ ...d, weightNet: e.target.value }))} />
         </Field>
         <Field label="Objętość (m³)">
-          <input type="number" className={cls.input} placeholder="6.5" value={data.volume} onChange={e => setData(d => ({ ...d, volume: e.target.value }))} />
+          <input type="number" className={cls.input} value={data.volume} onChange={e => setData(d => ({ ...d, volume: e.target.value }))} />
         </Field>
         <Field label="Liczba paczek">
-          <input type="number" className={cls.input} placeholder="24" value={data.packages} onChange={e => setData(d => ({ ...d, packages: e.target.value }))} />
+          <input type="number" className={cls.input} value={data.packages} onChange={e => setData(d => ({ ...d, packages: e.target.value }))} />
         </Field>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <Field label="Wartość towaru">
-          <input type="number" className={cls.input} placeholder="15000" value={data.value} onChange={e => setData(d => ({ ...d, value: e.target.value }))} />
+          <input type="number" className={cls.input} value={data.value} onChange={e => setData(d => ({ ...d, value: e.target.value }))} />
         </Field>
         <Field label="Waluta">
           <select className={cls.input} value={data.currency} onChange={e => setData(d => ({ ...d, currency: e.target.value }))}>
+            <option value="">—</option>
             {CURRENCIES.map(c => <option key={c}>{c}</option>)}
           </select>
         </Field>
@@ -328,7 +336,6 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
           <textarea
             className={`${cls.input} resize-none`}
             rows={3}
-            placeholder="np. towar kruchy, trzymać w pozycji pionowej"
             value={data.notes}
             onChange={e => setData(d => ({ ...d, notes: e.target.value }))}
           />
@@ -341,15 +348,16 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Warunki przewozu</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Field label="Koszt frachtu">
-              <input type="number" className={cls.input} placeholder="850" value={terms.freightPrice} onChange={e => setTerms(t => ({ ...t, freightPrice: e.target.value }))} />
+              <input type="number" className={cls.input} value={terms.freightPrice} onChange={e => setTerms(t => ({ ...t, freightPrice: e.target.value }))} />
             </Field>
             <Field label="Waluta frachtu">
               <select className={cls.input} value={terms.freightCurrency} onChange={e => setTerms(t => ({ ...t, freightCurrency: e.target.value }))}>
+                <option value="">—</option>
                 {CURRENCIES.map(c => <option key={c}>{c}</option>)}
               </select>
             </Field>
             <Field label="Termin płatności (dni)">
-              <input type="number" className={cls.input} placeholder="30" value={terms.paymentDays} onChange={e => setTerms(t => ({ ...t, paymentDays: e.target.value }))} />
+              <input type="number" className={cls.input} value={terms.paymentDays} onChange={e => setTerms(t => ({ ...t, paymentDays: e.target.value }))} />
             </Field>
           </div>
         </div>
@@ -382,10 +390,10 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
           {needsTemp && (
             <div className="grid grid-cols-2 gap-3 mb-4">
               <Field label="Temperatura od (°C)">
-                <input type="number" className={cls.input} placeholder="-18" value={road.tempFrom} onChange={e => setRoad(r => ({ ...r, tempFrom: e.target.value }))} />
+                <input type="number" className={cls.input} value={road.tempFrom} onChange={e => setRoad(r => ({ ...r, tempFrom: e.target.value }))} />
               </Field>
               <Field label="Temperatura do (°C)">
-                <input type="number" className={cls.input} placeholder="-15" value={road.tempTo} onChange={e => setRoad(r => ({ ...r, tempTo: e.target.value }))} />
+                <input type="number" className={cls.input} value={road.tempTo} onChange={e => setRoad(r => ({ ...r, tempTo: e.target.value }))} />
               </Field>
             </div>
           )}
@@ -405,13 +413,13 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
           {road.adr && (
             <div className="mb-4">
               <Field label="Klasa ADR / Numer UN">
-                <input className={cls.input} placeholder="np. Klasa 3 / UN 1203" value={road.adrClass} onChange={e => setRoad(r => ({ ...r, adrClass: e.target.value }))} />
+                <input className={cls.input} value={road.adrClass} onChange={e => setRoad(r => ({ ...r, adrClass: e.target.value }))} />
               </Field>
             </div>
           )}
 
           <Field label="Nr rejestracyjny pojazdu (opcjonalne)">
-            <input className={cls.input} placeholder="np. WA 12345" value={road.vehicleReg} onChange={e => setRoad(r => ({ ...r, vehicleReg: e.target.value }))} />
+            <input className={cls.input} value={road.vehicleReg} onChange={e => setRoad(r => ({ ...r, vehicleReg: e.target.value }))} />
           </Field>
         </div>
       )}
@@ -429,40 +437,40 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
               </select>
             </Field>
             <Field label="Numer kontenera (Container No.)">
-              <input className={cls.input} placeholder="np. MSCU1234567" value={sea.containerNo} onChange={e => setSea(s => ({ ...s, containerNo: e.target.value }))} />
+              <input className={cls.input} value={sea.containerNo} onChange={e => setSea(s => ({ ...s, containerNo: e.target.value }))} />
             </Field>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <Field label="Numer plomby (Seal No.)">
-              <input className={cls.input} placeholder="np. 123456" value={sea.sealNo} onChange={e => setSea(s => ({ ...s, sealNo: e.target.value }))} />
+              <input className={cls.input} value={sea.sealNo} onChange={e => setSea(s => ({ ...s, sealNo: e.target.value }))} />
             </Field>
             <Field label="Znaki i numery (Marks & Nos)">
-              <input className={cls.input} placeholder="np. ABC/001-024" value={sea.marksNos} onChange={e => setSea(s => ({ ...s, marksNos: e.target.value }))} />
+              <input className={cls.input} value={sea.marksNos} onChange={e => setSea(s => ({ ...s, marksNos: e.target.value }))} />
             </Field>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <Field label="Statek (Vessel)">
-              <input className={cls.input} placeholder="np. MSC ANNA" value={sea.vessel} onChange={e => setSea(s => ({ ...s, vessel: e.target.value }))} />
+              <input className={cls.input} value={sea.vessel} onChange={e => setSea(s => ({ ...s, vessel: e.target.value }))} />
             </Field>
             <Field label="Nr rejsu (Voyage No.)">
-              <input className={cls.input} placeholder="np. 241N" value={sea.voyageNo} onChange={e => setSea(s => ({ ...s, voyageNo: e.target.value }))} />
+              <input className={cls.input} value={sea.voyageNo} onChange={e => setSea(s => ({ ...s, voyageNo: e.target.value }))} />
             </Field>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <Field label="Numer rezerwacji (Booking No.)">
-              <input className={cls.input} placeholder="np. MSC-BKG-2024-001" value={sea.bookingNo} onChange={e => setSea(s => ({ ...s, bookingNo: e.target.value }))} />
+              <input className={cls.input} value={sea.bookingNo} onChange={e => setSea(s => ({ ...s, bookingNo: e.target.value }))} />
             </Field>
             <Field label="Bandera (Flag)">
-              <input className={cls.input} placeholder="np. Panama" value={sea.flag} onChange={e => setSea(s => ({ ...s, flag: e.target.value }))} />
+              <input className={cls.input} value={sea.flag} onChange={e => setSea(s => ({ ...s, flag: e.target.value }))} />
             </Field>
           </div>
 
           <div className="mb-4">
             <Field label="ETA — planowana data przybycia">
-              <input type="date" className={cls.input} value={sea.eta} onChange={e => setSea(s => ({ ...s, eta: e.target.value }))} />
+              <input type="date" className={`${cls.input} cursor-pointer`} value={sea.eta} onClick={openDatePicker} onChange={e => setSea(s => ({ ...s, eta: e.target.value }))} />
             </Field>
           </div>
 
@@ -534,17 +542,16 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
       {!subtitle && <div className="mb-4" />}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <Field label="Nazwa firmy">
-          <input className={cls.input} placeholder="np. ABC Sp. z o.o." value={data.name} onChange={e => upd('name', e.target.value)} />
+          <input className={cls.input} value={data.name} onChange={e => upd('name', e.target.value)} />
         </Field>
-        <Field label="NIP / VAT lub Tax ID" hint="Krajowy numer identyfikacji podatkowej">
-          <input className={cls.input} placeholder="np. PL1234567890" value={data.vat} onChange={e => upd('vat', e.target.value)} />
+        <Field label="NIP / VAT lub Tax ID">
+          <input className={cls.input} value={data.vat} onChange={e => upd('vat', e.target.value)} />
         </Field>
       </div>
       <div className="mb-3">
         <Field label="Adres">
           <input
             className={cls.input}
-            placeholder="ul. Przykładowa 1, 00-001 Warszawa"
             value={data.address}
             onChange={e => upd('address', e.target.value)}
           />
@@ -552,10 +559,10 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Osoba kontaktowa">
-          <input className={cls.input} placeholder="Jan Kowalski" value={data.contact} onChange={e => upd('contact', e.target.value)} />
+          <input className={cls.input} value={data.contact} onChange={e => upd('contact', e.target.value)} />
         </Field>
         <Field label="Telefon">
-          <input className={cls.input} placeholder="+48 500 000 000" value={data.phone} onChange={e => upd('phone', e.target.value)} />
+          <input className={cls.input} value={data.phone} onChange={e => upd('phone', e.target.value)} />
         </Field>
       </div>
       {showBank && (
@@ -563,14 +570,14 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Dane bankowe</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <Field label="IBAN">
-              <input className={cls.input} placeholder="PL61 1090 1014 0000 0712 1981 2874" value={data.iban} onChange={e => upd('iban', e.target.value)} />
+              <input className={cls.input} value={data.iban} onChange={e => upd('iban', e.target.value)} />
             </Field>
             <Field label="BIC / SWIFT">
-              <input className={cls.input} placeholder="WBKPPLPP" value={data.swift} onChange={e => upd('swift', e.target.value)} />
+              <input className={cls.input} value={data.swift} onChange={e => upd('swift', e.target.value)} />
             </Field>
           </div>
           <Field label="Nazwa banku">
-            <input className={cls.input} placeholder="np. Santander Bank Polska" value={data.bank} onChange={e => upd('bank', e.target.value)} />
+            <input className={cls.input} value={data.bank} onChange={e => upd('bank', e.target.value)} />
           </Field>
         </div>
       )}
@@ -719,6 +726,22 @@ function Step4({ onBack }) {
   const [saveError, setSaveError] = useState(null)
   const [savedSetId, setSavedSetId] = useState(null)
 
+  // Zapis do historii NATYCHMIAST przy wejściu na ten krok — nie dopiero po
+  // kliknięciu „Pobierz". Komplet zapisujemy z domyślnym zaznaczeniem (wymagane),
+  // a każde kolejne „Pobierz" aktualizuje TEN SAM rekord realnie pobranym kompletem
+  // (recordGenerated). Tryb edit WYŁĄCZONY — edit startuje już na tym kroku, więc
+  // auto-zapis od razu utworzyłby kopię, mimo że user niczego jeszcze nie zmienił
+  // (to properties dokładnie ten bug „2 wpisy przy otwarciu edytora", który usunęliśmy).
+  const autoSavedRef = useRef(false)
+  useEffect(() => {
+    if (mode === 'edit' || autoSavedRef.current) return
+    autoSavedRef.current = true
+    wiz.recordGenerated(Array.from(selected))
+      .then((saved) => setSavedSetId(saved.id))
+      .catch((err) => setSaveError(err.message || 'Nie udało się zapisać zestawu w historii.'))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const isAnyLoading = Object.values(statuses).some(s => s === 'loading')
   const doneCount = Object.values(statuses).filter(s => s === 'done').length
   const selectedDocs = docsList.filter(d => selected.has(d.key))
@@ -783,9 +806,9 @@ function Step4({ onBack }) {
     })
   }
 
-  // ETAP 6 — status/rekord ('draft'→'completed' od wejścia na ten krok) zarządza
-  // już WizardContext (persistProgress); tu tylko generujemy PDF-y i zapisujemy
-  // realnie wybrany komplet na tym samym rekordzie (recordGenerated).
+  // Zapis do historii następuje TU, dopiero po udanym wygenerowaniu PDF-ów:
+  // recordGenerated tworzy/aktualizuje rekord 'completed' z realnie wybranym
+  // kompletem. Kreator nie zapisuje nic automatycznie wcześniej.
   async function handleGenerate() {
     setSaveError(null)
     const keys = selectedDocs.map(d => d.key)
@@ -807,7 +830,7 @@ function Step4({ onBack }) {
     setSavedSetId(saved.id)
   }
 
-  const generateLabel = mode === 'edit' ? 'Wygeneruj jako nowy dokument' : 'Generuj dokumenty'
+  const generateLabel = mode === 'edit' ? 'Pobierz jako nowy dokument' : 'Pobierz wybrane dokumenty'
   const selectListDocs = docsList.map(d => ({
     id: d.key,
     namePl: d.name,
@@ -919,7 +942,7 @@ function Step4({ onBack }) {
         errorMessage={selectionError}
         statusFor={(id) => statuses[id]}
         actionLoading={isAnyLoading}
-        loadingLabel="Generowanie..."
+        loadingLabel="Pobieranie..."
       />
     </div>
   )

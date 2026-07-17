@@ -12,7 +12,7 @@ function normalize(str) {
     .replace(/[̀-ͯ]/g, '') // usuń znaki diakrytyczne (ą, ę, ó, ü...)
 }
 
-export default function CitySelect({ country, value, onChange, placeholder = 'np. Warszawa' }) {
+export default function CitySelect({ country, value, onChange, placeholder = '' }) {
   const [cities, setCities] = useState([])
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
