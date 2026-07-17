@@ -1,11 +1,11 @@
 import express from 'express'
 import cookieParser from 'cookie-parser'
-import authRouter from './routes/auth.js'
-import profileRouter from './routes/profile.js'
-import documentSetsRouter from './routes/documentSets.js'
-import newsRouter from './routes/news.js'
-import dieselRouter from './routes/diesel.js'
-import ecbRouter from './routes/ecb.js'
+import authRouter from './_routes/auth.js'
+import profileRouter from './_routes/profile.js'
+import documentSetsRouter from './_routes/documentSets.js'
+import newsRouter from './_routes/news.js'
+import dieselRouter from './_routes/diesel.js'
+import ecbRouter from './_routes/ecb.js'
 
 const app = express()
 

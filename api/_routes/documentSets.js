@@ -1,8 +1,8 @@
 import { Router } from 'express'
-import { prisma } from '../lib/prisma.js'
-import { requireAuth } from '../lib/auth.js'
-import { createSetSchema, updateSetSchema } from '../validation/documentSets.js'
-import { formatZodError } from '../validation/auth.js'
+import { prisma } from '../_lib/prisma.js'
+import { requireAuth } from '../_lib/auth.js'
+import { createSetSchema, updateSetSchema } from '../_validation/documentSets.js'
+import { formatZodError } from '../_validation/auth.js'
 
 const router = Router()
 

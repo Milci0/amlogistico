@@ -1,9 +1,9 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
-import { prisma } from '../lib/prisma.js'
-import { signToken, setAuthCookie, clearAuthCookie, requireAuth } from '../lib/auth.js'
-import { authLimiter } from '../lib/rateLimit.js'
-import { registerSchema, loginSchema, changePasswordSchema, formatZodError } from '../validation/auth.js'
+import { prisma } from '../_lib/prisma.js'
+import { signToken, setAuthCookie, clearAuthCookie, requireAuth } from '../_lib/auth.js'
+import { authLimiter } from '../_lib/rateLimit.js'
+import { registerSchema, loginSchema, changePasswordSchema, formatZodError } from '../_validation/auth.js'
 
 const router = Router()
 

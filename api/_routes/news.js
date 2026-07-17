@@ -1,5 +1,5 @@
 import express from 'express'
-import { fetchText, parseFeed, mapLimit } from '../lib/rss.js'
+import { fetchText, parseFeed, mapLimit } from '../_lib/rss.js'
 
 const router = express.Router()
 
