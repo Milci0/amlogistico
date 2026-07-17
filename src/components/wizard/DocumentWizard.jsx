@@ -1,20 +1,20 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Package, UtensilsCrossed, FlaskConical, PawPrint, Boxes, Info, ShieldCheck, ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Package, UtensilsCrossed, FlaskConical, PawPrint, Boxes, Info, ShieldCheck, ArrowRight, Truck, Ship, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { COUNTRIES } from '../../data/mockData'
 import CountrySelect from '../ui/CountrySelect'
 import CitySelect from '../ui/CitySelect'
 import AlertBox from '../ui/AlertBox'
 import { preloadHtml2Pdf } from '../../generators/generatePdf'
+import { useAuth } from '../../auth/AuthContext'
 import { useWizard } from './WizardContext'
 import {
   getDocsForSnapshot,
   computeBothEU,
   generateDocuments,
-  buildEngineResult,
-  buildMeta,
 } from '../../services/documentGeneration'
-import { completeSet, deleteSet } from '../../services/documentSetsRepo'
+import DocumentSelectList from '../documents/DocumentSelectList'
+import StepTransition from '../StepTransition'
 
 const CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF']
 const CONTAINER_TYPES = ['', '20ft', '40ft', '40ft HC', 'LCL']
@@ -91,12 +91,12 @@ function StepBar({ steps, current, maxReached, onStepClick }) {
             type="button"
             disabled={!reachable}
             onClick={() => reachable && onStepClick(num)}
-            className={`flex items-center justify-center gap-1 sm:gap-1.5 px-1 sm:px-2 py-2.5 rounded-xl border transition-colors
-              ${active ? 'border-emerald-400 bg-emerald-50' : done ? 'border-emerald-300 bg-white' : 'border-gray-200 bg-white'}
+            className={`flex items-center justify-center gap-1 sm:gap-1.5 px-1 sm:px-2 py-2.5 rounded-xl border-[1.5px] transition-colors
+              ${active ? 'border-emerald-500 bg-emerald-50' : done ? 'border-gray-200 bg-white' : 'border-gray-200 bg-white'}
               ${reachable ? 'cursor-pointer hover:bg-emerald-50/60' : 'cursor-default'}`}
           >
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0
-              ${done ? 'bg-emerald-500 text-white' : active ? 'bg-emerald-700 text-white' : 'bg-white border border-gray-300 text-gray-400'}`}>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0
+              ${done ? 'bg-emerald-500 text-white' : active ? 'border-[1.5px] border-emerald-500 bg-white text-emerald-700' : 'bg-white border border-gray-300 text-gray-400'}`}>
               {done ? (
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -124,29 +124,6 @@ function Field({ label, hint, children }) {
       {children}
       {hint && <p className="text-xs text-gray-400 dark:text-slate-400 mt-1">{hint}</p>}
     </div>
-  )
-}
-
-function DocIcon({ type }) {
-  if (type === 'list') return (
-    <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h10" />
-    </svg>
-  )
-  if (type === 'clipboard') return (
-    <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-    </svg>
-  )
-  if (type === 'sign') return (
-    <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-9 9H9v-3z" />
-    </svg>
-  )
-  return (
-    <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
   )
 }
 
@@ -601,16 +578,71 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
   )
 }
 
-function Step3({ data, setData, findMode, onNext, onBack, canNext }) {
+// Składa dane profilu firmy w kształt sekcji „Nadawca" (jeden wiersz adresu).
+function profileToSenderPatch(user) {
+  const line2 = [user.postalCode, user.city].filter(Boolean).join(' ')
+  const address = [user.address, line2, user.country].filter(Boolean).join(', ')
+  return { name: user.companyName || '', vat: user.vatNumber || '', address }
+}
+
+function isSenderEmpty(sender) {
+  return !['name', 'vat', 'address', 'contact', 'phone'].some(k => (sender[k] || '').trim())
+}
+
+function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext }) {
+  const profileReady = user?.profileCompleted === true
+  const [autofilled, setAutofilled] = useState(false)
+
+  // Auto-fill „Nadawca" z profilu — TYLKO świeży kreator (create), profil kompletny
+  // i sekcja Nadawca całkowicie pusta. NIGDY w resume/edit (nie nadpisujemy migawki).
+  useEffect(() => {
+    if (mode !== 'create' || !profileReady || !isSenderEmpty(data.sender)) return
+    setData(d => ({ ...d, sender: { ...d.sender, ...profileToSenderPatch(user) } }))
+    setAutofilled(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function fillFromProfile() {
+    setData(d => ({ ...d, sender: { ...d.sender, ...profileToSenderPatch(user) } }))
+  }
+
   return (
     <div>
       <BackButton onClick={onBack} />
+
+      {profileReady && (
+        <button
+          type="button"
+          onClick={fillFromProfile}
+          className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded-lg px-3 py-2 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" />
+          </svg>
+          Wstaw moje dane firmy
+        </button>
+      )}
+      {!profileReady && user && (
+        <p className="mb-3 text-xs text-gray-400">
+          Wypełniaj to szybciej —{' '}
+          <Link to="/profile?tab=firma" className="text-emerald-600 hover:underline">
+            uzupełnij dane firmy w profilu
+          </Link>
+          .
+        </p>
+      )}
+
       <PartySection
         title="Nadawca"
         data={data.sender}
         onChange={s => setData(d => ({ ...d, sender: s }))}
         showBank
       />
+      {autofilled && (
+        <p className="-mt-2 mb-4 text-xs text-gray-400">
+          Wypełnione danymi z Twojego profilu. Możesz je zmienić.
+        </p>
+      )}
       <PartySection
         title="Odbiorca"
         data={data.receiver}
@@ -658,76 +690,18 @@ function QuoteStep({ onNext, onBack }) {
 
 // ── Step 4: Dokumenty ──────────────────────────────────────────────────────────
 
-function DocStatusBadge({ status }) {
-  if (status === 'loading') {
-    return (
-      <svg className="w-4 h-4 animate-spin text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-      </svg>
-    )
+// Jedna funkcja formatująca wartości karty podsumowania: puste pole pokazuje
+// „Nie podano" (jasnoszary) zamiast myślnika. Używana we wszystkich komórkach.
+function formatSummaryValue(v) {
+  if (v == null || String(v).trim() === '' || String(v).trim() === '—') {
+    return <span className="text-gray-300">Nie podano</span>
   }
-  if (status === 'done') {
-    return (
-      <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-green-600">
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-        </svg>
-        Gotowe
-      </span>
-    )
-  }
-  if (status === 'error') {
-    return (
-      <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-red-600">
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-        </svg>
-        Błąd
-      </span>
-    )
-  }
-  return null
-}
-
-function DocCard({ doc, checked, locked, status, onToggle }) {
-  return (
-    <div
-      onClick={locked ? undefined : onToggle}
-      className={`flex items-center gap-3 px-4 py-3.5 border rounded-xl transition-colors
-        ${checked ? 'border-emerald-200 bg-emerald-50/50' : 'border-gray-200 bg-white'}
-        ${locked ? '' : 'cursor-pointer hover:border-emerald-300'}`}
-    >
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={locked}
-        readOnly={locked}
-        onChange={locked ? undefined : onToggle}
-        onClick={e => e.stopPropagation()}
-        className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-400 shrink-0 disabled:opacity-70"
-      />
-      <DocIcon type={doc.icon} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-medium text-gray-900">{doc.name}</p>
-          {locked && (
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
-              Wymagany
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-gray-400 mt-0.5">{doc.desc}</p>
-      </div>
-      <DocStatusBadge status={status} />
-    </div>
-  )
+  return v
 }
 
 function Step4({ onBack }) {
   const wiz = useWizard()
-  const navigate = useNavigate()
-  const { snapshot, mode, setId, flowType, totalSteps, derivedFromId, originalEngineResult } = wiz
+  const { snapshot, mode, originalEngineResult, flow } = wiz
 
   const docsList = useMemo(() => getDocsForSnapshot(snapshot), [snapshot])
   const bothEU = computeBothEU(snapshot.route)
@@ -737,15 +711,17 @@ function Step4({ onBack }) {
   const [statuses, setStatuses] = useState(() =>
     Object.fromEntries(docsList.map(d => [d.key, 'idle']))
   )
+  // ETAP 4 — checkbox dokumentu wymaganego jest odznaczalny; required tylko
+  // steruje domyślnym zaznaczeniem i badge'em, nie blokuje interakcji.
   const [selected, setSelected] = useState(() =>
-    Object.fromEntries(docsList.map(d => [d.key, !!d.required]))
+    new Set(docsList.filter(d => d.required).map(d => d.key))
   )
   const [saveError, setSaveError] = useState(null)
   const [savedSetId, setSavedSetId] = useState(null)
 
   const isAnyLoading = Object.values(statuses).some(s => s === 'loading')
   const doneCount = Object.values(statuses).filter(s => s === 'done').length
-  const selectedDocs = docsList.filter(d => selected[d.key])
+  const selectedDocs = docsList.filter(d => selected.has(d.key))
 
   // ETAP 5 — w trybie edit sygnalizujemy, że dobór dokumentów zmienił się względem
   // oryginału (engine liczony NA NOWO z aktualnego formData, nie z zapisanego).
@@ -755,27 +731,61 @@ function Step4({ onBack }) {
     return sig(docsList) !== sig(originalEngineResult.docs)
   }, [mode, originalEngineResult, docsList])
 
+  // „Kompletne" = wszystkie kroki poza „Dokumenty" przechodzą walidację ścieżki
+  // (ta sama reguła co przyciski „Dalej"/StepBar — nie wymyślamy nowej walidacji).
+  const isComplete = flow.steps.filter(s => s.key !== 'docs').every(s => s.validate(snapshot))
+
+  const routeReady = !!(fromCountry && toCountry)
+  const TransportIcon = snapshot.route.transport === 'road' ? Truck : Ship
+  const weightVal = snapshot.cargo.weight ? `${snapshot.cargo.weight} kg` : ''
+  const valueVal = snapshot.cargo.value ? `${snapshot.cargo.value} ${snapshot.cargo.currency}` : ''
+
   const summary = [
-    ['Typ transportu', snapshot.route.transport === 'road' ? 'Drogowy (TIR)' : 'Morski (Kontener)'],
-    ['Trasa', fromCountry && toCountry ? `${fromCountry.name} → ${toCountry.name}` : '—'],
-    ['Towar', snapshot.cargo.cargoName || '—'],
-    ['Waga', snapshot.cargo.weight ? `${snapshot.cargo.weight} kg` : '—'],
-    ['Wartość', snapshot.cargo.value ? `${snapshot.cargo.value} ${snapshot.cargo.currency}` : '—'],
-    ...(snapshot.terms.incoterms ? [['Incoterms', snapshot.terms.incoterms]] : []),
-    ['Cel. wymagana odprawa', fromCountry && toCountry ? (bothEU ? 'Nie — ruch wewnątrz UE' : 'Tak') : '—'],
-    ...(snapshot.parties.sender.name ? [['Nadawca', snapshot.parties.sender.name]] : []),
-    ...(snapshot.parties.receiver.name ? [['Odbiorca', snapshot.parties.receiver.name]] : []),
-    ...(snapshot.parties.carrier.name ? [['Przewoźnik', snapshot.parties.carrier.name]] : []),
+    {
+      label: 'Typ transportu',
+      value: snapshot.route.transport === 'road' ? 'Drogowy (TIR)' : 'Morski (Kontener)',
+      icon: <TransportIcon className="w-4 h-4 text-gray-400 shrink-0" strokeWidth={1.75} />,
+    },
+    {
+      label: 'Trasa',
+      value: routeReady ? `${fromCountry.name} → ${toCountry.name}` : '',
+      icon: routeReady ? <ArrowRight className="w-4 h-4 text-gray-400 shrink-0" strokeWidth={1.75} /> : null,
+    },
+    { label: 'Towar', value: snapshot.cargo.cargoName || '' },
+    {
+      label: 'Odprawa celna',
+      value: routeReady ? (bothEU ? 'Nie — ruch wewnątrz UE' : 'Tak') : '',
+      icon: routeReady
+        ? bothEU
+          ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={1.75} />
+          : <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={1.75} />
+        : null,
+      tone: routeReady ? (bothEU ? 'text-emerald-700' : 'text-amber-700') : undefined,
+    },
+    // Waga i Wartość: jedna komórka gdy oba puste, w przeciwnym razie dwie osobne.
+    ...(!weightVal && !valueVal
+      ? [{ label: 'Waga / Wartość', value: '' }]
+      : [{ label: 'Waga', value: weightVal }, { label: 'Wartość', value: valueVal }]),
+    { label: 'Incoterms', value: snapshot.terms.incoterms || '' },
+    { label: 'Nadawca', value: snapshot.parties.sender.name || '' },
+    { label: 'Odbiorca', value: snapshot.parties.receiver.name || '' },
+    ...(snapshot.parties.carrier.name
+      ? [{ label: 'Przewoźnik', value: snapshot.parties.carrier.name }]
+      : []),
   ]
 
   function toggleDoc(key) {
-    setSelected(s => ({ ...s, [key]: !s[key] }))
+    setSelected(s => {
+      const next = new Set(s)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
   }
 
-  // ETAP 4 — zapis DOPIERO po udanym wygenerowaniu kompletu. Błąd → nic nie zapisujemy.
-  //   create → nowy wpis (derivedFromId = null)
-  //   resume → nowy wpis + usunięcie draftu (setId)
-  //   edit   → nowy wpis z derivedFromId = oryginał (setId); oryginał nietknięty
+  // ETAP 6 — status/rekord ('draft'→'completed' od wejścia na ten krok) zarządza
+  // już WizardContext (persistProgress); tu tylko generujemy PDF-y i zapisujemy
+  // realnie wybrany komplet na tym samym rekordzie (recordGenerated).
   async function handleGenerate() {
     setSaveError(null)
     const keys = selectedDocs.map(d => d.key)
@@ -784,30 +794,9 @@ function Step4({ onBack }) {
     )
     if (failed.length > 0) return
 
-    const base = {
-      flowType,
-      totalSteps,
-      // resume: zachowaj powiązanie draftu z oryginałem (edit ustawia je przez
-      // sourceCompletedId); create: null.
-      derivedFromId,
-      formData: snapshot,
-      engineResult: buildEngineResult(snapshot),
-      selectedDocs: keys,
-      meta: buildMeta(snapshot),
-      lastStep: totalSteps,
-      maxStepReached: totalSteps,
-    }
-
     let saved
     try {
-      if (mode === 'resume') {
-        saved = await completeSet(base)
-        await deleteSet(setId)
-      } else if (mode === 'edit') {
-        saved = await completeSet({ ...base, sourceCompletedId: setId })
-      } else {
-        saved = await completeSet(base)
-      }
+      saved = await wiz.recordGenerated(keys)
     } catch (err) {
       setSaveError(err.message || 'Nie udało się zapisać zestawu w historii.')
       return
@@ -818,9 +807,16 @@ function Step4({ onBack }) {
     setSavedSetId(saved.id)
   }
 
-  const requiredDocs = docsList.filter(d => d.required)
-  const optionalDocs = docsList.filter(d => !d.required)
   const generateLabel = mode === 'edit' ? 'Wygeneruj jako nowy dokument' : 'Generuj dokumenty'
+  const selectListDocs = docsList.map(d => ({
+    id: d.key,
+    namePl: d.name,
+    description: d.desc,
+    required: d.required,
+  }))
+  const selectionError = selectedDocs.length === 0
+    ? 'Zaznacz co najmniej jeden dokument, aby pobrać pliki.'
+    : null
 
   return (
     <div>
@@ -854,23 +850,42 @@ function Step4({ onBack }) {
         <div className="mb-4">
           <AlertBox type="success" title="Zapisano w historii">
             Zestaw dokumentów został zapisany.{' '}
-            <Link to="/history" className="font-semibold underline">Przejdź do historii dokumentów</Link>.
+            <Link to="/history" className="font-medium underline">Przejdź do historii dokumentów</Link>.
           </AlertBox>
         </div>
       )}
 
-      <div className="border border-gray-200 rounded-xl overflow-hidden mb-6">
-        <div className="px-5 py-3 bg-white border-b border-gray-100">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Podsumowanie zlecenia</p>
-        </div>
-        {summary.map(([label, value]) => (
-          <div key={label} className="flex items-center justify-between px-5 py-3 border-b border-gray-100 last:border-b-0 bg-white">
-            <span className="text-sm text-gray-500">{label}</span>
-            <span className={`text-sm font-medium ${label === 'Cel. wymagana odprawa' && bothEU ? 'text-green-600' : 'text-gray-900'}`}>
-              {value}
+      <div className="border border-gray-200 rounded-2xl overflow-hidden mb-6 bg-white">
+        <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-gray-100">
+          <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Podsumowanie zlecenia</p>
+          {isComplete ? (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-1">
+              <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2} />
+              Kompletne
             </span>
-          </div>
-        ))}
+          ) : (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-2.5 py-1">
+              <AlertTriangle className="w-3.5 h-3.5" strokeWidth={2} />
+              Niekompletne
+            </span>
+          )}
+        </div>
+        {/* gap-px na szarym tle rysuje cienkie separatory między wierszami i kolumnami;
+            krawędzie karty zamyka border — ostatni wiersz nie ma dolnej linii. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-gray-100">
+          {summary.map((cell, i) => {
+            const spanFull = summary.length % 2 === 1 && i === summary.length - 1
+            return (
+              <div key={cell.label} className={`bg-white px-5 py-3 ${spanFull ? 'md:col-span-2' : ''}`}>
+                <p className="text-xs text-gray-400 mb-0.5">{cell.label}</p>
+                <div className={`flex items-center gap-1.5 text-sm font-medium ${cell.tone || 'text-gray-900'}`}>
+                  {cell.icon}
+                  <span className="min-w-0">{formatSummaryValue(cell.value)}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       <Link
@@ -881,7 +896,7 @@ function Step4({ onBack }) {
           <ShieldCheck className="w-5 h-5 text-emerald-600" strokeWidth={1.75} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-emerald-900">Ubezpiecz swoją przesyłkę</p>
+          <p className="text-sm font-medium text-emerald-900">Ubezpiecz swoją przesyłkę</p>
           <p className="text-xs text-emerald-700 mt-0.5">Chroń towar na czas transportu przed uszkodzeniem, kradzieżą i zagubieniem.</p>
         </div>
         <ArrowRight className="w-4 h-4 text-emerald-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
@@ -894,48 +909,18 @@ function Step4({ onBack }) {
         )}
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Wymagane</p>
-      <div className="space-y-2 mb-4">
-        {requiredDocs.map(doc => (
-          <DocCard key={doc.key} doc={doc} checked locked status={statuses[doc.key]} />
-        ))}
-      </div>
-
-      {optionalDocs.length > 0 && (
-        <>
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Opcjonalne</p>
-          <div className="space-y-2 mb-6">
-            {optionalDocs.map(doc => (
-              <DocCard
-                key={doc.key}
-                doc={doc}
-                checked={!!selected[doc.key]}
-                status={statuses[doc.key]}
-                onToggle={() => toggleDoc(doc.key)}
-              />
-            ))}
-          </div>
-        </>
-      )}
-      {optionalDocs.length === 0 && <div className="mb-6" />}
-
-      <button
-        onClick={handleGenerate}
-        disabled={isAnyLoading || selectedDocs.length === 0}
-        className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-semibold py-3.5 rounded-xl transition-colors text-sm"
-      >
-        {isAnyLoading ? (
-          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
-        ) : (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-        )}
-        {generateLabel}
-      </button>
+      <DocumentSelectList
+        documents={selectListDocs}
+        selectedIds={selected}
+        onToggle={toggleDoc}
+        actionLabel={generateLabel}
+        onAction={handleGenerate}
+        disabled={isAnyLoading}
+        errorMessage={selectionError}
+        statusFor={(id) => statuses[id]}
+        actionLoading={isAnyLoading}
+        loadingLabel="Generowanie..."
+      />
     </div>
   )
 }
@@ -946,7 +931,8 @@ function Step4({ onBack }) {
 
 export default function DocumentWizard() {
   const wiz = useWizard()
-  const { snapshot, currentStep, maxStepReached, flow, next, prev, goToStep } = wiz
+  const { user } = useAuth()
+  const { snapshot, currentStep, maxStepReached, flow, mode, next, prev, goToStep } = wiz
 
   const setRoute   = (u) => wiz.setStepData('route', u)
   const setCargo   = (u) => wiz.setStepData('cargo', u)
@@ -969,26 +955,28 @@ export default function DocumentWizard() {
   return (
     <div>
       <StepBar steps={stepLabels} current={currentStep} maxReached={maxStepReached} onStepClick={goToStep} />
-      {stepKey === 'route' && (
-        <Step1 data={snapshot.route} setData={setRoute} onNext={next} canNext={canNext} />
-      )}
-      {stepKey === 'cargo' && (
-        <Step2
-          data={snapshot.cargo} setData={setCargo}
-          road={snapshot.road} setRoad={setRoad}
-          sea={snapshot.sea} setSea={setSea}
-          terms={snapshot.terms} setTerms={setTerms}
-          transport={snapshot.route.transport}
-          findMode={findMode}
-          onNext={next} onBack={prev} canNext={canNext}
-        />
-      )}
-      {stepKey === 'parties' && (
-        <Step3 data={snapshot.parties} setData={setParties} findMode={findMode} onNext={next} onBack={prev} canNext={canNext} />
-      )}
-      {stepKey === 'forwarders' && <ForwardersStep onNext={next} onBack={prev} />}
-      {stepKey === 'quote' && <QuoteStep onNext={next} onBack={prev} />}
-      {stepKey === 'docs' && <Step4 onBack={prev} />}
+      <StepTransition stepKey={currentStep}>
+        {stepKey === 'route' && (
+          <Step1 data={snapshot.route} setData={setRoute} onNext={next} canNext={canNext} />
+        )}
+        {stepKey === 'cargo' && (
+          <Step2
+            data={snapshot.cargo} setData={setCargo}
+            road={snapshot.road} setRoad={setRoad}
+            sea={snapshot.sea} setSea={setSea}
+            terms={snapshot.terms} setTerms={setTerms}
+            transport={snapshot.route.transport}
+            findMode={findMode}
+            onNext={next} onBack={prev} canNext={canNext}
+          />
+        )}
+        {stepKey === 'parties' && (
+          <Step3 data={snapshot.parties} setData={setParties} findMode={findMode} mode={mode} user={user} onNext={next} onBack={prev} canNext={canNext} />
+        )}
+        {stepKey === 'forwarders' && <ForwardersStep onNext={next} onBack={prev} />}
+        {stepKey === 'quote' && <QuoteStep onNext={next} onBack={prev} />}
+        {stepKey === 'docs' && <Step4 onBack={prev} />}
+      </StepTransition>
     </div>
   )
 }

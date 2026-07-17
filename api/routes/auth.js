@@ -3,17 +3,31 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '../lib/prisma.js'
 import { signToken, setAuthCookie, clearAuthCookie, requireAuth } from '../lib/auth.js'
 import { authLimiter } from '../lib/rateLimit.js'
-import { registerSchema, loginSchema, formatZodError } from '../validation/auth.js'
+import { registerSchema, loginSchema, changePasswordSchema, formatZodError } from '../validation/auth.js'
 
 const router = Router()
 
-// Zwraca usera bez wrażliwych pól (nigdy nie wysyłamy passwordHash)
+// Zwraca usera bez wrażliwych pól (nigdy nie wysyłamy passwordHash).
+// Zawiera pola profilu potrzebne frontendowi (auto-fill nadawcy, nudge, waluta),
+// więc AuthContext ma je od razu bez dodatkowego zapytania.
 function publicUser(u) {
   return {
     id: u.id,
     email: u.email,
+    fullName: u.fullName,
+    phone: u.phone,
     companyName: u.companyName,
     vatNumber: u.vatNumber,
+    eoriNumber: u.eoriNumber,
+    address: u.address,
+    city: u.city,
+    postalCode: u.postalCode,
+    country: u.country,
+    defaultCurrency: u.defaultCurrency,
+    preferredLanguage: u.preferredLanguage,
+    marketingConsent: u.marketingConsent,
+    termsAcceptedAt: u.termsAcceptedAt,
+    profileCompleted: u.profileCompleted,
     plan: u.plan,
     createdAt: u.createdAt,
   }
@@ -25,7 +39,7 @@ router.post('/register', authLimiter, async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: 'Błąd walidacji', fields: formatZodError(parsed.error) })
   }
-  const { email, password, companyName, vatNumber } = parsed.data
+  const { email, password, fullName, phone, companyName, marketingConsent } = parsed.data
   const normalizedEmail = email.trim().toLowerCase()
 
   const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } })
@@ -41,8 +55,12 @@ router.post('/register', authLimiter, async (req, res) => {
       data: {
         email: normalizedEmail,
         passwordHash,
-        companyName,
-        vatNumber: vatNumber || null,
+        fullName,
+        phone,
+        companyName: companyName || null,
+        marketingConsent: !!marketingConsent,
+        // Liczy się znacznik czasu akceptacji, nie sam boolean z formularza
+        termsAcceptedAt: new Date(),
       },
     })
   } catch (err) {
@@ -83,6 +101,39 @@ router.get('/me', requireAuth, async (req, res) => {
     return res.status(401).json({ error: 'Brak autoryzacji' })
   }
   res.json({ user: publicUser(user) })
+})
+
+// POST /api/auth/change-password — zmiana hasła zalogowanego usera.
+// Objęte tym samym rate-limitem co login/register (ochrona przed zgadywaniem
+// currentPassword).
+router.post('/change-password', authLimiter, requireAuth, async (req, res) => {
+  const parsed = changePasswordSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Błąd walidacji', fields: formatZodError(parsed.error) })
+  }
+  const { currentPassword, newPassword } = parsed.data
+
+  const user = await prisma.user.findUnique({ where: { id: req.userId } })
+  if (!user) {
+    clearAuthCookie(res)
+    return res.status(401).json({ error: 'Brak autoryzacji' })
+  }
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash)
+  if (!valid) {
+    // Ten sam kształt co register/login — front pokaże błąd pod polem currentPassword
+    return res.status(400).json({
+      error: 'Błąd walidacji',
+      fields: { currentPassword: 'Nieprawidłowe aktualne hasło' },
+    })
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 12)
+  await prisma.user.update({ where: { id: user.id }, data: { passwordHash } })
+
+  // Nowe cookie — użytkownik zostaje zalogowany po zmianie hasła
+  setAuthCookie(res, signToken(user.id))
+  res.json({ ok: true })
 })
 
 // POST /api/auth/logout

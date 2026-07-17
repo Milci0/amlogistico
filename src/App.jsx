@@ -14,7 +14,7 @@ import HistoryPage from './pages/HistoryPage'
 import DraftsPage from './pages/DraftsPage'
 import CompaniesPage from './pages/CompaniesPage'
 import SubscriptionPage from './pages/SubscriptionPage'
-import SettingsPage from './pages/SettingsPage'
+import ProfilePage from './pages/ProfilePage'
 import CalibratePage from './pages/CalibratePage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import IncotermsPage from './pages/IncotermsPage'
@@ -57,8 +57,9 @@ const router = createBrowserRouter([
               { path: 'wersje-robocze', element: <DraftsPage /> },
               { path: 'companies', element: <CompaniesPage /> },
               { path: 'subscription', element: <SubscriptionPage /> },
-              { path: 'settings', element: <SettingsPage /> },
-              { path: 'profile', element: <PlaceholderPage title="Profil" description="Twoje dane konta i ustawienia profilu." /> },
+              // Ustawienia scalone z Profilem — stary link nie umiera
+              { path: 'settings', element: <Navigate to="/profile" replace /> },
+              { path: 'profile', element: <ProfilePage /> },
               { path: 'insurance', element: <PlaceholderPage title="Ubezpieczenia" description="Polisy i ubezpieczenia ładunków." /> },
               { path: 'routes', element: <PlaceholderPage title="Trasy handlowe" description="Planowanie i analiza tras transportowych." /> },
               { path: 'news', element: <NewsPage /> },

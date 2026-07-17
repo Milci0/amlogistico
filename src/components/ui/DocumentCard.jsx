@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { formatDocumentDate } from '../../utils/formatDate'
 import { COUNTRIES } from '../../data/mockData'
 import { getStepLabel, getFlowLabel } from '../wizard/flowSteps'
+import { getDocsForSnapshot } from '../../services/documentGeneration'
+import { getSet } from '../../services/documentSetsRepo'
 
 const TRANSPORT_LABEL = { road: 'Drogowy', sea: 'Morski' }
 
@@ -46,18 +49,50 @@ export default function DocumentCard({
   const flowLabel = getFlowLabel(set.flowType)
   const dateLabel = formatDocumentDate(isDraft ? set.updatedAt : set.createdAt)
   const docCount = set.selectedDocs?.length || 0
-
-  // Pojedyncze dokumenty do rozwinięcia — tylko dla gotowych zestawów, w kolejności
-  // z selectedDocs (dane opisowe z engineResult zapisanego przy generowaniu).
-  const docsDetails = !isDraft
-    ? (set.selectedDocs || [])
-        .map((key) => set.engineResult?.docs?.find((d) => d.key === key))
-        .filter(Boolean)
-    : []
-  const canExpand = docsDetails.length > 0
+  // Gotowe: wiadomo z metadanych listy (selectedDocs przeżywa okrojenie GET listy).
+  // Szkic: formData jeszcze nieznane na tym poziomie (lista nie niesie formData/
+  // engineResult — patrz toClientListItem na backendzie) — zakładamy, że da się
+  // rozwinąć, i sprawdzamy realnie dopiero po doładowaniu pełnego zestawu.
+  const canExpand = isDraft || docCount > 0
 
   const [expanded, setExpanded] = useState(false)
   const [docStatuses, setDocStatuses] = useState({})
+  // Pełny zestaw (z formData/engineResult) doładowywany leniwie przy pierwszym
+  // rozwinięciu — lista zestawów nie niesie tych pól (oszczędność transferu).
+  const [fullSet, setFullSet] = useState(null)
+  const [detailsLoading, setDetailsLoading] = useState(false)
+  const [detailsError, setDetailsError] = useState(false)
+
+  // Pojedyncze dokumenty do rozwinięcia. Gotowe zestawy: z selectedDocs (dane
+  // opisowe z engineResult zapisanego przy generowaniu). Wersje robocze nie mają
+  // jeszcze wybranego kompletu (krok „Dokumenty" nie był jeszcze odwiedzony) —
+  // liczymy projekcję na żywo z formData tym samym silnikiem co krok 4/6 kreatora.
+  const docsDetails = !fullSet
+    ? []
+    : !isDraft
+      ? (fullSet.selectedDocs || [])
+          .map((key) => fullSet.engineResult?.docs?.find((d) => d.key === key))
+          .filter(Boolean)
+      : fullSet.formData
+        ? getDocsForSnapshot(fullSet.formData).map((d) => ({ key: d.key, name: d.name, desc: d.desc }))
+        : []
+
+  async function toggleExpand() {
+    const next = !expanded
+    setExpanded(next)
+    if (next && !fullSet && !detailsLoading) {
+      setDetailsLoading(true)
+      setDetailsError(false)
+      try {
+        const full = await getSet(set.id)
+        setFullSet(full)
+      } catch {
+        setDetailsError(true)
+      } finally {
+        setDetailsLoading(false)
+      }
+    }
+  }
 
   async function handleDocDownload(key) {
     await onDownloadOne?.(set, key, (k, st) => setDocStatuses((s) => ({ ...s, [k]: st })))
@@ -75,16 +110,12 @@ export default function DocumentCard({
         {canExpand && (
           <button
             type="button"
-            onClick={() => setExpanded((e) => !e)}
-            aria-label={expanded ? 'Zwiń listę dokumentów' : 'Rozwiń listę dokumentów'}
+            onClick={toggleExpand}
+            aria-expanded={expanded}
+            aria-label={expanded ? 'Ukryj dokumenty' : 'Pokaż dokumenty'}
             className="shrink-0 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
           >
-            <svg
-              className={`w-4 h-4 transition-transform ${expanded ? 'rotate-90' : ''}`}
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? 'rotate-90' : ''}`} strokeWidth={2} />
           </button>
         )}
         <span className="text-xs font-bold px-2 py-1 rounded-md shrink-0 bg-blue-100 text-blue-700">
@@ -184,28 +215,40 @@ export default function DocumentCard({
 
       {expanded && canExpand && (
         <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
-          {docsDetails.map((doc) => {
-            const status = docStatuses[doc.key]
-            return (
-              <div key={doc.key} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-gray-800 truncate">{doc.name}</p>
-                  {doc.desc && <p className="text-[11px] text-gray-400 truncate">{doc.desc}</p>}
+          {detailsLoading ? (
+            <p className="text-xs text-gray-400 px-3 py-2">Ładowanie…</p>
+          ) : detailsError ? (
+            <p className="text-xs text-red-600 px-3 py-2">Nie udało się wczytać dokumentów.</p>
+          ) : (
+            docsDetails.map((doc) => {
+              const status = docStatuses[doc.key]
+              return (
+                <div key={doc.key} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-gray-800 truncate">{doc.name}</p>
+                    {doc.desc && <p className="text-[11px] text-gray-400 truncate">{doc.desc}</p>}
+                  </div>
+                  {isDraft ? (
+                    <span className="shrink-0 text-[11px] text-gray-400">Niewygenerowany</span>
+                  ) : (
+                    <>
+                      <DocRowStatus status={status} />
+                      <button
+                        onClick={() => handleDocDownload(doc.key)}
+                        disabled={status === 'loading'}
+                        className="shrink-0 flex items-center gap-1.5 text-[11px] font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-100 disabled:opacity-60 px-2 py-1 rounded-md transition-colors"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        {status === 'done' ? 'Pobierz ponownie' : 'Pobierz'}
+                      </button>
+                    </>
+                  )}
                 </div>
-                <DocRowStatus status={status} />
-                <button
-                  onClick={() => handleDocDownload(doc.key)}
-                  disabled={status === 'loading'}
-                  className="shrink-0 flex items-center gap-1.5 text-[11px] font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-100 disabled:opacity-60 px-2 py-1 rounded-md transition-colors"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  {status === 'done' ? 'Pobierz ponownie' : 'Pobierz'}
-                </button>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
       )}
     </div>

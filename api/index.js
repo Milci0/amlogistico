@@ -1,6 +1,7 @@
 import express from 'express'
 import cookieParser from 'cookie-parser'
 import authRouter from './routes/auth.js'
+import profileRouter from './routes/profile.js'
 import documentSetsRouter from './routes/documentSets.js'
 import newsRouter from './routes/news.js'
 import dieselRouter from './routes/diesel.js'
@@ -17,6 +18,7 @@ app.use(cookieParser())
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
 app.use('/api/auth', authRouter)
+app.use('/api/profile', profileRouter)
 app.use('/api/document-sets', documentSetsRouter)
 app.use('/api/news', newsRouter)
 app.use('/api/diesel-price', dieselRouter)

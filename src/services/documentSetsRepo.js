@@ -7,7 +7,8 @@
 // Założenie audytowe: PDF-ów NIE trzymamy. Trzymamy formData + engineResult i
 // regenerujemy na żądanie. Każdy realnie wygenerowany komplet (completed) to
 // OSOBNY, nieusuwalny-przez-edycję rekord: completeSet zawsze tworzy nowy id na
-// backendzie (POST). Drafty MOGĄ być nadpisywane (saveDraft = upsert po id).
+// backendzie (POST). ETAP 6 — postęp kreatora (draft/completed wg pozycji kroku)
+// idzie przez upsertProgress, który nadpisuje TEN SAM rekord niezależnie od statusu.
 //
 // Kształt DocumentSet (zwracany przez backend):
 //   { id, userId, status:'draft'|'completed', kind, flowType, totalSteps,
@@ -115,29 +116,6 @@ export async function getSet(id) {
   }
 }
 
-// saveDraft(partial) -> Promise<DocumentSet>   (upsert po id — drafty można nadpisywać)
-export async function saveDraft(partial) {
-  const body = toBody(partial, 'draft')
-  let set
-  if (partial.id) {
-    try {
-      const r = await api.patch(`/document-sets/${partial.id}`, body)
-      set = r.set
-    } catch (err) {
-      // Draft zniknął (np. usunięty na innym urządzeniu) — zakładamy nowy.
-      if (err?.status === 404) {
-        const r = await api.post('/document-sets', body)
-        set = r.set
-      } else throw err
-    }
-  } else {
-    const r = await api.post('/document-sets', body)
-    set = r.set
-  }
-  notifyChange()
-  return set
-}
-
 // completeSet(partial) -> Promise<DocumentSet>
 //   ZAWSZE nowy rekord (POST) — nigdy nie nadpisuje istniejącego completed.
 //   partial.sourceCompletedId (opcjonalny) → zapisywane jako derivedFromId.
@@ -147,6 +125,35 @@ export async function completeSet(partial) {
   const body = toBody(rest, 'completed')
   body.derivedFromId = sourceCompletedId ?? rest.derivedFromId ?? null
   const { set } = await api.post('/document-sets', body)
+  notifyChange()
+  return set
+}
+
+// upsertProgress(id, partial, status) -> Promise<DocumentSet>
+//   ETAP 6 — zapis „postępu” kreatora powiązany z pozycją kroku: status wynika z
+//   tego, czy bieżący krok to ostatni (completed) czy wcześniejszy (draft). W
+//   przeciwieństwie do completeSet (zawsze nowy rekord) i saveDraft (zawsze status
+//   draft), ten upsert NADPISUJE ten sam rekord niezależnie od statusu — krok
+//   dokumentów może być odwiedzony i opuszczony wielokrotnie w tej samej sesji
+//   (Wstecz/Dalej), a to wciąż JEDEN rekord ("jeden rekord, jeden status").
+export async function upsertProgress(id, partial, status) {
+  const body = toBody(partial, status)
+  let set
+  if (id) {
+    try {
+      const r = await api.patch(`/document-sets/${id}`, body)
+      set = r.set
+    } catch (err) {
+      // Rekord zniknął (np. usunięty na innym urządzeniu) — zakładamy nowy.
+      if (err?.status === 404) {
+        const r = await api.post('/document-sets', body)
+        set = r.set
+      } else throw err
+    }
+  } else {
+    const r = await api.post('/document-sets', body)
+    set = r.set
+  }
   notifyChange()
   return set
 }

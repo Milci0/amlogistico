@@ -180,6 +180,116 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   - Zweryfikowane: build zielony + 19/19 niezmienników repo (nieusuwalność completed, derivedFromId,
     resume-delete, namespace per-user, quota). Testy interaktywne guarda/kreatora — do sprawdzenia w przeglądarce.
 
+- **Profil, rejestracja, zmiana hasła, auto-fill — GOTOWE (2026-07-17):**
+  - **Rejestracja** (`RegisterPage.jsx`): pola Imię i nazwisko / Email / Telefon / Hasło / Powtórz
+    hasło / Nazwa firmy (opcjonalna) + checkbox regulaminu (wymagany, blokuje przycisk) + checkbox
+    marketingowy (opcjonalny, domyślnie odznaczony). Pole VAT usunięte. Zgodność haseł walidowana po
+    stronie klienta; błędy per pole przez istniejący mechanizm (AlertBox + `fieldErrors`).
+  - **`ProfilePage.jsx`** (trasa `/profile`, `?tab=`) — pod-zakładki: `dane-osobowe` (imię,
+    email read-only „służy do logowania", telefon), `firma` (box zachęcający AlertBox info + firma,
+    VAT, EORI, adres/kod/miasto/kraj), `preferencje` (waluta EUR/PLN/USD/CHF; język PL aktywny,
+    EN `disabled` „wkrótce"), `bezpieczenstwo` (zmiana hasła, stany idle/loading/success/error,
+    błędy per pole), `zgody` (checkbox marketingowy + data akceptacji regulaminu read-only). Nieznany
+    `?tab=` → `dane-osobowe`. Zapis przez `PATCH /api/profile`, po sukcesie `updateUser` w AuthContext
+    (avatar/nudge/auto-fill widzą zmiany bez reloadu). Żaden input nie jest oznaczony jako wymagany.
+  - **Merge Profil+Ustawienia:** „Ustawienia" usunięte z `MENU_BOTTOM`; trasa `/settings` → `Navigate`
+    na `/profile`; `SettingsPage.jsx` (atrapa demo) **usunięta**. `AuthContext` ma nowe `updateUser`.
+  - **Topbar** (`Topbar.jsx`): dropdown avatara rozbudowany (nagłówek: `fullName`+email, „Mój profil"
+    →`/profile`, „Abonament"→`/subscription`, „Zmień hasło"→`/profile?tab=bezpieczenstwo`, separator,
+    „Wyloguj się"); zamykanie click-outside **i Escape** (`useDismissable`). Dzwonek dostał dropdown
+    łączący dwa źródła — nieprzeczytane newsy (`NewsContext`) + **nudge profilu** (klient, gdy
+    `user.profileCompleted===false` i nie odrzucony); licznik = suma. Nudge klik →
+    `/profile?tab=firma`, „X" zapisuje `amlogistico:v1:${userId}:profileNudgeDismissed` w localStorage
+    (jedyne nowe użycie LS); znika na zawsze gdy `profileCompleted===true`.
+  - **Auto-fill „Nadawca" w kreatorze** (`DocumentWizard.jsx`, krok `parties`): przy `mode==='create'`
+    + `profileCompleted===true` + pusta sekcja Nadawca → automatyczne wypełnienie z profilu
+    (`companyName`→name, `vatNumber`→vat, złożony adres) + szary tekst „Wypełnione danymi z Twojego
+    profilu…". Przycisk „Wstaw moje dane firmy" (gdy profil kompletny). Gdy `profileCompleted===false`
+    → link „uzupełnij dane firmy w profilu". **NIGDY** w `resume`/`edit` (ochrona migawki audytowej).
+    Domyślna waluta z `user.defaultCurrency` w `WizardProvider` (nowy prop `defaultCurrency`) — tylko
+    świeży `create` (edit/resume/restore bez zmian). Build zielony.
+- **Wspólna lista dokumentów + zapis wersji roboczej per krok — GOTOWE (2026-07-17):**
+  - **`src/components/documents/DocumentSelectList.jsx`** (nowy) — jedna lista z checkboxami
+    używana przez „Puste szablony" i krok Dokumenty kreatora (Step4 w `DocumentWizard.jsx`, dawniej
+    `DocCard`/`DocIcon` lokalne w tym pliku — usunięte). Sekcje Wymagane/Opcjonalne (nagłówek
+    „Opcjonalne" zawsze — w Pustych szablonach mapuje się z `result.conditional`), styl wiersza
+    zależny od `required` (nie od zaznaczenia): wymagany = zielone tło/ramka + badge „Wymagany"
+    (informacyjny, NIE blokuje checkboxa), opcjonalny = białe tło/ramka. Props: `documents
+    ({id,namePl,nameEn?,description?,required}), selectedIds (Set), onToggle, actionLabel, onAction,
+    disabled, errorMessage, statusFor? (per-doc spinner/gotowe/błąd — używane tylko w Step4),
+    actionLoading`. Komunikat pod przyciskiem (nie nad listą) gdy `errorMessage` ustawiony przez
+    wywołującego — oba miejsca przekazują ten sam tekst przy 0 zaznaczonych: „Zaznacz co najmniej
+    jeden dokument, aby pobrać pliki."
+  - **„Puste szablony" (`BlankTemplatesPage.jsx`):** usunięte przyciski „Pobierz”/„Wkrótce" przy
+    wierszu; jeden przycisk „Pobierz zaznaczone (ZIP)” na dole. Domyślnie zaznaczone wszystkie
+    `required`. Lista pokazuje tylko dokumenty faktycznie do pobrania (`available && hasBlankSource`) —
+    afordancja „Wkrótce" zniknęła (nie ma sensu przy zaznaczaniu zbiorczym). Zapis do historii
+    (`completeSet`, `kind:'blank'`) bez zmian, niezależny od zaznaczenia ZIP-a.
+  - **Krok 4/6 kreatora (Step4):** checkbox dokumentu wymaganego jest teraz odznaczalny (usunięty
+    `locked`/`disabled`/`readOnly`) — badge „Wymagany" zostaje jako informacja.
+  - **ETAP 6 — moment zapisu wersji roboczej przepisany na model „status = f(krok)":**
+    `WizardContext.jsx` ma teraz `activeRecordIdRef` (jeden rekord na sesję kreatora) i
+    `persistProgress(step, snapshot)`, wołane automatycznie w `useEffect` przy KAŻDEJ zmianie kroku
+    (Dalej/Wstecz/klik w StepBar) — status liczony z pozycji (`step>=totalSteps` → `completed`,
+    inaczej `draft`), niezależnie od kierunku (cofnięcie z kroku dokumentów na wcześniejszy
+    **przywraca** `draft` na tym samym rekordzie — symetrycznie). Nowa funkcja repo
+    `upsertProgress(id, partial, status)` w `documentSetsRepo.js` (PATCH gdy jest id, inaczej POST;
+    404→fallback POST) — **zastąpiła** `saveDraft` (usunięta, była duplikatem). `completeSet` zostaje,
+    używana tylko przez „Puste szablony" (jednorazowy zapis, nie przechodzi przez kroki kreatora).
+    - `create`: rekord nie istnieje w bazie, dopóki user nie ruszy się z kroku 1.
+    - `resume`: kontynuuje ISTNIEJĄCY draft (ten sam id) — koniec z „nowy rekord + deleteSet starego"
+      przy generowaniu.
+    - `edit`: NOWA kopia (`derivedFromId`=oryginał) tworzona **natychmiast po otwarciu edytora**
+      (edit startuje od razu na ostatnim kroku, więc pierwszy zapis to już `completed`); dziedziczy
+      `selectedDocs` oryginału, dopóki user nie wygeneruje na nowo.
+    - „Generuj dokumenty" (Step4.handleGenerate) już NIE woła `completeSet`/`deleteSet` — woła nowe
+      `wiz.recordGenerated(keys)`, które PATCH-uje TEN SAM rekord (już `completed` od wejścia na
+      krok) z realnie wybranym kompletem.
+    - Toast (nowy `src/components/ui/Toast.jsx`, samo-znikający w rogu ekranu) pokazuje się
+      WYŁĄCZNIE gdy zapis kończy się statusem `draft` — nigdy na kroku dokumentów ani po generowaniu.
+    - Znana konsekwencja (zgodna ze specyfikacją): jeśli user wejdzie na krok dokumentów i porzuci
+      kreator bez kliknięcia „Generuj", w „Gotowe dokumenty" zostaje rekord `completed` z 0
+      dokumentami (`selectedDocs: []`) — to zamierzone zachowanie modelu „status = f(kroku)", nie bug.
+  - **ETAP 7 — rozwijana lista w Historii/Wersjach roboczych:** `DocumentCard.jsx` — chevron zamieniony
+    na `ChevronRight` z lucide-react (już używane w repo) zamiast ręcznego SVG, `aria-expanded` +
+    `aria-label` „Pokaż/Ukryj dokumenty". **Nowość:** lista zestawów (`GET /document-sets`) nie niesie
+    `formData`/`engineResult` (oszczędność transferu na backendzie — bez zmian), więc rozwinięcie
+    doładowuje pełny zestaw leniwie przez `getSet(id)` (cache w stanie komponentu, jeden fetch na
+    kartę). Wersje robocze: lista dokumentów liczona na żywo z `formData` przez
+    `getDocsForSnapshot` (ten sam silnik co Step4) — pokazuje projekcję wymagane+opcjonalne, każdy
+    wiersz z szarym „Niewygenerowany" zamiast przycisku „Pobierz". Gotowe zestawy: bez zmian
+    (`selectedDocs` + `engineResult.docs`, przycisk „Pobierz”/„Pobierz ponownie" per dokument).
+  - Zweryfikowane: build frontendu zielony. **Nie zweryfikowane w przeglądarce** (brak w tej sesji
+    narzędzia do interaktywnego testu UI) — przed uznaniem za w pełni gotowe warto ręcznie przejść:
+    kreator krok po kroku (toast na 1-3/1-5, brak na 4/6), cofanie z kroku dokumentów (draft wraca),
+    edit→shadow copy, rozwijanie wierszy w Historii/Wersjach roboczych.
+
+- **Odświeżenie wizualne kroku „Dokumenty" (Step4) — GOTOWE (2026-07-17):** wyłącznie warstwa UI,
+  bez zmian logiki/silnika/katalogu/szablonów PDF.
+  - **Typografia:** Inter faktycznie ładowany (`@fontsource/inter` 400/500/600/700 w `main.jsx`) —
+    `body` deklarowało `'Inter'`, ale font nie był dołączony (spadał na `system-ui`). `index.css`:
+    dodane `-webkit-font-smoothing: antialiased` + `-moz-osx-font-smoothing`. W markupie Step4
+    `font-semibold`→`font-medium` (karta ubezpieczenia, link „do historii"). Szablony PDF (Arial,
+    794px) NIETKNIĘTE.
+  - **Pasek kroków (StepBar):** trzy jednoznaczne stany (ukończony=zielone kółko z ✓, aktywny=
+    jasnozielone tło + obwódka `border-[1.5px] border-emerald-500` + kółko z numerem w zieleni,
+    przyszły=szare). Wszystkie chipy mają `border-[1.5px]` → zmiana stanu nie przesuwa layoutu.
+  - **Karta „Podsumowanie zlecenia":** `rounded-2xl`, nagłówek z badge **Kompletne/Niekompletne**
+    (kompletność = walidatory kroków ≠ „docs" z `flowSteps` — bez nowej walidacji), siatka
+    `grid-cols-1 md:grid-cols-2` (separatory przez `gap-px` na `bg-gray-100`), helper
+    `formatSummaryValue(v)` → „Nie podano" (jasnoszary) zamiast myślnika, ikony kontekstowe
+    (Truck/Ship, ArrowRight, CheckCircle2/AlertTriangle z lucide). Waga i Wartość łączą się w jedną
+    komórkę gdy oba puste.
+  - **Przejścia kroków:** `src/components/StepTransition.jsx` (fade+slide 200 ms, `prefers-reduced-
+    motion` przez `motion-reduce:*`); root kreatora owija render kroków (pasek kroków poza animacją).
+  - **Przycisk „Generuj":** repo miał już spinner+disabled we współdzielonym `DocumentSelectList`
+    (nie tworzono osobnego `GenerateButton.jsx` — byłby dublem); dodany tylko opcjonalny
+    `loadingLabel` („Generowanie...") i waga przycisku `font-semibold`→`font-medium`.
+  - **Uwaga (repo≠prompt):** akcenty to **emerald** (nie `green-600`), tło `#f8fafc` (nie „kremowe"),
+    Tailwind **v4** (`@theme` w `index.css`, brak `tailwind.config.js`). Zweryfikowane: `npm run build`
+    zielony; `git diff` bez zmian w `generators/templates`, `documentEngine.js`, `documentCatalog.js`.
+    **Nie zweryfikowane interaktywnie w przeglądarce.**
+
 **Do zrobienia:**
 - Panel abonamentu (integracja ze Stripe)
 - Ścieżka B kreatora „Szukam transportu" — szkielet 6 kroków gotowy; kroki „Spedytorzy" i „Wycena"
@@ -187,6 +297,9 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 - Deploy autoryzacji na Vercel (env vary DATABASE_URL/DIRECT_URL/JWT_SECRET) — patrz niżej
 - Tabela `companies` w bazie — typ `carrier` (do wyboru z listy zapisanych firm, jak Nadawca/Odbiorca)
 - Opcjonalne: dedykowany krok wizarda „Przewoźnik" po wdrożeniu bazy firm
+- Reset hasła przez email („nie pamiętam hasła") — wymaga skonfigurowanego serwisu mailowego
+- Angielskie szablony JSX — po dodaniu odblokować opcję EN w `ProfilePage` (Preferencje → język)
+- Strony `/regulamin` i `/polityka-prywatnosci` (linki w rejestracji na razie `href="#"`)
 
 ### Backend: auth gotowy (serverless `/api`)
 - `api/index.js` — Express 5 (lokalnie `npm run server` na `:3001`, na Vercelu funkcja serverless)
@@ -281,6 +394,26 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   - Zweryfikowane end-to-end (server na :3001): 401 bez auth, lista bez `formData`, pełny GET z `formData`,
     izolacja kont (B nie widzi setów A → 404 na GET/PATCH/DELETE), identyczny komunikat login (złe hasło =
     nieistniejący email), delete→404 na re-get, `completedAt` przy completed. Build frontendu zielony.
+- **Profil użytkownika + zmiana hasła — GOTOWE (2026-07-17):** minimalizacja rejestracji, dane
+  rozszerzone przeniesione do opcjonalnego profilu.
+  - `api/routes/profile.js` (mount `/api/profile`, oba za `requireAuth`, `userId` ZAWSZE z tokenu):
+    `GET /api/profile` (dane profilu bez `passwordHash`), `PATCH /api/profile` (aktualizacja
+    `fullName/phone/companyName/vatNumber/eoriNumber/address/city/postalCode/country/defaultCurrency/
+    preferredLanguage/marketingConsent`; `email` NIE edytowalny — pomijany; puste stringi → `null`).
+    Po zapisie przelicza `profileCompleted` = `true` tylko gdy komplet
+    `companyName+address+city+postalCode+country` (VAT/EORI/preferencje NIE wliczają się).
+    `api/validation/profile.js` (Zod, wszystkie pola opcjonalne/partial).
+  - `POST /api/auth/change-password` (za `requireAuth` + `authLimiter`): Zod
+    (`newPassword` min 8, `===confirmPassword`, `!==currentPassword`); zły `currentPassword` → **400**
+    z błędem pod polem `currentPassword` (ten sam kształt co login/register); po zmianie hasła
+    wystawia NOWE cookie JWT (user zostaje zalogowany). Reset przez email NIE zrobiony (brak mailera).
+  - `publicUser()` w `api/routes/auth.js` rozszerzony o pola profilu (`fullName`, `phone`,
+    `profileCompleted`, `defaultCurrency`, adres firmy itd.) — front ma je od razu z `/auth/me`
+    bez dodatkowego zapytania (auto-fill nadawcy, nudge, domyślna waluta).
+  - Rejestracja (`api/validation/auth.js` + handler): `fullName` (min 3, wymagane), `phone`
+    (wymagane, format międzynarodowy), `termsAccepted` (`z.literal(true)` — bez zgody 400),
+    `marketingConsent` (opcjonalne, default false), `companyName` **opcjonalne**. Handler zapisuje
+    `termsAcceptedAt = new Date()` (nie sam boolean). Zweryfikowane end-to-end (server :3001): T1–T7 zielone.
 - **Rate-limit `/auth/*` — GOTOWE (2026-07-16):** `api/lib/rateLimit.js` (`express-rate-limit`,
   10 żądań / 15 min / IP) nałożony na `POST /auth/login` i `/auth/register` (wspólny bucket per IP).
   **NIE** na `GET /auth/me` (wołane przy każdym starcie appki → limit by je zablokował).
@@ -292,6 +425,11 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 
 ### Baza danych: users na Neonie (Prisma 6 + PostgreSQL)
 - `prisma/schema.prisma` — model `User` (`@@map("users")`, snake_case przez `@map`)
+- **Pola profilu (2026-07-17):** dodane do `User` (wszystkie **nullable** — tabela ma rekordy,
+  wymagalność egzekwuje Zod): `fullName`, `phone`, `termsAcceptedAt`, `marketingConsent` (default
+  false), `profileCompleted` (default false), `eoriNumber`, `address`, `city`, `postalCode`,
+  `country`, `defaultCurrency`, `preferredLanguage` (default `"PL"`). `companyName` zmienione na
+  **opcjonalne** (`String?`). Wgrane `prisma db push` (additive) + `generate`.
 - Hosting **Neon**; `.env`: `DATABASE_URL` (pooled, `-pooler`) + `DIRECT_URL` (direct, do migracji)
 - Schema wgrana przez `npx prisma db push`; podgląd `npx prisma studio`
 - **Tabela `document_sets` — GOTOWA (2026-07-16):** model `DocumentSet` w `schema.prisma`

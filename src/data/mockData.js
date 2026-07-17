@@ -264,9 +264,8 @@ export const MENU_GROUPS = [
   },
 ]
 
-// Dolne pozycje sidebara
+// Dolne pozycje sidebara (Ustawienia scalone z Profilem — została jedna pozycja)
 export const MENU_BOTTOM = [
-  { label: 'Ustawienia', path: '/settings', icon: 'cog' },
   { label: 'Profil', path: '/profile', icon: 'user' },
 ]
 

@@ -49,8 +49,14 @@ export function AuthProvider({ children }) {
     setUser(null)
   }, [])
 
+  // Scala dane profilu w bieżącego usera (po zapisie w ProfilePage), by avatar,
+  // nudge i auto-fill kreatora widziały nowe dane bez przeładowania strony.
+  const updateUser = useCallback((patch) => {
+    setUser((u) => (u ? { ...u, ...patch } : u))
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )

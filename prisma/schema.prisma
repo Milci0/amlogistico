@@ -16,12 +16,29 @@ model User {
   id               String    @id @default(uuid())
   email            String    @unique
   passwordHash     String    @map("password_hash")
-  companyName      String    @map("company_name")
+  companyName      String?   @map("company_name") // opcjonalne — rejestracja nie wymaga firmy
   vatNumber        String?   @map("vat_number")
   plan             String    @default("free") // free / monthly / pay_per_doc
   planExpiresAt    DateTime? @map("plan_expires_at")
   stripeCustomerId String?   @map("stripe_customer_id")
   createdAt        DateTime  @default(now()) @map("created_at")
+
+  // Dane podstawowe zbierane przy rejestracji (nullable w bazie — tabela ma już
+  // rekordy; wymagalność egzekwuje Zod, nie schemat)
+  fullName         String?   @map("full_name")
+  phone            String?
+  termsAcceptedAt  DateTime? @map("terms_accepted_at")
+  marketingConsent Boolean   @default(false) @map("marketing_consent")
+
+  // Profil rozszerzony — zawsze opcjonalny (auto-fill nadawcy w kreatorze)
+  profileCompleted  Boolean  @default(false) @map("profile_completed")
+  eoriNumber        String?  @map("eori_number")
+  address           String?
+  city              String?
+  postalCode        String?  @map("postal_code")
+  country           String?
+  defaultCurrency   String?  @map("default_currency")
+  preferredLanguage String?  @default("PL") @map("preferred_language")
 
   documentSets DocumentSet[]
 

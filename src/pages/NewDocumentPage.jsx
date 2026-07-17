@@ -3,11 +3,13 @@ import { Helmet } from 'react-helmet-async'
 import { useSearchParams } from 'react-router-dom'
 import DocumentWizard from '../components/wizard/DocumentWizard'
 import { WizardProvider, UnsavedChangesGuard, readAutosave, clearAutosave, PATH_TO_FLOW } from '../components/wizard'
+import { useAuth } from '../auth/AuthContext'
 import { getSet } from '../services/documentSetsRepo'
 import AlertBox from '../components/ui/AlertBox'
 import { formatDocumentDate } from '../utils/formatDate'
 
 export default function NewDocumentPage() {
+  const { user } = useAuth()
   const [params] = useSearchParams()
   const editId = params.get('editId')
   const draftId = params.get('draftId')
@@ -148,7 +150,13 @@ export default function NewDocumentPage() {
           Wypełnij formularz a my dobierzemy dokumenty automatycznie.
         </p>
       </div>
-      <WizardProvider key={providerKey} flowType={flowType} mode={mode} initialSet={initialSet}>
+      <WizardProvider
+        key={providerKey}
+        flowType={flowType}
+        mode={mode}
+        initialSet={initialSet}
+        defaultCurrency={mode === 'create' ? user?.defaultCurrency : null}
+      >
         <UnsavedChangesGuard />
         <DocumentWizard />
       </WizardProvider>

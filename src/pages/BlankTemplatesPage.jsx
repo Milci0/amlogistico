@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Package, UtensilsCrossed, FlaskConical, PawPrint, Boxes, Info } from 'lucide-react'
 import CountrySelect from '../components/ui/CountrySelect'
 import AlertBox from '../components/ui/AlertBox'
+import DocumentSelectList from '../components/documents/DocumentSelectList'
 import { getDocuments, getRouteLabel } from '../utils/documentEngine'
-import { downloadBlankDocument, downloadBlankZip, hasBlankSource } from '../utils/blankDocuments'
+import { downloadBlankZip, hasBlankSource } from '../utils/blankDocuments'
 import { completeSet } from '../services/documentSetsRepo'
 
 // ── Opcje formularza ────────────────────────────────────────────────────────────
@@ -69,24 +70,6 @@ const FLAG_OPTIONS = [
 
 // ── Ikony ───────────────────────────────────────────────────────────────────────
 
-function PdfIcon() {
-  return (
-    <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-  )
-}
-
-function DownloadIcon() {
-  return (
-    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-    </svg>
-  )
-}
-
 // Ikona środka transportu (kolor dziedziczy z przycisku przez currentColor)
 function ModeIcon({ id }) {
   const paths = {
@@ -114,54 +97,6 @@ function ModeIcon({ id }) {
   )
 }
 
-// ── Wiersz dokumentu ──────────────────────────────────────────────────────────
-
-function DocRow({ doc }) {
-  const [state, setState] = useState('idle') // idle | loading | error
-  const downloadable = doc.available && hasBlankSource(doc.id)
-
-  async function handleDownload() {
-    setState('loading')
-    try {
-      await downloadBlankDocument(doc.id, doc.name_pl)
-      setState('idle')
-    } catch (err) {
-      console.error('Błąd generowania pustego PDF:', err)
-      setState('error')
-    }
-  }
-
-  return (
-    <div className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl bg-white">
-      <PdfIcon />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900">{doc.name_pl}</p>
-        {doc.name_en && doc.name_en !== doc.name_pl && (
-          <p className="text-xs text-gray-400 mt-0.5">{doc.name_en}</p>
-        )}
-        {state === 'error' && <p className="text-xs text-red-600 mt-0.5">Nie udało się wygenerować pliku.</p>}
-      </div>
-      {downloadable ? (
-        <button
-          onClick={handleDownload}
-          disabled={state === 'loading'}
-          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-60 transition-colors"
-        >
-          <DownloadIcon />
-          {state === 'loading' ? 'Generuję…' : 'Pobierz'}
-        </button>
-      ) : (
-        <button
-          disabled
-          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed"
-        >
-          Wkrótce
-        </button>
-      )}
-    </div>
-  )
-}
-
 // ── Strona ──────────────────────────────────────────────────────────────────────
 
 export default function BlankTemplatesPage() {
@@ -177,6 +112,7 @@ export default function BlankTemplatesPage() {
   })
   const [zipState, setZipState] = useState('idle') // idle | loading | error
   const [result, setResult] = useState(null) // null = jeszcze nie wygenerowano
+  const [selectedIds, setSelectedIds] = useState(new Set())
 
   const cargoCategory = CARGO_TYPE_TO_ENGINE_CATEGORY[cargoType]
   const selectedCargoType = CARGO_TYPES.find(ct => ct.id === cargoType)
@@ -185,7 +121,19 @@ export default function BlankTemplatesPage() {
   useEffect(() => {
     setResult(null)
     setZipState('idle')
+    setSelectedIds(new Set())
   }, [origin, destination, mode, cargoType, flags])
+
+  // Dokumenty w kształcie DocumentSelectList — tylko te faktycznie do pobrania
+  // (dostępne + mają źródło pustego PDF-a); „Wkrótce" nie ma już sensu przy
+  // zaznaczaniu zbiorczym, więc niedostępne dokumenty tu nie trafiają.
+  const selectListDocs = useMemo(() => {
+    if (!result) return []
+    const toDoc = (d, required) => ({ id: d.id, namePl: d.name_pl, nameEn: d.name_en, required })
+    const req = result.required.filter(d => d.available && hasBlankSource(d.id)).map(d => toDoc(d, true))
+    const cond = result.conditional.filter(d => d.available && hasBlankSource(d.id)).map(d => toDoc(d, false))
+    return [...req, ...cond]
+  }, [result])
 
   // Zapis do historii dokumentów — jeden wpis (kind:'blank') na każde kliknięcie
   // „Generuj dokumenty", ten sam mechanizm co completeSet w kroku 4 kreatora.
@@ -226,19 +174,28 @@ export default function BlankTemplatesPage() {
   function handleGenerate() {
     const res = getDocuments(origin, destination, mode, cargoCategory, flags)
     setResult(res)
+    // ETAP 3 — domyślnie zaznaczone: wszystkie dokumenty z required=true.
+    const req = res.required.filter(d => d.available && hasBlankSource(d.id))
+    setSelectedIds(new Set(req.map(d => d.id)))
     saveToHistory(res)
   }
 
-  const downloadableRequired = result
-    ? result.required.filter(d => d.available && hasBlankSource(d.id))
-    : []
+  function toggleDoc(id) {
+    setSelectedIds(s => {
+      const next = new Set(s)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   async function downloadZip() {
-    if (downloadableRequired.length === 0) return
+    const docs = selectListDocs.filter(d => selectedIds.has(d.id))
+    if (docs.length === 0) return
     setZipState('loading')
     try {
       await downloadBlankZip(
-        downloadableRequired.map(d => ({ key: d.id, name: d.name_pl })),
+        docs.map(d => ({ key: d.id, name: d.namePl })),
         `dokumenty_${origin}_${destination}.zip`
       )
       setZipState('idle')
@@ -380,59 +337,30 @@ export default function BlankTemplatesPage() {
         </div>
       )}
 
-      {/* Wymagane */}
-      <div className="border-l-4 border-red-400 pl-4 mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-red-600">
-            Wymagane ({result.required.length})
-          </span>
-        </div>
-
-        {result.required.length === 0 ? (
-          <p className="text-sm text-gray-400">Brak dokumentów wymaganych dla tej konfiguracji.</p>
-        ) : (
-          <>
-            <div className="space-y-2">
-              {result.required.map(doc => <DocRow key={doc.id} doc={doc} />)}
-            </div>
-
-            <button
-              onClick={downloadZip}
-              disabled={zipState === 'loading' || downloadableRequired.length === 0}
-              className="mt-3 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors text-sm"
-            >
-              {zipState === 'loading' ? (
-                <>
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                  </svg>
-                  Pakuję ZIP…
-                </>
-              ) : (
-                <>
-                  <DownloadIcon />
-                  Pobierz wszystkie jako ZIP ({downloadableRequired.length})
-                </>
-              )}
-            </button>
-            {zipState === 'error' && (
-              <p className="text-xs text-red-600 mt-2">Nie udało się spakować plików. Spróbuj ponownie.</p>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Warunkowe */}
-      {result.conditional.length > 0 && (
-        <div className="border-l-4 border-amber-400 pl-4 mb-6">
-          <span className="text-xs font-semibold uppercase tracking-wider text-amber-600 block mb-3">
-            Warunkowe ({result.conditional.length})
-          </span>
-          <div className="space-y-2">
-            {result.conditional.map(doc => <DocRow key={doc.id} doc={doc} />)}
-          </div>
-        </div>
+      {/* Lista dokumentów do zaznaczenia — wspólny komponent z krokiem 4/6 kreatora */}
+      {selectListDocs.length === 0 ? (
+        <p className="text-sm text-gray-400">Brak dokumentów dla tej konfiguracji.</p>
+      ) : (
+        <DocumentSelectList
+          documents={selectListDocs}
+          selectedIds={selectedIds}
+          onToggle={toggleDoc}
+          actionLabel={
+            zipState === 'loading'
+              ? 'Pakuję ZIP…'
+              : `Pobierz zaznaczone (ZIP)${selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}`
+          }
+          onAction={downloadZip}
+          disabled={zipState === 'loading'}
+          actionLoading={zipState === 'loading'}
+          errorMessage={
+            selectedIds.size === 0
+              ? 'Zaznacz co najmniej jeden dokument, aby pobrać pliki.'
+              : zipState === 'error'
+                ? 'Nie udało się spakować plików. Spróbuj ponownie.'
+                : null
+          }
+        />
       )}
       </>
       )}
