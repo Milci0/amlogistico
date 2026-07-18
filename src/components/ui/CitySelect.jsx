@@ -59,8 +59,8 @@ export default function CitySelect({ country, value, onChange, placeholder = '' 
       <input
         type="text"
         disabled={!country}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 bg-white
-          focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700
+          focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50 dark:disabled:bg-slate-800 disabled:cursor-not-allowed transition-colors"
         placeholder={country ? placeholder : 'Najpierw wybierz kraj'}
         value={value}
         onChange={e => onChange(e.target.value)}
@@ -68,9 +68,9 @@ export default function CitySelect({ country, value, onChange, placeholder = '' 
       />
 
       {open && country && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
+        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg max-h-52 overflow-y-auto">
           {filtered.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-3 px-3">
+            <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-3 px-3">
               Brak podpowiedzi — możesz wpisać nazwę ręcznie
             </p>
           ) : (
@@ -78,8 +78,8 @@ export default function CitySelect({ country, value, onChange, placeholder = '' 
               <button
                 key={city}
                 type="button"
-                className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors
-                  ${city === value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'}`}
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors
+                  ${city === value ? 'bg-blue-50 dark:bg-slate-700 text-blue-700 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-slate-300'}`}
                 onClick={() => { onChange(city); setOpen(false) }}
               >
                 {city}

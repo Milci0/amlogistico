@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import { NewsProvider } from '../../context/NewsContext'
+import StepTransition from '../StepTransition'
 
 export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const location = useLocation()
 
   return (
     <NewsProvider>
@@ -34,7 +36,9 @@ export default function AppShell() {
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
           <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-amber-50/60 dark:bg-slate-800/40">
-            <Outlet />
+            <StepTransition stepKey={location.pathname} className="h-full" slide={false}>
+              <Outlet />
+            </StepTransition>
           </main>
         </div>
       </div>

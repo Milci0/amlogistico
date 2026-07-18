@@ -215,22 +215,22 @@ export default function BlankTemplatesPage() {
       </div>
 
       {/* ── Formularz doboru ──────────────────────────────────────── */}
-      <div className="border border-gray-200 rounded-xl p-5 mb-6 bg-white space-y-5">
+      <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6 bg-white dark:bg-slate-800 space-y-5">
         {/* Trasa */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Kraj nadania</label>
+            <label className="block text-sm text-gray-700 dark:text-slate-300 mb-1">Kraj nadania</label>
             <CountrySelect value={origin} onChange={setOrigin} />
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Kraj przeznaczenia</label>
+            <label className="block text-sm text-gray-700 dark:text-slate-300 mb-1">Kraj przeznaczenia</label>
             <CountrySelect value={destination} onChange={setDestination} />
           </div>
         </div>
 
         {/* Środek transportu */}
         <div>
-          <label className="block text-sm text-gray-700 mb-2">Środek transportu</label>
+          <label className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Środek transportu</label>
           <div className="flex flex-wrap gap-2">
             {TRANSPORT_MODES.map(m => {
               const active = mode === m.id
@@ -242,8 +242,8 @@ export default function BlankTemplatesPage() {
                   title={m.sub}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors
                     ${active
-                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
+                      ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                      : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'}`}
                 >
                   <ModeIcon id={m.id} />
                   {m.label}
@@ -255,7 +255,7 @@ export default function BlankTemplatesPage() {
 
         {/* Rodzaj ładunku */}
         <div>
-          <label className="block text-sm text-gray-700 mb-2">Rodzaj ładunku</label>
+          <label className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Rodzaj ładunku</label>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             {CARGO_TYPES.map(ct => {
               const Icon = ct.icon
@@ -266,30 +266,30 @@ export default function BlankTemplatesPage() {
                   type="button"
                   onClick={() => setCargoType(ct.id)}
                   className={`flex flex-col items-center gap-1.5 p-3 border-2 rounded-xl text-center transition-all
-                    ${active ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                    ${active ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'}`}
                 >
-                  <Icon className={active ? 'w-5 h-5 text-emerald-500' : 'w-5 h-5 text-gray-400'} strokeWidth={1.5} />
-                  <span className={`text-xs font-medium ${active ? 'text-emerald-700' : 'text-gray-700'}`}>{ct.label}</span>
+                  <Icon className={active ? 'w-5 h-5 text-emerald-500' : 'w-5 h-5 text-gray-400 dark:text-slate-500'} strokeWidth={1.5} />
+                  <span className={`text-xs font-medium ${active ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-700 dark:text-slate-300'}`}>{ct.label}</span>
                 </button>
               )
             })}
           </div>
           {selectedCargoType && (
-            <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+            <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-lg">
               <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.5} />
-              <p className="text-xs text-emerald-700">{selectedCargoType.hint}</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-300">{selectedCargoType.hint}</p>
             </div>
           )}
         </div>
 
         {/* Flagi / warunki dodatkowe */}
         <div>
-          <label className="block text-sm text-gray-700 mb-2">Warunki dodatkowe</label>
+          <label className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Warunki dodatkowe</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {FLAG_OPTIONS.map(f => (
               <label
                 key={f.key}
-                className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-700 rounded-lg cursor-pointer bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
               >
                 <input
                   type="checkbox"
@@ -297,7 +297,7 @@ export default function BlankTemplatesPage() {
                   checked={flags[f.key]}
                   onChange={e => setFlags(prev => ({ ...prev, [f.key]: e.target.checked }))}
                 />
-                <span className="text-sm text-gray-700">{f.label}</span>
+                <span className="text-sm text-gray-700 dark:text-slate-300">{f.label}</span>
               </label>
             ))}
           </div>
@@ -320,8 +320,8 @@ export default function BlankTemplatesPage() {
       <>
       {/* Etykieta trasy */}
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Charakter trasy</span>
-        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">Charakter trasy</span>
+        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
           {getRouteLabel(origin, destination)}
         </span>
       </div>
@@ -339,7 +339,7 @@ export default function BlankTemplatesPage() {
 
       {/* Lista dokumentów do zaznaczenia — wspólny komponent z krokiem 4/6 kreatora */}
       {selectListDocs.length === 0 ? (
-        <p className="text-sm text-gray-400">Brak dokumentów dla tej konfiguracji.</p>
+        <p className="text-sm text-gray-400 dark:text-slate-500">Brak dokumentów dla tej konfiguracji.</p>
       ) : (
         <DocumentSelectList
           documents={selectListDocs}

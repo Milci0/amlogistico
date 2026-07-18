@@ -22,8 +22,8 @@ function PathCard({ icon: Icon, title, description, steps, path, onSelect }) {
     <button
       type="button"
       onClick={() => onSelect(path)}
-      className="group text-left w-full h-full bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-sm
-        hover:shadow-lg hover:border-emerald-300 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400
+      className="group text-left w-full h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 sm:p-7 shadow-sm
+        hover:shadow-lg hover:border-emerald-300 dark:hover:border-emerald-600 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400
         transition-all duration-200 flex flex-col"
     >
       <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0
@@ -31,14 +31,14 @@ function PathCard({ icon: Icon, title, description, steps, path, onSelect }) {
         <Icon className="w-6 h-6" strokeWidth={1.8} />
       </div>
 
-      <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-4">{title}</h2>
-      <p className="text-sm text-slate-500 mt-2 leading-relaxed">{description}</p>
+      <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-4">{title}</h2>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{description}</p>
 
       <ul className="mt-5 space-y-2.5 flex-1">
         {steps.map((step) => (
-          <li key={step.label} className="flex items-center gap-3 text-sm text-slate-700">
-            <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0
-              group-hover:bg-emerald-100 transition-colors">
+          <li key={step.label} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+            <span className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0
+              group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 transition-colors">
               <step.icon className="w-4 h-4" strokeWidth={1.8} />
             </span>
             {step.label}
@@ -72,7 +72,7 @@ export default function PathSelectPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-amber-50 flex flex-col items-center px-4 py-10 relative">
+    <div className="min-h-dvh bg-amber-50 dark:bg-slate-950 flex flex-col items-center px-4 py-10 relative">
       <Helmet>
         <title>Jak chcesz zacząć? | AMLogistico</title>
         <meta name="robots" content="noindex" />
@@ -82,7 +82,7 @@ export default function PathSelectPage() {
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-1.5 text-xs sm:text-sm text-slate-400 hover:text-slate-600 transition-colors"
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-1.5 text-xs sm:text-sm text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" strokeWidth={2} />
         Wróć
@@ -93,14 +93,14 @@ export default function PathSelectPage() {
         {user ? (
           <button
             onClick={handleLogout}
-            className="text-xs sm:text-sm text-slate-400 hover:text-slate-600 transition-colors"
+            className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
             Wyloguj
           </button>
         ) : (
           <Link
             to="/"
-            className="text-xs sm:text-sm text-slate-400 hover:text-slate-600 transition-colors"
+            className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
             Wróć do strony głównej
           </Link>
@@ -109,17 +109,17 @@ export default function PathSelectPage() {
 
       <div className="w-full max-w-3xl flex flex-col items-center mt-6 sm:mt-10">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 font-bold text-xl sm:text-2xl text-gray-900 mb-8 sm:mb-10">
+        <Link to="/" className="flex items-center gap-2 font-bold text-xl sm:text-2xl text-gray-900 dark:text-white mb-8 sm:mb-10">
           <span className="bg-emerald-500 text-white rounded-lg w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-sm sm:text-base font-black">A</span>
           <span>AM<span className="text-emerald-600">Logistico</span></span>
         </Link>
 
         {/* Nagłówek */}
         <div className="text-center max-w-lg">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             Jak chcesz zacząć?
           </h1>
-          <p className="text-slate-500 mt-2.5 text-sm sm:text-base leading-relaxed">
+          <p className="text-slate-500 dark:text-slate-400 mt-2.5 text-sm sm:text-base leading-relaxed">
             Wybierz ścieżkę dopasowaną do Twojej sytuacji — obie prowadzą do kompletu dokumentów.
           </p>
         </div>

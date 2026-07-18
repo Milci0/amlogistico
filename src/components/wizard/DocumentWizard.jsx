@@ -68,7 +68,7 @@ const INCOTERMS = [
 ]
 
 const cls = {
-  input: 'w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 transition-colors',
+  input: 'w-full bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900 transition-colors',
 }
 
 // Kliknięcie w dowolne miejsce pola daty otwiera natywny kalendarz (nie tylko
@@ -99,18 +99,18 @@ function StepBar({ steps, current, maxReached, onStepClick }) {
             disabled={!reachable}
             onClick={() => reachable && onStepClick(num)}
             className={`flex items-center justify-center gap-1 sm:gap-1.5 px-1 sm:px-2 py-2.5 rounded-xl border-[1.5px] transition-colors
-              ${active ? 'border-emerald-500 bg-emerald-50' : done ? 'border-emerald-300 bg-white' : 'border-gray-200 bg-white'}
-              ${reachable ? 'cursor-pointer hover:bg-emerald-50/60' : 'cursor-default'}`}
+              ${active ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' : done ? 'border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-800' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800'}
+              ${reachable ? 'cursor-pointer hover:bg-emerald-50/60 dark:hover:bg-emerald-900/20' : 'cursor-default'}`}
           >
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0
-              ${done ? 'bg-emerald-500 text-white' : active ? 'border-[1.5px] border-emerald-500 bg-white text-emerald-700' : 'bg-white border border-gray-300 text-gray-400'}`}>
+              ${done ? 'bg-emerald-500 text-white' : active ? 'border-[1.5px] border-emerald-500 dark:border-emerald-400 bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300' : 'bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-400 dark:text-slate-500'}`}>
               {done ? (
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               ) : num}
             </div>
-            <span className={`hidden sm:inline text-[11px] md:text-xs font-medium leading-tight ${active ? 'text-emerald-800' : done ? 'text-gray-900' : 'text-gray-400'}`}>
+            <span className={`hidden sm:inline text-[11px] md:text-xs font-medium leading-tight ${active ? 'text-emerald-800 dark:text-emerald-300' : done ? 'text-gray-900 dark:text-slate-200' : 'text-gray-400 dark:text-slate-500'}`}>
               {name}
             </span>
           </button>
@@ -138,7 +138,7 @@ function BackButton({ onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1.5 text-sm text-gray-600 font-medium border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors mb-6"
+      className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-slate-300 font-medium border border-gray-200 dark:border-slate-700 rounded-lg px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors mb-6"
     >
       ← Wróć
     </button>
@@ -150,7 +150,7 @@ function NextButton({ onClick, disabled, label = 'Dalej →' }) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
+      className="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-100 dark:disabled:bg-slate-700 disabled:text-gray-400 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
     >
       {label}
     </button>
@@ -170,7 +170,7 @@ function Step1({ data, setData, onNext, canNext }) {
             label: 'Drogowy',
             sub: 'TIR, ciężarówka',
             svg: (active) => (
-              <svg className={`w-7 h-7 ${active ? 'text-emerald-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg className={`w-7 h-7 ${active ? 'text-emerald-500' : 'text-gray-400 dark:text-slate-500'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3h1.4a2 2 0 0 1 1.7.9l1.7 2.6a2 2 0 0 1 .3 1V17h-2" />
                 <circle cx="7.5" cy="17.5" r="2.5" />
                 <circle cx="17.5" cy="17.5" r="2.5" />
@@ -182,7 +182,7 @@ function Step1({ data, setData, onNext, canNext }) {
             label: 'Morski',
             sub: 'Kontener FCL/LCL',
             svg: (active) => (
-              <svg className={`w-7 h-7 ${active ? 'text-emerald-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg className={`w-7 h-7 ${active ? 'text-emerald-500' : 'text-gray-400 dark:text-slate-500'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M2 21c.6.5 1.2 1 2.5 1C7 22 7 20 9.5 20c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
                 <path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.2.5 4.3 1.62 6" />
                 <path d="M12 10V2" />
@@ -197,19 +197,19 @@ function Step1({ data, setData, onNext, canNext }) {
               key={id}
               onClick={() => setData(d => ({ ...d, transport: id }))}
               className={`flex items-center gap-3 p-4 border-2 rounded-xl text-left transition-all
-                ${active ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                ${active ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'}`}
             >
               {svg(active)}
               <div>
-                <p className={`text-sm font-semibold ${active ? 'text-emerald-700' : 'text-gray-800'}`}>{label}</p>
-                <p className={`text-xs mt-0.5 ${active ? 'text-emerald-400' : 'text-gray-400'}`}>{sub}</p>
+                <p className={`text-sm font-semibold ${active ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-800 dark:text-slate-200'}`}>{label}</p>
+                <p className={`text-xs mt-0.5 ${active ? 'text-emerald-400' : 'text-gray-400 dark:text-slate-500'}`}>{sub}</p>
               </div>
             </button>
           )
         })}
       </div>
 
-      <label className="flex items-start gap-3 p-3.5 mb-5 border border-gray-200 rounded-xl cursor-pointer bg-white hover:bg-gray-50 transition-colors">
+      <label className="flex items-start gap-3 p-3.5 mb-5 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
         <input
           type="checkbox"
           className="mt-0.5 w-4 h-4 accent-emerald-600 cursor-pointer flex-shrink-0"
@@ -217,8 +217,8 @@ function Step1({ data, setData, onNext, canNext }) {
           onChange={e => setData(d => ({ ...d, multimodal: e.target.checked }))}
         />
         <div>
-          <p className="text-sm font-medium text-gray-800">Transport multimodalny</p>
-          <p className="text-xs text-gray-400 mt-0.5">Towar jedzie kilkoma środkami transportu (np. ciężarówka + statek). Generuje dodatkowy dokument MTD.</p>
+          <p className="text-sm font-medium text-gray-800 dark:text-slate-200">Transport multimodalny</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Towar jedzie kilkoma środkami transportu (np. ciężarówka + statek). Generuje dodatkowy dokument MTD.</p>
         </div>
       </label>
 
@@ -277,7 +277,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
       </div>
 
       <div className="mb-4">
-        <p className="block text-sm text-gray-700 mb-2">Rodzaj ładunku</p>
+        <p className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Rodzaj ładunku</p>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {CARGO_TYPES.map(ct => {
             const Icon = ct.icon
@@ -288,18 +288,18 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
                 type="button"
                 onClick={() => setData(d => ({ ...d, cargoType: d.cargoType === ct.id ? '' : ct.id }))}
                 className={`flex flex-col items-center gap-1.5 p-3 border-2 rounded-xl text-center transition-all
-                  ${active ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                  ${active ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'}`}
               >
-                <Icon className={active ? 'w-5 h-5 text-emerald-500' : 'w-5 h-5 text-gray-400'} strokeWidth={1.5} />
-                <span className={`text-xs font-medium ${active ? 'text-emerald-700' : 'text-gray-700'}`}>{ct.label}</span>
+                <Icon className={active ? 'w-5 h-5 text-emerald-500' : 'w-5 h-5 text-gray-400 dark:text-slate-500'} strokeWidth={1.5} />
+                <span className={`text-xs font-medium ${active ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-700 dark:text-slate-300'}`}>{ct.label}</span>
               </button>
             )
           })}
         </div>
         {selectedCargoType && (
-          <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+          <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-lg">
             <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.5} />
-            <p className="text-xs text-emerald-700">{selectedCargoType.hint}</p>
+            <p className="text-xs text-emerald-700 dark:text-emerald-300">{selectedCargoType.hint}</p>
           </div>
         )}
       </div>
@@ -344,8 +344,8 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
 
       {/* ── Warunki przewozu (oba typy; nieznane przy szukaniu transportu) ── */}
       {!findMode && (
-        <div className="border border-gray-200 rounded-xl p-5 mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Warunki przewozu</p>
+        <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">Warunki przewozu</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Field label="Koszt frachtu">
               <input type="number" className={cls.input} value={terms.freightPrice} onChange={e => setTerms(t => ({ ...t, freightPrice: e.target.value }))} />
@@ -365,11 +365,11 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
 
       {/* ── Sekcja: Transport Drogowy ────────────────────────────── */}
       {transport === 'road' && (
-        <div className="border border-gray-200 rounded-xl p-5 mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Pojazd i warunki drogowe</p>
+        <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">Pojazd i warunki drogowe</p>
 
           <div className="mb-4">
-            <p className="block text-sm text-gray-700 mb-2">Typ pojazdu</p>
+            <p className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Typ pojazdu</p>
             <div className="flex flex-wrap gap-2">
               {VEHICLE_TYPES.map(vt => (
                 <button
@@ -378,8 +378,8 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
                   onClick={() => setRoad(r => ({ ...r, vehicleType: r.vehicleType === vt ? '' : vt }))}
                   className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors
                     ${road.vehicleType === vt
-                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
+                      ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                      : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'}`}
                 >
                   {vt}
                 </button>
@@ -402,11 +402,11 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-400"
+                className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 text-emerald-600 focus:ring-emerald-400"
                 checked={road.adr}
                 onChange={e => setRoad(r => ({ ...r, adr: e.target.checked, adrClass: e.target.checked ? r.adrClass : '' }))}
               />
-              <span className="text-sm text-gray-700">ADR — towary niebezpieczne</span>
+              <span className="text-sm text-gray-700 dark:text-slate-300">ADR — towary niebezpieczne</span>
             </label>
           </div>
 
@@ -426,9 +426,9 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
 
       {/* ── Sekcja: Transport Morski (szczegóły nieznane przy szukaniu transportu) ── */}
       {!findMode && transport === 'sea' && (
-        <div className="border border-gray-200 rounded-xl p-5 mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Szczegóły kontenera i rejsu</p>
-          <p className="text-xs text-gray-400 mb-4">Pola opcjonalne — dane nadawane przez armatora. Możesz uzupełnić je później.</p>
+        <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">Szczegóły kontenera i rejsu</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">Pola opcjonalne — dane nadawane przez armatora. Możesz uzupełnić je później.</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <Field label="Typ kontenera">
@@ -475,7 +475,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
           </div>
 
           <div>
-            <p className="block text-sm text-gray-700 mb-2">Warunki frachtu</p>
+            <p className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Warunki frachtu</p>
             <div className="flex gap-3">
               {['Prepaid', 'Collect'].map(ft => (
                 <button
@@ -484,8 +484,8 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
                   onClick={() => setSea(s => ({ ...s, freightTerms: ft }))}
                   className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors
                     ${sea.freightTerms === ft
-                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
+                      ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                      : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'}`}
                 >
                   {ft}
                 </button>
@@ -496,9 +496,9 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
       )}
 
       {/* ── Incoterms — na końcu, wymaga już pełnego obrazu przesyłki ───── */}
-      <div className="border border-gray-200 rounded-xl p-5 mb-4">
-        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Incoterms</p>
-        <p className="text-xs text-gray-400 mb-4">Reguła handlowa określająca podział kosztów i ryzyka między nadawcą a odbiorcą</p>
+      <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">Incoterms</p>
+        <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">Reguła handlowa określająca podział kosztów i ryzyka między nadawcą a odbiorcą</p>
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
           {INCOTERMS.map(it => {
             const active = terms.incoterms === it.code
@@ -508,7 +508,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
                 type="button"
                 onClick={() => setTerms(t => ({ ...t, incoterms: t.incoterms === it.code ? '' : it.code }))}
                 className={`px-3 py-2.5 rounded-lg text-sm font-semibold border transition-colors
-                  ${active ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
+                  ${active ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'}`}
               >
                 {it.code}
               </button>
@@ -516,11 +516,11 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
           })}
         </div>
         {selectedIncoterm && (
-          <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+          <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-lg">
             <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.5} />
             <div>
-              <p className="text-xs font-semibold text-emerald-700 mb-0.5">{selectedIncoterm.code} — {selectedIncoterm.label}</p>
-              <p className="text-xs text-emerald-700">{selectedIncoterm.desc}</p>
+              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-0.5">{selectedIncoterm.code} — {selectedIncoterm.label}</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-300">{selectedIncoterm.desc}</p>
             </div>
           </div>
         )}
@@ -536,9 +536,9 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
 function PartySection({ title, subtitle, data, onChange, showBank = false }) {
   const upd = (key, val) => onChange({ ...data, [key]: val })
   return (
-    <div className="border border-gray-200 rounded-xl p-5 mb-4">
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">{title}</p>
-      {subtitle && <p className="text-xs text-gray-400 mb-4">{subtitle}</p>}
+    <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">{title}</p>
+      {subtitle && <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">{subtitle}</p>}
       {!subtitle && <div className="mb-4" />}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <Field label="Nazwa firmy">
@@ -566,8 +566,8 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
         </Field>
       </div>
       {showBank && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Dane bankowe</p>
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-3">Dane bankowe</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <Field label="IBAN">
               <input className={cls.input} value={data.iban} onChange={e => upd('iban', e.target.value)} />
@@ -621,7 +621,7 @@ function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext })
         <button
           type="button"
           onClick={fillFromProfile}
-          className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded-lg px-3 py-2 transition-colors"
+          className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-lg px-3 py-2 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" />
@@ -630,7 +630,7 @@ function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext })
         </button>
       )}
       {!profileReady && user && (
-        <p className="mb-3 text-xs text-gray-400">
+        <p className="mb-3 text-xs text-gray-400 dark:text-slate-500">
           Wypełniaj to szybciej —{' '}
           <Link to="/profile?tab=firma" className="text-emerald-600 hover:underline">
             uzupełnij dane firmy w profilu
@@ -646,7 +646,7 @@ function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext })
         showBank
       />
       {autofilled && (
-        <p className="-mt-2 mb-4 text-xs text-gray-400">
+        <p className="-mt-2 mb-4 text-xs text-gray-400 dark:text-slate-500">
           Wypełnione danymi z Twojego profilu. Możesz je zmienić.
         </p>
       )}
@@ -701,7 +701,7 @@ function QuoteStep({ onNext, onBack }) {
 // „Nie podano" (jasnoszary) zamiast myślnika. Używana we wszystkich komórkach.
 function formatSummaryValue(v) {
   if (v == null || String(v).trim() === '' || String(v).trim() === '—') {
-    return <span className="text-gray-300">Nie podano</span>
+    return <span className="text-gray-300 dark:text-slate-600">Nie podano</span>
   }
   return v
 }
@@ -729,12 +729,17 @@ function Step4({ onBack }) {
   // Zapis do historii NATYCHMIAST przy wejściu na ten krok — nie dopiero po
   // kliknięciu „Pobierz". Komplet zapisujemy z domyślnym zaznaczeniem (wymagane),
   // a każde kolejne „Pobierz" aktualizuje TEN SAM rekord realnie pobranym kompletem
-  // (recordGenerated). Tryb edit WYŁĄCZONY — edit startuje już na tym kroku, więc
-  // auto-zapis od razu utworzyłby kopię, mimo że user niczego jeszcze nie zmienił
-  // (to properties dokładnie ten bug „2 wpisy przy otwarciu edytora", który usunęliśmy).
+  // (recordGenerated). W trybie edit pomijamy TYLKO pierwsze wejście bez zmian
+  // (edit startuje już na tym kroku — auto-zapis od razu utworzyłby zbędną kopię,
+  // mimo że user niczego jeszcze nie zmienił). Gdy user wróci do wcześniejszego
+  // kroku, coś zmieni (isDirty=true) i przejdzie do „Dokumenty" ponownie — Step4
+  // montuje się na nowo (render wg klucza kroku), efekt odpala się od nowa i
+  // auto-zapisuje jako nowy wpis w historii (a kolejne przejścia aktualizują TEN
+  // SAM rekord, bo activeRecordIdRef w WizardProvider przeżywa całą sesję).
   const autoSavedRef = useRef(false)
   useEffect(() => {
-    if (mode === 'edit' || autoSavedRef.current) return
+    if (autoSavedRef.current) return
+    if (mode === 'edit' && !wiz.isDirty) return
     autoSavedRef.current = true
     wiz.recordGenerated(Array.from(selected))
       .then((saved) => setSavedSetId(saved.id))
@@ -767,12 +772,12 @@ function Step4({ onBack }) {
     {
       label: 'Typ transportu',
       value: snapshot.route.transport === 'road' ? 'Drogowy (TIR)' : 'Morski (Kontener)',
-      icon: <TransportIcon className="w-4 h-4 text-gray-400 shrink-0" strokeWidth={1.75} />,
+      icon: <TransportIcon className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" strokeWidth={1.75} />,
     },
     {
       label: 'Trasa',
       value: routeReady ? `${fromCountry.name} → ${toCountry.name}` : '',
-      icon: routeReady ? <ArrowRight className="w-4 h-4 text-gray-400 shrink-0" strokeWidth={1.75} /> : null,
+      icon: routeReady ? <ArrowRight className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" strokeWidth={1.75} /> : null,
     },
     { label: 'Towar', value: snapshot.cargo.cargoName || '' },
     {
@@ -783,7 +788,7 @@ function Step4({ onBack }) {
           ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={1.75} />
           : <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={1.75} />
         : null,
-      tone: routeReady ? (bothEU ? 'text-emerald-700' : 'text-amber-700') : undefined,
+      tone: routeReady ? (bothEU ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-400') : undefined,
     },
     // Waga i Wartość: jedna komórka gdy oba puste, w przeciwnym razie dwie osobne.
     ...(!weightVal && !valueVal
@@ -845,15 +850,6 @@ function Step4({ onBack }) {
     <div>
       <BackButton onClick={onBack} />
 
-      {mode === 'edit' && (
-        <div className="mb-4">
-          <AlertBox type="info" title="Edytujesz istniejący zestaw">
-            Wygenerowanie utworzy <strong>nowy</strong> dokument w historii. Oryginał pozostanie
-            niezmieniony.
-          </AlertBox>
-        </div>
-      )}
-
       {docsChanged && (
         <div className="mb-4">
           <AlertBox type="warning" title="Zmienił się zestaw dokumentów">
@@ -878,16 +874,16 @@ function Step4({ onBack }) {
         </div>
       )}
 
-      <div className="border border-gray-200 rounded-2xl overflow-hidden mb-6 bg-white">
-        <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-gray-100">
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Podsumowanie zlecenia</p>
+      <div className="border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden mb-6 bg-white dark:bg-slate-800">
+        <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-gray-100 dark:border-slate-700">
+          <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-slate-500">Podsumowanie zlecenia</p>
           {isComplete ? (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-1">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-full px-2.5 py-1">
               <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2} />
               Kompletne
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-2.5 py-1">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800 rounded-full px-2.5 py-1">
               <AlertTriangle className="w-3.5 h-3.5" strokeWidth={2} />
               Niekompletne
             </span>
@@ -895,13 +891,13 @@ function Step4({ onBack }) {
         </div>
         {/* gap-px na szarym tle rysuje cienkie separatory między wierszami i kolumnami;
             krawędzie karty zamyka border — ostatni wiersz nie ma dolnej linii. */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-gray-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-gray-100 dark:bg-slate-700">
           {summary.map((cell, i) => {
             const spanFull = summary.length % 2 === 1 && i === summary.length - 1
             return (
-              <div key={cell.label} className={`bg-white px-5 py-3 ${spanFull ? 'md:col-span-2' : ''}`}>
-                <p className="text-xs text-gray-400 mb-0.5">{cell.label}</p>
-                <div className={`flex items-center gap-1.5 text-sm font-medium ${cell.tone || 'text-gray-900'}`}>
+              <div key={cell.label} className={`bg-white dark:bg-slate-800 px-5 py-3 ${spanFull ? 'md:col-span-2' : ''}`}>
+                <p className="text-xs text-gray-400 dark:text-slate-500 mb-0.5">{cell.label}</p>
+                <div className={`flex items-center gap-1.5 text-sm font-medium ${cell.tone || 'text-gray-900 dark:text-slate-100'}`}>
                   {cell.icon}
                   <span className="min-w-0">{formatSummaryValue(cell.value)}</span>
                 </div>
@@ -913,14 +909,14 @@ function Step4({ onBack }) {
 
       <Link
         to="/insurance"
-        className="flex items-center gap-4 p-5 mb-6 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 hover:border-emerald-300 transition-colors group"
+        className="flex items-center gap-4 p-5 mb-6 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 hover:border-emerald-300 dark:hover:border-emerald-600 transition-colors group"
       >
-        <div className="shrink-0 w-11 h-11 rounded-full bg-emerald-100 flex items-center justify-center">
+        <div className="shrink-0 w-11 h-11 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
           <ShieldCheck className="w-5 h-5 text-emerald-600" strokeWidth={1.75} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-emerald-900">Ubezpiecz swoją przesyłkę</p>
-          <p className="text-xs text-emerald-700 mt-0.5">Chroń towar na czas transportu przed uszkodzeniem, kradzieżą i zagubieniem.</p>
+          <p className="text-sm font-medium text-emerald-900 dark:text-emerald-200">Ubezpiecz swoją przesyłkę</p>
+          <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">Chroń towar na czas transportu przed uszkodzeniem, kradzieżą i zagubieniem.</p>
         </div>
         <ArrowRight className="w-4 h-4 text-emerald-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
       </Link>
@@ -975,8 +971,18 @@ export default function DocumentWizard() {
 
   useEffect(() => { preloadHtml2Pdf() }, [])
 
+  // Po przejściu na kolejny/poprzedni krok — przewiń do góry najbliższego
+  // scrollowalnego przodka (w AppShell to <main class="overflow-y-auto">),
+  // żeby nie zostawać w miejscu przewinięcia z poprzedniego, dłuższego kroku.
+  const wrapperRef = useRef(null)
+  useEffect(() => {
+    const scrollParent = wrapperRef.current?.closest('.overflow-y-auto')
+    if (scrollParent) scrollParent.scrollTop = 0
+    else window.scrollTo(0, 0)
+  }, [currentStep])
+
   return (
-    <div>
+    <div ref={wrapperRef}>
       <StepBar steps={stepLabels} current={currentStep} maxReached={maxStepReached} onStepClick={goToStep} />
       <StepTransition stepKey={currentStep}>
         {stepKey === 'route' && (

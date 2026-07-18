@@ -50,9 +50,9 @@ export default function UnsavedChangesGuard() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6">
-        <h3 className="text-lg font-bold text-slate-900">Niedokończony formularz</h3>
-        <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Niedokończony formularz</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
           Wprowadzone dane nie zostały jeszcze wygenerowane. Zapisać bieżący postęp jako wersję
           roboczą, aby wrócić do niego później?
         </p>
@@ -70,13 +70,13 @@ export default function UnsavedChangesGuard() {
           </button>
           <button
             onClick={handleDiscard}
-            className="w-full text-sm font-semibold text-red-600 hover:bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 transition-colors"
+            className="w-full text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-2.5 transition-colors"
           >
             Odrzuć zmiany
           </button>
           <button
             onClick={() => blocker.reset()}
-            className="w-full text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-lg px-4 py-2.5 transition-colors"
+            className="w-full text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg px-4 py-2.5 transition-colors"
           >
             Anuluj
           </button>

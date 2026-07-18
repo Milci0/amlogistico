@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import { useState, useRef, useEffect } from 'react'
+import { useTheme } from '../context/ThemeContext'
 
 const DATA = {
   EXW: {
@@ -178,13 +179,14 @@ function DetailPanel({ code, onClose }) {
     }
   }, [code])
 
+  const { dark } = useTheme()
   const sellerDominant = d.sp >= d.bp
-  const sSide = sellerDominant
-    ? { bg: '#FAEEDA', color: '#633806' }
-    : { bg: '#E1F5EE', color: '#085041' }
-  const bSide = sellerDominant
-    ? { bg: '#E1F5EE', color: '#085041' }
-    : { bg: '#FAEEDA', color: '#633806' }
+  // W ciemnym motywie te same barwy (bursztynowa/zielona) w bardziej nasyconej,
+  // ciemniejszej wersji — jasne pastele z jasnego motywu ginęły na granatowym tle.
+  const AMBER = dark ? { bg: '#7C4A0A', color: '#FDE9C8' } : { bg: '#FAEEDA', color: '#633806' }
+  const TEAL  = dark ? { bg: '#0F6B54', color: '#D3FBEE' } : { bg: '#E1F5EE', color: '#085041' }
+  const sSide = sellerDominant ? AMBER : TEAL
+  const bSide = sellerDominant ? TEAL : AMBER
 
   return (
     <div
@@ -220,7 +222,7 @@ function DetailPanel({ code, onClose }) {
       <div className="h-px bg-slate-100 dark:bg-slate-700 mb-4" />
 
       {/* Pasek ryzyka */}
-      <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">
+      <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-2">
         Punkt przeniesienia ryzyka
       </div>
       <div className="flex h-8 rounded-lg overflow-hidden mb-3">

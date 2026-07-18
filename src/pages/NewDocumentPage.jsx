@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useSearchParams } from 'react-router-dom'
 import DocumentWizard from '../components/wizard/DocumentWizard'
-import { WizardProvider, UnsavedChangesGuard, readAutosave, clearAutosave, PATH_TO_FLOW } from '../components/wizard'
+import { WizardProvider, UnsavedChangesGuard, clearAutosave, PATH_TO_FLOW } from '../components/wizard'
 import { useAuth } from '../auth/AuthContext'
 import { getSet } from '../services/documentSetsRepo'
 import AlertBox from '../components/ui/AlertBox'
-import { formatDocumentDate } from '../utils/formatDate'
 
 export default function NewDocumentPage() {
   const { user } = useAuth()
@@ -43,17 +42,17 @@ export default function NewDocumentPage() {
     return () => { active = false }
   }, [sourceId])
 
-  // Flow dla świeżego kreatora — potrzebne już do odczytu właściwego autozapisu
-  // (autozapis jest per flowType).
+  // Flow dla świeżego kreatora — potrzebne do wyczyszczenia ewentualnego starego
+  // autozapisu (autozapis jest per flowType).
   const createFlowType = mode === 'create' ? pathFlow || 'have_transport' : null
 
-  // Autozapis do przywrócenia — tylko przy czystym starcie (bez edit/draft),
-  // czytany dla flow wynikającego z ?path=.
-  const autosave = useMemo(
-    () => (mode === 'create' ? readAutosave(createFlowType) : null),
-    [mode, createFlowType]
-  )
-  const [restore, setRestore] = useState(null) // null | 'fresh' | 'restored'
+  // Bez propozycji „przywróć niedokończony formularz" — gdy user wcześniej
+  // wyszedł z kreatora, UnsavedChangesGuard już go zapytał, czy zapisać wersję
+  // roboczą, czy odrzucić zmiany. Świeży start zawsze czyści stary autozapis,
+  // żeby nie zostawał w localStorage bez sensu.
+  useEffect(() => {
+    if (mode === 'create') clearAutosave(createFlowType)
+  }, [mode, createFlowType])
 
   // Ładowanie zestawu źródłowego (edit/resume) — czekamy, zanim zdecydujemy o kreatorze.
   if (sourceId && sourceLoading) {
@@ -89,52 +88,13 @@ export default function NewDocumentPage() {
     )
   }
 
-  // Propozycja przywrócenia niedokończonego formularza (ETAP 16).
-  if (autosave && restore === null) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <Helmet><title>Nowe zlecenie | AMLogistico</title></Helmet>
-        <AlertBox type="info" title="Znaleziono niedokończony formularz">
-          <p>
-            Masz zapisany automatycznie postęp z {formatDocumentDate(autosave.savedAt, true)}. Chcesz
-            do niego wrócić?
-          </p>
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={() => setRestore('restored')}
-              className="text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-4 py-2 transition-colors"
-            >
-              Przywróć
-            </button>
-            <button
-              onClick={() => { clearAutosave(createFlowType); setRestore('fresh') }}
-              className="text-sm font-semibold text-slate-600 border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-50 transition-colors"
-            >
-              Zacznij od nowa
-            </button>
-          </div>
-        </AlertBox>
-      </div>
-    )
-  }
-
-  // initialSet dla providera: edit/resume → z repo; restore → z autozapisu.
-  const restoredSet =
-    restore === 'restored' && autosave
-      ? {
-          formData: autosave.snapshot,
-          lastStep: autosave.step,
-          maxStepReached: autosave.maxStepReached,
-          flowType: autosave.flowType,
-        }
-      : null
-
-  const initialSet = sourceSet || restoredSet
-  // Priorytet flowType: 1) wczytany zestaw (edit/resume/restore) wygrywa zawsze,
+  // initialSet dla providera: edit/resume → z repo; świeży create → brak (null).
+  const initialSet = sourceSet
+  // Priorytet flowType: 1) wczytany zestaw (edit/resume) wygrywa zawsze,
   // 2) ?path= dla świeżego create, 3) fallback have_transport.
   const flowType = initialSet?.flowType || pathFlow || 'have_transport'
   // flowType w kluczu remountu — inaczej zmiana ścieżki nie zresetowałaby wizarda.
-  const providerKey = `${editId || draftId || (restore === 'restored' ? 'restored' : 'new')}:${flowType}`
+  const providerKey = `${editId || draftId || 'new'}:${flowType}`
 
   return (
     <div className="max-w-2xl mx-auto">

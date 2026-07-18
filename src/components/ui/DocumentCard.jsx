@@ -26,13 +26,50 @@ function DocRowStatus({ status }) {
   return null
 }
 
+function DocGroup({ title, docs, isDraft, docStatuses, onDownload }) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 px-3 mb-1">{title}</p>
+      <div className="space-y-1.5">
+        {docs.map((doc) => {
+          const status = docStatuses[doc.key]
+          return (
+            <div key={doc.key} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-slate-700/50">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-gray-800 dark:text-slate-200 truncate">{doc.name}</p>
+                {doc.desc && <p className="text-[11px] text-gray-400 dark:text-slate-500 truncate">{doc.desc}</p>}
+              </div>
+              {isDraft ? (
+                <span className="shrink-0 text-[11px] text-gray-400 dark:text-slate-500">Niewygenerowany</span>
+              ) : (
+                <>
+                  <DocRowStatus status={status} />
+                  <button
+                    onClick={() => onDownload(doc.key)}
+                    disabled={status === 'loading'}
+                    className="shrink-0 flex items-center gap-1.5 text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 disabled:opacity-60 px-2 py-1 rounded-md transition-colors"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    {status === 'done' ? 'Pobierz ponownie' : 'Pobierz'}
+                  </button>
+                </>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // Karta zestawu dokumentów (DocumentSet). Wspólna dla Historii (completed) i
 // Wersji roboczych (draft). Bez przycisku „Duplikuj" — edycja gotowego zestawu
 // tworzy nowy, niezależny wpis (patrz onEdit → tryb edit kreatora).
 export default function DocumentCard({
   set,
   downloading,
-  derivedFromDate,
   onDownload,
   onDownloadOne,
   onEdit,
@@ -62,14 +99,12 @@ export default function DocumentCard({
   const [detailsLoading, setDetailsLoading] = useState(false)
   const [detailsError, setDetailsError] = useState(false)
 
-  // Pojedyncze dokumenty do rozwinięcia — tylko gotowe zestawy (canExpand wyklucza
-  // drafty), więc zawsze z selectedDocs (dane opisowe z engineResult zapisanego
-  // przy generowaniu).
-  const docsDetails = !fullSet
-    ? []
-    : (fullSet.selectedDocs || [])
-        .map((key) => fullSet.engineResult?.docs?.find((d) => d.key === key))
-        .filter(Boolean)
+  // Pojedyncze dokumenty do rozwinięcia — CAŁA lista z engineResult (wymagane +
+  // opcjonalne), nie tylko te realnie zaznaczone/pobrane przy generowaniu —
+  // każdy z nich da się pobrać osobno (regenerowany z zapisanego formData).
+  const allDocs = fullSet?.engineResult?.docs || []
+  const requiredDocs = allDocs.filter((d) => d.required)
+  const optionalDocs = allDocs.filter((d) => !d.required)
 
   async function toggleExpand() {
     const next = !expanded
@@ -95,8 +130,8 @@ export default function DocumentCard({
   return (
     <div
       className={
-        'bg-white rounded-xl border shadow-sm p-4 ' +
-        (isDraft ? 'border-l-4 border-l-amber-400 border-gray-100' : 'border-gray-100')
+        'bg-white dark:bg-slate-800 rounded-xl border shadow-sm p-4 ' +
+        (isDraft ? 'border-l-4 border-l-amber-400 border-gray-100 dark:border-slate-700' : 'border-gray-100 dark:border-slate-700')
       }
     >
       <div className="flex items-center justify-between gap-4">
@@ -123,28 +158,28 @@ export default function DocumentCard({
         {canExpand && (
           <span
             aria-hidden="true"
-            className="shrink-0 w-6 h-6 flex items-center justify-center text-gray-400"
+            className="shrink-0 w-6 h-6 flex items-center justify-center text-gray-400 dark:text-slate-500"
           >
             <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? 'rotate-90' : ''}`} strokeWidth={2} />
           </span>
         )}
-        <span className="text-xs font-bold px-2 py-1 rounded-md shrink-0 bg-blue-100 text-blue-700">
+        <span className="text-xs font-bold px-2 py-1 rounded-md shrink-0 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
           {transportLabel}
         </span>
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-medium text-gray-900 truncate">{title}</p>
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+            <p className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate">{title}</p>
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">
               {flowLabel}
             </span>
           </div>
 
           {isDraft ? (
             <div className="mt-1">
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 dark:text-slate-500">
                 {route} · Krok {set.lastStep} z {set.totalSteps}: {getStepLabel(set.flowType, set.lastStep)} · edytowano {dateLabel}
               </p>
-              <div className="w-32 h-1 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
+              <div className="w-32 h-1 bg-gray-100 dark:bg-slate-700 rounded-full mt-1.5 overflow-hidden">
                 <div
                   className="h-full bg-amber-400 rounded-full"
                   style={{ width: `${(set.lastStep / set.totalSteps) * 100}%` }}
@@ -153,14 +188,9 @@ export default function DocumentCard({
             </div>
           ) : (
             <>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                 {route} · {docCount} {docCount === 1 ? 'dokument' : 'dokumentów'} · {dateLabel}
               </p>
-              {set.derivedFromId && (
-                <p className="text-[11px] text-slate-400 mt-0.5 italic">
-                  na podstawie zestawu{derivedFromDate ? ` z ${derivedFromDate}` : ''}
-                </p>
-              )}
             </>
           )}
         </div>
@@ -170,7 +200,7 @@ export default function DocumentCard({
         <span
           className={
             'hidden sm:inline text-xs font-medium px-2 py-0.5 rounded-full ' +
-            (isDraft ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700')
+            (isDraft ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300')
           }
         >
           {isDraft ? 'Szkic' : 'Gotowy'}
@@ -179,7 +209,7 @@ export default function DocumentCard({
         {isDraft ? (
           <button
             onClick={() => onContinue?.(set)}
-            className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 px-2.5 py-1.5 rounded-lg transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -191,7 +221,7 @@ export default function DocumentCard({
             <button
               onClick={() => onDownload?.(set)}
               disabled={downloading}
-              className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 disabled:opacity-60 px-2.5 py-1.5 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 disabled:opacity-60 px-2.5 py-1.5 rounded-lg transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -201,7 +231,7 @@ export default function DocumentCard({
             {!isBlank && (
               <button
                 onClick={() => onEdit?.(set)}
-                className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-lg transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -213,7 +243,7 @@ export default function DocumentCard({
         )}
         <button
           onClick={() => onRemove?.(set)}
-          className="flex items-center gap-1.5 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 text-xs font-medium text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 px-2.5 py-1.5 rounded-lg transition-colors"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -224,40 +254,32 @@ export default function DocumentCard({
       </div>
 
       {expanded && canExpand && (
-        <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700 space-y-3">
           {detailsLoading ? (
-            <p className="text-xs text-gray-400 px-3 py-2">Ładowanie…</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 px-3 py-2">Ładowanie…</p>
           ) : detailsError ? (
             <p className="text-xs text-red-600 px-3 py-2">Nie udało się wczytać dokumentów.</p>
           ) : (
-            docsDetails.map((doc) => {
-              const status = docStatuses[doc.key]
-              return (
-                <div key={doc.key} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-gray-800 truncate">{doc.name}</p>
-                    {doc.desc && <p className="text-[11px] text-gray-400 truncate">{doc.desc}</p>}
-                  </div>
-                  {isDraft ? (
-                    <span className="shrink-0 text-[11px] text-gray-400">Niewygenerowany</span>
-                  ) : (
-                    <>
-                      <DocRowStatus status={status} />
-                      <button
-                        onClick={() => handleDocDownload(doc.key)}
-                        disabled={status === 'loading'}
-                        className="shrink-0 flex items-center gap-1.5 text-[11px] font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-100 disabled:opacity-60 px-2 py-1 rounded-md transition-colors"
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        {status === 'done' ? 'Pobierz ponownie' : 'Pobierz'}
-                      </button>
-                    </>
-                  )}
-                </div>
-              )
-            })
+            <>
+              {requiredDocs.length > 0 && (
+                <DocGroup
+                  title="Wymagane"
+                  docs={requiredDocs}
+                  isDraft={isDraft}
+                  docStatuses={docStatuses}
+                  onDownload={handleDocDownload}
+                />
+              )}
+              {optionalDocs.length > 0 && (
+                <DocGroup
+                  title="Opcjonalne"
+                  docs={optionalDocs}
+                  isDraft={isDraft}
+                  docStatuses={docStatuses}
+                  onDownload={handleDocDownload}
+                />
+              )}
+            </>
           )}
         </div>
       )}

@@ -53,27 +53,27 @@ function DocRow({ doc, checked, onToggle, status }) {
     <div
       onClick={() => onToggle(doc.id)}
       className={`flex items-center gap-3 px-4 py-3.5 border rounded-xl cursor-pointer transition-colors
-        ${doc.required ? 'border-emerald-200 bg-emerald-50/50' : 'border-gray-200 bg-white hover:border-emerald-300'}`}
+        ${doc.required ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-emerald-300 dark:hover:border-emerald-600'}`}
     >
       <input
         type="checkbox"
         checked={checked}
         onChange={() => onToggle(doc.id)}
         onClick={(e) => e.stopPropagation()}
-        className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-400 shrink-0"
+        className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 text-emerald-600 focus:ring-emerald-400 shrink-0"
       />
       <DocIcon />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-medium text-gray-900">{doc.namePl}</p>
+          <p className="text-sm font-medium text-gray-900 dark:text-slate-100">{doc.namePl}</p>
           {doc.required && (
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-0.5 rounded">
               Wymagany
             </span>
           )}
         </div>
         {(doc.description || doc.nameEn) && (
-          <p className="text-xs text-gray-400 mt-0.5">{doc.description || doc.nameEn}</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{doc.description || doc.nameEn}</p>
         )}
       </div>
       <StatusBadge status={status} />
@@ -102,7 +102,7 @@ export default function DocumentSelectList({
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2">
         Wymagane ({required.length})
       </p>
       <div className="space-y-2 mb-4">
@@ -119,7 +119,7 @@ export default function DocumentSelectList({
 
       {optional.length > 0 && (
         <>
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2">
             Opcjonalne ({optional.length})
           </p>
           <div className="space-y-2 mb-6">
@@ -140,7 +140,7 @@ export default function DocumentSelectList({
       <button
         onClick={onAction}
         disabled={actionDisabled}
-        className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-medium py-3.5 rounded-xl transition-colors text-sm"
+        className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 disabled:text-gray-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed text-white font-medium py-3.5 rounded-xl transition-colors text-sm"
       >
         {actionLoading ? <SpinnerIcon /> : <DownloadTrayIcon />}
         {actionLoading && loadingLabel ? loadingLabel : actionLabel}

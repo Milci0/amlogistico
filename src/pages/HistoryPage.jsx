@@ -9,7 +9,6 @@ import AlertBox from '../components/ui/AlertBox'
 import useDocumentSets, { useDocumentSetList } from '../hooks/useDocumentSets'
 import { generateDocuments } from '../services/documentGeneration'
 import { downloadBlankDocument, downloadBlankZip } from '../utils/blankDocuments'
-import { formatDocumentDate } from '../utils/formatDate'
 
 const SORT_OPTIONS = [
   { key: 'newest', label: 'Najnowsze' },
@@ -109,15 +108,6 @@ export default function HistoryPage() {
     setToDelete(null)
   }
 
-  // Data oryginału dla etykiety „na podstawie zestawu z…" — szukamy wśród już
-  // wczytanych gotowych setów (oryginał to również completed). Gdy odfiltrowany
-  // wyszukiwarką lub usunięty — brak etykiety (degradacja bez dodatkowego zapytania).
-  function derivedDate(set) {
-    if (!set.derivedFromId) return null
-    const orig = allCompleted.find((s) => s.id === set.derivedFromId)
-    return orig ? formatDocumentDate(orig.createdAt) : null
-  }
-
   return (
     <div className="max-w-3xl mx-auto">
       <Helmet>
@@ -174,7 +164,6 @@ export default function HistoryPage() {
               key={set.id}
               set={set}
               downloading={downloadingId === set.id}
-              derivedFromDate={derivedDate(set)}
               onDownload={handleDownload}
               onDownloadOne={handleDownloadOne}
               onEdit={handleEdit}
