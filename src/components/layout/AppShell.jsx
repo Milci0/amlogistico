@@ -7,6 +7,7 @@ import StepTransition from '../StepTransition'
 
 export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
   const location = useLocation()
 
   return (
@@ -16,7 +17,7 @@ export default function AppShell() {
 
         {/* Sidebar desktop */}
         <div className="hidden md:flex md:shrink-0">
-          <Sidebar />
+          <Sidebar collapsed={collapsed} onToggleCollapse={() => setCollapsed(c => !c)} />
         </div>
 
         {/* Sidebar mobile — overlay */}

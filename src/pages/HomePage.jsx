@@ -1,7 +1,33 @@
 import { Helmet } from 'react-helmet-async'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { HOME_STATS } from '../data/mockData'
+
+const STAT_VALUE_RE = /^(\D*)(\d+)(\D*)$/
+
+function AnimatedStatValue({ value, duration = 1200 }) {
+  const match = value.match(STAT_VALUE_RE)
+  const [prefix, digits, suffix] = match ? [match[1], match[2], match[3]] : ['', value, '']
+  const target = Number(digits)
+  const [display, setDisplay] = useState(match ? 0 : target)
+
+  useEffect(() => {
+    if (!match) return
+    let frame
+    const start = performance.now()
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplay(Math.round(eased * target))
+      if (progress < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [target, duration])
+
+  return <>{prefix}{display}{suffix}</>
+}
 
 const ICON_SVG = {
   pin: (
@@ -104,7 +130,9 @@ export default function HomePage() {
               <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${ICON_COLORS[stat.color]}`}>
                 {ICON_SVG[stat.icon]}
               </div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                <AnimatedStatValue value={stat.value} />
+              </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-snug">{stat.label}</p>
             </div>
           ))}
