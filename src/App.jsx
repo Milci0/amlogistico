@@ -4,6 +4,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './auth/AuthContext'
 import RequireAuth from './components/auth/RequireAuth'
+import RequireAdmin from './components/auth/RequireAdmin'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import PathSelectPage from './pages/PathSelectPage'
@@ -20,6 +21,7 @@ import PlaceholderPage from './pages/PlaceholderPage'
 import IncotermsPage from './pages/IncotermsPage'
 import BlankTemplatesPage from './pages/BlankTemplatesPage'
 import NewsPage from './pages/NewsPage'
+import AdminNotificationsPage from './pages/AdminNotificationsPage'
 
 // Root layout — AuthProvider wewnątrz routera, by trasy/hooki miały kontekst sesji
 function RootLayout() {
@@ -65,6 +67,14 @@ const router = createBrowserRouter([
               { path: 'news', element: <NewsPage /> },
               { path: 'incoterms', element: <IncotermsPage /> },
               { path: 'blank-templates', element: <BlankTemplatesPage /> },
+            ],
+          },
+
+          // Panel administratora — dodatkowa bramka isAdmin (poza samym zalogowaniem)
+          {
+            element: <RequireAdmin />,
+            children: [
+              { path: 'admin/powiadomienia', element: <AdminNotificationsPage /> },
             ],
           },
         ],

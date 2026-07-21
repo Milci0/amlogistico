@@ -28,6 +28,7 @@ function publicUser(u) {
     marketingConsent: u.marketingConsent,
     termsAcceptedAt: u.termsAcceptedAt,
     profileCompleted: u.profileCompleted,
+    isAdmin: u.isAdmin,
     plan: u.plan,
     createdAt: u.createdAt,
   }

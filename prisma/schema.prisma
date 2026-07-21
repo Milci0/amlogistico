@@ -40,9 +40,34 @@ model User {
   defaultCurrency   String?  @map("default_currency")
   preferredLanguage String?  @default("PL") @map("preferred_language")
 
-  documentSets DocumentSet[]
+  // Uprawnienie administratora (wysyłanie powiadomień). Nadawane ręcznie w Prisma
+  // Studio — brak UI do zarządzania adminami (MVP).
+  isAdmin           Boolean  @default(false) @map("is_admin")
+
+  documentSets  DocumentSet[]
+  notifications Notification[]
 
   @@map("users")
+}
+
+// notifications — powiadomienia w aplikacji (dzwonek). Wysyłane przez admina na
+// konkretne konto lub do wszystkich (fan-out: osobny wiersz na użytkownika).
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      String    @default("info") // info | success | warning
+  title     String
+  body      String
+  ctaLabel  String?   @map("cta_label") // etykieta przycisku (opcjonalnie)
+  ctaUrl    String?   @map("cta_url")   // link przycisku (opcjonalnie)
+
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, readAt])
+  @@map("notifications")
 }
 
 // document_sets — zapisane komplety dokumentów (migawka formData, NIE pliki PDF).

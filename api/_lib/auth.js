@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import { prisma } from './prisma.js'
 
 const COOKIE_NAME = 'token'
 const TOKEN_TTL = '7d'
@@ -51,6 +52,14 @@ export function requireAuth(req, res, next) {
   const payload = token && verifyToken(token)
   if (!payload) return res.status(401).json({ error: 'Brak autoryzacji' })
   req.userId = payload.userId
+  next()
+}
+
+// Middleware — wymaga uprawnień admina. Stosować PO requireAuth (potrzebuje req.userId).
+// JWT nosi tylko userId, więc flagę admina sprawdzamy w bazie.
+export async function requireAdmin(req, res, next) {
+  const user = await prisma.user.findUnique({ where: { id: req.userId } })
+  if (!user?.isAdmin) return res.status(403).json({ error: 'Brak uprawnień' })
   next()
 }
 

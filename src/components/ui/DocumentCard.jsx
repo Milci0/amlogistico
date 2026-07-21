@@ -124,7 +124,9 @@ export default function DocumentCard({
   }
 
   async function handleDocDownload(key) {
-    await onDownloadOne?.(set, key, (k, st) => setDocStatuses((s) => ({ ...s, [k]: st })))
+    // Przekazujemy pełny zestaw (dociągnięty przy rozwinięciu) — niesie
+    // formData/engineResult potrzebne do regeneracji; lista ich nie ma.
+    await onDownloadOne?.(fullSet || set, key, (k, st) => setDocStatuses((s) => ({ ...s, [k]: st })))
   }
 
   return (

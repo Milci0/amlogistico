@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { getCurrentUserId } from '../../services/currentUser'
 import { upsertProgress } from '../../services/documentSetsRepo'
 import { buildMeta, buildEngineResult } from '../../services/documentGeneration'
+import { peekPendingIncoterm, clearPendingIncoterm } from '../../services/pendingIncoterm'
 import { getFlow } from './flowSteps'
 import { createEmptySnapshot, cloneSnapshot } from './wizardState'
 
@@ -92,7 +93,18 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
     return empty
   }, [initialSet, mode, defaultCurrency])
 
-  const [snapshot, setSnapshot] = useState(initialSnapshot)
+  // Incoterm „w podróży" z /incoterms (przycisk „Użyj w nowym zleceniu") — tylko
+  // świeży create. Doklejany PO initialSnapshot i celowo NIE trafia do baseline,
+  // żeby formularz startował jako „dirty" — alert wyjścia zapisze wersję roboczą,
+  // nawet jeśli user nic więcej nie wypełnił.
+  const [snapshot, setSnapshot] = useState(() => {
+    if (mode !== 'create') return initialSnapshot
+    const pendingIncoterm = peekPendingIncoterm()
+    if (!pendingIncoterm) return initialSnapshot
+    const withIncoterm = cloneSnapshot(initialSnapshot)
+    withIncoterm.terms.incoterms = pendingIncoterm
+    return withIncoterm
+  })
   // edit → zawsze od ostatniego kroku (dokumenty gotowe od razu); resume → od lastStep.
   const [step, setStep] = useState(
     mode === 'edit' ? totalSteps : initialSet?.lastStep || 1
@@ -101,6 +113,13 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
     mode === 'edit' ? totalSteps : Math.max(initialSet?.maxStepReached || 1, initialSet?.lastStep || 1)
   )
   const [baseline, setBaseline] = useState(() => cloneSnapshot(initialSnapshot))
+
+  // Bilet jednorazowy — zużyty (przeczytany do snapshotu powyżej albo nie było go
+  // wcale), więc czyścimy, żeby kolejny świeży kreator w tej karcie go nie odziedziczył.
+  useEffect(() => {
+    if (mode === 'create') clearPendingIncoterm()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const setId = initialSet?.id || null
   const derivedFromId =

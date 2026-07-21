@@ -1,6 +1,8 @@
 import { Helmet } from 'react-helmet-async'
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
+import { setPendingIncoterm } from '../services/pendingIncoterm'
 
 const DATA = {
   EXW: {
@@ -172,12 +174,20 @@ function IconPin() {
 function DetailPanel({ code, onClose }) {
   const d = DATA[code]
   const ref = useRef(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (ref.current) {
       setTimeout(() => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
     }
   }, [code])
+
+  // /incoterms jest za RequireAuth — user jest tu zawsze zalogowany, więc od razu
+  // na wybór ścieżki (jak „Rozpocznij" na stronie głównej dla zalogowanego usera).
+  function handleUseInOrder() {
+    setPendingIncoterm(code)
+    navigate('/wybor-sciezki')
+  }
 
   const { dark } = useTheme()
   const sellerDominant = d.sp >= d.bp
@@ -217,6 +227,19 @@ function DetailPanel({ code, onClose }) {
             </svg>
           </button>
         </div>
+      </div>
+
+      {/* CTA: użyj w nowym zleceniu */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 p-2.5 rounded-lg bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30">
+        <p className="text-xs text-slate-600 dark:text-slate-300">
+          Chcesz zastosować <span className="font-semibold text-slate-800 dark:text-white">{code}</span> w nowym zleceniu?
+        </p>
+        <button
+          onClick={handleUseInOrder}
+          className="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm whitespace-nowrap"
+        >
+          Użyj w nowym zleceniu
+        </button>
       </div>
 
       <div className="h-px bg-slate-100 dark:bg-slate-700 mb-4" />

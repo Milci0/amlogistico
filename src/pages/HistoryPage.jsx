@@ -9,6 +9,7 @@ import AlertBox from '../components/ui/AlertBox'
 import useDocumentSets, { useDocumentSetList } from '../hooks/useDocumentSets'
 import { generateDocuments } from '../services/documentGeneration'
 import { downloadBlankDocument, downloadBlankZip } from '../utils/blankDocuments'
+import { getSet } from '../services/documentSetsRepo'
 
 const SORT_OPTIONS = [
   { key: 'newest', label: 'Najnowsze' },
@@ -44,19 +45,31 @@ export default function HistoryPage() {
     return allCompleted.filter((s) => TRANSPORT_LABEL[s.meta?.transportMode] === typeFilter)
   }, [allCompleted, typeFilter])
 
+  // Lista zestawów (GET /document-sets) NIE niesie formData/engineResult — są
+  // odcinane dla oszczędności transferu (patrz backend toClientListItem). Do
+  // regeneracji PDF-ów potrzebujemy pełnego rekordu, więc przed każdym pobraniem
+  // doładowujemy go leniwie przez getSet(id). Bez tego generateDocuments dostawało
+  // undefined (rzut / pusty ZIP) i „Pobierz" nie działało dla żadnego zestawu.
+  async function loadFull(set) {
+    if (set.formData !== undefined) return set // już pełny (np. przekazany z karty)
+    const full = await getSet(set.id)
+    return full || set
+  }
+
   async function handleDownload(set) {
     setDownloadError(null)
     setDownloadingId(set.id)
     try {
-      if (set.kind === 'blank') {
+      const full = await loadFull(set)
+      if (full.kind === 'blank') {
         // Puste szablony — generowane przez JSX (jak wypełnione), fallback na
         // statyczny plik dla dokumentów bez jeszcze skonwertowanego szablonu.
-        const docs = (set.selectedDocs || [])
-          .map((key) => set.engineResult?.docs?.find((d) => d.key === key))
+        const docs = (full.selectedDocs || [])
+          .map((key) => full.engineResult?.docs?.find((d) => d.key === key))
           .filter(Boolean)
-        await downloadBlankZip(docs, `dokumenty_${set.meta?.routeFrom}_${set.meta?.routeTo}.zip`)
+        await downloadBlankZip(docs, `dokumenty_${full.meta?.routeFrom}_${full.meta?.routeTo}.zip`)
       } else {
-        const { failed } = await generateDocuments(set.formData, set.selectedDocs || [])
+        const { failed } = await generateDocuments(full.formData, full.selectedDocs || [])
         if (failed.length > 0) setDownloadError('Nie udało się wygenerować części dokumentów.')
       }
     } catch (err) {
@@ -71,8 +84,17 @@ export default function HistoryPage() {
   // dokumentu (onStatus), nie do globalnego downloadingId karty.
   async function handleDownloadOne(set, key, onStatus) {
     setDownloadError(null)
-    if (set.kind === 'blank') {
-      const doc = set.engineResult?.docs?.find((d) => d.key === key)
+    let full
+    try {
+      full = await loadFull(set)
+    } catch (err) {
+      console.error('Błąd ładowania zestawu:', err)
+      onStatus?.(key, 'error')
+      setDownloadError('Nie udało się wczytać zestawu.')
+      return
+    }
+    if (full.kind === 'blank') {
+      const doc = full.engineResult?.docs?.find((d) => d.key === key)
       if (!doc) return
       onStatus?.(key, 'loading')
       try {
@@ -86,7 +108,7 @@ export default function HistoryPage() {
       return
     }
     try {
-      const { failed } = await generateDocuments(set.formData, [key], onStatus)
+      const { failed } = await generateDocuments(full.formData, [key], onStatus)
       if (failed.length > 0) setDownloadError('Nie udało się wygenerować dokumentu.')
     } catch (err) {
       console.error('Błąd generowania PDF:', err)

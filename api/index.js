@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser'
 import authRouter from './_routes/auth.js'
 import profileRouter from './_routes/profile.js'
 import documentSetsRouter from './_routes/documentSets.js'
+import notificationsRouter from './_routes/notifications.js'
 import newsRouter from './_routes/news.js'
 import dieselRouter from './_routes/diesel.js'
 import ecbRouter from './_routes/ecb.js'
@@ -20,6 +21,7 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
 app.use('/api/auth', authRouter)
 app.use('/api/profile', profileRouter)
 app.use('/api/document-sets', documentSetsRouter)
+app.use('/api/notifications', notificationsRouter)
 app.use('/api/news', newsRouter)
 app.use('/api/diesel-price', dieselRouter)
 app.use('/api/ecb-rate', ecbRouter)

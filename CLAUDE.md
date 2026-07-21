@@ -328,6 +328,97 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     `freightCurrency:''`, selecty waluty w kroku „Towar" dostały pustą opcję „—", a `WizardProvider`
     ustawia obie waluty tylko gdy profil ma `defaultCurrency` (wtedy wypełnia cargo+freight spójnie).
 
+- **Incoterms → „Użyj w nowym zleceniu" (2026-07-21):** `IncotermsPage.jsx` — w panelu szczegółów
+  (`DetailPanel`) przycisk „Użyj w nowym zleceniu" (styl jak `HomePage` „Rozpocznij": biały,
+  obramowany), widoczny od razu pod nagłówkiem. Klik: `setPendingIncoterm(code)` (nowy
+  `src/services/pendingIncoterm.js`, sessionStorage, jednorazowy „bilet") + nawigacja jak
+  `handleStart` w `HomePage` (zalogowany → `/wybor-sciezki`, gość → `/login` z `from`). Użytkownik
+  wybiera ścieżkę A/B na `PathSelectPage` jak zwykle → `/new-document?path=`.
+  `WizardContext.jsx` (`WizardProvider`, tylko `mode==='create'`): `peekPendingIncoterm()` doklejane
+  do `terms.incoterms` w POCZĄTKOWYM `snapshot`, ale celowo NIE do `baseline` — formularz startuje
+  jako `isDirty`, więc `UnsavedChangesGuard` (już istniejący, bez zmian) zapyta o zapis wersji
+  roboczej, jeśli user wyjdzie/zamknie kartę bez generowania, nawet gdy nic więcej nie wypełnił.
+  Bilet czyszczony (`clearPendingIncoterm`) w efekcie przy montowaniu providera (create), żeby
+  kolejny świeży kreator w tej karcie go nie odziedziczył. Zweryfikowane: `npm run build` zielony.
+  **Nie zweryfikowane interaktywnie w przeglądarce.**
+
+- **FIX: pobieranie z Historii nie działało dla żadnego zestawu (2026-07-21):** `GET /document-sets`
+  (lista) celowo NIE niesie `formData`/`engineResult` (`toClientListItem` je odcina — oszczędność
+  transferu), a `HistoryPage` przekazywał ten OKROJONY obiekt listy prosto do generowania. Skutek:
+  - zestawy kreatora (`kind=null`) → `generateDocuments(undefined, keys)` → `buildGeneratorData`
+    destrukturyzował `undefined` → **rzut** → „Nie udało się pobrać dokumentów";
+  - zestawy „Puste szablony" (`kind='blank'`) → `set.engineResult` = `undefined` → lista docs `[]`
+    → **pusty ZIP** (~22 B) pobierany po cichu.
+  Rozwinięcie karty działało, bo `DocumentCard` sam dociągał pełny zestaw przez `getSet(id)` — ale
+  handlery pobierania nigdy tego nie robiły. **Fix:** `HistoryPage` ma helper `loadFull(set)` (zwraca
+  `set`, jeśli ma już `formData`, inaczej `getSet(set.id)`), wołany w `handleDownload` i
+  `handleDownloadOne` przed regeneracją; `DocumentCard.handleDocDownload` przekazuje `fullSet||set`
+  (unika drugiego fetchu). Dane w bazie były cały czas OK (per-konto, bez limitu czasu, cross-device
+  — potwierdzone: konto usera miało 13 completed). Zweryfikowane E2E (Playwright + zalogowana sesja):
+  zestaw kreatora → 3 realne PDF-y (~200 KB), zestawy blank → ZIP-y 2+ MB, pojedynczy dokument z
+  rozwiniętej karty → realny PDF, 0 błędów konsoli.
+
+- **FIX + zmiana reguł nudge'a „Uzupełnij dane firmy" (2026-07-21):** `src/utils/profileNudge.js`
+  (nowy) + `Topbar.jsx` (dzwonek). Dwa problemy:
+  1. **Nudge wracał po każdym odświeżeniu mimo kliknięcia X** — klucz odrzucenia liczony był z
+     `getCurrentUserId()`, które podczas hydratacji sesji (`/auth/me`) zwraca jeszcze `'local-user'`
+     (efekt ustawiający realne `userId` w `AuthContext` odpala się PO pierwszym renderze dzwonka).
+     Zapis i odczyt trafiały w różne klucze. **Fix:** klucz oparty na `user.id` (prop dzwonka) —
+     stabilny.
+  2. **Brakowało reguły „częściowo wypełniony profil → nie nagabuj"** — jedyną bramką było
+     `profileCompleted===false`, a `profileCompleted` jest `true` dopiero przy KOMPLETNYM adresie firmy
+     (`companyName+address+city+postalCode+country`). Nowa logika w `profileNudge.js`:
+     - `hasStartedProfile(user)` = ≥1 pole osobowe (`fullName/phone`, bez email) I ≥1 pole firmy
+       (`companyName/vatNumber/eoriNumber/address/city/postalCode/country`) → nudge **NIGDY więcej**.
+     - `snoozeNudge(userId)` / `isNudgeSnoozed(userId)` — po X nudge **uśpiony na 7 dni** (klucz
+       `amlogistico:v1:${userId}:profileNudgeSnoozedUntil` = timestamp „pokaż znowu po"), potem może
+       wrócić. Zastąpiło stary permanentny boolean `…:profileNudgeDismissed`.
+     - `shouldShowNudge(user)` = user istnieje && !hasStartedProfile && !isNudgeSnoozed.
+     Dzwonek: `showNudge` przez `useMemo([user, nudgeBump])`, `dismissNudge` woła `snoozeNudge` + bump.
+  Uwaga: `fullName`/`phone` są wymagane przy rejestracji, więc w praktyce reguła 1 sprowadza się do
+  „≥1 pole firmy wypełnione → koniec nudge'a". Zweryfikowane: test jednostkowy logiki (6/6) + E2E
+  Playwright (zalogowana sesja): konto bez firmy → nudge widoczny → X → znika → **po reloadzie NIE
+  wraca** + snooze w localStorage; konto z 1 polem firmy → nudge w ogóle się nie pokazuje.
+  - **Redesign dropdownu powiadomień (2026-07-21, warstwa UI):** `Topbar.jsx` — dropdown `w-80`,
+    `rounded-2xl`, `shadow-xl`, nagłówek z badge „N nowe". Nudge jako karta z gradientowym akcentem
+    (emerald), ikoną firmy w gradientowym kafelku, tytułem „Dokończ konfigurację firmy", zachęcającym
+    tekstem i wyraźnym CTA „Uzupełnij profil →" + secondary „Później" (oba wołają odpowiednio
+    `openNudge`/`dismissNudge`). „X" w rogu = „Przypomnij później" (ten sam `dismissNudge` → 7-dniowy
+    snooze). Wiersz newsów ujednolicony (ikona w kafelku, spójny layout). Pusty stan z ikoną dzwonka.
+    Zweryfikowane wizualnie (Playwright, jasny + ciemny motyw) — bez zmian logiki.
+
+- **System powiadomień admin→konto (2026-07-21) — GOTOWE:** możliwość wysłania powiadomienia z
+  panelu admina na konkretne konto (po emailu) lub do wszystkich; odbiorca widzi je w dzwonku na
+  dowolnym urządzeniu (per-konto, przez backend). To TRZECIE źródło dzwonka obok newsów i nudge'a.
+  - **Baza:** model `Notification` w `schema.prisma` (relacja do `User`, `onDelete: Cascade`,
+    `@@index([userId, readAt])`, pola `type`(info/success/warning)/`title`/`body`/`ctaLabel`/`ctaUrl`/
+    `readAt`/`createdAt`) + flaga `User.isAdmin` (`@default(false)`, nadawana RĘCZNIE w Prisma Studio —
+    brak UI do zarządzania adminami). Wgrane `prisma db push` + `generate`.
+  - **Backend (nowe pliki tylko w `_`-folderach — limit 12 funkcji Vercel):** `api/_routes/notifications.js`
+    (CRUD wg `documentSets.js`, `router.use(requireAuth)`, wszystko scope'owane `req.userId`):
+    `GET /` (moje), `PATCH /:id/read`, `POST /read-all`, `DELETE /:id`, oraz `POST /` **z
+    `requireAdmin`** (wysyłka: `target:'user'` → 1 wpis / `target:'all'` → fan-out `createMany` po
+    wpisie na konto). `api/_validation/notifications.js` (Zod, refine: email wymagany dla target=user,
+    CTA komplet-albo-nic). `requireAdmin` w `api/_lib/auth.js` (ładuje usera, sprawdza `isAdmin` — JWT
+    nosi tylko userId). Montaż w `index.js`. `isAdmin` dodane do `publicUser()`/`publicProfile()`.
+  - **Front:** `src/services/notificationsRepo.js` (api.*, emituje `notifications:changed`),
+    `src/hooks/useNotifications.js` (refetch na mount/event/`window focus`, `unreadCount`). Dzwonek
+    (`Topbar.jsx`): `count = unreadCount + news + nudge`; karty powiadomień z serwera na górze listy
+    (kafelek wg typu, kropka nieprzeczytania, treść, opcjonalny przycisk CTA, „X"=usuń); klik karty =
+    `markRead` + nawigacja do `ctaUrl`; „Oznacz wszystkie jako przeczytane" gdy są nieprzeczytane.
+    Karty READ zostają widoczne (przyciemnione) — dlatego pusty stan zależy od realnej zawartości, nie
+    od `count`. `src/pages/AdminNotificationsPage.jsx` (formularz: odbiorca konkretny/wszyscy, typ,
+    tytuł, treść, opcjonalne CTA + **podgląd na żywo**; błędy per pole z 400/404). Trasa
+    `/admin/powiadomienia` za nowym `RequireAdmin.jsx` (nie-admin → redirect na `/`). Link
+    „Administracja → Powiadomienia" w `Sidebar.jsx` renderowany tylko gdy `user.isAdmin`.
+  - **Obsługa:** raz ustaw `is_admin=true` swojemu kontu w Prisma Studio → pojawia się pozycja w
+    menu → `/admin/powiadomienia` → wpisujesz i wysyłasz. Świadome uproszczenia: fan-out przy „wszyscy",
+    brak push (odświeżanie na focus/event), bez maili, admin nadawany ręcznie.
+  - Zweryfikowane: backend E2E (10/10 — 403 dla nie-admina, izolacja kont, mark read, 404 cudzego,
+    broadcast=liczba kont) + front E2E Playwright (panel+wysyłka, badge, karta, „oznacz wszystkie",
+    persist po reloadzie, „X" usuwa, nie-admin redirect + brak linku), build zielony. Stan testowy
+    (powiadomienia + isAdmin) posprzątany po testach.
+
 **Do zrobienia:**
 - Panel abonamentu (integracja ze Stripe)
 - Ścieżka B kreatora „Szukam transportu" — szkielet 6 kroków gotowy; kroki „Spedytorzy" i „Wycena"

@@ -2,6 +2,10 @@ import { NavLink, Link } from 'react-router-dom'
 import { MENU_GROUPS, MENU_BOTTOM } from '../../data/mockData'
 import { useNews } from '../../context/NewsContext'
 import { useDraftCount } from '../../hooks/useDocumentSets'
+import { useAuth } from '../../auth/AuthContext'
+
+// Pozycja menu widoczna tylko dla adminów (panel wysyłki powiadomień).
+const ADMIN_ITEM = { path: '/admin/powiadomienia', label: 'Powiadomienia', icon: 'megaphone' }
 
 const ICONS = {
   home: (
@@ -81,6 +85,12 @@ const ICONS = {
         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
     </svg>
   ),
+  megaphone: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+    </svg>
+  ),
 }
 
 function Badge({ children }) {
@@ -134,6 +144,7 @@ function MenuLink({ item, onClose, dot, collapsed }) {
 export default function Sidebar({ onClose, collapsed, onToggleCollapse }) {
   const { hasUnread } = useNews()
   const draftCount = useDraftCount()
+  const { user } = useAuth()
 
   return (
     <aside className={'flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 transition-all duration-200 ' + (collapsed ? 'w-[88px]' : 'w-64')}>
@@ -210,6 +221,20 @@ export default function Sidebar({ onClose, collapsed, onToggleCollapse }) {
             </div>
           </div>
         ))}
+
+        {/* Sekcja admina — tylko dla kont z uprawnieniem */}
+        {user?.isAdmin && (
+          <div>
+            {!collapsed && (
+              <p className="px-3 mb-1.5 text-[11px] font-semibold tracking-wider uppercase text-slate-400 dark:text-slate-500">
+                Administracja
+              </p>
+            )}
+            <div className="space-y-0.5">
+              <MenuLink item={ADMIN_ITEM} onClose={onClose} collapsed={collapsed} />
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Dół — Ustawienia / Profil */}
