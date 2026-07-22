@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useBlocker } from 'react-router-dom'
 import { useWizard } from './WizardContext'
 import AlertBox from '../ui/AlertBox'
@@ -48,9 +49,16 @@ export default function UnsavedChangesGuard() {
     blocker.proceed()
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6">
+  // Karta na środku ekranu (jak pierwotny modal), ale BEZ przyciemnionej nakładki —
+  // `bg-black/40` + `shadow-xl` dawały na ciemnym motywie brzydką czarną ramkę.
+  // Renderowana przez portal do <body>: kreator siedzi w kontenerach z animacją
+  // (`animate-page-in`/StepTransition), a element z `transform` tworzy nowy blok
+  // zawierający — bez portalu `position: fixed` przyczepiłby się do kreatora
+  // i karta odjeżdżałaby przy scrollowaniu.
+  // Nawigacja pozostaje wstrzymana (blocker), dopóki user nie wybierze akcji.
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg shadow-slate-900/10 dark:shadow-black/30 p-6 animate-page-in">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Niedokończony formularz</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
           Wprowadzone dane nie zostały jeszcze wygenerowane. Zapisać bieżący postęp jako wersję
@@ -82,6 +90,7 @@ export default function UnsavedChangesGuard() {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

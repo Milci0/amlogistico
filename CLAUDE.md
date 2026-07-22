@@ -26,22 +26,31 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 
 ### Frontend: ~80% gotowe
 **Zrobione:**
-- Landing Page (hero z przyciskiem "Rozpocznij", wizard modal, karty zalet, cennik, stopka)
 - 4-krokowy wizard (Trasa → Towar → Strony → Dokumenty) z paskiem kroków, walidacją
-- Layout po zalogowaniu: Navbar, Sidebar, AppShell
-- Dashboard z metrykami i tabelą dokumentów (dane mockowane)
-- Strony: Historia, Moje firmy, Abonament, Ustawienia (szkielet)
+- Layout aplikacji: Sidebar, Topbar, AppShell
+- Strony: Dokumentacja (`/history`), Moje firmy, Abonament, Profil
 - **Generowanie PDF po stronie przeglądarki** (html2pdf.js z CDN, bez backendu)
   - `src/generators/generatePdf.jsx` — wspólny silnik React → html2canvas → PDF (jeden dla wszystkich)
-  - Szablony JSX w `src/generators/templates/eu/{common,land,sea}/` — inline styles, 794px, Arial
-    (folder odwzorowuje strukturę wzorcowych PDF-ów z `public/templates/eu/`)
-  - **`src/generators/documents.js` — centralny rejestr `DOCUMENTS`** (jedyne źródło prawdy):
-    każdy dokument to wpis `{ key, transport, required, show?, name, desc, icon, filename, template }`.
-    `getDocsList(transport, bothEU)` filtruje listę, `generateDocument(doc, data)` woła silnik.
-    Dodanie nowego dokumentu = szablon JSX + 1 wpis w rejestrze (koniec z plikami `fill*.js`)
+  - **118 szablonów JSX** w `src/generators/templates/` (inline styles, 794px, Arial):
+    `eu/{common,land,sea}` (9 — odwzorowanie wzorców z `public/templates/eu/`),
+    `global/import` (48), `global/cargo` (25), `global/export` (18), `global/special` (18)
+  - **DWA rejestry, różne role — nie mylić:**
+    - `src/generators/documents.js` — rejestr `DOCUMENTS` (9 wpisów) używany przez **kreator**:
+      `{ key, transport, required, show?, name, desc, icon, filename, template }`.
+      `getDocsList(transport, bothEU)` filtruje, `generateDocument(doc, data)` woła silnik.
+    - `src/data/templateCatalog.js` — `TEMPLATE_CATALOG` (118 wpisów, 1:1 z szablonami JSX):
+      `{ key, name, grupa, filename, template, tags }`. Zasila „Puste szablony", wyszukiwarkę
+      w Topbarze i pobieranie pustych formularzy. Grupy: `ue/transport/swiadectwo/celne_export/
+      celne_import/towary_niebezp/handlowe`.
+  - **Puste formularze generowane z JSX, nie z plików w `public/`:**
+    `src/utils/blankDocuments.js` (`downloadBlankDocument`, `downloadBlankZip`, `hasBlankSource`)
+    + `src/data/blankTemplateMap.js` (`getBlankTemplate` — mostek id z `documentCatalog.js` →
+    wpis w `TEMPLATE_CATALOG`). Statyczne PDF-y z `public/templates/` to fallback/wzorzec wizualny.
+  - `src/components/layout/TemplateSearch.jsx` — wyszukiwarka szablonów w Topbarze,
+    widoczna wyłącznie na zakładce „Dokumentacja" (`/history`)
 - **Step 4 wizarda** — lista Wymagane/Opcjonalne, przycisk PDF przy każdym dokumencie,
   stany idle/loading/done/error, 2 przyciski zbiorcze: "Generuj wymagane" + "Generuj wszystkie"
-- **Branding:** logo `AMLogistico` (Navbar, Sidebar, AppShell, Footer)
+- **Branding:** logo `AMLogistico` (Sidebar, AppShell)
 - **Nowy layout aplikacji (`/app`)** — jasny motyw z zielonym akcentem (emerald):
   - `Sidebar` przepisany: jasny, pogrupowane sekcje (GŁÓWNE/NARZĘDZIA/WIEDZA) z `MENU_GROUPS`,
     badge `Core`/licznik, dół: Ustawienia + Profil (`MENU_BOTTOM` w `data/mockData.js`)
@@ -49,7 +58,7 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     ciemny avatar; hamburger mobilny przeniesiony tutaj
   - `AppShell` — aplikacja w zaokrąglonej karcie-„oknie" (border, shadow) na szarym tle
   - **Dashboard usunięty.** Indeks `/app` = `HomePage` (hero „Strona główna": label → nagłówek →
-    podtytuł → „Rozpocznij" → 3 karty statystyk `HOME_STATS` → strzałka w dół)
+    podtytuł → „Rozpocznij" → 4 karty statystyk `HOME_STATS` → strzałka w dół)
   - **Layout publiczny:** `AppShell` nie jest już za `RequireAuth` — sam wygląd (sidebar/topbar/hero)
     widać też bez logowania. `/` → redirect na `/app`. `RequireAuth` chroni tylko funkcje
     (new-document, history, companies, subscription, settings + placeholdery).
@@ -57,8 +66,8 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     `HomePage` „Rozpocznij": gość → `/login` (z `from`), zalogowany → kreator; gość ma podpowiedź
   - „Rozpocznij" → `/app/new-document`, gdzie `NewDocumentPage` renderuje już realny
     `DocumentWizard` (4-kroki) zamiast dawnej atrapy
-  - Stara marketingowa `LandingPage` nie jest już routowana (plik zostaje, niewykorzystany)
-  - `PlaceholderPage` + trasy dla nowych pozycji menu (profile/drafts/insurance/routes/incoterms)
+  - `PlaceholderPage` + trasy dla nowych pozycji menu (profile/drafts/insurance/routes/incoterms/
+    quotation) — „Wycena" (`/quotation`, badge `Core` w menu) to na razie placeholder
 - **Spójność generatora PDF — GOTOWE (2026-06-22):**
   - `src/utils/formatDate.js` — `formatDocumentDate(date, includeTime?)`: jedyna funkcja dat,
     format DD.MM.RRRR (pl-PL), obsługuje Date / ISO string "YYYY-MM-DD" / datetime z godziną;
@@ -106,7 +115,7 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     `login/register/logout`; `src/lib/api.js` — fetch wrapper z `credentials:'include'` + `ApiError`
   - `src/components/auth/RequireAuth.jsx` — chroni `/app/*` (redirect na `/login`, zapamiętuje `from`)
   - `App.jsx` — root layout z `AuthProvider`, trasy `/login` `/register`, guard na `/app`
-  - Navbar: przyciski → `/login` i `/register`; Sidebar: profil z danymi usera + „Wyloguj"
+  - Topbar: dla gościa przyciski → `/login` i `/register`; Sidebar: profil z danymi usera + „Wyloguj"
   - Dev: proxy `/api` → `:3001` w `vite.config.js`; `vercel.json` routuje `/api/*` do funkcji
 - **Dobór i pobieranie pustych formularzy PDF — GOTOWE (2026-06-23):**
   - `src/data/documentCatalog.js` — katalog dokumentów (klucze typu `"44_India_Import"`,
@@ -136,6 +145,8 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     w silniku można podpiąć analogicznie wg specyfikacji
 
 - **Historia dokumentów + wersje robocze z pełną ścieżką audytową — GOTOWE (2026-07-15):**
+  (w menu bocznym pozycja nazywa się **„Dokumentacja"**, trasa nadal `/history`; na tej zakładce
+  Topbar pokazuje dodatkowo `TemplateSearch` — wyszukiwarkę 118 szablonów)
   - **Zasada:** PDF-ów NIE trzymamy. Trzymamy `formData` (migawka kreatora) + `engineResult`
     (wynik `getDocsList`); każde „Pobierz" to regeneracja z zapisanych danych tą samą funkcją
     co kreator. Każdy realnie wygenerowany komplet = OSOBNY, nieusuwalny-przez-edycję wpis
@@ -171,7 +182,15 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     `?path=` (tylko create) → `have_transport`. Wpis „Gotowe formularze" usunięty z sidebara
     (trasa `/new-document` została — obsługuje `?editId=`/`?draftId=`/`?path=`).
   - **Ochrona formularza (ETAP 7):** `UnsavedChangesGuard.jsx` — `useBlocker` (data router) +
-    `beforeunload`; modal Zapisz/Odrzuć/Anuluj. Autozapis czyszczony po generowaniu/zapisie/odrzuceniu.
+    `beforeunload`; Zapisz/Odrzuć/Anuluj. **ZMIANA (2026-07-22):** zamiast modalu na przyciemnionym
+    tle (`bg-black/40` + `shadow-xl` dawały na ciemnym motywie brzydką czarną ramkę wokół karty)
+    karta stoi **na środku ekranu jak wcześniej i w tym samym rozmiarze** (`max-w-md`, `p-6`,
+    3 przyciski w kolumnie), ale **bez przyciemnionego tła** — zamiast nakładki delikatna ramka
+    i miękki cień. Kontener `inset-0` ma `pointer-events-none`, sama karta `pointer-events-auto`.
+    Renderowana przez **`createPortal` do `document.body`** — kreator siedzi w kontenerach
+    z animacją (`animate-page-in`/`StepTransition`), a element z `transform` tworzy blok
+    zawierający, przez co `position: fixed` przyczepiało się do kreatora i karta odjeżdżała przy
+    scrollowaniu. Nawigacja nadal wstrzymana przez blocker do czasu wyboru akcji. Autozapis czyszczony po generowaniu/zapisie/odrzuceniu.
   - **UI:** `DocumentCard` na nowy kształt (badge ścieżki, dynamiczne kroki, „Pobierz/Edytuj/Usuń",
     etykieta „na podstawie zestawu z…"; BEZ „Duplikuj"). `HistoryPage`/`DraftsPage`/`Sidebar`
     przełączone na `useDocumentSets` + `documentSetsRepo`. Modale `ConfirmDialog`.
@@ -206,8 +225,51 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     (`companyName`→name, `vatNumber`→vat, złożony adres) + szary tekst „Wypełnione danymi z Twojego
     profilu…". Przycisk „Wstaw moje dane firmy" (gdy profil kompletny). Gdy `profileCompleted===false`
     → link „uzupełnij dane firmy w profilu". **NIGDY** w `resume`/`edit` (ochrona migawki audytowej).
+    **ZMIANA (2026-07-22):** auto-fill NIE wymaga już kompletnego profilu. Bramką jest
+    `hasCompanyDataToFill(user)` (≥1 z `companyName/vatNumber/address/city/postalCode/country`),
+    a `profileToSenderPatch` zwraca tylko NIEPUSTE pola (częściowe dane nie kasują wpisanych ręcznie).
+    Gdy `profileCompleted!==true`, pod auto-wypełnioną sekcją jest link „Uzupełnij resztę danych firmy".
     Domyślna waluta z `user.defaultCurrency` w `WizardProvider` (nowy prop `defaultCurrency`) — tylko
     świeży `create` (edit/resume/restore bez zmian). Build zielony.
+- **Kategorie i podkategorie towaru — GOTOWE (2026-07-22):** dawne 5 „rodzajów ładunku”
+  (`CARGO_TYPES` duplikowane w `DocumentWizard.jsx` i `BlankTemplatesPage.jsx`) zastąpione
+  pełnym katalogiem.
+  - **`src/data/cargoCategories.js`** (nowy, jedyne źródło prawdy): `CARGO_CATEGORIES` (19 kategorii:
+    id, nazwa PL, ikona lucide, `engine`, `hint`), `CARGO_SUBCATEGORIES` (260 podkategorii:
+    `{id, categoryId, name, hsCode, flags[], docs[], warning}`), `CARGO_FLAGS` (37 flag cargo z
+    etykietą PL, ikoną i klasą ADR). Helpery: `getCategory/getSubcategories/getSubcategory`
+    (`getSubcategories` sortuje **alfabetycznie** przez `localeCompare(…, 'pl')` — w tablicy
+    kolejność jest tematyczna, sortowanie tylko na wyjściu, żeby id-ki się nie rozjechały),
+    `cargoLabel(cat, sub)` → „Elektronika — Smartfony”, `engineCategoryFor(cat, sub)` → kategoria
+    dla `documentEngine.js`, przy czym podkategoria z flagą ADR (dangerous/flammable/corrosive/
+    toxic/oxidizing/gas/explosive/radioactive) **podnosi** wynik do `dangerous_goods` (np. wódka
+    w kategorii „Napoje”). Pole `docs` (typowe dokumenty per towar) na razie nie jest renderowane —
+    zostaje jako podstawa pod przyszłą warstwę silnika „per podkategoria”.
+  - **`src/components/cargo/CargoCategoryPicker.jsx`** (nowy, wspólny widget): kafelki kategorii
+    w tym samym stylu co wcześniej (emerald przy zaznaczeniu, neutralny w spoczynku — jasny
+    i ciemny motyw), siatka `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`, pod nią info-box z `hint`,
+    pole „Podkategoria — konkretny towar” jako **combobox z wyszukiwarką** (wzorzec `CountrySelect`:
+    klik otwiera listę, wpisywanie filtruje po nazwie **lub kodzie HS**, Escape/klik poza zamyka,
+    pozycja „Wyczyść wybór”; akcent emerald zamiast niebieskiego), a po wyborze: pigułki flag cargo
+    (ikona + etykieta + klasa ADR) i `AlertBox type="warning"` z ostrzeżeniem eksportowym.
+    Ponowny klik w aktywny kafelek czyści wybór.
+  - **Kreator (krok „Towar”):** nagłówek „Rodzaj ładunku” → **„Kategoria towaru”**. Kolejność pól:
+    kategoria → podkategoria → **dopiero potem** „Nazwa towaru” i „Kod celny (HS/CN)” (wcześniej
+    były na górze i wybór podkategorii wyglądał na nadpisywanie wpisanej ręcznie nazwy). Wybór
+    podkategorii podpowiada nazwę i kod HS **tylko gdy pole jest puste** — ręczny wpis nigdy nie
+    jest nadpisywany.
+  - **Stan:** `cargo.cargoType` w migawce zastąpione przez `cargo.cargoCategory` +
+    `cargo.cargoSubcategory` (`wizardState.js`). Zestawy zapisane wcześniej mają jeszcze
+    `cargoType` — wczytują się bez błędu (pusty wybór kategorii), a `buildGeneratorData` wypełnia
+    `data.cargo.cargoType` dla szablonów przez `cargoLabel(...) || cargo.cargoType` (fallback).
+  - **Puste szablony:** ten sam widget; silnik dostaje `engineCategoryFor(...)` zamiast dawnej
+    mapy 5 opcji, `meta.cargoDescription` w historii = `cargoLabel(...)`.
+  - **Uwaga:** dostarczony plik bazy deklarował w `meta` 432 podkategorie, ale realnie zawierał
+    260 — tyle jest w katalogu. Dodanie kolejnych = dopisanie wierszy `sub(...)`.
+  - Zweryfikowane: `npm run build` zielony + skrypt kontrolny (19 kategorii, 260 podkategorii,
+    zero duplikatów id, zero sierot `categoryId`, zero nieznanych flag). **Nie zweryfikowane
+    interaktywnie w przeglądarce.**
+
 - **Wspólna lista dokumentów + zapis wersji roboczej per krok — GOTOWE (2026-07-17):**
   - **`src/components/documents/DocumentSelectList.jsx`** (nowy) — jedna lista z checkboxami
     używana przez „Puste szablony" i krok Dokumenty kreatora (Step4 w `DocumentWizard.jsx`, dawniej
@@ -253,7 +315,8 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     - **WYCOFANE (2026-07-17):** automatyczny zapis „przy KAŻDEJ zmianie kroku" oraz toast „Zapisano
       wersję roboczą" USUNIĘTE (na życzenie użytkownika — kliknięcie „Rozpocznij"/„Edytuj" nie może
       tworzyć wpisów, a w trybie DEV `StrictMode` dublował zapis edit → 2 kopie). `WizardContext.jsx`
-      nie ma już `useEffect([step])`, `showToast` ani renderu `<Toast>`. Wersja robocza powstaje TYLKO
+      nie ma już `useEffect([step])`, `showToast` ani renderu `<Toast>`. Sam plik `ui/Toast.jsx`
+      został skasowany podczas czystki 2026-07-22 (patrz niżej). Wersja robocza powstaje TYLKO
       przez alert wyjścia (`UnsavedChangesGuard` → `saveDraftAndMark`, pojawia się wyłącznie gdy
       `isDirty`, tj. gdy user coś wpisał), a `completed` — przez „Generuj" (`recordGenerated`).
       Skutki: (1) wejście w „Edytuj" bez zmian NIE tworzy żadnego wpisu; (2) znika też opisana wyżej
@@ -386,6 +449,12 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     `openNudge`/`dismissNudge`). „X" w rogu = „Przypomnij później" (ten sam `dismissNudge` → 7-dniowy
     snooze). Wiersz newsów ujednolicony (ikona w kafelku, spójny layout). Pusty stan z ikoną dzwonka.
     Zweryfikowane wizualnie (Playwright, jasny + ciemny motyw) — bez zmian logiki.
+  - **Newsy WYPISANE z dzwonka (2026-07-22):** karta „Nowe artykuły w Newsach" i udział newsów
+    w liczniku USUNIĘTE z `Topbar.jsx` (nie ma tam już `useNews`). Dzwonek ma dwa źródła:
+    powiadomienia z serwera + nudge profilu. Nowe artykuły sygnalizuje wyłącznie **czerwona kropka
+    przy pozycji „Newsy" w Sidebarze** (`hasUnread` z `NewsContext`, czyszczone przez `markRead()`
+    przy wejściu na `/news` — bez zmian). `MenuLink` renderuje kropkę także przy **zwiniętym**
+    pasku (na ikonie, z obwódką `ring`) — wcześniej znikała.
 
 - **System powiadomień admin→konto (2026-07-21) — GOTOWE:** możliwość wysłania powiadomienia z
   panelu admina na konkretne konto (po emailu) lub do wszystkich; odbiorca widzi je w dzwonku na
@@ -419,6 +488,26 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     persist po reloadzie, „X" usuwa, nie-admin redirect + brak linku), build zielony. Stan testowy
     (powiadomienia + isAdmin) posprzątany po testach.
 
+- **Czystka tekstów i martwego kodu — GOTOWE (2026-07-22):**
+  - **Myślniki „—" usunięte z tekstów UI** (104 wystąpienia w `src/`). Zamiana kontekstowa,
+    nie mechaniczna: zdanie z małą literą po myślniku → przecinek; etykieta + doprecyzowanie →
+    nawias („ADR (towary niebezpieczne)", „Celne (eksport)"); skrót + rozwinięcie → dwukropek;
+    zakresy liczbowe („7–10 dni", „2–8°C", „0–14 lat") → dywiz; placeholdery pustej wartości
+    `'—'` → `'-'` (`DocumentCard`, `ProfilePage`, selecty w kreatorze — uwaga: porównanie
+    `=== '-'` w `formatSummaryValue` w `DocumentWizard.jsx` musi zostać spójne z tym, co renderują
+    komponenty). **NIETKNIĘTE celowo:** nazwy dokumentów (`name_pl` w `documentCatalog.js`,
+    `name` w `templateCatalog.js`), wszystkie szablony PDF w `src/generators/templates/`
+    (myślnik jest tam elementem odwzorowania oryginalnych formularzy) i komentarze w kodzie.
+  - **Usunięty martwy kod (10 plików):** `src/pages/LandingPage.jsx` (nieroutowana od czasu
+    przejścia na layout `/app`) wraz z jej jedynymi konsumentami — całym folderem
+    `src/components/landing/` (HeroSection, HowItWorksSection, FeaturesSection, PricingSection,
+    Footer, WizardModal) i `src/components/layout/Navbar.jsx`; `src/components/ui/Toast.jsx`
+    (toast wycofany 2026-07-17); `src/utils/sortDocuments.js` (nieimportowany).
+    **Zostawione:** `src/components/wizard/index.js` — wygląda na osierocony barrel, ale jest
+    używany przez import katalogowy `from '../components/wizard'` w `NewDocumentPage.jsx`.
+  - Zweryfikowane: `npm run build` zielony po obu operacjach. **Nie zweryfikowane interaktywnie
+    w przeglądarce.**
+
 **Do zrobienia:**
 - Panel abonamentu (integracja ze Stripe)
 - Ścieżka B kreatora „Szukam transportu" — szkielet 6 kroków gotowy; kroki „Spedytorzy" i „Wycena"
@@ -432,16 +521,16 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 
 ### Backend: auth gotowy (serverless `/api`)
 - `api/index.js` — Express 5 (lokalnie `npm run server` na `:3001`, na Vercelu funkcja serverless)
-- `api/routes/auth.js` — `POST /api/auth/register|login|logout`, `GET /api/auth/me`
-- `api/lib/auth.js` — JWT (jsonwebtoken) w **httpOnly cookie** (`sameSite:lax`, `secure` na prod),
-  middleware `requireAuth` gotowe pod kolejne trasy; `api/lib/prisma.js` — singleton
-- `api/validation/auth.js` — Zod 4; hasła bcryptjs (salt 12)
-- **Newsy na backendzie — GOTOWE (2026-06-23):** `api/routes/news.js` + `api/lib/rss.js`
+- `api/_routes/auth.js` — `POST /api/auth/register|login|logout`, `GET /api/auth/me`
+- `api/_lib/auth.js` — JWT (jsonwebtoken) w **httpOnly cookie** (`sameSite:lax`, `secure` na prod),
+  middleware `requireAuth` gotowe pod kolejne trasy; `api/_lib/prisma.js` — singleton
+- `api/_validation/auth.js` — Zod 4; hasła bcryptjs (salt 12)
+- **Newsy na backendzie — GOTOWE (2026-06-23):** `api/_routes/news.js` + `api/_lib/rss.js`
   - `GET /api/news` — agreguje RSS po stronie serwera (browser User-Agent omija część
     blokad), kategoryzuje (geo/transport), wykrywa alerty, dedupe + sort. Cache w pamięci
     15 min (stale-while-revalidate). Zwraca `{ articles, ticker, updatedAt }`.
     `?refresh=1` → wymusza świeże pobranie z pominięciem cache (używa przycisk „Odśwież")
-  - `api/lib/rss.js` — tylko parser RSS 2.0/Atom (regex, bez zależności): `fetchText`,
+  - `api/_lib/rss.js` — tylko parser RSS 2.0/Atom (regex, bez zależności): `fetchText`,
     `parseFeed`, `mapLimit`. **Kod obrazów (og:image, image-proxy, weserv) USUNIĘTY** —
     zdjęć nie pokazujemy (prawa autorskie), artykuł nie ma już pola `image`
   - **TRYB NAJBEZPIECZNIEJSZY (2026-06-23):** artykuł zwiera tylko **tytuł + link** (geo/transport/
@@ -467,7 +556,7 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     WCI (Drewry)/BDI (Baltic Exchange)/SCFI (Shanghai) są licencjonowane — nie pokazywać bez
     licencji/oficjalnego API.
     „Na żywo" w UI pokazuje się tylko gdy ticker ma dane (NBP/diesel)
-  - **Cena diesla EU na pasku — GOTOWE (2026-06-24):** osobny endpoint `api/routes/diesel.js`
+  - **Cena diesla EU na pasku — GOTOWE (2026-06-24):** osobny endpoint `api/_routes/diesel.js`
     (mount `/api/diesel-price`). Pobiera plik „Prices History" z EC Weekly Oil Bulletin
     (link stały + fallback skanujący stronę biuletynu), parsuje przez **SheetJS (`xlsx`)**:
     arkusz „Prices with taxes", kolumna `EU_price_with_tax_diesel` (ważona średnia EU-27,
@@ -478,7 +567,7 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     (ukryty gdy `value:null`), atrybucja CC BY 4.0 w stopce. Pasek = seamless marquee
     (dwie grupy `min-w-full` + `justify-around`, translateX 0→-100%, 60s linear, pauza na hover,
     separator „ · ") — bez pustej luki niezależnie od liczby elementów
-  - **Stopa EBC na pasku — GOTOWE (2026-06-24):** endpoint `api/routes/ecb.js` (`/api/ecb-rate`).
+  - **Stopa EBC na pasku — GOTOWE (2026-06-24):** endpoint `api/_routes/ecb.js` (`/api/ecb-rate`).
     ECB SDMX (`FM.B.U2.EUR.4F.KR.MRR_FR.LEV`, csvdata, bez klucza) →
     `{value,date,unit:'%',source:'ECB'}`. Fetch 8 s timeout, cache 6 h, try/catch z console.error.
     Front (`NewsPage`): fetch w useEffect, element „Stopa EBC: 2,40% (DD.MM.RRRR)" (ukryty gdy
@@ -500,10 +589,10 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   przeniesiona z localStorage do backendu, żeby działała cross-device (ten sam user, inne urządzenie).
   ZASADA: baza trzyma `formData` (migawkę kreatora), NIE pliki PDF — regeneracja z tego samego
   szablonu JSX na żądanie (bez zmian w silniku/szablonach).
-  - `api/routes/documentSets.js` — CRUD za `requireAuth`, `userId` ZAWSZE z tokenu (nigdy z body/query).
+  - `api/_routes/documentSets.js` — CRUD za `requireAuth`, `userId` ZAWSZE z tokenu (nigdy z body/query).
     `GET /api/document-sets?status=` (metadane bez `formData`), `GET /:id` (pełny), `POST` (nowy set),
     `PATCH /:id` (autosave draftu / promocja draft→completed), `DELETE /:id`. Cudzy/nieistniejący set = **404**
-    (nie 403 — nie ujawnia istnienia). `api/validation/documentSets.js` (Zod, `formData/meta` jako dowolny JSON).
+    (nie 403 — nie ujawnia istnienia). `api/_validation/documentSets.js` (Zod, `formData/meta` jako dowolny JSON).
   - `src/config/templateVersion.js` — `TEMPLATE_VERSION = '1.0.0'` doklejane przy KAŻDYM secie (audyt wersji szablonów).
   - **Repo bez zmiany kontraktu:** `src/services/documentSetsRepo.js` — te same nazwy eksportów
     (`listSets/getSet/saveDraft/completeSet/deleteSet/countByStatus`), ale wnętrze woła REST i funkcje
@@ -525,25 +614,25 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     nieistniejący email), delete→404 na re-get, `completedAt` przy completed. Build frontendu zielony.
 - **Profil użytkownika + zmiana hasła — GOTOWE (2026-07-17):** minimalizacja rejestracji, dane
   rozszerzone przeniesione do opcjonalnego profilu.
-  - `api/routes/profile.js` (mount `/api/profile`, oba za `requireAuth`, `userId` ZAWSZE z tokenu):
+  - `api/_routes/profile.js` (mount `/api/profile`, oba za `requireAuth`, `userId` ZAWSZE z tokenu):
     `GET /api/profile` (dane profilu bez `passwordHash`), `PATCH /api/profile` (aktualizacja
     `fullName/phone/companyName/vatNumber/eoriNumber/address/city/postalCode/country/defaultCurrency/
     preferredLanguage/marketingConsent`; `email` NIE edytowalny — pomijany; puste stringi → `null`).
     Po zapisie przelicza `profileCompleted` = `true` tylko gdy komplet
     `companyName+address+city+postalCode+country` (VAT/EORI/preferencje NIE wliczają się).
-    `api/validation/profile.js` (Zod, wszystkie pola opcjonalne/partial).
+    `api/_validation/profile.js` (Zod, wszystkie pola opcjonalne/partial).
   - `POST /api/auth/change-password` (za `requireAuth` + `authLimiter`): Zod
     (`newPassword` min 8, `===confirmPassword`, `!==currentPassword`); zły `currentPassword` → **400**
     z błędem pod polem `currentPassword` (ten sam kształt co login/register); po zmianie hasła
     wystawia NOWE cookie JWT (user zostaje zalogowany). Reset przez email NIE zrobiony (brak mailera).
-  - `publicUser()` w `api/routes/auth.js` rozszerzony o pola profilu (`fullName`, `phone`,
+  - `publicUser()` w `api/_routes/auth.js` rozszerzony o pola profilu (`fullName`, `phone`,
     `profileCompleted`, `defaultCurrency`, adres firmy itd.) — front ma je od razu z `/auth/me`
     bez dodatkowego zapytania (auto-fill nadawcy, nudge, domyślna waluta).
-  - Rejestracja (`api/validation/auth.js` + handler): `fullName` (min 3, wymagane), `phone`
+  - Rejestracja (`api/_validation/auth.js` + handler): `fullName` (min 3, wymagane), `phone`
     (wymagane, format międzynarodowy), `termsAccepted` (`z.literal(true)` — bez zgody 400),
     `marketingConsent` (opcjonalne, default false), `companyName` **opcjonalne**. Handler zapisuje
     `termsAcceptedAt = new Date()` (nie sam boolean). Zweryfikowane end-to-end (server :3001): T1–T7 zielone.
-- **Rate-limit `/auth/*` — GOTOWE (2026-07-16):** `api/lib/rateLimit.js` (`express-rate-limit`,
+- **Rate-limit `/auth/*` — GOTOWE (2026-07-16):** `api/_lib/rateLimit.js` (`express-rate-limit`,
   10 żądań / 15 min / IP) nałożony na `POST /auth/login` i `/auth/register` (wspólny bucket per IP).
   **NIE** na `GET /auth/me` (wołane przy każdym starcie appki → limit by je zablokował).
   `app.set('trust proxy', 1)` w `api/index.js` (realne IP za proxy Vercela). Store w pamięci =
@@ -572,4 +661,4 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 - Przed większymi zmianami przedstaw krótki plan
 - Po zakończeniu sesji zaktualizuj sekcję "AKTUALNY STATUS"
 - Logika doboru dokumentów (TIR+EU vs TIR+poza-UE vs Morski) jest w `docs/2.Backend.md`
-- Lista krajów UE: stała `EU_CODES` w `src/components/wizard/DocumentWizard.jsx`
+- Lista krajów UE: stała `EU_CODES` w `src/services/documentGeneration.js`

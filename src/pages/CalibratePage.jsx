@@ -77,7 +77,7 @@ export default function CalibratePage() {
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
           <h2 className="text-base font-semibold text-gray-900 mb-1">Celownik (próbkowanie)</h2>
           <p className="text-xs text-gray-400 mb-4">
-            Wpisz współrzędne i tekst testowy. Pobierz PDF — sprawdź czy celownik trafia w właściwe pole.
+            Wpisz współrzędne i tekst testowy. Pobierz PDF, sprawdź czy celownik trafia w właściwe pole.
           </p>
 
           <div className="grid grid-cols-2 gap-3 mb-3">
@@ -125,7 +125,7 @@ export default function CalibratePage() {
           <p className="text-xs font-semibold text-blue-700 mb-2">Jak kalibrować nowy szablon:</p>
           <ol className="text-xs text-blue-600 space-y-1 list-decimal list-inside">
             <li>Wybierz szablon z listy powyżej.</li>
-            <li>Kliknij "Pobierz z siatką" — otwórz wynikowy PDF.</li>
+            <li>Kliknij "Pobierz z siatką", a potem otwórz wynikowy PDF.</li>
             <li>Na siatce odczytaj x, y każdego pola formularza.</li>
             <li>Wpisz te wartości w pola X/Y i kliknij "Pobierz z celownikiem" dla potwierdzenia.</li>
             <li>Zaktualizuj współrzędne w <code className="bg-blue-100 px-1 rounded">src/generators/fillXxx.js</code>.</li>

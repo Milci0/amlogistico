@@ -330,12 +330,12 @@ export const HOW_IT_WORKS_STEPS = [
   {
     number: '01',
     title: 'Wybierz typ dokumentu',
-    description: 'CMR, Packing List, Faktura handlowa, SAD — wybierz co potrzebujesz i jaki środek transportu.',
+    description: 'CMR, Packing List, Faktura handlowa, SAD, wybierz co potrzebujesz i jaki środek transportu.',
   },
   {
     number: '02',
     title: 'Uzupełnij dane',
-    description: 'Formularz krok po kroku — nadawca, odbiorca, towar, trasa. System podpowiada dane z poprzednich wysyłek.',
+    description: 'Formularz krok po kroku, nadawca, odbiorca, towar, trasa. System podpowiada dane z poprzednich wysyłek.',
   },
   {
     number: '03',

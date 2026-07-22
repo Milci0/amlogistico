@@ -241,7 +241,7 @@ function SecurityTab() {
         </Field>
         <SaveBar status={status} message={message} label="Zmień hasło" />
         <p className="text-xs text-gray-400 dark:text-slate-500 pt-2">
-          Nie pamiętasz hasła? Skontaktuj się z nami — odzyskiwanie hasła przez email będzie
+          Nie pamiętasz hasła? Skontaktuj się z nami, odzyskiwanie hasła przez email będzie
           dostępne wkrótce.
         </p>
       </form>
@@ -274,7 +274,7 @@ function ConsentsTab({ user, updateUser }) {
           <p className="text-sm text-gray-500 dark:text-slate-400">
             Regulamin zaakceptowany:{' '}
             <span className="font-medium text-gray-800 dark:text-slate-200">
-              {user.termsAcceptedAt ? formatDocumentDate(user.termsAcceptedAt, true) : '—'}
+              {user.termsAcceptedAt ? formatDocumentDate(user.termsAcceptedAt, true) : '-'}
             </span>
           </p>
         </div>

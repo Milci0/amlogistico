@@ -120,7 +120,7 @@ export default function PathSelectPage() {
             Jak chcesz zacząć?
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2.5 text-sm sm:text-base leading-relaxed">
-            Wybierz ścieżkę dopasowaną do Twojej sytuacji — obie prowadzą do kompletu dokumentów.
+            Wybierz ścieżkę dopasowaną do Twojej sytuacji, obie prowadzą do kompletu dokumentów.
           </p>
         </div>
 
@@ -129,7 +129,7 @@ export default function PathSelectPage() {
           <PathCard
             icon={PackageCheck}
             title="Mam już transport"
-            description="Masz umówionego przewoźnika lub spedytora — potrzebujesz tylko dokumentów i opcjonalnie ubezpieczenia."
+            description="Masz umówionego przewoźnika lub spedytora, potrzebujesz tylko dokumentów i opcjonalnie ubezpieczenia."
             steps={STEPS_A}
             path="A"
             onSelect={handleSelect}

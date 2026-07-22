@@ -260,7 +260,7 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
 
   if (inGroup(destination, "BR")) {
     required.add("47_Brazil_Import");
-    warnings.push("Licencja importowa (LI) Brazylia może być wymagana przed wysyłką — sprawdź z importerem.");
+    warnings.push("Licencja importowa (LI) Brazylia może być wymagana przed wysyłką, sprawdź z importerem.");
   }
 
   if (destination === "SA") required.add("50_Saudi_Import");
@@ -415,19 +415,19 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
   if (inGroup(destination, "BLACKLIST_CERT")) {
     conditional.add("70_Blacklist");
     warnings.push("Blacklist Certificate może być wymagany przez urząd celny kraju docelowego. Skonsultuj z lokalnym agentem celnym.");
-    warnings.push("Faktura i CoO wymagają legalizacji przez KIG i ambasadę — planuj 7–10 dni roboczych.");
+    warnings.push("Faktura i CoO wymagają legalizacji przez KIG i ambasadę, planuj 7-10 dni roboczych.");
   }
 
   // PSI — inspekcja przedwysyłkowa
   if (inGroup(destination, "PSI_REQUIRED")) {
     required.add("68_PSI");
-    warnings.push("PSI (inspekcja przedwysyłkowa) wymagana — planuj 3–5 dni roboczych.");
+    warnings.push("PSI (inspekcja przedwysyłkowa) wymagana, planuj 3-5 dni roboczych.");
   }
 
   // T2L — dowód unijnego statusu przy morskim EU→EU
   if (mode === "sea" && isEU(origin) && isEU(destination)) {
     required.add("104_T2L");
-    warnings.push("T2L wymagany przy morskim transporcie wewnątrz UE — bez niego towar traktowany jako import spoza UE w porcie docelowym.");
+    warnings.push("T2L wymagany przy morskim transporcie wewnątrz UE, bez niego towar traktowany jako import spoza UE w porcie docelowym.");
   }
 
   // T2L — EU→EU tranzytem przez non-EU (np. IE→PL przez UK/CH)
@@ -483,18 +483,18 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
 
   // CHED-P/TRACES — pre-notyfikacja przy imporcie żywności do UE
   if (isEU(destination) && !isEU(origin) && (cargoCategory === "food_animal" || cargoCategory === "food_plant")) {
-    warnings.push("Import żywności do UE wymaga pre-notyfikacji CHED-P w systemie TRACES NT minimum 24h przed przybyciem do portu. Obowiązek spoczywa na importerze UE. Kontrola weterynaryjna na Border Control Post (BCP) jest obowiązkowa — brak CHED-P = zatrzymanie towaru.");
+    warnings.push("Import żywności do UE wymaga pre-notyfikacji CHED-P w systemie TRACES NT minimum 24h przed przybyciem do portu. Obowiązek spoczywa na importerze UE. Kontrola weterynaryjna na Border Control Post (BCP) jest obowiązkowa, brak CHED-P = zatrzymanie towaru.");
   }
 
   // ATP — łańcuch chłodniczy dla żywności (Konwencja ATP)
   if (cargoCategory === "food_animal" || cargoCategory === "food_plant") {
-    warnings.push("Żywność wymaga zachowania łańcucha chłodniczego: mrożona max −18°C, schłodzona 0–4°C. Transport musi spełniać wymagania Konwencji ATP. Dołącz zapis temperatury z rejestratora danych.");
+    warnings.push("Żywność wymaga zachowania łańcucha chłodniczego: mrożona max −18°C, schłodzona 0-4°C. Transport musi spełniać wymagania Konwencji ATP. Dołącz zapis temperatury z rejestratora danych.");
   }
 
   // EU-Mercosur iTA (od 01.05.2026) — obie strony handlu
   if ((inGroup(origin, "MERCOSUR") && isEU(destination)) ||
       (isEU(origin) && inGroup(destination, "MERCOSUR"))) {
-    warnings.push("Od 01.05.2026 obowiązuje Umowa EU-Mercosur (iTA). Sprawdź wymagania dotyczące nowych certyfikatów pochodzenia — EC Notice 2026/875. Może być wymagany zaktualizowany format COO.");
+    warnings.push("Od 01.05.2026 obowiązuje Umowa EU-Mercosur (iTA). Sprawdź wymagania dotyczące nowych certyfikatów pochodzenia. EC Notice 2026/875. Może być wymagany zaktualizowany format COO.");
   }
 
   // Import do UE — zgłoszenie celne SAD/H1
@@ -510,14 +510,14 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
       "Import z " + origin + " do UE: importer moze ubiegac sie o preferencyjna " +
       "stawke celna na podstawie umowy FTA. Eksporter musi dolaczyc deklaracje " +
       "pochodzenia na fakturze (system REX / statement on origin). " +
-      "Do 6000 EUR moze ja wystawic kazdy eksporter; powyzej — tylko zarejestrowany " +
+      "Do 6000 EUR moze ja wystawic kazdy eksporter; powyzej, tylko zarejestrowany " +
       "eksporter REX lub upowazniony eksporter (AE)."
     );
   }
 
   // EOG (NO/IS/LI) — poza obszarem celnym UE
   if (inGroup(destination, "EEA")) {
-    warnings.push("Norwegia/Islandia/Liechtenstein należą do EOG, ale nie do obszaru celnego UE. EAD wymagana jak przy eksporcie poza UE. Brak ceł dzięki umowie EOG — formalności celne są jednak obowiązkowe.");
+    warnings.push("Norwegia/Islandia/Liechtenstein należą do EOG, ale nie do obszaru celnego UE. EAD wymagana jak przy eksporcie poza UE. Brak ceł dzięki umowie EOG, formalności celne są jednak obowiązkowe.");
   }
 
   // ── DEDUPLIKACJA: usuń z conditional to co już jest w required ────

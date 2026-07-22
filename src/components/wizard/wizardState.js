@@ -20,7 +20,11 @@ export function createEmptySnapshot() {
     cargo: {
       cargoName: '',
       hsCode: '',
-      cargoType: '',
+      // Kategoria + podkategoria z data/cargoCategories.js. Zestawy zapisane przed
+      // 2026-07-22 mają zamiast tego pole `cargoType` (5 dawnych rodzajów ładunku) —
+      // stare migawki wczytują się bez zmian, po prostu z pustym wyborem kategorii.
+      cargoCategory: '',
+      cargoSubcategory: '',
       weight: '',
       weightNet: '',
       volume: '',

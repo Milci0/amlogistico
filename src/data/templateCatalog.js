@@ -130,8 +130,8 @@ import { IndonesiaPibImportTemplate } from '../generators/templates/global/impor
 // grupa: ue | celne_export | celne_import | transport | swiadectwo | towary_niebezp | finansowe | inne
 export const GROUP_LABELS = {
   ue: 'UE',
-  celne_export: 'Celne — eksport',
-  celne_import: 'Celne — import',
+  celne_export: 'Celne (eksport)',
+  celne_import: 'Celne (import)',
   transport: 'Transport',
   swiadectwo: 'Świadectwo',
   towary_niebezp: 'Towary niebezpieczne',

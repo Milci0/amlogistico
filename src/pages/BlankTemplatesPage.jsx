@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Package, UtensilsCrossed, FlaskConical, PawPrint, Boxes, Info } from 'lucide-react'
 import CountrySelect from '../components/ui/CountrySelect'
 import AlertBox from '../components/ui/AlertBox'
 import DocumentSelectList from '../components/documents/DocumentSelectList'
+import CargoCategoryPicker from '../components/cargo/CargoCategoryPicker'
+import { cargoLabel, engineCategoryFor } from '../data/cargoCategories'
 import { getDocuments, getRouteLabel } from '../utils/documentEngine'
 import { downloadBlankZip, hasBlankSource } from '../utils/blankDocuments'
 import { completeSet } from '../services/documentSetsRepo'
@@ -13,53 +14,6 @@ const TRANSPORT_MODES = [
   { id: 'road', label: 'Drogowy', sub: 'TIR, ciężarówka' },
   { id: 'sea', label: 'Morski', sub: 'Kontener FCL/LCL' },
 ]
-
-// Ten sam widget co „Rodzaj ładunku” w kroku 2 kreatora (DocumentWizard.jsx) —
-// spójny wygląd i słownictwo w całej aplikacji.
-const CARGO_TYPES = [
-  {
-    id: 'general',
-    label: 'Ogólny',
-    icon: Package,
-    hint: 'Ładunek standardowy — zwykle wystarczą podstawowe dokumenty transportowe (CMR/B&L, faktura, packing list). Brak dodatkowych certyfikatów.',
-  },
-  {
-    id: 'food',
-    label: 'Żywność',
-    icon: UtensilsCrossed,
-    hint: 'Może być wymagane świadectwo fitosanitarne (towary roślinne) lub certyfikat zdrowia / HACCP — zależnie od towaru i kraju docelowego.',
-  },
-  {
-    id: 'chemicals',
-    label: 'Chemia / ADR',
-    icon: FlaskConical,
-    hint: 'Wymagana karta charakterystyki substancji niebezpiecznej (MSDS/SDS) oraz dokumenty ADR — instrukcja pisemna, zaświadczenie ADR kierowcy.',
-  },
-  {
-    id: 'animal',
-    label: 'Pochodzenia zwierzęcego',
-    icon: PawPrint,
-    hint: 'Wymagane świadectwo weterynaryjne (health certificate) oraz zgłoszenie w systemie TRACES przy imporcie/eksporcie z/do UE.',
-  },
-  {
-    id: 'other',
-    label: 'Inne',
-    icon: Boxes,
-    hint: 'Rodzaj dodatkowych dokumentów zależy od konkretnego towaru — warto skonsultować się z agencją celną.',
-  },
-]
-
-// Mapowanie prostego wyboru użytkownika na szczegółową kategorię silnika doboru
-// dokumentów (documentEngine.js) — ten sam widget co w kreatorze ma tylko 5 opcji,
-// więc część rozróżnień silnika (np. halal/kosher/elektronika/leki) nie jest tu
-// osiągalna z UI; wybieramy najbliższy odpowiednik.
-const CARGO_TYPE_TO_ENGINE_CATEGORY = {
-  general: 'general',
-  food: 'food_plant',
-  chemicals: 'dangerous_goods',
-  animal: 'food_animal',
-  other: 'general',
-}
 
 const FLAG_OPTIONS = [
   { key: 'woodenPackaging', label: 'Drewniane opakowania (palety, skrzynie)' },
@@ -103,7 +57,8 @@ export default function BlankTemplatesPage() {
   const [origin, setOrigin] = useState('PL')
   const [destination, setDestination] = useState('US')
   const [mode, setMode] = useState('road')
-  const [cargoType, setCargoType] = useState('general')
+  const [cargoCategory, setCargoCategory] = useState('')
+  const [cargoSubcategory, setCargoSubcategory] = useState('')
   const [flags, setFlags] = useState({
     woodenPackaging: false,
     temporaryExport: false,
@@ -114,15 +69,15 @@ export default function BlankTemplatesPage() {
   const [result, setResult] = useState(null) // null = jeszcze nie wygenerowano
   const [selectedIds, setSelectedIds] = useState(new Set())
 
-  const cargoCategory = CARGO_TYPE_TO_ENGINE_CATEGORY[cargoType]
-  const selectedCargoType = CARGO_TYPES.find(ct => ct.id === cargoType)
+  // Kategoria dla silnika doboru; podkategoria z flagą ADR podnosi ją do dangerous_goods.
+  const engineCategory = engineCategoryFor(cargoCategory, cargoSubcategory)
 
   // Po zmianie któregokolwiek pola chowamy poprzedni wynik — trzeba wygenerować ponownie.
   useEffect(() => {
     setResult(null)
     setZipState('idle')
     setSelectedIds(new Set())
-  }, [origin, destination, mode, cargoType, flags])
+  }, [origin, destination, mode, cargoCategory, cargoSubcategory, flags])
 
   // Dokumenty w kształcie DocumentSelectList — tylko te faktycznie do pobrania
   // (dostępne + mają źródło pustego PDF-a); „Wkrótce" nie ma już sensu przy
@@ -146,7 +101,7 @@ export default function BlankTemplatesPage() {
         kind: 'blank',
         flowType: 'blank_templates',
         totalSteps: 1,
-        formData: { origin, destination, mode, cargoType, flags },
+        formData: { origin, destination, mode, cargoCategory, cargoSubcategory, flags },
         engineResult: {
           docs: downloadable.map(d => ({
             key: d.id,
@@ -162,7 +117,7 @@ export default function BlankTemplatesPage() {
           routeFrom: origin,
           routeTo: destination,
           transportMode: mode,
-          cargoDescription: selectedCargoType?.label || cargoType,
+          cargoDescription: cargoLabel(cargoCategory, cargoSubcategory),
           transportDate: null,
         },
       })
@@ -172,7 +127,7 @@ export default function BlankTemplatesPage() {
   }
 
   function handleGenerate() {
-    const res = getDocuments(origin, destination, mode, cargoCategory, flags)
+    const res = getDocuments(origin, destination, mode, engineCategory, flags)
     setResult(res)
     // ETAP 3 — domyślnie zaznaczone: wszystkie dokumenty z required=true.
     const req = res.required.filter(d => d.available && hasBlankSource(d.id))
@@ -253,34 +208,15 @@ export default function BlankTemplatesPage() {
           </div>
         </div>
 
-        {/* Rodzaj ładunku */}
-        <div>
-          <label className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Rodzaj ładunku</label>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {CARGO_TYPES.map(ct => {
-              const Icon = ct.icon
-              const active = cargoType === ct.id
-              return (
-                <button
-                  key={ct.id}
-                  type="button"
-                  onClick={() => setCargoType(ct.id)}
-                  className={`flex flex-col items-center gap-1.5 p-3 border-2 rounded-xl text-center transition-all
-                    ${active ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'}`}
-                >
-                  <Icon className={active ? 'w-5 h-5 text-emerald-500' : 'w-5 h-5 text-gray-400 dark:text-slate-500'} strokeWidth={1.5} />
-                  <span className={`text-xs font-medium ${active ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-700 dark:text-slate-300'}`}>{ct.label}</span>
-                </button>
-              )
-            })}
-          </div>
-          {selectedCargoType && (
-            <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-lg">
-              <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.5} />
-              <p className="text-xs text-emerald-700 dark:text-emerald-300">{selectedCargoType.hint}</p>
-            </div>
-          )}
-        </div>
+        {/* Kategoria towaru */}
+        <CargoCategoryPicker
+          categoryId={cargoCategory}
+          subcategoryId={cargoSubcategory}
+          onChange={({ categoryId, subcategoryId }) => {
+            setCargoCategory(categoryId)
+            setCargoSubcategory(subcategoryId)
+          }}
+        />
 
         {/* Flagi / warunki dodatkowe */}
         <div>

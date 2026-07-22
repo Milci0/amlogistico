@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
-import { useNews } from '../../context/NewsContext'
 import { shouldShowNudge, snoozeNudge } from '../../utils/profileNudge'
 import { useNotifications } from '../../hooks/useNotifications'
 import { markRead as markNotifRead, markAllRead, deleteNotification } from '../../services/notificationsRepo'
@@ -58,14 +57,16 @@ function useDismissable(open, setOpen, ref) {
 }
 
 // ── Dzwonek powiadomień ─────────────────────────────────────────────────────────
-// Łączy trzy źródła: powiadomienia z serwera (useNotifications — wysyłane przez
-// admina), nieprzeczytane newsy (NewsContext) oraz zachętę do uzupełnienia danych
-// firmy (nudge). Reguły nudge'a w utils/profileNudge.js:
+// Dwa źródła: powiadomienia z serwera (useNotifications — wysyłane przez admina)
+// oraz zachęta do uzupełnienia danych firmy (nudge). Reguły nudge'a w
+// utils/profileNudge.js:
 //   • znika na zawsze, gdy user ma ≥1 pole osobowe i ≥1 pole firmy,
 //   • po odrzuceniu (X) uśpiony na 7 dni (per konto).
 // Licznik = suma źródeł.
+//
+// Newsy NIE są tu pokazywane — nowe artykuły sygnalizuje czerwona kropka przy
+// pozycji „Newsy" w menu bocznym (Sidebar + NewsContext).
 function NotificationsBell({ user }) {
-  const { hasUnread, markRead } = useNews()
   const { items: notifs, unreadCount } = useNotifications()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -83,7 +84,7 @@ function NotificationsBell({ user }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [user, nudgeBump]
   )
-  const count = unreadCount + (hasUnread ? 1 : 0) + (showNudge ? 1 : 0)
+  const count = unreadCount + (showNudge ? 1 : 0)
 
   function dismissNudge(e) {
     e.stopPropagation()
@@ -94,12 +95,6 @@ function NotificationsBell({ user }) {
   function openNudge() {
     setOpen(false)
     navigate('/profile?tab=firma')
-  }
-
-  function openNews() {
-    setOpen(false)
-    markRead()
-    navigate('/news')
   }
 
   // Klik w powiadomienie z serwera → oznacz przeczytane i (jeśli jest link) przejdź.
@@ -141,7 +136,7 @@ function NotificationsBell({ user }) {
             )}
           </div>
 
-          {notifs.length === 0 && !showNudge && !hasUnread && (
+          {notifs.length === 0 && !showNudge && (
             <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
               <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -265,25 +260,6 @@ function NotificationsBell({ user }) {
               </div>
             )}
 
-            {hasUnread && (
-              <button
-                onClick={openNews}
-                className="w-full text-left flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors"
-              >
-                <div className="shrink-0 w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                      d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m0 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Nowe artykuły w Newsach</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                    Najnowsze informacje z branży transportowej i celnej.
-                  </p>
-                </div>
-              </button>
-            )}
           </div>
         </div>
       )}

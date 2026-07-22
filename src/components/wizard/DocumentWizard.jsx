@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Package, UtensilsCrossed, FlaskConical, PawPrint, Boxes, Info, ShieldCheck, ArrowRight, Truck, Ship, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Info, ShieldCheck, ArrowRight, Truck, Ship, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { COUNTRIES } from '../../data/mockData'
 import CountrySelect from '../ui/CountrySelect'
 import CitySelect from '../ui/CitySelect'
@@ -14,53 +14,21 @@ import {
   generateDocuments,
 } from '../../services/documentGeneration'
 import DocumentSelectList from '../documents/DocumentSelectList'
+import CargoCategoryPicker from '../cargo/CargoCategoryPicker'
 import StepTransition from '../StepTransition'
 
 const CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF']
 const CONTAINER_TYPES = ['', '20ft', '40ft', '40ft HC', 'LCL']
 const VEHICLE_TYPES = ['Plandeka', 'Chłodnia', 'Mroźnia']
 
-const CARGO_TYPES = [
-  {
-    id: 'general',
-    label: 'Ogólny',
-    icon: Package,
-    hint: 'Ładunek standardowy — zwykle wystarczą podstawowe dokumenty transportowe (CMR/B&L, faktura, packing list). Brak dodatkowych certyfikatów.',
-  },
-  {
-    id: 'food',
-    label: 'Żywność',
-    icon: UtensilsCrossed,
-    hint: 'Może być wymagane świadectwo fitosanitarne (towary roślinne) lub certyfikat zdrowia / HACCP — zależnie od towaru i kraju docelowego.',
-  },
-  {
-    id: 'chemicals',
-    label: 'Chemia / ADR',
-    icon: FlaskConical,
-    hint: 'Wymagana karta charakterystyki substancji niebezpiecznej (MSDS/SDS) oraz dokumenty ADR — instrukcja pisemna, zaświadczenie ADR kierowcy.',
-  },
-  {
-    id: 'animal',
-    label: 'Pochodzenia zwierzęcego',
-    icon: PawPrint,
-    hint: 'Wymagane świadectwo weterynaryjne (health certificate) oraz zgłoszenie w systemie TRACES przy imporcie/eksporcie z/do UE.',
-  },
-  {
-    id: 'other',
-    label: 'Inne',
-    icon: Boxes,
-    hint: 'Rodzaj dodatkowych dokumentów zależy od konkretnego towaru — warto skonsultować się z agencją celną.',
-  },
-]
-
 const INCOTERMS = [
-  { code: 'EXW', label: 'Ex Works', desc: 'Sprzedający udostępnia towar w swoim zakładzie — kupujący organizuje cały transport i ponosi ryzyko od tego momentu.' },
-  { code: 'FCA', label: 'Free Carrier', desc: 'Sprzedający dostarcza towar do przewoźnika wskazanego przez kupującego — ryzyko przechodzi po załadunku.' },
+  { code: 'EXW', label: 'Ex Works', desc: 'Sprzedający udostępnia towar w swoim zakładzie, kupujący organizuje cały transport i ponosi ryzyko od tego momentu.' },
+  { code: 'FCA', label: 'Free Carrier', desc: 'Sprzedający dostarcza towar do przewoźnika wskazanego przez kupującego, ryzyko przechodzi po załadunku.' },
   { code: 'FAS', label: 'Free Alongside Ship', desc: 'Sprzedający dostarcza towar wzdłuż burty statku w porcie załadunku. Tylko transport morski.' },
-  { code: 'FOB', label: 'Free On Board', desc: 'Sprzedający dostarcza towar na pokład statku — ryzyko przechodzi po przejściu burty statku. Tylko transport morski.' },
-  { code: 'CFR', label: 'Cost and Freight', desc: 'Sprzedający opłaca fracht do portu przeznaczenia — ryzyko przechodzi już po załadunku na statek. Tylko transport morski.' },
+  { code: 'FOB', label: 'Free On Board', desc: 'Sprzedający dostarcza towar na pokład statku, ryzyko przechodzi po przejściu burty statku. Tylko transport morski.' },
+  { code: 'CFR', label: 'Cost and Freight', desc: 'Sprzedający opłaca fracht do portu przeznaczenia, ryzyko przechodzi już po załadunku na statek. Tylko transport morski.' },
   { code: 'CIF', label: 'Cost, Insurance and Freight', desc: 'Jak CFR, dodatkowo sprzedający opłaca ubezpieczenie towaru. Tylko transport morski.' },
-  { code: 'CPT', label: 'Carriage Paid To', desc: 'Sprzedający opłaca przewóz do miejsca przeznaczenia — ryzyko przechodzi po przekazaniu towaru pierwszemu przewoźnikowi.' },
+  { code: 'CPT', label: 'Carriage Paid To', desc: 'Sprzedający opłaca przewóz do miejsca przeznaczenia, ryzyko przechodzi po przekazaniu towaru pierwszemu przewoźnikowi.' },
   { code: 'CIP', label: 'Carriage and Insurance Paid To', desc: 'Jak CPT, dodatkowo sprzedający opłaca ubezpieczenie towaru na czas całego transportu.' },
   { code: 'DAP', label: 'Delivered At Place', desc: 'Sprzedający dostarcza towar gotowy do rozładunku w uzgodnionym miejscu przeznaczenia.' },
   { code: 'DPU', label: 'Delivered at Place Unloaded', desc: 'Jak DAP, ale sprzedający odpowiada również za rozładunek towaru w miejscu przeznaczenia.' },
@@ -259,13 +227,33 @@ function Step1({ data, setData, onNext, canNext }) {
 
 function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, transport, findMode, onNext, onBack, canNext }) {
   const needsTemp = road.vehicleType === 'Chłodnia' || road.vehicleType === 'Mroźnia'
-  const selectedCargoType = CARGO_TYPES.find(ct => ct.id === data.cargoType)
   const selectedIncoterm = INCOTERMS.find(it => it.code === terms.incoterms)
 
   return (
     <div>
       <BackButton onClick={onBack} />
       <SectionLabel>Opis towaru</SectionLabel>
+
+      {/* Kategoria → podkategoria → dopiero potem nazwa i kod HS. Kolejność ma
+          znaczenie: wybór podkategorii podpowiada oba pola poniżej, więc muszą być
+          wypełniane PO wyborze towaru (inaczej ręczny wpis wyglądał na nadpisany). */}
+      <div className="mb-4">
+        <CargoCategoryPicker
+          categoryId={data.cargoCategory}
+          subcategoryId={data.cargoSubcategory}
+          onChange={({ categoryId, subcategoryId, subcategory }) =>
+            setData(d => ({
+              ...d,
+              cargoCategory: categoryId,
+              cargoSubcategory: subcategoryId,
+              // Podpowiedź wchodzi tylko w puste pola — tego, co user wpisał
+              // ręcznie, nie ruszamy.
+              hsCode: subcategory && !d.hsCode.trim() ? subcategory.hsCode : d.hsCode,
+              cargoName: subcategory && !d.cargoName.trim() ? subcategory.name : d.cargoName,
+            }))
+          }
+        />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <Field label="Nazwa towaru">
@@ -274,34 +262,6 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
         <Field label="Kod celny (HS/CN)">
           <input className={cls.input} value={data.hsCode} onChange={e => setData(d => ({ ...d, hsCode: e.target.value }))} />
         </Field>
-      </div>
-
-      <div className="mb-4">
-        <p className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Rodzaj ładunku</p>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          {CARGO_TYPES.map(ct => {
-            const Icon = ct.icon
-            const active = data.cargoType === ct.id
-            return (
-              <button
-                key={ct.id}
-                type="button"
-                onClick={() => setData(d => ({ ...d, cargoType: d.cargoType === ct.id ? '' : ct.id }))}
-                className={`flex flex-col items-center gap-1.5 p-3 border-2 rounded-xl text-center transition-all
-                  ${active ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'}`}
-              >
-                <Icon className={active ? 'w-5 h-5 text-emerald-500' : 'w-5 h-5 text-gray-400 dark:text-slate-500'} strokeWidth={1.5} />
-                <span className={`text-xs font-medium ${active ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-700 dark:text-slate-300'}`}>{ct.label}</span>
-              </button>
-            )
-          })}
-        </div>
-        {selectedCargoType && (
-          <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-lg">
-            <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.5} />
-            <p className="text-xs text-emerald-700 dark:text-emerald-300">{selectedCargoType.hint}</p>
-          </div>
-        )}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
@@ -325,7 +285,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
         </Field>
         <Field label="Waluta">
           <select className={cls.input} value={data.currency} onChange={e => setData(d => ({ ...d, currency: e.target.value }))}>
-            <option value="">—</option>
+            <option value="">-</option>
             {CURRENCIES.map(c => <option key={c}>{c}</option>)}
           </select>
         </Field>
@@ -352,7 +312,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
             </Field>
             <Field label="Waluta frachtu">
               <select className={cls.input} value={terms.freightCurrency} onChange={e => setTerms(t => ({ ...t, freightCurrency: e.target.value }))}>
-                <option value="">—</option>
+                <option value="">-</option>
                 {CURRENCIES.map(c => <option key={c}>{c}</option>)}
               </select>
             </Field>
@@ -406,7 +366,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
                 checked={road.adr}
                 onChange={e => setRoad(r => ({ ...r, adr: e.target.checked, adrClass: e.target.checked ? r.adrClass : '' }))}
               />
-              <span className="text-sm text-gray-700 dark:text-slate-300">ADR — towary niebezpieczne</span>
+              <span className="text-sm text-gray-700 dark:text-slate-300">ADR (towary niebezpieczne)</span>
             </label>
           </div>
 
@@ -428,12 +388,12 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
       {!findMode && transport === 'sea' && (
         <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">Szczegóły kontenera i rejsu</p>
-          <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">Pola opcjonalne — dane nadawane przez armatora. Możesz uzupełnić je później.</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">Pola opcjonalne, dane nadawane przez armatora. Możesz uzupełnić je później.</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <Field label="Typ kontenera">
               <select className={cls.input} value={sea.containerType} onChange={e => setSea(s => ({ ...s, containerType: e.target.value }))}>
-                {CONTAINER_TYPES.map(ct => <option key={ct} value={ct}>{ct || '— wybierz —'}</option>)}
+                {CONTAINER_TYPES.map(ct => <option key={ct} value={ct}>{ct || 'wybierz'}</option>)}
               </select>
             </Field>
             <Field label="Numer kontenera (Container No.)">
@@ -469,7 +429,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
           </div>
 
           <div className="mb-4">
-            <Field label="ETA — planowana data przybycia">
+            <Field label="ETA (planowana data przybycia)">
               <input type="date" className={`${cls.input} cursor-pointer`} value={sea.eta} onClick={openDatePicker} onChange={e => setSea(s => ({ ...s, eta: e.target.value }))} />
             </Field>
           </div>
@@ -519,7 +479,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
           <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-lg">
             <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.5} />
             <div>
-              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-0.5">{selectedIncoterm.code} — {selectedIncoterm.label}</p>
+              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-0.5">{selectedIncoterm.code}: {selectedIncoterm.label}</p>
               <p className="text-xs text-emerald-700 dark:text-emerald-300">{selectedIncoterm.desc}</p>
             </div>
           </div>
@@ -586,10 +546,26 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
 }
 
 // Składa dane profilu firmy w kształt sekcji „Nadawca" (jeden wiersz adresu).
+// Uzupełniamy CZĘŚCIOWO — puste pola profilu po prostu nie trafiają do patcha,
+// więc nie kasują tego, co user zdążył wpisać ręcznie.
 function profileToSenderPatch(user) {
   const line2 = [user.postalCode, user.city].filter(Boolean).join(' ')
   const address = [user.address, line2, user.country].filter(Boolean).join(', ')
-  return { name: user.companyName || '', vat: user.vatNumber || '', address }
+  const patch = {}
+  if (user.companyName) patch.name = user.companyName
+  if (user.vatNumber) patch.vat = user.vatNumber
+  if (address) patch.address = address
+  return patch
+}
+
+// Pola profilu, które potrafimy przenieść do sekcji „Nadawca".
+// Wystarczy JEDNO wypełnione (np. sama nazwa firmy), żeby auto-uzupełnianie działało —
+// nie wymagamy kompletnego profilu (`profileCompleted`), bo ten jest `true` dopiero
+// przy pełnym adresie i blokował podpowiadanie częściowych danych.
+const SENDER_SOURCE_FIELDS = ['companyName', 'vatNumber', 'address', 'city', 'postalCode', 'country']
+
+function hasCompanyDataToFill(user) {
+  return SENDER_SOURCE_FIELDS.some((f) => String(user?.[f] ?? '').trim() !== '')
 }
 
 function isSenderEmpty(sender) {
@@ -597,11 +573,12 @@ function isSenderEmpty(sender) {
 }
 
 function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext }) {
-  const profileReady = user?.profileCompleted === true
+  const profileReady = hasCompanyDataToFill(user)
   const [autofilled, setAutofilled] = useState(false)
 
-  // Auto-fill „Nadawca" z profilu — TYLKO świeży kreator (create), profil kompletny
-  // i sekcja Nadawca całkowicie pusta. NIGDY w resume/edit (nie nadpisujemy migawki).
+  // Auto-fill „Nadawca" z profilu — TYLKO świeży kreator (create), gdy w profilu jest
+  // cokolwiek do wstawienia (choćby sama nazwa firmy) i sekcja Nadawca jest całkowicie
+  // pusta. NIGDY w resume/edit (nie nadpisujemy migawki).
   useEffect(() => {
     if (mode !== 'create' || !profileReady || !isSenderEmpty(data.sender)) return
     setData(d => ({ ...d, sender: { ...d.sender, ...profileToSenderPatch(user) } }))
@@ -631,7 +608,7 @@ function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext })
       )}
       {!profileReady && user && (
         <p className="mb-3 text-xs text-gray-400 dark:text-slate-500">
-          Wypełniaj to szybciej —{' '}
+          Wypełniaj to szybciej:{' '}
           <Link to="/profile?tab=firma" className="text-emerald-600 hover:underline">
             uzupełnij dane firmy w profilu
           </Link>
@@ -648,6 +625,15 @@ function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext })
       {autofilled && (
         <p className="-mt-2 mb-4 text-xs text-gray-400 dark:text-slate-500">
           Wypełnione danymi z Twojego profilu. Możesz je zmienić.
+          {user?.profileCompleted !== true && (
+            <>
+              {' '}
+              <Link to="/profile?tab=firma" className="text-emerald-600 hover:underline">
+                Uzupełnij resztę danych firmy
+              </Link>
+              , żeby następnym razem wstawiły się w całości.
+            </>
+          )}
         </p>
       )}
       <PartySection
@@ -659,7 +645,7 @@ function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext })
       {!findMode && (
         <PartySection
           title="Przewoźnik"
-          subtitle="Wymagane — pojawia się w CMR, Zleceniu Transportowym i POD"
+          subtitle="Wymagane. Pojawia się w CMR, Zleceniu Transportowym i POD"
           data={data.carrier}
           onChange={c => setData(d => ({ ...d, carrier: c }))}
         />
@@ -700,7 +686,7 @@ function QuoteStep({ onNext, onBack }) {
 // Jedna funkcja formatująca wartości karty podsumowania: puste pole pokazuje
 // „Nie podano" (jasnoszary) zamiast myślnika. Używana we wszystkich komórkach.
 function formatSummaryValue(v) {
-  if (v == null || String(v).trim() === '' || String(v).trim() === '—') {
+  if (v == null || String(v).trim() === '' || String(v).trim() === '-') {
     return <span className="text-gray-300 dark:text-slate-600">Nie podano</span>
   }
   return v
@@ -782,7 +768,7 @@ function Step4({ onBack }) {
     { label: 'Towar', value: snapshot.cargo.cargoName || '' },
     {
       label: 'Odprawa celna',
-      value: routeReady ? (bothEU ? 'Nie — ruch wewnątrz UE' : 'Tak') : '',
+      value: routeReady ? (bothEU ? 'Nie (ruch wewnątrz UE)' : 'Tak') : '',
       icon: routeReady
         ? bothEU
           ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={1.75} />

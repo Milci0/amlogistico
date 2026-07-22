@@ -9,6 +9,7 @@
 
 import { getDocsList, generateDocument } from '../generators/documents'
 import { COUNTRIES } from '../data/mockData'
+import { cargoLabel } from '../data/cargoCategories'
 
 // Lista kodów UE — spójna z DocumentWizard/EU_CODES.
 const EU_CODES = [
@@ -42,7 +43,11 @@ export function buildGeneratorData(snapshot) {
     cargo: {
       name: cargo.cargoName,
       hsCode: cargo.hsCode,
-      cargoType: cargo.cargoType,
+      // `cargoType` zostaje w ładunku dla szablonów; dla nowych zestawów wypełnia je
+      // etykieta kategorii/podkategorii, dla starych — dawny 5-elementowy rodzaj ładunku.
+      cargoType: cargoLabel(cargo.cargoCategory, cargo.cargoSubcategory) || cargo.cargoType || '',
+      cargoCategory: cargo.cargoCategory || '',
+      cargoSubcategory: cargo.cargoSubcategory || '',
       weight: cargo.weight,
       weightNet: cargo.weightNet,
       volume: cargo.volume,

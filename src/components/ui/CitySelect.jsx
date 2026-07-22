@@ -71,7 +71,7 @@ export default function CitySelect({ country, value, onChange, placeholder = '' 
         <div className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg max-h-52 overflow-y-auto">
           {filtered.length === 0 ? (
             <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-3 px-3">
-              Brak podpowiedzi — możesz wpisać nazwę ręcznie
+              Brak podpowiedzi, możesz wpisać nazwę ręcznie
             </p>
           ) : (
             filtered.map(city => (

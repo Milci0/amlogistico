@@ -13,7 +13,7 @@ const DATA = {
     pt: 'Ryzyko przechodzi w momencie udostępnienia towaru w miejscu sprzedającego',
     sl: ['Udostępnienie towaru w magazynie', 'Pakowanie towaru'],
     bl: ['Załadunek towaru', 'Odprawa eksportowa', 'Transport do portu/granicy', 'Fracht główny', 'Ubezpieczenie', 'Odprawa importowa i cło', 'Dostawa do miejsca docelowego'],
-    warn: { type: 'warn', text: 'EXW nakłada na kupującego maksymalne ryzyko — w tym odprawę eksportową, którą trudno przeprowadzić bez obecności w kraju sprzedającego. W praktyce często zastępowane przez FCA.' },
+    warn: { type: 'warn', text: 'EXW nakłada na kupującego maksymalne ryzyko, w tym odprawę eksportową, którą trudno przeprowadzić bez obecności w kraju sprzedającego. W praktyce często zastępowane przez FCA.' },
     modes: ['Drogowy', 'Morski', 'Lotniczy', 'Kolejowy'],
   },
   FCA: {
@@ -24,7 +24,7 @@ const DATA = {
     pt: 'Ryzyko przechodzi po wydaniu towaru przewoźnikowi kupującego w uzgodnionym miejscu',
     sl: ['Opakowanie i oznakowanie', 'Odprawa eksportowa', 'Załadunek (jeśli miejsce u sprzedającego)', 'Dostarczenie do przewoźnika'],
     bl: ['Fracht główny', 'Ubezpieczenie cargo', 'Odprawa importowa i cło', 'Dostawa końcowa'],
-    warn: { type: 'info', text: 'FCA to rekomendowany zamiennik FOB przy transporcie kontenerowym — ryzyko przechodzi w uzgodnionym miejscu, zanim towar trafi na statek.' },
+    warn: { type: 'info', text: 'FCA to rekomendowany zamiennik FOB przy transporcie kontenerowym, ryzyko przechodzi w uzgodnionym miejscu, zanim towar trafi na statek.' },
     modes: ['Drogowy', 'Morski', 'Lotniczy', 'Kolejowy'],
   },
   CPT: {
@@ -32,10 +32,10 @@ const DATA = {
     full: 'Fracht opłacony do miejsca docelowego',
     type: 'land',
     sp: 45, bp: 55,
-    pt: 'Ryzyko przechodzi po wydaniu towaru przewoźnikowi — mimo że sprzedający płaci za fracht',
+    pt: 'Ryzyko przechodzi po wydaniu towaru przewoźnikowi, mimo że sprzedający płaci za fracht',
     sl: ['Opakowanie i odprawa eksportowa', 'Opłacenie frachtu do miejsca docelowego', 'Dostarczenie do przewoźnika'],
     bl: ['Ubezpieczenie cargo (opcjonalne)', 'Odprawa importowa i cło', 'Ryzyko od momentu wydania przewoźnikowi'],
-    warn: { type: 'warn', text: 'Przy CPT sprzedający płaci za transport, ale ryzyko przechodzi wcześniej — już przy wydaniu przewoźnikowi. Kupujący ponosi ryzyko w trakcie transportu, za który nie płaci.' },
+    warn: { type: 'warn', text: 'Przy CPT sprzedający płaci za transport, ale ryzyko przechodzi wcześniej, już przy wydaniu przewoźnikowi. Kupujący ponosi ryzyko w trakcie transportu, za który nie płaci.' },
     modes: ['Drogowy', 'Morski', 'Lotniczy'],
   },
   CIP: {
@@ -43,10 +43,10 @@ const DATA = {
     full: 'Fracht i ubezpieczenie opłacone do miejsca docelowego',
     type: 'land',
     sp: 70, bp: 30,
-    pt: 'Ryzyko przechodzi po wydaniu towaru przewoźnikowi — sprzedający ubezpiecza transport na pełną wartość',
+    pt: 'Ryzyko przechodzi po wydaniu towaru przewoźnikowi, sprzedający ubezpiecza transport na pełną wartość',
     sl: ['Opakowanie i odprawa eksportowa', 'Opłacenie frachtu', 'Ubezpieczenie cargo (min. 110% wartości)', 'Dostarczenie do przewoźnika'],
     bl: ['Odprawa importowa i cło', 'Rozładunek w miejscu docelowym'],
-    warn: { type: 'info', text: 'CIP wymaga ubezpieczenia na poziomie Institute Cargo Clauses (A) — najszersza ochrona. Różni go od CIF, który wymaga tylko klauzuli (C).' },
+    warn: { type: 'info', text: 'CIP wymaga ubezpieczenia na poziomie Institute Cargo Clauses (A), najszersza ochrona. Różni go od CIF, który wymaga tylko klauzuli (C).' },
     modes: ['Drogowy', 'Morski', 'Lotniczy'],
   },
   DAP: {
@@ -54,10 +54,10 @@ const DATA = {
     full: 'Dostawa do uzgodnionego miejsca',
     type: 'land',
     sp: 82, bp: 18,
-    pt: 'Ryzyko przechodzi po dostarczeniu towaru do uzgodnionego miejsca — przed rozładunkiem',
+    pt: 'Ryzyko przechodzi po dostarczeniu towaru do uzgodnionego miejsca, przed rozładunkiem',
     sl: ['Cały transport do miejsca docelowego', 'Odprawa eksportowa', 'Ubezpieczenie (zalecane)', 'Opłaty za tranzyt'],
     bl: ['Rozładunek towaru', 'Odprawa importowa i cło', 'Podatki i opłaty celne'],
-    warn: { type: 'warn', text: 'Sprzedający nie odpowiada za rozładunek — jeśli miejsce dostawy nie umożliwia rozładunku przez sprzedającego, rozważ DPU.' },
+    warn: { type: 'warn', text: 'Sprzedający nie odpowiada za rozładunek, jeśli miejsce dostawy nie umożliwia rozładunku przez sprzedającego, rozważ DPU.' },
     modes: ['Drogowy', 'Morski', 'Lotniczy'],
   },
   DPU: {
@@ -68,7 +68,7 @@ const DATA = {
     pt: 'Ryzyko przechodzi dopiero po rozładunku towaru w miejscu docelowym',
     sl: ['Cały transport', 'Odprawa eksportowa', 'Rozładunek w miejscu docelowym', 'Ubezpieczenie'],
     bl: ['Odprawa importowa i cło', 'Podatki i opłaty'],
-    warn: { type: 'info', text: 'DPU to jedyny Incoterm gdzie sprzedający odpowiada za rozładunek. Wcześniej nazywany DAT — zmieniony w Incoterms 2020.' },
+    warn: { type: 'info', text: 'DPU to jedyny Incoterm gdzie sprzedający odpowiada za rozładunek. Wcześniej nazywany DAT, zmieniony w Incoterms 2020.' },
     modes: ['Drogowy', 'Morski', 'Lotniczy'],
   },
   DDP: {
@@ -79,7 +79,7 @@ const DATA = {
     pt: 'Ryzyko przechodzi dopiero po dostarczeniu do miejsca docelowego z opłaconym cłem i podatkami',
     sl: ['Cały transport', 'Odprawa eksportowa i importowa', 'Opłacenie ceł i podatków VAT', 'Ubezpieczenie'],
     bl: ['Przyjęcie towaru w miejscu docelowym'],
-    warn: { type: 'warn', text: 'DDP wymaga posiadania numeru VAT i EORI w kraju importu. Problematyczny dla sprzedających spoza UE — niezalecany bez znajomości lokalnych przepisów.' },
+    warn: { type: 'warn', text: 'DDP wymaga posiadania numeru VAT i EORI w kraju importu. Problematyczny dla sprzedających spoza UE, niezalecany bez znajomości lokalnych przepisów.' },
     modes: ['Drogowy', 'Morski', 'Lotniczy'],
   },
   FAS: {
@@ -90,7 +90,7 @@ const DATA = {
     pt: 'Ryzyko przechodzi gdy towar znajdzie się wzdłuż burty statku w porcie załadunku',
     sl: ['Odprawa eksportowa', 'Dostarczenie do portu', 'Umieszczenie wzdłuż burty statku'],
     bl: ['Załadunek na statek', 'Fracht morski', 'Ubezpieczenie', 'Odprawa importowa i cło'],
-    warn: { type: 'warn', text: 'FAS stosowany przy ładunkach masowych (zboże, ruda, węgiel). Przy kontenerach praktycznie nieużywany — lepszy FCA.' },
+    warn: { type: 'warn', text: 'FAS stosowany przy ładunkach masowych (zboże, ruda, węgiel). Przy kontenerach praktycznie nieużywany, lepszy FCA.' },
     modes: ['Morski', 'Śródlądowy'],
   },
   FOB: {
@@ -101,7 +101,7 @@ const DATA = {
     pt: 'Ryzyko przechodzi po załadowaniu towaru na pokład statku w porcie załadunku',
     sl: ['Odprawa eksportowa', 'Dostarczenie do portu', 'Załadunek na statek'],
     bl: ['Fracht morski', 'Ubezpieczenie cargo', 'Odprawa importowa i cło', 'Dostawa do miejsca docelowego'],
-    warn: { type: 'warn', text: 'FOB stosowany wyłącznie dla transportu morskiego. Przy kontenerach zalecany FCA — lepiej oddaje rzeczywistość załadunku w terminalu.' },
+    warn: { type: 'warn', text: 'FOB stosowany wyłącznie dla transportu morskiego. Przy kontenerach zalecany FCA, lepiej oddaje rzeczywistość załadunku w terminalu.' },
     modes: ['Morski', 'Śródlądowy'],
   },
   CFR: {
@@ -109,7 +109,7 @@ const DATA = {
     full: 'Koszt i fracht do portu docelowego',
     type: 'sea',
     sp: 50, bp: 50,
-    pt: 'Ryzyko przechodzi po załadowaniu na statek — sprzedający płaci za fracht, ale nie za ubezpieczenie',
+    pt: 'Ryzyko przechodzi po załadowaniu na statek, sprzedający płaci za fracht, ale nie za ubezpieczenie',
     sl: ['Odprawa eksportowa', 'Załadunek na statek', 'Opłacenie frachtu do portu docelowego'],
     bl: ['Ubezpieczenie cargo (własny koszt)', 'Odprawa importowa i cło', 'Ryzyko od momentu załadunku'],
     warn: { type: 'warn', text: 'Sprzedający płaci za fracht, ale ryzyko przechodzi już przy załadunku. Kupujący ponosi ryzyko przez cały rejs, mimo że nie kontroluje wyboru armatora.' },
@@ -120,7 +120,7 @@ const DATA = {
     full: 'Koszt, ubezpieczenie i fracht do portu docelowego',
     type: 'sea',
     sp: 58, bp: 42,
-    pt: 'Ryzyko przechodzi po załadowaniu na statek — sprzedający opłaca fracht i minimalne ubezpieczenie',
+    pt: 'Ryzyko przechodzi po załadowaniu na statek, sprzedający opłaca fracht i minimalne ubezpieczenie',
     sl: ['Odprawa eksportowa', 'Załadunek na statek', 'Fracht do portu docelowego', 'Ubezpieczenie (min. klauzula C)'],
     bl: ['Rozładunek w porcie docelowym', 'Odprawa importowa i cło', 'Ryzyko od momentu załadunku'],
     warn: { type: 'warn', text: 'CIF wymaga jedynie minimalnego ubezpieczenia (klauzula C). Dla cennych towarów rozważ CIP, który wymaga pełniejszej ochrony (klauzula A).' },
@@ -351,7 +351,7 @@ export default function IncotermsPage() {
   return (
     <div className="max-w-5xl mx-auto">
       <Helmet>
-        <title>Incoterms 2020 – przewodnik | AMLogistico</title>
+        <title>Incoterms 2020: przewodnik | AMLogistico</title>
         <meta name="description" content="Kompletny przewodnik po Incoterms 2020. Sprawdź podział kosztów i ryzyka dla EXW, FCA, FOB, CIF, DAP, DDP i pozostałych warunków dostawy." />
       </Helmet>
       <div className="mb-5">

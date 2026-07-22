@@ -560,7 +560,7 @@ export default function NewsPage() {
         </p>
         {diesel && (
           <p className="text-[11px] leading-relaxed text-slate-400 dark:text-slate-500 text-center mt-1">
-            Cena diesla: „Weekly Oil Bulletin" © European Commission — licencja{' '}
+            Cena diesla: „Weekly Oil Bulletin" © European Commission, licencja{' '}
             <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener"
                className="underline hover:text-slate-600 dark:hover:text-slate-300">CC BY 4.0</a>
           </p>

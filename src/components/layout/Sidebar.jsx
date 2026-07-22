@@ -129,8 +129,12 @@ function MenuLink({ item, onClose, dot, collapsed }) {
     >
       {({ isActive }) => (
         <>
-          <span className={'shrink-0 ' + (isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500')}>
+          <span className={'relative shrink-0 ' + (isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500')}>
             {ICONS[item.icon]}
+            {/* Zwinięty pasek nie ma miejsca na kropkę obok etykiety — wtedy siedzi na ikonie */}
+            {collapsed && dot && (
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900" />
+            )}
           </span>
           {!collapsed && <span className="truncate">{item.label}</span>}
           {!collapsed && dot && <span className="ml-auto w-2 h-2 rounded-full bg-red-500 shrink-0" />}

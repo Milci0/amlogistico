@@ -8,7 +8,7 @@ import { getSet } from '../../services/documentSetsRepo'
 const TRANSPORT_LABEL = { road: 'Drogowy', sea: 'Morski' }
 
 function countryName(code) {
-  return COUNTRIES.find((c) => c.code === code)?.name || code || '—'
+  return COUNTRIES.find((c) => c.code === code)?.name || code || '-'
 }
 
 function DocRowStatus({ status }) {
@@ -81,7 +81,7 @@ export default function DocumentCard({
   const meta = set.meta || {}
   const title = meta.cargoDescription?.trim() || 'Zestaw dokumentów'
   const route = `${countryName(meta.routeFrom)} → ${countryName(meta.routeTo)}`
-  const transportLabel = TRANSPORT_LABEL[meta.transportMode] || meta.transportMode || '—'
+  const transportLabel = TRANSPORT_LABEL[meta.transportMode] || meta.transportMode || '-'
   const flowLabel = getFlowLabel(set.flowType)
   const dateLabel = formatDocumentDate(isDraft ? set.updatedAt : set.createdAt)
   const docCount = set.selectedDocs?.length || 0
