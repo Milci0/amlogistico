@@ -15,6 +15,7 @@ import {
 } from '../../services/documentGeneration'
 import DocumentSelectList from '../documents/DocumentSelectList'
 import CargoCategoryPicker from '../cargo/CargoCategoryPicker'
+import HsCodeFinder from '../cargo/HsCodeFinder'
 import StepTransition from '../StepTransition'
 
 const CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF']
@@ -225,7 +226,7 @@ function Step1({ data, setData, onNext, canNext }) {
 
 // ── Step 2: Towar ──────────────────────────────────────────────────────────────
 
-function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, transport, findMode, onNext, onBack, canNext }) {
+function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, transport, fromCountry, toCountry, isAdmin, findMode, onNext, onBack, canNext }) {
   const needsTemp = road.vehicleType === 'Chłodnia' || road.vehicleType === 'Mroźnia'
   const selectedIncoterm = INCOTERMS.find(it => it.code === terms.incoterms)
 
@@ -254,6 +255,19 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
           }
         />
       </div>
+
+      {/* Wyszukiwarka kodu celnego AI — uzupełnienie dropdownu podkategorii, gdy user
+          nie znajduje towaru na liście. Wstawia kod do pola „Kod celny" po „Użyj".
+          WIDOCZNA TYLKO DLA ADMINA (funkcja w fazie testów, koszt API). */}
+      {isAdmin && (
+        <div className="mb-4">
+          <HsCodeFinder
+            fromCountry={fromCountry}
+            toCountry={toCountry}
+            onUseCode={code => setData(d => ({ ...d, hsCode: code }))}
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <Field label="Nazwa towaru">
@@ -981,6 +995,9 @@ export default function DocumentWizard() {
             sea={snapshot.sea} setSea={setSea}
             terms={snapshot.terms} setTerms={setTerms}
             transport={snapshot.route.transport}
+            fromCountry={snapshot.route.fromCountry}
+            toCountry={snapshot.route.toCountry}
+            isAdmin={!!user?.isAdmin}
             findMode={findMode}
             onNext={next} onBack={prev} canNext={canNext}
           />

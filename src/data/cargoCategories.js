@@ -2,7 +2,7 @@
 //
 // Zastąpił dawną listę 5 „rodzajów ładunku” zaszytą w DocumentWizard.jsx
 // i BlankTemplatesPage.jsx. Struktura odwzorowuje bazę spedycyjną:
-//   kategoria (19) → podkategoria (260) → { kod HS, flagi cargo, typowe dokumenty, ostrzeżenie }
+//   kategoria (19) → podkategoria (262) → { kod HS, flagi cargo, typowe dokumenty, ostrzeżenie }
 //
 // Konsumenci:
 //  - components/cargo/CargoCategoryPicker.jsx — widget wyboru (kreator + puste szablony)
@@ -156,7 +156,8 @@ export const CARGO_SUBCATEGORIES = [
   sub('fp034', 'food_plant', 'Ogórki świeże', '0707.00.05', ['perishable', 'chilled'], ['phytosanitary']),
   sub('fp035', 'food_plant', 'Warzywa mrożone (mix)', '0710.80.61', ['frozen'], ['phytosanitary']),
   sub('fp036', 'food_plant', 'Grzyby świeże', '0709.51.00', ['perishable', 'chilled'], ['phytosanitary']),
-  sub('fp037', 'food_plant', 'Zioła świeże (bazylia, pietruszka)', '0709.99.60', ['perishable', 'chilled', 'pesticides'], ['phytosanitary', 'MRL_certificate']),
+  sub('fp037', 'food_plant', 'Pietruszka świeża', '0709.99.90', ['perishable', 'chilled', 'pesticides'], ['phytosanitary', 'MRL_certificate']),
+  sub('fp055', 'food_plant', 'Bazylia i zioła świeże (przyprawowe)', '1211.90.86', ['perishable', 'chilled', 'pesticides'], ['phytosanitary', 'MRL_certificate']),
   sub('fp038', 'food_plant', 'Pszenica', '1001.99.00', ['gmo_risk', 'pesticides'], ['phytosanitary', 'fumigation_certificate', 'weight_certificate'], 'Sprawdź normy mykotoksyn (DON, aflatoksyny) dla kraju docelowego.'),
   sub('fp039', 'food_plant', 'Kukurydza', '1005.90.00', ['gmo_risk', 'pesticides'], ['phytosanitary', 'non_gmo_certificate', 'fumigation_certificate'], 'Ryzyko GMO: UE, Japonia i Australia wymagają certyfikatu Non-GMO.'),
   sub('fp040', 'food_plant', 'Ryż', '1006.30.27', ['pesticides'], ['phytosanitary', 'MRL_certificate']),
@@ -185,8 +186,8 @@ export const CARGO_SUBCATEGORIES = [
   sub('fa007', 'food_animal', 'Mięso jagnięce / baranie', '0204.41.00', ['perishable', 'chilled', 'halal'], ['veterinary_certificate', 'halal_if_required']),
   sub('fa008', 'food_animal', 'Mięso końskie', '0205.00.00', ['perishable', 'chilled'], ['veterinary_certificate', 'horse_passport'], 'Koń musi mieć paszport. Wiele krajów nie akceptuje mięsa końskiego.'),
   sub('fa009', 'food_animal', 'Wędliny i kiełbasy', '1601.00.91', ['perishable', 'halal'], ['veterinary_certificate', 'halal_if_required']),
-  sub('fa010', 'food_animal', 'Konserwy mięsne', '1602.32.11', ['halal'], ['veterinary_certificate', 'halal_if_required']),
-  sub('fa011', 'food_animal', 'Łosoś świeży/chłodzony', '0302.11.10', ['perishable', 'chilled'], ['veterinary_certificate', 'catch_certificate']),
+  sub('fa010', 'food_animal', 'Konserwy drobiowe', '1602.32.11', ['halal'], ['veterinary_certificate', 'halal_if_required']),
+  sub('fa011', 'food_animal', 'Łosoś świeży/chłodzony', '0302.14.00', ['perishable', 'chilled'], ['veterinary_certificate', 'catch_certificate']),
   sub('fa012', 'food_animal', 'Łosoś mrożony', '0303.11.00', ['frozen'], ['veterinary_certificate', 'catch_certificate']),
   sub('fa013', 'food_animal', 'Tuńczyk świeży', '0302.31.10', ['perishable', 'chilled'], ['veterinary_certificate', 'catch_certificate', 'SIMP_if_US'], 'USA: SIMP, dokumentacja połowu wymagana dla tuńczyka.'),
   sub('fa014', 'food_animal', 'Krewetki mrożone', '0306.17.10', ['frozen', 'halal'], ['veterinary_certificate', 'halal_if_required']),
@@ -209,7 +210,8 @@ export const CARGO_SUBCATEGORIES = [
   sub('pr006', 'food_processed', 'Pieczywo i wyroby cukiernicze', '1905.31.11', ['perishable', 'halal'], ['analysis_certificate', 'halal_if_required']),
   sub('pr007', 'food_processed', 'Czekolada i wyroby czekoladowe', '1806.31.00', ['halal', 'kosher'], ['analysis_certificate', 'halal_if_required']),
   sub('pr008', 'food_processed', 'Cukierki i karmelki', '1704.90.51', ['halal', 'kosher'], ['analysis_certificate', 'halal_if_required']),
-  sub('pr009', 'food_processed', 'Chipsy i przekąski', '1905.90.30', ['gmo_risk', 'halal'], ['analysis_certificate', 'non_gmo_if_required', 'halal_if_required']),
+  sub('pr009', 'food_processed', 'Chipsy ziemniaczane', '2005.20.20', ['gmo_risk', 'halal'], ['analysis_certificate', 'non_gmo_if_required', 'halal_if_required']),
+  sub('pr016', 'food_processed', 'Przekąski ekstrudowane (chrupki)', '1905.90.55', ['gmo_risk', 'halal'], ['analysis_certificate', 'non_gmo_if_required', 'halal_if_required']),
   sub('pr010', 'food_processed', 'Płatki śniadaniowe', '1904.10.10', ['gmo_risk'], ['analysis_certificate', 'non_gmo_if_required']),
   sub('pr011', 'food_processed', 'Lody i mrożone desery', '2105.00.10', ['frozen', 'halal'], ['veterinary_certificate', 'halal_if_required']),
   sub('pr012', 'food_processed', 'Mąka pszenna', '1101.00.11', [], ['analysis_certificate', 'phytosanitary']),
@@ -246,7 +248,7 @@ export const CARGO_SUBCATEGORIES = [
   sub('el008', 'electronics', 'Aparaty fotograficzne', '9006.53.10', [], ['CE_declaration']),
   sub('el009', 'electronics', 'Słuchawki i głośniki', '8518.30.95', ['wireless'], ['CE_declaration', 'FCC_if_US', 'WEEE_RoHS']),
   sub('el010', 'electronics', 'Konsole do gier', '9504.50.00', ['lithium', 'wireless'], ['CE_declaration', 'FCC_if_US', 'CCC_if_CN', 'lithium_battery_declaration']),
-  sub('el011', 'electronics', 'Smartwatche i opaski fitness', '9102.12.00', ['lithium', 'wireless'], ['CE_declaration', 'FCC_if_US', 'lithium_battery_declaration']),
+  sub('el011', 'electronics', 'Smartwatche i opaski fitness (z komunikacją BT/LTE)', '8517.62.00', ['lithium', 'wireless'], ['CE_declaration', 'FCC_if_US', 'lithium_battery_declaration'], 'Urządzenia z komunikacją Bluetooth/LTE klasyfikowane jako sprzęt komunikacyjny (8517.62), nie zegarki. Proste opaski/zegarki bez łączności mogą kwalifikować się jako 9102/9031.'),
   sub('el012', 'electronics', 'Routery i modemy', '8517.62.00', ['wireless', 'dual_use'], ['CE_declaration', 'FCC_if_US', 'SRRC_if_CN'], 'Urządzenia sieciowe mogą wymagać zezwolenia telekomunikacyjnego w kraju importu.'),
   sub('el013', 'electronics', 'Baterie litowo-jonowe (samodzielne)', '8507.60.00', ['lithium', 'dangerous'], ['MSDS', 'lithium_battery_declaration_UN3480', 'IMDG_if_sea', 'ADR_if_road'], 'UN3480 (samodzielne baterie), ograniczenia w transporcie lotniczym, wiele linii odmawia.'),
   sub('el014', 'electronics', 'Panele słoneczne (fotowoltaiczne)', '8541.43.00', [], ['CE_declaration', 'antidumping_check'], 'UE: sprawdź cła antydumpingowe dla paneli z Chin.'),
@@ -258,7 +260,7 @@ export const CARGO_SUBCATEGORIES = [
   sub('el020', 'electronics', 'Transformatory', '8504.21.00', [], ['CE_declaration']),
   sub('el021', 'electronics', 'Oświetlenie LED', '8539.52.00', [], ['CE_declaration', 'WEEE_RoHS', 'energy_label_EU']),
   sub('el022', 'electronics', 'Drony / UAV', '8806.21.00', ['wireless', 'dual_use'], ['CE_declaration', 'dual_use_check', 'aviation_authority_approval'], 'Drony mogą wymagać zezwolenia lotniczego w kraju importu. Sprawdź przepisy EASA/FAA.'),
-  sub('el023', 'electronics', 'Roboty przemysłowe', '8479.89.97', ['dual_use'], ['CE_machinery', 'dual_use_check']),
+  sub('el023', 'electronics', 'Roboty przemysłowe', '8479.50.00', ['dual_use'], ['CE_machinery', 'dual_use_check']),
 
   // ── Maszyny i urządzenia ────────────────────────────────────────────────────
   sub('mach001', 'machinery', 'Maszyny do obróbki metali (tokarki CNC)', '8457.10.10', ['dual_use', 'oversize'], ['CE_machinery', 'dual_use_check', 'special_transport_if_oversize'], 'Precyzyjne tokarki CNC mogą wymagać licencji Dual-Use (produkcja rakiet i broni).'),
@@ -266,11 +268,11 @@ export const CARGO_SUBCATEGORIES = [
   sub('mach003', 'machinery', 'Kompresory i sprężarki', '8414.80.11', ['dual_use'], ['CE_machinery', 'dual_use_check', 'pressure_vessel_certificate'], 'Sprężarki wysokociśnieniowe mogą być Dual-Use.'),
   sub('mach004', 'machinery', 'Pompy (wodne, przemysłowe)', '8413.70.10', [], ['CE_machinery']),
   sub('mach005', 'machinery', 'Turbiny wiatrowe (komponenty)', '8502.31.00', ['oversize'], ['CE_declaration', 'special_transport_permit', 'project_cargo_insurance'], 'Łopaty turbin: długość do 70 m. Transport specjalny, zezwolenia drogowe w każdym kraju tranzytu.'),
-  sub('mach006', 'machinery', 'Generatory prądu', '8502.11.20', ['fuel_tank', 'flammable'], ['CE_machinery', 'MSDS_if_fuel', 'emission_certificate'], 'Z paliwem w zbiorniku: transport lotniczy zakazany. Zbiornik opróżnić i oczyścić.'),
+  sub('mach006', 'machinery', 'Generatory prądu (do 7,5 kVA)', '8502.11.20', ['fuel_tank', 'flammable'], ['CE_machinery', 'MSDS_if_fuel', 'emission_certificate'], 'Z paliwem w zbiorniku: transport lotniczy zakazany. Zbiornik opróżnić i oczyścić.'),
   sub('mach007', 'machinery', 'Reaktory przemysłowe (chemiczne)', '8419.89.30', ['dual_use', 'oversize'], ['CE_pressure_equipment', 'dual_use_check', 'pressure_vessel_certificate'], 'Reaktory chemiczne mogą być Dual-Use (produkcja substancji chemicznych).'),
 
   // ── Chemikalia przemysłowe ──────────────────────────────────────────────────
-  sub('ch001', 'chemicals', 'Kwas siarkowy', '2807.00.10', ['corrosive', 'dangerous'], ['MSDS', 'ADR_class8', 'IMDG_class8', 'REACH_EU'], 'ADR klasa 8 (żrący). UN1830. Specjalne pojazdy i kontenery.'),
+  sub('ch001', 'chemicals', 'Kwas siarkowy', '2807.00.00', ['corrosive', 'dangerous'], ['MSDS', 'ADR_class8', 'IMDG_class8', 'REACH_EU'], 'ADR klasa 8 (żrący). UN1830. Specjalne pojazdy i kontenery.'),
   sub('ch002', 'chemicals', 'Kwas solny (chlorowodorowy)', '2806.10.00', ['corrosive', 'dangerous', 'precursor'], ['MSDS', 'ADR_class8', 'REACH_EU', 'precursor_check'], 'Prekursor do produkcji narkotyków, rejestracja wymagana w UE.'),
   sub('ch003', 'chemicals', 'Kwas azotowy', '2808.00.00', ['corrosive', 'oxidizing', 'dangerous'], ['MSDS', 'ADR_class8', 'dual_use_check'], 'Dual-Use: może być użyty do produkcji materiałów wybuchowych.'),
   sub('ch004', 'chemicals', 'Wodorotlenek sodu (soda kaustyczna)', '2815.11.00', ['corrosive', 'dangerous'], ['MSDS', 'ADR_class8', 'IMDG_class8'], 'UN1823 to postać stała, UN1824 to roztwór. Klasa 8.'),
@@ -300,9 +302,8 @@ export const CARGO_SUBCATEGORIES = [
 
   // ── Leki i farmaceutyki ─────────────────────────────────────────────────────
   sub('med001', 'medicines', 'Leki gotowe, tabletki i kapsułki', '3004.90.00', ['cold_chain', 'halal'], ['free_sale_certificate', 'GMP_certificate', 'batch_release', 'MA_certificate', 'halal_if_required'], 'USA: FDA NDA/ANDA. Chiny: NMPA. Indie: CDSCO. Brazylia: ANVISA.'),
-  sub('med002', 'medicines', 'Leki iniekcyjne (ampułki, fiolki)', '3002.13.00', ['cold_chain', 'sterile'], ['free_sale_certificate', 'GMP_certificate', 'batch_release', 'cold_chain_certificate'], 'Sterylność krytyczna, dokumentacja temperature excursion wymagana.'),
   sub('med003', 'medicines', 'Szczepionki', '3002.20.00', ['cold_chain', 'sterile'], ['WHO_prequalification', 'batch_release', 'cold_chain_certificate', 'import_licence_vaccines'], 'Łańcuch chłodniczy 2-8°C absolutnie krytyczny. Każde odchylenie = zniszczenie partii.'),
-  sub('med004', 'medicines', 'Substancje farmaceutyczne (API)', '2941.10.00', ['dual_use', 'cold_chain'], ['GMP_certificate', 'DMF_certificate', 'REACH_EU', 'MSDS'], 'Drug Master File (DMF) wymagany przez FDA i inne organy.'),
+  sub('med004', 'medicines', 'Penicyliny i pochodne (substancje czynne)', '2941.10.00', ['dual_use', 'cold_chain'], ['GMP_certificate', 'DMF_certificate', 'REACH_EU', 'MSDS'], 'Drug Master File (DMF) wymagany przez FDA i inne organy.'),
   sub('med005', 'medicines', 'Suplementy diety', '2106.90.92', ['halal', 'kosher'], ['free_sale_certificate', 'analysis_certificate', 'novel_food_check_EU'], 'Klasyfikacja różni się w krajach. USA = dietary supplement (FDA). UE = suplement diety. Japonia = FoSHU.'),
   sub('med006', 'medicines', 'Narkotyki i psychotropy (kontrolowane)', '2939.11.00', ['narcotic', 'cold_chain'], ['export_licence_narcotic_GIF', 'import_licence_narcotic', 'batch_release', 'cold_chain_certificate'], 'Podwójna licencja obowiązkowa: eksportowa (GIF Polska) + importowa (organ kraju docelowego). Konwencje ONZ 1961/1971.'),
   sub('med007', 'medicines', 'Produkty weterynaryjne', '3004.50.00', [], ['free_sale_certificate', 'veterinary_authority_approval', 'GMP_certificate']),
@@ -405,7 +406,7 @@ export const CARGO_SUBCATEGORIES = [
   sub('lux005', 'luxury', 'Biżuteria złota', '7113.19.00', ['valuable', 'cites'], ['hallmarking_certificate', 'assay_certificate', 'CITES_if_exotic_materials', 'insurance_certificate'], 'UK: obowiązkowe cechowanie w Assay Office. CITES jeśli zawiera kość słoniową, koralowce itp.'),
   sub('lux006', 'luxury', 'Zegarki luksusowe', '9102.11.00', ['valuable'], ['insurance_certificate', 'authenticity_certificate']),
   sub('lux007', 'luxury', 'Dzieła sztuki (obrazy, rzeźby)', '9701.10.00', ['valuable', 'fragile', 'artwork', 'cites'], ['provenance_documentation', 'authenticity_certificate', 'export_permit_cultural_goods', 'insurance_certificate', 'CITES_if_applicable'], 'MKiDN (Polska): pozwolenie na wywóz dóbr kultury. Konwencja UNESCO 1970, proweniencja.'),
-  sub('lux008', 'luxury', 'Antyki (ponad 100 lat)', '9706.10.00', ['valuable', 'artwork'], ['provenance_documentation', 'authenticity_certificate', 'export_permit_MKiDN', 'insurance_certificate'], 'Polska: obowiązkowe pozwolenie MKiDN dla antyków powyżej określonej wartości.'),
+  sub('lux008', 'luxury', 'Antyki (ponad 100 lat)', '9706.90.00', ['valuable', 'artwork'], ['provenance_documentation', 'authenticity_certificate', 'export_permit_MKiDN', 'insurance_certificate'], 'Polska: obowiązkowe pozwolenie MKiDN dla antyków powyżej określonej wartości.'),
   sub('lux009', 'luxury', 'Skóra krokodyla / wężowa (wyroby)', '4205.00.90', ['cites'], ['CITES_export_permit', 'CITES_import_permit', 'GDOS_permit'], 'CITES Appendix I lub II. Zezwolenie GDOŚ wymagane. Bez CITES, konfiskata i kara.'),
   sub('lux010', 'luxury', 'Futra naturalne', '4303.10.90', ['cites', 'fur'], ['CITES_if_applicable', 'origin_declaration', 'anti_fur_check_UK_US'], 'USA: Fur Products Labeling Act. Sprawdź CITES dla gatunków chronionych. UE: import futer z niektórych krajów ograniczony.'),
   sub('lux011', 'luxury', 'Instrumenty muzyczne (skrzypce, gitary)', '9202.10.00', ['cites'], ['CITES_if_rosewood', 'authenticity_certificate'], 'Palisander (Dalbergia spp.): CITES Appendix II. Dotyczy podstrunnic gitar i skrzypiec.'),
@@ -413,8 +414,9 @@ export const CARGO_SUBCATEGORIES = [
   // ── Towary kontrolowane i obrona ────────────────────────────────────────────
   sub('def001', 'defence', 'Broń palna cywilna (pistolety, karabiny)', '9302.00.00', ['military', 'dangerous'], ['export_licence_MSZ', 'import_licence_country', 'end_user_certificate', 'ATT_compliance'], 'Traktat o Handlu Bronią (ATT). Licencja MSZ (Polska). Sprawdź embarga ONZ/UE/USA.'),
   sub('def002', 'defence', 'Amunicja', '9306.30.90', ['military', 'explosive', 'dangerous'], ['export_licence_MSZ', 'import_licence_country', 'end_user_certificate', 'ADR_class1'], 'ADR klasa 1 (materiały wybuchowe). Podwójne zezwolenie. Embarga ONZ.'),
-  sub('def003', 'defence', 'Oprogramowanie szyfrujące', '8523.49.20', ['dual_use'], ['dual_use_licence_MRiT', 'EAR_if_US', 'end_user_certificate'], 'ECCN 5E002 (USA) / ML21 (UE). Licencja eksportowa wymagana do większości krajów.'),
-  sub('def004', 'defence', 'Noktowizory i termowizory', '9013.20.00', ['dual_use', 'military'], ['dual_use_licence_MRiT', 'end_user_certificate', 'military_export_licence'], 'Dual-Use kategoria 6. Eksport do krajów objętych embargiem zakazany.'),
+  sub('def003', 'defence', 'Oprogramowanie szyfrujące', '8523.49.20', ['dual_use'], ['dual_use_licence_MRiT', 'EAR_if_US', 'end_user_certificate'], 'ECCN 5E002 (USA) / ML21 (UE). Licencja eksportowa wymagana do większości krajów. Kod dotyczy nośnika fizycznego (płyta/dysk). Oprogramowanie pobrane elektronicznie ma inny status celny.'),
+  sub('def004', 'defence', 'Kamery termowizyjne / noktowizyjne', '8525.83.00', ['dual_use', 'military'], ['dual_use_licence_MRiT', 'end_user_certificate', 'military_export_licence'], 'Dual-Use kategoria 6 (rozp. UE 2021/821). Klasyfikacja konkretnego urządzenia wymaga potwierdzenia ze specjalistą celnym, to nie jest kod do wyboru „na oko". Eksport do krajów objętych embargiem zakazany.'),
+  sub('def006', 'defence', 'Celowniki optyczne noktowizyjne', '9013.10.90', ['dual_use', 'military'], ['dual_use_licence_MRiT', 'end_user_certificate', 'military_export_licence'], 'Dual-Use kategoria 6 (rozp. UE 2021/821). Klasyfikacja konkretnego urządzenia wymaga potwierdzenia ze specjalistą celnym, to nie jest kod do wyboru „na oko". Eksport do krajów objętych embargiem zakazany.'),
   sub('def005', 'defence', 'Chemikalia bojowe (zakazane)', '2929.90.00', ['dual_use', 'military', 'dangerous', 'toxic'], ['CWC_compliance_check'], 'Konwencja o Zakazie Broni Chemicznej (CWC), eksport w celach wojskowych ZAKAZANY globalnie.'),
 ]
 

@@ -194,7 +194,7 @@ export default function CargoCategoryPicker({
             subcategories={subcategories}
             value={activeSub ? activeSub.id : ''}
             onChange={pickSubcategory}
-            placeholder={`Wybierz lub wpisz towar (${subcategories.length})...`}
+            placeholder="Wybierz lub wpisz towar..."
           />
         </div>
       )}

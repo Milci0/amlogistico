@@ -1,0 +1,80 @@
+{
+  "_meta": {
+    "title": "Runda ISZTAR — stan końcowy poprawek kodów CN",
+    "note": "Plik RĘCZNIE kuratorowany. NIE importowany przez aplikację. Auto-sugestie algorytmu są osobno w cargo-categories-suggested-fixes.auto.json. Wszystkie pozycje z tej rundy zostały ZAMKNIĘTE (wdrożone lub zdecydowane) — jedyny otwarty punkt to el011 (decyzja biznesowa).",
+    "closedAt": "2026-07-23"
+  },
+
+  "applied_code_change": [
+    { "id": "ch001", "name": "Kwas siarkowy", "from": "2807.00.10", "to": "2807.00.00", "validator": "OK" },
+    { "id": "fa011", "name": "Łosoś świeży/chłodzony", "from": "0302.11.10", "to": "0302.14.00", "note": "0302.11 to pstrąg; 0302.14 to łosoś atlantycki świeży.", "validator": "OK" },
+    { "id": "el023", "name": "Roboty przemysłowe", "from": "8479.89.97", "to": "8479.50.00", "note": "Dedykowana podpozycja robotów przemysłowych.", "validator": "OK" },
+    { "id": "lux008", "name": "Antyki (ponad 100 lat)", "from": "9706.10.00", "to": "9706.90.00", "note": "9706.10 = >250 lat (za wąsko); 9706.90 = 100-250 lat.", "validator": "OK" },
+    { "id": "el011", "name": "Smartwatche i opaski fitness (z komunikacją BT/LTE)", "from": "9102.12.00", "to": "8517.62.00", "note": "Decyzja biznesowa Milosza: urządzenia z komunikacją BT/LTE = sprzęt komunikacyjny 8517.62, nie zegarki. Nazwa doprecyzowana o „(z komunikacją BT/LTE)”; proste opaski bez łączności mogą pozostać 9102/9031.", "validator": "OK" }
+  ],
+
+  "restructured": [
+    {
+      "was": { "id": "pr009", "name": "Chipsy i przekąski", "hsCode": "1905.90.30" },
+      "reason": "Jedna nazwa = dwa różne towary/kody.",
+      "now": [
+        { "id": "pr009", "name": "Chipsy ziemniaczane", "hsCode": "2005.20.20", "validator": "OK" },
+        { "id": "pr016", "name": "Przekąski ekstrudowane (chrupki)", "hsCode": "1905.90.55", "validator": "OK" }
+      ]
+    },
+    {
+      "was": { "id": "fp037", "name": "Zioła świeże (bazylia, pietruszka)", "hsCode": "0709.99.60" },
+      "reason": "Pietruszka (warzywo, dział 07) i bazylia (roślina aromatyczna, dział 12) to różne działy HS.",
+      "now": [
+        { "id": "fp037", "name": "Pietruszka świeża", "hsCode": "0709.99.90", "validator": "OK" },
+        { "id": "fp055", "name": "Bazylia i zioła świeże (przyprawowe)", "hsCode": "1211.90.86", "validator": "OK" }
+      ],
+      "other_herbs_check": "Sprawdzono resztę food_plant: jedyny inny wpis ziołowy to fp047 „Pieprz i inne przyprawy” (0904.11) — suszona przyprawa (dział 09), kod poprawny, ten sam błąd nie występuje gdzie indziej."
+    },
+    {
+      "was": { "id": "def004", "name": "Noktowizory i termowizory", "hsCode": "9013.20.00 (=lasery, błąd)" },
+      "reason": "Dwie klasy urządzeń o różnych kodach; pozycja pod kontrolą eksportu.",
+      "now": [
+        { "id": "def004", "name": "Kamery termowizyjne / noktowizyjne", "hsCode": "8525.83.00", "flags": ["dual_use", "military"], "validator": "OK" },
+        { "id": "def006", "name": "Celowniki optyczne noktowizyjne", "hsCode": "9013.10.90", "flags": ["dual_use", "military"], "validator": "OK" }
+      ],
+      "warning_added": "Obie pozycje: „Dual-Use kategoria 6 (rozp. UE 2021/821). Klasyfikacja konkretnego urządzenia wymaga potwierdzenia ze specjalistą celnym, to nie jest kod do wyboru na oko. Eksport do krajów objętych embargiem zakazany.” Zachowane dokumenty kontroli eksportu (dual_use_licence_MRiT, end_user_certificate, military_export_licence)."
+    },
+    {
+      "was": { "id": "med002", "name": "Leki iniekcyjne (ampułki, fiolki)", "hsCode": "3002.13.00" },
+      "reason": "„Iniekcyjny” nie jest kryterium klasyfikacji celnej — kod zależy od substancji czynnej. Kategoria „Leki” ma już podział wg substancji (med003 szczepionki, med004 penicyliny, med006 narkotyki, med007 weterynaryjne, med008 biocydy) + ogólny med001 „Leki gotowe” (3004.90).",
+      "action": "USUNIĘTA z żywej bazy.",
+      "user_guidance": "Użytkownik szukający leku iniekcyjnego powinien wybrać podkategorię wg substancji/grupy (np. med001 leki gotowe 3004.90, med006 narkotyki), albo skorzystać z wyszukiwarki AI kodu celnego (Etap 3, w przygotowaniu)."
+    }
+  ],
+
+  "name_clarified_no_code_change": [
+    { "id": "fa010", "from": "Konserwy mięsne", "to": "Konserwy drobiowe", "hsCode": "1602.32.11", "reason": "Kod pokrywa tylko konserwy drobiowe (≥57% kurczaka)." },
+    { "id": "mach006", "from": "Generatory prądu", "to": "Generatory prądu (do 7,5 kVA)", "hsCode": "8502.11.20", "reason": "Kod = zespoły prądotwórcze ≤7,5 kVA." },
+    { "id": "med004", "from": "Substancje farmaceutyczne (API)", "to": "Penicyliny i pochodne (substancje czynne)", "hsCode": "2941.10.00", "reason": "2941.10 obejmuje wyłącznie penicyliny, nie API ogólnie." },
+    { "id": "def003", "name": "Oprogramowanie szyfrujące", "hsCode": "8523.49.20", "change": "warning uzupełniony", "reason": "Dopisano: „Kod dotyczy nośnika fizycznego (płyta/dysk). Oprogramowanie pobrane elektronicznie ma inny status celny.” Nazwa i kod bez zmian." }
+  ],
+
+  "open_questions": [
+    {
+      "id": "fp001",
+      "name": "Jabłka świeże",
+      "currentCode": "0808.10.80",
+      "concern": "Lookup po CN8 08081080 w cn_codes pokazuje opis „Jabłka na cydr (cidr)” → wygląda na kod przemysłowy/sezonowy, nie jabłka deserowe.",
+      "finding": "08081080 to CN8 „pozostałe jabłka” i JEST poprawny dla świeżych jabłek deserowych. Ma trzy dzieci 10-cyfrowe TARIC: 0808108010 „Jabłka na cydr (cidr)”, 0808108020 „Odmiany Fuji”, 0808108090 „Pozostałe”. Mylący opis „na cydr” pochodzi z PIERWSZEGO dziecka (lookup po prefiksie cn8 trafia w nie), a nie z całego CN8. Sezonowe jabłka na cydr LUZEM (16.09–15.12) to OSOBNY, węższy CN8 08081010 — nie 08081080.",
+      "recommendation": "BEZ ZMIANY KODU — 0808.10.80 jest właściwy dla świeżych jabłek (obejmuje Fuji + Pozostałe). Zmiana na 08081010 byłaby BŁĘDEM (zawęziłaby do sezonowego cydru luzem).",
+      "related": "Osobno naprawiono wyszukiwarkę AI (hsSuggest.js), by dla świeżych jabłek nie sugerowała 0813 (suszone) ani sezonowego cydru — instrukcja HS-semantyki + koherencja działu.",
+      "decision": "oczekuje na akceptację Milosza (rekomendacja: zamknąć bez zmiany)"
+    }
+  ],
+
+  "green_no_change": {
+    "count": 18,
+    "note": "Kod poprawny; niedopasowanie tekstowe = synonim (nazwa handlowa vs formalny opis celny). ZAMKNIĘTE bez zmian.",
+    "ids": [
+      "fa001", "fa002", "fa003", "fa004", "pr015", "bv013",
+      "el002", "el003", "el004", "el005", "el012", "el016",
+      "med005", "med006", "cos002", "cos005", "cos007", "wd002"
+    ]
+  }
+}

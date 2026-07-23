@@ -107,3 +107,65 @@ model DocumentSet {
   @@index([userId, status])
   @@map("document_sets")
 }
+
+// cn_codes — nomenklatura CN/TARIC z ISZTAR4 (Ministerstwo Finansów). Źródło prawdy
+// dla walidacji kodów celnych podkategorii towaru. Zasilane WYŁĄCZNIE offline przez
+// scripts/sync-isztar.js (nigdy z requestu użytkownika).
+//
+// Uwagi o rozbieżności model⇄API (rekonesans 2026-07-23):
+//  - ISZTAR endpoint `codes?date=` zwraca DRZEWO aktywne na dany dzień, bez jawnych
+//    dat obowiązywania per kod. Dlatego `validFrom` = data pierwszej synchronizacji,
+//    a `validTo` ustawiamy dopiero, gdy kod ZNIKNIE z API w kolejnym przebiegu
+//    (kodów NIE kasujemy — historyczne są potrzebne do starych dokumentów).
+//  - API emituje `code` tylko dla poziomów 6-cyfrowego (podpozycja CN) i 10-cyfrowego
+//    (TARIC). Poziomy 2/4 (dział/pozycja) są węzłami bez `code` — nie zapisujemy ich.
+//    Kod CN8 z bazy podkategorii waliduje się jako PREFIKS aktywnego kodu 10-cyfrowego.
+model CnCode {
+  code          String    @id                 // kod bez kropek (6 lub 10 cyfr)
+  cn8           String    @map("cn8")          // pierwsze ≤8 cyfr kodu (do dopasowań CN8)
+  parentCode    String?   @map("parent_code")  // najbliższy kod nadrzędny w drzewie
+  level         Int                            // długość kodu (6 lub 10)
+  descriptionPl String    @map("description_pl")
+  descriptionEn String?   @map("description_en")
+  validFrom     DateTime  @map("valid_from")   // data pierwszej synchronizacji (nie realna data KE)
+  validTo       DateTime? @map("valid_to")     // ustawiane, gdy kod zniknie z ISZTAR
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([cn8])
+  @@index([descriptionPl])
+  @@map("cn_codes")
+}
+
+// hs_suggestion_cache — cache wyników wyszukiwarki kodu celnego AI (krok 2 kreatora).
+// Klucz = sha256(lowercase(trim(description)) + countryFrom + countryTo). TTL 90 dni
+// egzekwowane w kodzie (po createdAt). Trafienie w cache = zero wywołań Claude API.
+model HsSuggestionCache {
+  key           String   @id // sha256 hex
+  description   String
+  countryFrom   String   @map("country_from")
+  countryTo     String   @map("country_to")
+  result        Json     // pełna odpowiedź zwracana frontendowi (suggestions, destination, ...)
+  usedWebSearch Boolean  @default(false) @map("used_web_search")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("hs_suggestion_cache")
+}
+
+// hs_choice_log — który kod user FAKTYCZNIE wybrał („Użyj") spośród sugestii AI.
+// Do oceny skuteczności wyszukiwarki po wdrożeniu (czy user bierze pierwszą sugestię,
+// czy dalszą, czy w ogóle). userId to plain string (bez relacji — to log analityczny).
+model HsChoiceLog {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  description    String
+  countryFrom    String   @map("country_from")
+  countryTo      String   @map("country_to")
+  chosenCode     String   @map("chosen_code")
+  source         String   // 'classify' (CN8/HS-6) | 'destination' (kraj docelowy)
+  verified       Boolean? // dla source=destination: czy kod był zweryfikowany źródłem
+  suggestedCodes Json     @map("suggested_codes") // kody pokazane userowi (ocena trafności)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("hs_choice_log")
+}

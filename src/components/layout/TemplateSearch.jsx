@@ -48,7 +48,7 @@ export default function TemplateSearch() {
       {open && (
         <div className="absolute left-0 right-0 mt-2 max-h-80 overflow-y-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50">
           <div className="sticky top-0 px-3 py-1.5 text-[11px] text-slate-400 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
-            {query.trim() ? `Wyniki (${results.length})` : `Wszystkie szablony (${results.length})`}
+            {query.trim() ? `Wyniki` : `Wszystkie szablony`}
           </div>
           {results.length === 0 ? (
             <div className="px-4 py-3 text-sm text-slate-400">Brak dopasowań.</div>

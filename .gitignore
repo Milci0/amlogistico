@@ -3,3 +3,6 @@ dist
 .env
 .env.local
 .DS_Store
+
+# ISZTAR — lokalny cache migawek nomenklatury (nie commitować)
+scripts/.cache/

@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-07-23T19:03:39.191Z",
+  "note": "Do RĘCZNEJ akceptacji. NIE jest importowany przez aplikację.",
+  "legend": {
+    "strict": "próg pierwotny (rygorystyczny)",
+    "relaxed_threshold": "próg poluzowany (pkt 3)"
+  },
+  "counts": {
+    "strict": 0,
+    "relaxed_threshold": 0
+  },
+  "suggestions": []
+}

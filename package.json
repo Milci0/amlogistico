@@ -12,6 +12,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.114.0",
     "@fontsource/inter": "^5.2.8",
     "@prisma/client": "^6.19.3",
     "@vercel/analytics": "^2.0.1",

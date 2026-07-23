@@ -655,6 +655,132 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   z `documentSetsRepo.js` + `templateVersion` + `kind` dla setów z pustych szablonów). Wgrana przez
   `prisma db push` (additive). `prisma generate` wymaga zatrzymanego serwera (EPERM na query engine dll
   gdy `npm run server` działa).
+- **Podsystem ISZTAR4 — walidacja kodów celnych — GOTOWE Etap 1+2 (2026-07-23):** integracja
+  oficjalnej nomenklatury CN/TARIC (ISZTAR4, Ministerstwo Finansów) jako źródła prawdy dla kodów HS
+  w bazie 260 podkategorii (`src/data/cargoCategories.js`).
+  - **Tabela `cn_codes`** (model `CnCode` w `schema.prisma`, `@@map("cn_codes")`) — 19 316 kodów CN/TARIC
+    (poziom 6 i 10 cyfr; pozycje 2/4-cyfrowe API zwraca bez `code`). Uwaga: ISZTAR daje migawkę
+    „aktywne na dzień X" bez dat KE, więc `validFrom` = data 1. synchronizacji, `validTo` ustawiane
+    dopiero gdy kod zniknie z API (kodów NIE kasujemy). Wgrana `prisma db push` (additive).
+  - **API ISZTAR (bez klucza):** `GET https://ext-isztar4.mf.gov.pl/tariff/rest/goods-nomenclature/codes
+    ?date=&language=PL|EN&page=` — drzewo `{description,subgroup[],links}`, paginacja przez `links.last`.
+    Wymaga `Accept: */*` (przy `application/json` → 406). Kody CN8 z bazy walidują się jako PREFIKS
+    aktywnego kodu 10-cyfrowego. Floor dat: **1990-01-01** (wcześniej HTTP 500).
+  - **`scripts/lib/isztar.js`** (fetch/flatten + `fetchCodeContext` z ancestry) + **`scripts/lib/syncCore.js`**
+    (`runSync` — RAW SQL UPSERT, współdzielony CLI+cron; działa bez `prisma generate`, które blokuje
+    działający serwer dev). **`scripts/sync-isztar.js`** — CLI: `NODE_OPTIONS=--use-system-ca node
+    --env-file=.env scripts/sync-isztar.js`.
+  - **Cron tygodniowy:** `vercel.json` → `crons` (poniedziałek 04:00), trasa `GET /api/cron/sync-isztar`
+    w `api/_routes/cron.js` chroniona `requireCronSecret` (env `CRON_SECRET`, wzorzec Vercel Cron
+    `Authorization: Bearer`; bez sekretu → 503). Doczepiona do istniejącej funkcji Express (zero nowych
+    funkcji Vercel). Cron leci PL-only (nie kasuje opisów EN). Uwaga: pełny sync trwa kilkadziesiąt
+    sekund — `maxDuration: 60`; jeśli plan Vercel nie wystarczy, fallback = CLI / GitHub Actions.
+  - **Walidacja bazy: `scripts/validate-cargo-categories.js`** — klasyfikuje 260 podkategorii:
+    OK / NIEAKTUALNY (wycofany, migawki 2021-06-30 + 2000-01-01, szuka następcy) / NIEISTNIEJĄCY /
+    NIESPÓJNY (konflikt wieku lub zerowe pokrycie tekstowe). Przynależność twarda z `cn_codes`; spójność
+    tematyczna to HEURYSTYKA (nie odróżnia synonimów od błędów → tylko do ręcznego przeglądu).
+    Raporty w `scripts/reports/`: `cargo-validation-*.md/.json` + `*.auto.json` (auto-sugestie).
+  - **`scripts/reports/cargo-categories-suggested-fixes.json`** — RĘCZNIE kuratorowana lista sugestii
+    do akceptacji (NIE importowana przez apkę, NIE nadpisywana przez walidator). **Runda poprawek
+    wdrożona (2026-07-23):** baza ma teraz **262** podkategorie. Zastosowane podmiany kodu: `ch001`
+    kwas siarkowy `2807.00.10`→`2807.00.00`, `fa011` łosoś `0302.11.10`→`0302.14.00`, `el023` roboty
+    `8479.89.97`→`8479.50.00`, `lux008` antyki `9706.10.00`→`9706.90.00`. Rozbicia: `pr009`→(chipsy
+    `2005.20.20` + `pr016` ekstrudowane `1905.90.55`), `fp037`→(pietruszka `0709.99.90` + `fp055`
+    bazylia `1211.90.86`), `def004`→(kamery termo/nokto `8525.83.00` + `def006` celowniki `9013.10.90`).
+    `med002` (leki iniekcyjne) USUNIĘTA („iniekcyjny" nie jest kryterium CN — kategoria ma już podział
+    wg substancji). Doprecyzowane nazwy: `fa010`→Konserwy drobiowe, `mach006`→Generatory (do 7,5 kVA),
+    `med004`→Penicyliny i pochodne; `def003` warning o nośniku fizycznym. Otwarte pytanie: `el011`
+    smartwatch (9102 zegarek vs 8517.62). **Etap 3 (walidacja na żywo w kroku 2 kreatora + logika
+    UE-UE=CN8 vs spoza-UE=HS-6) gotowy do startu po potwierdzeniu.**
+- **Wyszukiwarka kodu celnego AI (krok 2 kreatora) — GOTOWE (2026-07-23):** panel pod
+  polem „Podkategoria”, oparty o Claude API — UZUPEŁNIENIE dropdownu 262 podkategorii,
+  gdy user nie znajduje towaru na liście. To NIE czat: każde „Znajdź kod” = niezależne,
+  jednorazowe zapytanie. Klucz API WYŁĄCZNIE po stronie serwera (`ANTHROPIC_API_KEY`,
+  `@anthropic-ai/sdk`), nigdy w bundlu frontendu.
+  - **Reguła doboru wg KRAJU NADANIA (nie całej trasy):** `countryFrom` w UE → pełny CN8
+    z `cn_codes` (zawsze, niezależnie od `countryTo`); `countryFrom` poza UE → tylko HS-6.
+    `countryTo` poza UE → DODATKOWO osobna sugestia kodu z taryfy kraju docelowego (1b).
+  - **Backend (doczepiony do `api/index.js`, bez nowej funkcji Vercel):**
+    `api/_routes/hsCode.js` (`POST /api/hs-code/suggest`, za `requireAuth`),
+    `api/_lib/hsSuggest.js` (kandydaci z `cn_codes` ważeni długością słów kluczowych +
+    2 wywołania modelu), `api/_lib/anthropic.js` (singleton; **MODEL_CLASSIFY=`claude-sonnet-5`**
+    — zmiana z Haiku 2026-07-24: Haiku był za słaby na rozróżnianiu postaci towaru mimo
+    identycznego opisu tekstowego, 4/5 razy wybierał suszone jabłka; Sonnet stabilnie trafia.
+    MODEL_WEB_SEARCH=`claude-sonnet-5` — Haiku NIE obsługuje web_search; `MODEL_RATES` do logu),
+    `api/_lib/hsRateLimit.js` (per-user, in-memory: 1a 60/h, 1b 15/h; best-effort na
+    serverless), `api/_validation/hsCode.js` (Zod + `sanitizeInput`: <3/>200 znaków i
+    frazy injection → 400 przed jakimkolwiek wywołaniem API),
+    `api/_config/tariffSources.js` (`EU_CODES`, `officialTariffSources` — 6 krajów:
+    US/CA/GB/AU/CH/NO, nazwy systemów taryfowych).
+  - **Etap 1a (kraj nadania w UE):** kandydaci z `cn_codes` (CN8 z poziomu 10-cyfr; HS-6
+    z poziomu 6 gdy nadanie spoza UE) → Claude BEZ web_search → **walidacja wyjścia**:
+    kod spoza listy kandydatów odrzucany po cichu (`filterValidSuggestions`).
+  - **Etap 1b (kraj docelowy poza UE i w `officialTariffSources`):** Claude + `web_search`
+    ograniczony do oficjalnych domen taryfowych. **KOSZT (2026-07-24, pomiary na żywo):**
+    wariant PODSTAWOWY `web_search_20250305` (NIE `_20260209` z filtrowaniem dynamicznym,
+    które pobiera całe strony/PDF-y). Kluczowe: każde wyszukiwanie na Sonnecie 5 wciąga
+    ~13-17K input tokenów treści, a kolejne KUMULUJĄ kontekst → 3 wyszukiwania = ~79K input
+    = **~$0.29** (zmierzone!). Dlatego **twardy `max_uses:1`** → 1 wyszukiwanie ≈ 16K input
+    ≈ **~$0.05-0.07/zapytanie 1b**, wciąż znajduje kod + URL z dozwolonej domeny. Guard
+    pętli `pause_turn`=1, `max_tokens:1024`. **Realny rozkład (logi `[hs-suggest]` niosą
+    `stage1a`/`stage1b` z tokenami + `cost1a_usd`/`cost1b_usd`):** trasa UE-UE (np. PL→DE) =
+    TYLKO 1a (Haiku, bez web_search) ≈ **$0.001** (router poprawnie nie uruchamia 1b);
+    trasa poza-UE (np. PL→CA) = 1a (~$0.002) + 1b (~$0.07). **~2¢ dla 1b jest nieosiągalne**
+    z Sonnetem 5 + web_search (sama treść 1 wyszukiwania to ~16K × $3/1M); ~5-7¢ to podłoga.
+    **ZMIANA (2026-07-23):** brak/niedozwolony
+    `sourceUrl` NIE ukrywa wyniku — zwracamy kod jako niezweryfikowany szacunek
+    (`verified:false`, `sourceUrl:null`); z dozwolonej domeny → `verified:true` + link +
+    „Zweryfikowano w [system]”. Model zwraca `null` tylko gdy nawet szacunek niemożliwy.
+    Kraj spoza mapy → web_search NIE wołany wcale (`destinationReason:'brak_zrodla_dla_kraju'`
+    → front pokazuje HS-6 + notkę o agencie celnym).
+  - **Cache:** tabela `hs_suggestion_cache` (model `HsSuggestionCache`, klucz =
+    `sha256(lowercase(trim(description))+countryFrom+countryTo)`, TTL 90 dni w kodzie).
+    Trafienie = zero wywołań API. Log kosztowy `console.log('[hs-suggest]', …)` bez PII.
+  - **Log wyboru użytkownika:** `POST /api/hs-code/log-choice` (za `requireAuth`) + tabela
+    `hs_choice_log` (model `HsChoiceLog`) — zapisuje, KTÓRY kod user faktycznie kliknął
+    „Użyj" spośród sugestii (`chosenCode`, `source: classify|destination`, `verified`,
+    `suggestedCodes`). Front woła fire-and-forget przy „Użyj". Do oceny skuteczności
+    wyszukiwarki po wdrożeniu (czy user bierze 1. sugestię, dalszą, czy żadną).
+  - **Dobór kandydatów (`findCandidates`, HEURYSTYKA) — wzmocniony (2026-07-24):**
+    (1) **unaccent** — zapytanie do `cn_codes` przez `$queryRawUnsafe` z
+    `unaccent(lower(description_pl)) LIKE …` (wymaga rozszerzenia `unaccent` w Postgres —
+    włączone na Neonie; fallback na Prisma `contains` gdy niedostępne). Dzięki temu opis
+    bez ogonków („jablka") trafia w „Jabłka". `stripPl` (ł→l + NFD) normalizuje też po
+    stronie JS. (2) **Stopwordy** — jednostki/ilości/ogólniki („ton", „kg", „świeże",
+    „nowe", czyste liczby) usuwane; to one ściągały kody z zupełnie innych działów (np.
+    „ton" z „10 ton" łapał farby/wybuchowe, „świeże" cytrusy). (3) **Koherencja działu HS**
+    — zostają tylko działy (2 cyfry) kandydatów z wynikiem ≥50% najlepszego; odcina długi
+    ogon niepowiązanych działów, nie gubi bliskich trafień. Do stopwordów doszły też
+    słowa-gatunki („klasa", „ekstra", „premium", „jakosc"). (4) **Opis dla USERA = etykieta
+    HS-6 (`label`):** `findCandidates` zwraca `label` (czysty opis pozycji HS-6 danego CN8,
+    np. „Jabłka") — pokazywany userowi ORAZ wysyłany do modelu (prompt `code - label`,
+    krótki). NIE pierwszy liść TARIC — bez mylącego „Jabłka na cydr" przy kodzie „pozostałe
+    jabłka". `cn_codes` ma poziomy **tylko 6 i 10 (NIE ma poziomu 4** — potwierdzone;
+    2583+16733 rekordów), więc HS-6 to najbliższy opis samego CN8. Dropdown podkategorii i tak
+    używa statycznej nazwy z `cargoCategories.js`. (5) **Reguły postaci towaru w prompcie 1a:**
+    skoro brak poziomu 4 (słowa „świeże"/„suszone" fizycznie nie istnieją w bazie), prompt
+    niesie: znaczenie pozycji HS (0808 świeże vs 0813 suszone), **domyślność postaci
+    ŚWIEŻEJ/SUROWEJ** gdy brak słowa o przetworzeniu, oraz preferencję kodu OGÓLNEGO/„pozostałe"
+    nad wąską podpozycją. Pole `reasoning` USUNIĘTE z wyjścia (oszczędność output). (6) **Model
+    1a → Sonnet 5** (Haiku 4/5 razy wybierał suszone jabłka; Sonnet stabilny).
+    **Zweryfikowane 8/8:** jabłka→08081080, pomidory→0702, śliwki→0809.40 (świeże);
+    „jabłka suszone"→0813.30, „śliwki suszone"→0813.20; smartfon→8517.13, palety→4415.20; bez
+    przecieku działów. **KOSZT 1a:** ~0.3-0.6¢ (Sonnet, BEZ web_search — trasa UE-UE nie odpala
+    1b). Kompromis świadomy: Haiku ~0.1¢ ale błędny, Sonnet ~0.5¢ ale trafny. Rzadkie towary
+    obserwować w `hs_choice_log`.
+  - **Frontend:** `src/components/cargo/HsCodeFinder.jsx` (zwijany panel: textarea 0/200,
+    „Znajdź kod”, wyniki z „Użyj” → wpis do pola „Kod celny”, sekcja kraju docelowego z
+    **checkboxem wymaganym w OBU przypadkach** przed „Użyj”). Wpięty w `Step2` w
+    `DocumentWizard.jsx` między `CargoCategoryPicker` a polami Nazwa/Kod; trasa
+    (`fromCountry`/`toCountry` ISO-2) przekazana z `snapshot.route`. Panel NIE zastępuje
+    dropdownu podkategorii. **WIDOCZNY WYŁĄCZNIE DLA ADMINA** (`user.isAdmin`) — funkcja
+    w fazie testów, koszt API (gating przez prop `isAdmin` w `Step2`).
+  - Zweryfikowane: build zielony, brak `sk-ant-`/`ANTHROPIC_API_KEY` w bundlu; backend E2E
+    (401 bez auth, injection/za-długi → 400 bez API, PL→DE CN8, cache hit, PL→CA verified
+    + link CBSA, PL→MM bez web_search → HS-6, log-choice 201/400 + zapis do bazy) + 13/13
+    testów jednostkowych (rate-limit, walidacja wyjścia 1a, logika verified 1b).
+    **Interaktywny test UI panelu — do sprawdzenia w przeglądarce (widoczny po nadaniu
+    sobie `is_admin=true`).**
 - Tabele companies/payments — jeszcze nie zaczęte (schema w `docs/3.Baza danych.md`)
 
 ## Zasady pracy
