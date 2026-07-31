@@ -49,6 +49,13 @@ body {
 .animate-page-in {
   animation: page-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+/* Ograniczony ruch: rezygnujemy z PRZESUNIĘCIA, ale sam fade zostaje. Dolegliwości
+   przedsionkowe wywołuje ruch, nie zmiana krycia — a przy `animation: none` efekt
+   przejścia znikał całkowicie każdemu, kto ma wyłączone animacje w systemie. */
+@keyframes page-in-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .animate-page-in { animation: none; }
+  .animate-page-in { animation: page-in-fade 220ms ease-out both; }
 }

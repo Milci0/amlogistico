@@ -22,6 +22,8 @@ import IncotermsPage from './pages/IncotermsPage'
 import BlankTemplatesPage from './pages/BlankTemplatesPage'
 import NewsPage from './pages/NewsPage'
 import AdminNotificationsPage from './pages/AdminNotificationsPage'
+import TradeRoutesPage from './pages/TradeRoutesPage'
+import InsurancePage from './pages/InsurancePage'
 
 // Root layout — AuthProvider wewnątrz routera, by trasy/hooki miały kontekst sesji
 function RootLayout() {
@@ -62,8 +64,8 @@ const router = createBrowserRouter([
               // Ustawienia scalone z Profilem — stary link nie umiera
               { path: 'settings', element: <Navigate to="/profile" replace /> },
               { path: 'profile', element: <ProfilePage /> },
-              { path: 'insurance', element: <PlaceholderPage title="Ubezpieczenia" description="Polisy i ubezpieczenia ładunków." /> },
-              { path: 'routes', element: <PlaceholderPage title="Trasy handlowe" description="Planowanie i analiza tras transportowych." /> },
+              { path: 'insurance', element: <InsurancePage /> },
+              { path: 'routes', element: <TradeRoutesPage /> },
               { path: 'news', element: <NewsPage /> },
               { path: 'incoterms', element: <IncotermsPage /> },
               { path: 'blank-templates', element: <BlankTemplatesPage /> },

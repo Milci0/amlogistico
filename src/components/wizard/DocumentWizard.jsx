@@ -17,6 +17,9 @@ import DocumentSelectList from '../documents/DocumentSelectList'
 import CargoCategoryPicker from '../cargo/CargoCategoryPicker'
 import HsCodeFinder from '../cargo/HsCodeFinder'
 import StepTransition from '../StepTransition'
+import FreightRates from '../freight/FreightRates'
+import useFreightRates from '../../hooks/useFreightRates'
+import { findSeaPortCode } from '../../data/seaPorts'
 
 const CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF']
 const CONTAINER_TYPES = ['', '20ft', '40ft', '40ft HC', 'LCL']
@@ -669,9 +672,9 @@ function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext })
   )
 }
 
-// ── Kroki ścieżki B (placeholder) — Spedytorzy / Wycena ─────────────────────────
-// Zawartość dojdzie w osobnym zakresie. Na razie tylko nagłówek + informacja i
-// nawigacja (Dalej zawsze aktywny). Zero pól i zero zapisu do formData.
+// ── Krok Spedytorzy (placeholder) — ścieżka B ───────────────────────────────────
+// Freightos nie zwraca listy spedytorów, więc ten krok zostaje pusty (poza zakresem
+// wyceny frachtu). Zero pól i zero zapisu do formData.
 
 function ForwardersStep({ onNext, onBack }) {
   return (
@@ -684,12 +687,60 @@ function ForwardersStep({ onNext, onBack }) {
   )
 }
 
-function QuoteStep({ onNext, onBack }) {
+// Wyłącznie informacyjny: nic nie zapisuje do snapshotu (route czytany tylko do
+// odczytu portu/trybu transportu). Fracht morski (lub multimodalny) — automatyczne
+// wyszukanie stawek Freightos przy wejściu w krok, gdy oba miasta z Kroku 1 dają
+// się rozpoznać jako port. Fracht drogowy — Freightos go nie obejmuje, informacja +
+// link do „Trasy handlowe". „Dalej" zawsze aktywne, niezależnie od wyniku.
+function QuoteStep({ route, onNext, onBack }) {
+  const { loading, result, searched, search } = useFreightRates()
+  const isSea = route.transport === 'sea' || route.multimodal
+
+  const originCode = isSea ? findSeaPortCode(route.fromCity, route.fromCountry) : null
+  const destCode = isSea ? findSeaPortCode(route.toCity, route.toCountry) : null
+  const portsResolved = !!(originCode && destCode)
+
+  useEffect(() => {
+    if (portsResolved) {
+      search({ origin: originCode, destination: destCode, loadtype: 'container20', weight: 15000, quantity: 1 })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <div>
       <BackButton onClick={onBack} />
       <SectionLabel>Wycena</SectionLabel>
-      <p className="text-sm text-gray-400 dark:text-slate-400">Ten krok będzie dostępny wkrótce.</p>
+
+      {isSea ? (
+        portsResolved ? (
+          <div className="mb-6">
+            <FreightRates
+              result={result}
+              loading={loading}
+              searched={searched}
+              routeLabel={`${route.fromCity} – ${route.toCity}`}
+              cargoLabel="1× 20' Standard FCL"
+              compact
+            />
+          </div>
+        ) : (
+          <div className="mb-6">
+            <AlertBox type="warning">
+              Nie rozpoznano portu dla tej trasy. Stawki możesz sprawdzić w zakładce
+              Trasy handlowe.
+            </AlertBox>
+          </div>
+        )
+      ) : (
+        <div className="mb-6">
+          <AlertBox type="info">
+            Wycena frachtu drogowego będzie dostępna wkrótce. Stawki morskie i lotnicze
+            sprawdzisz w zakładce Trasy handlowe.
+          </AlertBox>
+        </div>
+      )}
+
       <NextButton onClick={onNext} />
     </div>
   )
@@ -1006,7 +1057,7 @@ export default function DocumentWizard() {
           <Step3 data={snapshot.parties} setData={setParties} findMode={findMode} mode={mode} user={user} onNext={next} onBack={prev} canNext={canNext} />
         )}
         {stepKey === 'forwarders' && <ForwardersStep onNext={next} onBack={prev} />}
-        {stepKey === 'quote' && <QuoteStep onNext={next} onBack={prev} />}
+        {stepKey === 'quote' && <QuoteStep route={snapshot.route} onNext={next} onBack={prev} />}
         {stepKey === 'docs' && <Step4 onBack={prev} />}
       </StepTransition>
     </div>

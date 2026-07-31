@@ -161,7 +161,7 @@ export default function BlankTemplatesPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="max-w-3xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dobór dokumentów transportowych</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">

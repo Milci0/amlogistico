@@ -39,7 +39,7 @@ export function StepTransition({ children, stepKey, className = '', slide = true
   // Kreator — exit→enter ze slajdem w poziomie (bez zmian).
   return (
     <div
-      className={`transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:transform-none ${className} ${
+      className={`transition-all duration-200 ease-out motion-reduce:transform-none ${className} ${
         phase === 'enter' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'
       }`}
     >

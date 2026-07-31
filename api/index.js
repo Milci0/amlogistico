@@ -9,6 +9,7 @@ import dieselRouter from './_routes/diesel.js'
 import ecbRouter from './_routes/ecb.js'
 import cronRouter from './_routes/cron.js'
 import hsCodeRouter from './_routes/hsCode.js'
+import freightRouter from './_routes/freight.js'
 
 const app = express()
 
@@ -29,6 +30,7 @@ app.use('/api/diesel-price', dieselRouter)
 app.use('/api/ecb-rate', ecbRouter)
 app.use('/api/cron', cronRouter)
 app.use('/api/hs-code', hsCodeRouter)
+app.use('/api/freight', freightRouter)
 
 // Globalny handler błędów — łapie wyjątki z async tras (Express 5 forwarduje je tu)
 // eslint-disable-next-line no-unused-vars

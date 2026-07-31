@@ -380,3 +380,32 @@ export const MOCK_METRICS = [
   { value: '3', label: 'Zarejestrowane firmy', trend: null, up: null },
   { value: '156', label: 'Dokumentów łącznie', trend: '+28%', up: true },
 ]
+
+// Przykładowe polisy na zakładce /insurance. Dane wyłącznie poglądowe — obsługa polis
+// ruszy po podpisaniu umowy z ubezpieczycielem, do tego czasu nic tu nie jest prawdziwe.
+export const MOCK_POLICIES = [
+  {
+    id: 'pol_001', ref: 'LSR-2026-41287', status: 'ACTIVE',
+    provider: 'Loadsure', coverageType: 'ICC_A',
+    premium: 187, currency: 'EUR', coverageLimit: 50000, deductible: 500,
+    origin: 'Gdańsk', destination: 'Newark',
+    cargoDescription: 'Części elektroniczne',
+    issuedAt: '2026-07-02', expiresAt: '2026-08-31',
+  },
+  {
+    id: 'pol_002', ref: 'LSR-2026-39104', status: 'EXPIRED',
+    provider: 'Loadsure', coverageType: 'ICC_B',
+    premium: 95, currency: 'EUR', coverageLimit: 30000, deductible: 500,
+    origin: 'Hamburg', destination: 'Felixstowe',
+    cargoDescription: 'Meble biurowe',
+    issuedAt: '2026-04-18', expiresAt: '2026-06-10',
+  },
+  {
+    id: 'pol_003', ref: 'MRS-2026-00812', status: 'CANCELLED',
+    provider: 'Marsh', coverageType: 'ICC_C',
+    premium: 240, currency: 'EUR', coverageLimit: 85000, deductible: 1000,
+    origin: 'Gdynia', destination: 'Szanghaj',
+    cargoDescription: 'Maszyny CNC',
+    issuedAt: '2026-05-06', expiresAt: '2026-07-15',
+  },
+]

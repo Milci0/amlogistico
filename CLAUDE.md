@@ -366,6 +366,15 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     komórkę gdy oba puste.
   - **Przejścia kroków:** `src/components/StepTransition.jsx` (fade+slide 200 ms, `prefers-reduced-
     motion` przez `motion-reduce:*`); root kreatora owija render kroków (pasek kroków poza animacją).
+    **UWAGA (2026-07-31):** przy `prefers-reduced-motion: reduce` (Windows: Ustawienia → Ułatwienia
+    dostępu → Efekty wizualne → **Efekty animacji = Wył.**) przejścia stron znikały CAŁKOWICIE —
+    `index.css` miał `.animate-page-in { animation: none }`, a `StepTransition` `motion-reduce:
+    transition-none`. Wyglądało to jak regresja („efekt przestał działać"), a było poprawnym
+    honorowaniem ustawienia systemu. Teraz w tym trybie zostaje sam **fade** (`@keyframes
+    page-in-fade`, 220 ms) bez `translateY`, a kreator zachowuje przejście krycia (usunięte
+    `motion-reduce:transition-none`, zostało `motion-reduce:transform-none`) — ruch nadal wyłączony,
+    zgodnie z intencją reduced-motion. Diagnostyka ustawienia: `SystemParametersInfo`
+    `SPI_GETCLIENTAREAANIMATION` (0x1042), to na nie mapuje się media query w Chrome.
   - **Przycisk „Generuj":** repo miał już spinner+disabled we współdzielonym `DocumentSelectList`
     (nie tworzono osobnego `GenerateButton.jsx` — byłby dublem); dodany tylko opcjonalny
     `loadingLabel` („Generowanie...") i waga przycisku `font-semibold`→`font-medium`.
@@ -508,10 +517,96 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   - Zweryfikowane: `npm run build` zielony po obu operacjach. **Nie zweryfikowane interaktywnie
     w przeglądarce.**
 
+- **Stawki frachtowe (Freightos) — GOTOWE (2026-07-30):** orientacyjne stawki frachtu morskiego
+  i lotniczego w dwóch miejscach — zakładka „Trasy handlowe" (`/routes`, samodzielna wyszukiwarka)
+  i krok „Wycena" w ścieżce B kreatora (`find_transport`, kompaktowy widok bez wyszukiwarki).
+  - **Backend:** `api/_lib/freightos.js` (`getFreightosRates`, `PORT_CODES`, `FALLBACK_RATES`,
+    `getFallbackRates`) — proxy do `ship.freightos.com/api/shippingCalculator`, timeout 8s
+    (AbortController, wzorzec `diesel.js`/`ecb.js`), klucz z `FREIGHTOS_API_KEY` (opcjonalny —
+    endpoint działa bez niego w trybie `estimate`). `api/_routes/freight.js` — `POST`/`GET
+    /api/freight/quotes`, cache w pamięci per-trasa (`Map`, TTL 5 min), fallback na
+    `FALLBACK_RATES` gdy Freightos nie zwróci nic, `success:false` (status 200, nie 500) gdy
+    brak pokrycia. **Uwaga:** publiczne Freightos bez klucza API zwraca `numQuotes:0` dla
+    każdej trasy (potwierdzone) — aplikacja realnie pokazuje `source:'fallback'`, dopóki klucz
+    nie zostanie ustawiony w `.env`.
+  - **Frontend:** `src/hooks/useFreightRates.js` (`search/reset`, woła `api.post`),
+    `src/components/freight/FreightRates.jsx` (prezentacja: badge źródła emerald/amber, karty
+    stawek per tryb FCL/LCL/AIR/EXPRESS, `compact` dla osadzenia w kreatorze, `AlertBox
+    type="warning"` na stan pusty), `src/pages/TradeRoutesPage.jsx` (`/routes` — formularz +
+    chipy portów + wyniki), `src/data/seaPorts.js` (`findSeaPortCode(city, countryCode)` —
+    dopasowanie miasta z Kroku 1 kreatora do UN/LOCODE; osobna, mniejsza lista frontendowa,
+    bo `api/` nie jest budowane do bundla — precedens: `EU_CODES` też zduplikowane między
+    `src/services/documentGeneration.js` i `api/_config/tariffSources.js`).
+  - **Krok „Wycena" (`QuoteStep` w `DocumentWizard.jsx`, tylko `find_transport`):** wyłącznie
+    informacyjny, nic nie zapisuje do snapshotu. `route.transport==='sea'` (lub
+    `route.multimodal`) → auto-`search()` przy wejściu w krok (`useEffect([])`), gdy oba
+    miasta z Kroku 1 rozpoznają się jako port (`findSeaPortCode`) — inaczej `AlertBox
+    type="warning"` „Nie rozpoznano portu…". `transport==='road'` → `AlertBox type="info"`
+    bez wywołania Freightos. „Dalej" zawsze aktywne (`validate: () => true` już w
+    `flowSteps.js`, bez zmian). Krok „Spedytorzy" (`ForwardersStep`) NIETKNIĘTY — zostaje
+    placeholderem (Freightos nie zwraca listy spedytorów).
+  - **Restylizacja `/routes` — akcent amber (2026-07-31, WYŁĄCZNIE warstwa stylu):** zakładka
+    dostała własny akcent wizualny wg standardu z `/insurance` (każda zakładka NARZĘDZI ma
+    rozpoznawalny kolor). Nagłówek przepisany na ten sam wzorzec strukturalny co `InsurancePage`
+    (karta z ikoną 12×12 w `rounded-xl` + tytuł + podtytuł), kolor amber zamiast emerald/teal,
+    ikona `RouteIcon` **inline SVG** (dwa węzły + przerywana linia) — mimo że `lucide-react` JEST
+    w repo (^1.23.0, używa go `InsurancePage`), `TradeRoutesPage`/`FreightRates` konsekwentnie
+    trzymają się inline SVG. Pola Skąd/Dokąd dostały kropki-węzły wewnątrz obramowania
+    (`NodeDot`: nadanie = wypełniona, cel = obwódka) + przerywany łącznik `RouteDash` po obu
+    stronach przycisku zamiany kierunku (przycisk BEZ zmian, łącznik `hidden sm:flex` — na mobile
+    pola układają się w pionie). Aktywny chip portu i przycisk „Szukaj stawek" → amber
+    (był emerald, nie blue jak zakładał prompt). Karty stawek w `FreightRates.jsx`: lewy pasek
+    `border-l-2 border-l-amber-600` + `rounded-l-none`, **tylko gdy `!compact`** — wariant
+    `compact` osadzony w kroku „Wycena" kreatora zostaje nietknięty. Reszta `FreightRates`
+    (badge źródła, stan pusty, dane) bez zmian.
+    Zweryfikowane: build zielony + kolejność utilities w zbudowanym CSS (`pl-8` po `px-3`,
+    `border-l-amber-600` po `border-emerald-300`, także w wariancie `hover:`, `rounded-l-none`
+    po `rounded-xl`) — od niej zależy, czy nadpisania w ogóle zadziałają. **Nie zweryfikowane
+    w przeglądarce** (Playwright nie jest zainstalowany w repo).
+  - Zweryfikowane E2E (Playwright, zalogowana sesja): `/routes` (chip portu, zamiana kierunku,
+    badge emerald/amber, karty, stan pusty), pełny przebieg kreatora ścieżki B Trasa→…→Wycena→
+    Dokumenty z transportem morskim (Gdańsk→Newark, porty rozpoznane, fallback rates, „Dalej"
+    aktywne) i drogowym (0 wywołań `/api/freight`, `AlertBox` info, „Dalej" aktywne), jasny +
+    ciemny motyw. Build zielony.
+
+- **Ubezpieczenia cargo (`/insurance`) — LAYOUT GOTOWY (2026-07-31):** zakładka zastąpiła
+  `PlaceholderPage`. **Zero backendu, zero bazy, zero sieci** — rozmowy z ubezpieczycielami trwają,
+  do podpisania umowy nic się realnie nie kupuje. Materiał źródłowy (Loadsure/Marsh) leży
+  w `docs/insurance-ref/` (4 pliki `.ts/.tsx`, WYŁĄCZNIE referencja — nic ich nie importuje).
+  - `src/data/insuranceRates.js` — `BASE_RATES` (12 kategorii), `COVERAGE_MULTIPLIERS`
+    (ICC_A/B/C = 1.00/0.75/0.55), `MODE_MULTIPLIERS` (sea/air/road/rail), `calculatePremiumLocally`
+    (× 1.5 dla ADR, × 1.2 dla łatwo psujących, `MIN_PREMIUM = 25`) + etykiety PL. Czysta logika.
+    **Uwaga:** 12 kluczy stawek to WŁASNY słownik ryzyka, celowo NIE pokrywa się z 19 kategoriami
+    z `cargoCategories.js` (tamte są celne). Mapowanie 19→12 = decyzja z ubezpieczycielem.
+  - `src/data/insuranceProviders.js` — `PROVIDERS` (Loadsure `recommended`, mnożnik 1.0, franszyza
+    500; Marsh mnożnik 0.92, franszyza 1000).
+  - `src/components/ui/Modal.jsx` (NOWY, ogólnego użytku) — modal z `children`, Escape + klik
+    w overlay, blokada scrolla tła, `max-h-[90vh]`. **`createPortal` do `document.body`** jest
+    konieczny: `AppShell` owija KAŻDĄ stronę w `StepTransition`, a element z `transform` tworzy
+    blok zawierający i `position: fixed` przyczepiłoby się do strony (ten sam powód co
+    w `UnsavedChangesGuard`). Istniejący `ConfirmDialog` został — to dialog 2-przyciskowy
+    bez miejsca na formularz, więc nie dało się go użyć.
+  - `src/components/insurance/` — `InsuranceCalculator.jsx` (liczy na bieżąco, bez przycisku
+    „Oblicz"; eksportuje `DEFAULT_QUOTE`, żeby karty ofert miały czym się zasilić przed pierwszym
+    efektem), `OfferCard.jsx`, `PolicyPurchaseModal.jsx` (2 kroki: Strony / Szczegóły),
+    `ClaimModal.jsx`, `PolicyList.jsx`. Oba modale kończą się `AlertBox type="info"` — przycisk
+    NIC nie wysyła i nie zapisuje, formularz żyje w stanie komponentu.
+  - `MOCK_POLICIES` dopisane do `src/data/mockData.js` (3 wpisy: ACTIVE / EXPIRED / CANCELLED).
+  - Akcent emerald/teal użyty oszczędnie: nagłówek, wynik kalkulatora, badge „Polecane".
+    Ikony z `lucide-react` (jest w repo, wbrew założeniu promptu).
+  - Zweryfikowane: build zielony + 13/13 testów akceptacyjnych E2E (Playwright, strona zamontowana
+    w tymczasowym entry Vite poza `src/`, skasowanym po testach — `/insurance` jest za `RequireAuth`,
+    a to omija zakładanie konta w produkcyjnej bazie): przeliczanie na żywo, ICC_C < ICC_A, ADR 1.5×,
+    minimum 25, dwie oferty + badge, Marsh tańszy, modal per oferta, przełączanie kroków, Escape,
+    lista polis, ClaimModal z danymi polisy, 375px. **ZERO zapytań sieciowych i zero błędów konsoli
+    potwierdzone nasłuchem `page.on('request')`.**
+
 **Do zrobienia:**
+- Ubezpieczenia: integracja z ubezpieczycielem po podpisaniu umowy (endpointy, tabele
+  `insurance_policies`/`insurance_claims`, realny zakup i certyfikat PDF)
 - Panel abonamentu (integracja ze Stripe)
-- Ścieżka B kreatora „Szukam transportu" — szkielet 6 kroków gotowy; kroki „Spedytorzy" i „Wycena"
-  to placeholdery (do zaimplementowania: lista spedytorów, wycena frachtu, ubezpieczenie)
+- Krok „Spedytorzy" ścieżki B — lista spedytorów (Freightos nie ma takiego endpointu,
+  potrzebne inne źródło/ręczna baza)
 - Deploy autoryzacji na Vercel (env vary DATABASE_URL/DIRECT_URL/JWT_SECRET) — patrz niżej
 - Tabela `companies` w bazie — typ `carrier` (do wyboru z listy zapisanych firm, jak Nadawca/Odbiorca)
 - Opcjonalne: dedykowany krok wizarda „Przewoźnik" po wdrożeniu bazy firm
