@@ -205,12 +205,11 @@ function Ticker({ items }) {
 
 function SkeletonCards() {
   return (
-    <div className="p-4 md:p-5 animate-pulse">
-      <div className="h-56 bg-slate-200 dark:bg-slate-700 rounded-xl mb-4" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {[1, 2, 3, 4].map(i => (
+    <div className="p-4 md:p-5 max-w-[2000px] mx-auto animate-pulse">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 min-[1600px]:grid-cols-4 gap-4">
+        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
           <div key={i} className="bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden">
-            <div className="h-44 bg-slate-200 dark:bg-slate-700" />
+            <div className="h-[120px] bg-slate-200 dark:bg-slate-700" />
             <div className="p-4 space-y-2">
               <div className="flex gap-2">
                 <div className="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded-full" />
@@ -238,21 +237,23 @@ function Tag({ children, cls }) {
 // Świadomie NIE pokazujemy cudzych zdjęć z RSS (prawa autorskie/licencje agencji) —
 // zamiast miniaturki renderujemy kolorowy placeholder z ikoną dopasowaną do kategorii.
 
+// Stonowane (800, nie 900) tło — przy pasku wysokości 120px ciemny, nasycony
+// prostokąt zaczynał dominować nad treścią kafelka; wraz z mniejszą ikoną (w-7)
+// i niższą krycia (/30) placeholder działa jak spokojny akcent, nie plama koloru.
 const CATEGORY_PLACEHOLDER = {
-  morski:  'bg-blue-900',
-  drogowy: 'bg-green-900',
-  cla:     'bg-yellow-900',
-  alert:   'bg-red-900',
-  default: 'bg-gray-800',
+  morski:  'bg-blue-800',
+  drogowy: 'bg-green-800',
+  cla:     'bg-yellow-800',
+  alert:   'bg-red-800',
+  default: 'bg-gray-700',
 }
 
-function NewsImage({ transport, isAlert, featured }) {
+function NewsImage({ transport, isAlert }) {
   const key = isAlert ? 'alert' : (CATEGORY_PLACEHOLDER[transport] ? transport : 'default')
   const bg = CATEGORY_PLACEHOLDER[key]
-  const h = featured ? 'h-56 sm:h-72' : 'h-44'
-  const iconCls = featured ? 'w-24 h-24 text-white/40' : 'w-12 h-12 text-white/40'
+  const iconCls = 'w-7 h-7 text-white/30'
   return (
-    <div className={`relative ${h} ${bg} flex items-center justify-center overflow-hidden`}>
+    <div className={`relative h-[120px] shrink-0 ${bg} flex items-center justify-center overflow-hidden`}>
       {isAlert
         ? <IconAlert cls={iconCls} />
         : <TransportIcon type={transport} className={iconCls} />}
@@ -261,38 +262,17 @@ function NewsImage({ transport, isAlert, featured }) {
 }
 
 // ── Karty ─────────────────────────────────────────────────────────────────────
-
-function FeaturedCard({ a }) {
-  const t = a.transport[0]
-  return (
-    <a href={a.link} target="_blank" rel="noopener noreferrer"
-       className="group block rounded-xl overflow-hidden bg-slate-900 mb-4 hover:opacity-95 transition-opacity">
-      <NewsImage transport={t} isAlert={a.isAlert} featured />
-      <div className="px-5 pb-5 pt-3">
-        <div className="flex flex-wrap gap-2 mb-3 items-center">
-          {a.isAlert && <Tag cls="bg-red-500 text-white">Alert</Tag>}
-          {t && <Tag cls={TRANSPORT_COLOR[t] || 'bg-slate-700 text-white'}>{TRANSPORT_LABEL[t]}</Tag>}
-          {a.geo.includes('swiat')  && <Tag cls="bg-slate-700 text-slate-200">Świat</Tag>}
-          {a.geo.includes('polska') && <Tag cls="bg-emerald-700 text-white">Polska</Tag>}
-          <Tag cls={SRC_COLOR[a.sourceId] || 'bg-slate-700 text-slate-200'}>{a.sourceName}</Tag>
-          <span className="text-slate-500 text-xs">· {timeAgo(a.pubDate)}</span>
-        </div>
-        <h2 className="text-white font-bold text-lg leading-snug mb-4 line-clamp-3 group-hover:text-emerald-300 transition-colors">
-          {a.title}
-        </h2>
-        <span className="text-emerald-400 text-sm font-semibold">Czytaj więcej →</span>
-      </div>
-    </a>
-  )
-}
+// Jeden, jednolity kształt kafelka dla wszystkich artykułów (dawny osobny
+// "hero" na pierwszy news usunięty — kolidował z wymogiem równej wysokości
+// siatki i zjadał miejsce potrzebne na 6-8 widocznych newsów bez scrolla).
 
 function ArticleCard({ a }) {
   const t = a.transport[0]
   return (
     <a href={a.link} target="_blank" rel="noopener noreferrer"
-       className="group block bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+       className="group h-full flex flex-col bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all">
       <NewsImage transport={t} isAlert={a.isAlert} />
-      <div className="p-4">
+      <div className="flex-1 flex flex-col p-4">
         <div className="flex flex-wrap gap-1.5 mb-2 items-center">
           {a.isAlert && <Tag cls="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">Alert</Tag>}
           {t && <Tag cls={TRANSPORT_COLOR[t] || 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}>{TRANSPORT_LABEL[t]}</Tag>}
@@ -302,7 +282,9 @@ function ArticleCard({ a }) {
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug line-clamp-3 mb-3 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
           {a.title}
         </h3>
-        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Czytaj więcej →</span>
+        {/* mt-auto przypina link do dołu niezależnie od długości (skróconego) tytułu,
+            żeby kafelki w jednym wierszu wyglądały równo mimo różnej treści. */}
+        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-auto">Czytaj więcej →</span>
       </div>
     </a>
   )
@@ -414,8 +396,6 @@ export default function NewsPage() {
   })
 
   const alertCount = articles.filter(a => a.isAlert).length
-  const featured   = filtered[0]
-  const rest       = filtered.slice(1)
   const mainLabel  = MAIN_TABS.find(t => t.id === mainTab)?.label
   const subLabel   = SUB_TABS.find(t => t.id === subTab)?.label
 
@@ -536,16 +516,13 @@ export default function NewsPage() {
                   Wybierz inną zakładkę lub kliknij „Odśwież".
                 </AlertBox>
               </div>
-            ) : featured && (
-              <div className="p-4 md:p-5">
-                <FeaturedCard a={featured} />
-                {rest.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {rest.map((a, i) => (
-                      <ArticleCard key={`${a.sourceId}-${a.link}-${i}`} a={a} />
-                    ))}
-                  </div>
-                )}
+            ) : (
+              <div className="p-4 md:p-5 max-w-[2000px] mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 min-[1600px]:grid-cols-4 gap-4">
+                  {filtered.map((a, i) => (
+                    <ArticleCard key={`${a.sourceId}-${a.link}-${i}`} a={a} />
+                  ))}
+                </div>
               </div>
             )}
           </StepTransition>
