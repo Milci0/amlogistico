@@ -97,7 +97,9 @@ export function DgRoadManifestAdrTemplate({ data }) {
         <div style={{ width: '40px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '35px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.weight || ''}</div>
-        <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packages || ''}</div>
+        <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>
+          {data.cargo?.packages || ''} {data.cargo?.packageTypeUnCode || ''}
+        </div>
         <div style={{ width: '100px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.sender?.name || ''}</div>
         <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.receiver?.name || ''}</div>
       </div>

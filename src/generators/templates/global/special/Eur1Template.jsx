@@ -96,7 +96,9 @@ export function Eur1Template({ data }) {
       <div style={{ display: 'flex', borderLeft: b, minHeight: '22px' }}>
         <div style={{ width: '50px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>1</div>
         <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>
-          {data.cargo?.marksNos || ''} {data.cargo?.packages ? `— ${data.cargo.packages} opak.` : ''}
+          {data.cargo?.marksNos || ''} {data.cargo?.packages
+            ? `— ${data.cargo.packages} ${data.cargo.packageTypeName ? `${data.cargo.packageTypeName} / ${data.cargo.packageTypeNameEn}` : 'opak.'}`
+            : ''}
         </div>
         <div style={{ width: '60px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.hsCode || ''}</div>
         <div style={{ width: '70px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.weight || ''}</div>

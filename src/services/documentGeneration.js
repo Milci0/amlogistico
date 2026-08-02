@@ -10,6 +10,7 @@
 import { getDocsList, generateDocument } from '../generators/documents'
 import { COUNTRIES } from '../data/mockData'
 import { cargoLabel } from '../data/cargoCategories'
+import { getUnitType } from '../data/cargoUnits'
 
 // Lista kodów UE — spójna z DocumentWizard/EU_CODES.
 const EU_CODES = [
@@ -32,6 +33,9 @@ export function getDocsForSnapshot(snapshot) {
 // (Mapowanie przeniesione 1:1 z dawnego Step4 — nie zmieniać kształtu bez zmiany szablonów.)
 export function buildGeneratorData(snapshot) {
   const { route, cargo, parties, road, sea, terms } = snapshot
+  // Typ jednostki ładunku (PLT/CTN/…) rozwiązany raz do PL/EN nazwy + kodu
+  // UN/ECE Rec 21, żeby szablony PDF nie musiały same importować cargoUnits.js.
+  const unitType = getUnitType(cargo.packageType)
   return {
     transport: route.transport,
     multimodal: route.multimodal,
@@ -52,6 +56,10 @@ export function buildGeneratorData(snapshot) {
       weightNet: cargo.weightNet,
       volume: cargo.volume,
       packages: cargo.packages,
+      packageType: cargo.packageType || '',
+      packageTypeName: unitType?.name || '',
+      packageTypeNameEn: unitType?.nameEn || '',
+      packageTypeUnCode: unitType?.unCode || '',
       value: cargo.value,
       currency: cargo.currency,
       notes: cargo.notes,

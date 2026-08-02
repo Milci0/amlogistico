@@ -160,7 +160,10 @@ export function ZlecenieTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '40px' }}>
           <div style={lbl}>Ilość opakowań:</div>
-          <div style={{ ...val, marginTop: '2px' }}>{data.cargo?.packages}</div>
+          <div style={{ ...val, marginTop: '2px' }}>
+            {data.cargo?.packages}
+            {data.cargo?.packageTypeName ? ` × ${data.cargo.packageTypeName}` : ''}
+          </div>
         </div>
       </div>
 

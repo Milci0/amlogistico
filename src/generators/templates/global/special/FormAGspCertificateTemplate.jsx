@@ -89,7 +89,9 @@ export function FormAGspCertificateTemplate({ data }) {
         <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>1</div>
         <div style={{ width: '65px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.marksNos || ''}</div>
         <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>
-          {data.cargo?.packages ? `${data.cargo.packages} pkg — ` : ''}{data.cargo?.name || ''}
+          {data.cargo?.packages
+            ? `${data.cargo.packages} ${data.cargo.packageTypeNameEn || 'pkg'} — `
+            : ''}{data.cargo?.name || ''}
         </div>
         <div style={{ width: '65px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '60px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.weight || ''}</div>

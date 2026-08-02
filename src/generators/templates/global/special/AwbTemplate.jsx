@@ -127,7 +127,11 @@ export function AwbTemplate({ data }) {
         <div style={{ width: '60px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '50px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-        <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.name || ''}</div>
+        <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>
+          {data.cargo?.packages && data.cargo?.packageTypeNameEn
+            ? `${data.cargo.packages} ${data.cargo.packageTypeNameEn} — `
+            : ''}{data.cargo?.name || ''}
+        </div>
       </div>
       {emptyRow}
       {emptyRow}

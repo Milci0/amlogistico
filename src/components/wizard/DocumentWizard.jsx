@@ -15,6 +15,7 @@ import {
 } from '../../services/documentGeneration'
 import DocumentSelectList from '../documents/DocumentSelectList'
 import CargoCategoryPicker from '../cargo/CargoCategoryPicker'
+import CargoUnitField from '../cargo/CargoUnitField'
 import HsCodeFinder from '../cargo/HsCodeFinder'
 import StepTransition from '../StepTransition'
 import FreightRates from '../freight/FreightRates'
@@ -281,7 +282,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
         </Field>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
         <Field label="Waga brutto (kg)">
           <input type="number" className={cls.input} value={data.weight} onChange={e => setData(d => ({ ...d, weight: e.target.value }))} />
         </Field>
@@ -291,9 +292,14 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
         <Field label="Objętość (m³)">
           <input type="number" className={cls.input} value={data.volume} onChange={e => setData(d => ({ ...d, volume: e.target.value }))} />
         </Field>
-        <Field label="Liczba paczek">
-          <input type="number" className={cls.input} value={data.packages} onChange={e => setData(d => ({ ...d, packages: e.target.value }))} />
-        </Field>
+      </div>
+
+      <div className="mb-4">
+        <CargoUnitField
+          packageType={data.packageType}
+          packages={data.packages}
+          onChange={({ packageType, packages }) => setData(d => ({ ...d, packageType, packages }))}
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
