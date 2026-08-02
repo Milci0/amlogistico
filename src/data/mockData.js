@@ -251,7 +251,12 @@ export const MENU_GROUPS = [
     title: 'Narzędzia',
     items: [
       { label: 'Ubezpieczenia', path: '/insurance', icon: 'shield' },
-      { label: 'Trasy handlowe', path: '/routes', icon: 'map' },
+      {
+        label: 'Trasy handlowe', path: '/routes', icon: 'map',
+        children: [
+          { label: 'Śledzenie ładunku', path: '/tracking', icon: 'pin' },
+        ],
+      },
       { label: 'Puste szablony', path: '/blank-templates', icon: 'template' },
     ],
   },

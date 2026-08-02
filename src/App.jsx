@@ -24,6 +24,7 @@ import NewsPage from './pages/NewsPage'
 import AdminNotificationsPage from './pages/AdminNotificationsPage'
 import TradeRoutesPage from './pages/TradeRoutesPage'
 import InsurancePage from './pages/InsurancePage'
+import TrackingPage from './pages/TrackingPage'
 
 // Root layout — AuthProvider wewnątrz routera, by trasy/hooki miały kontekst sesji
 function RootLayout() {
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
               { path: 'profile', element: <ProfilePage /> },
               { path: 'insurance', element: <InsurancePage /> },
               { path: 'routes', element: <TradeRoutesPage /> },
+              { path: 'tracking', element: <TrackingPage /> },
               { path: 'news', element: <NewsPage /> },
               { path: 'incoterms', element: <IncotermsPage /> },
               { path: 'blank-templates', element: <BlankTemplatesPage /> },

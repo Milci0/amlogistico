@@ -1,4 +1,5 @@
-import { NavLink, Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Link, useLocation } from 'react-router-dom'
 import { MENU_GROUPS, MENU_BOTTOM } from '../../data/mockData'
 import { useNews } from '../../context/NewsContext'
 import { useDraftCount } from '../../hooks/useDocumentSets'
@@ -42,6 +43,13 @@ const ICONS = {
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
         d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+    </svg>
+  ),
+  pin: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z" />
+      <circle cx="12" cy="9" r="2.5" strokeWidth={1.8} />
     </svg>
   ),
   globe: (
@@ -145,10 +153,96 @@ function MenuLink({ item, onClose, dot, collapsed }) {
   )
 }
 
+// Pozycja menu z podpozycjami (na razie tylko „Trasy handlowe" → „Śledzenie
+// ładunku") — klik w etykietę nawiguje jak dotąd, osobna strzałka rozwija/zwija
+// listę dzieci. W trybie zwiniętym paska (tylko ikony) nie ma miejsca na
+// zagnieżdżoną listę — pozycja zachowuje się jak zwykły MenuLink do `item.path`.
+function MenuLinkGroup({ item, onClose, collapsed, expanded, onToggle, isChildActive }) {
+  if (collapsed) {
+    return <MenuLink item={item} onClose={onClose} collapsed={collapsed} />
+  }
+
+  return (
+    <div>
+      <div className="flex items-center">
+        <NavLink
+          to={item.path}
+          onClick={onClose}
+          className={({ isActive }) =>
+            'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ' +
+            ((isActive || isChildActive)
+              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100')
+          }
+        >
+          {({ isActive }) => (
+            <>
+              <span className={'shrink-0 ' + ((isActive || isChildActive) ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500')}>
+                {ICONS[item.icon]}
+              </span>
+              <span className="truncate">{item.label}</span>
+            </>
+          )}
+        </NavLink>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={expanded ? `Zwiń ${item.label}` : `Rozwiń ${item.label}`}
+          aria-expanded={expanded}
+          className="shrink-0 p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          <svg className={'w-3.5 h-3.5 transition-transform duration-200 ' + (expanded ? 'rotate-90' : '')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+      {expanded && (
+        <div className="mt-0.5 ml-4 pl-3 border-l border-slate-200 dark:border-slate-700 space-y-0.5">
+          {item.children.map(child => (
+            <MenuLink key={child.path} item={child} onClose={onClose} collapsed={false} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Sidebar({ onClose, collapsed, onToggleCollapse }) {
   const { hasUnread } = useNews()
   const draftCount = useDraftCount()
   const { user } = useAuth()
+  const location = useLocation()
+  const [expandedGroups, setExpandedGroups] = useState(() => new Set())
+
+  // Auto-rozwinięcie sekcji, gdy user wejdzie na trasę rodzica lub dziecka (np.
+  // bezpośredni link/refresh na /tracking) — tylko DOPISUJE do zbioru, nigdy nie
+  // zwija tego, co user sam zwinął ręcznie.
+  useEffect(() => {
+    setExpandedGroups(prev => {
+      let changed = false
+      const next = new Set(prev)
+      for (const group of MENU_GROUPS) {
+        for (const item of group.items) {
+          if (!item.children) continue
+          const active = location.pathname === item.path || item.children.some(c => location.pathname === c.path)
+          if (active && !next.has(item.path)) {
+            next.add(item.path)
+            changed = true
+          }
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [location.pathname])
+
+  function toggleGroup(path) {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
+  }
 
   return (
     <aside className={'flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 transition-all duration-200 ' + (collapsed ? 'w-[88px]' : 'w-64')}>
@@ -218,6 +312,21 @@ export default function Sidebar({ onClose, collapsed, onToggleCollapse }) {
                 const resolvedItem = isDrafts
                   ? { ...item, badge: draftCount > 0 ? String(draftCount) : undefined }
                   : item
+
+                if (resolvedItem.children) {
+                  return (
+                    <MenuLinkGroup
+                      key={resolvedItem.path}
+                      item={resolvedItem}
+                      onClose={onClose}
+                      collapsed={collapsed}
+                      expanded={expandedGroups.has(resolvedItem.path)}
+                      onToggle={() => toggleGroup(resolvedItem.path)}
+                      isChildActive={resolvedItem.children.some(c => location.pathname === c.path)}
+                    />
+                  )
+                }
+
                 return (
                   <MenuLink key={item.path} item={resolvedItem} onClose={onClose} dot={item.path === '/news' && hasUnread} collapsed={collapsed} />
                 )
