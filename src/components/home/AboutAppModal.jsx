@@ -172,7 +172,7 @@ export default function AboutAppModal({ onClose, onStart }) {
               Jak to działa
             </h2>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-              Od opisu ładunku do gotowych dokumentów — pięć kroków
+              Od opisu ładunku po dokumenty, fracht i ubezpieczenie
             </p>
           </div>
           <button
