@@ -59,3 +59,31 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-page-in { animation: page-in-fade 220ms ease-out both; }
 }
+
+/* Ujawnianie kroków w AboutAppModal (panel "Dowiedz się więcej") przy scrollu
+   wewnątrz panelu — IntersectionObserver w komponencie dokłada `.is-visible`
+   do wiersza kroku. Ikona i treść ujawniają się z lekkim przesunięciem w czasie
+   (stagger) tym samym easingiem co .animate-page-in, dla spójności ruchu w apce. */
+.about-modal-step-icon,
+.about-modal-step-body {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 550ms cubic-bezier(0.16, 1, 0.3, 1), transform 550ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.about-modal-step.is-visible .about-modal-step-icon {
+  opacity: 1;
+  transform: translateY(0);
+}
+.about-modal-step.is-visible .about-modal-step-body {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 80ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .about-modal-step-icon,
+  .about-modal-step-body {
+    transform: none;
+    transition: opacity 220ms ease-out;
+    transition-delay: 0ms;
+  }
+}

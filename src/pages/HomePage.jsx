@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { HOME_STATS } from '../data/mockData'
+import AboutAppModal from '../components/home/AboutAppModal'
 
 const STAT_VALUE_RE = /^(\D*)(\d+)(\D*)$/
 
@@ -70,6 +71,7 @@ const ICON_COLORS = {
 export default function HomePage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const [aboutOpen, setAboutOpen] = useState(false)
 
   function handleStart() {
     if (user) {
@@ -107,12 +109,16 @@ export default function HomePage() {
             Rozpocznij
           </button>
           <button
-            onClick={() => navigate('/incoterms')}
+            onClick={() => setAboutOpen(true)}
             className="px-6 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
           >
             Dowiedz się więcej
           </button>
         </div>
+
+        {aboutOpen && (
+          <AboutAppModal onClose={() => setAboutOpen(false)} onStart={handleStart} />
+        )}
 
         {!user && (
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
