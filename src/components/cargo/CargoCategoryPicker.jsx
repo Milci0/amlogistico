@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { Info, Search, ChevronDown } from 'lucide-react'
+import { Info, Search, ChevronDown, Thermometer, Scale, ClipboardCheck } from 'lucide-react'
 import AlertBox from '../ui/AlertBox'
 import {
   CARGO_CATEGORIES,
@@ -7,6 +7,8 @@ import {
   getCategory,
   getSubcategories,
   getSubcategory,
+  getTempRange,
+  formatTempRange,
 } from '../../data/cargoCategories'
 
 // Wspólny widget „Kategoria towaru" — używany w kroku 2 kreatora (DocumentWizard)
@@ -137,6 +139,7 @@ export default function CargoCategoryPicker({
   const subcategory = getSubcategory(subcategoryId)
   // Podkategoria z innej kategorii (np. po zmianie kategorii) nie jest brana pod uwagę.
   const activeSub = subcategory && subcategory.categoryId === categoryId ? subcategory : null
+  const tempRange = activeSub ? getTempRange(activeSub.id) : null
 
   function pickCategory(id) {
     // Ponowne kliknięcie w aktywny kafelek = odznaczenie całego wyboru.
@@ -218,6 +221,27 @@ export default function CargoCategoryPicker({
                   </span>
                 )
               })}
+            </div>
+          )}
+
+          {tempRange && (
+            <div className="flex items-start gap-2 px-3.5 py-3 bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800 rounded-lg">
+              <Thermometer className="w-4 h-4 text-sky-500 shrink-0 mt-0.5" strokeWidth={1.5} />
+              <div className="flex-1">
+                <p className="text-xs text-sky-800 dark:text-sky-300">
+                  <span className="font-medium">Temperatura transportu:</span> {formatTempRange(tempRange)}
+                </p>
+                <span
+                  className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium
+                    ${tempRange.legal
+                      ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                      : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}
+                >
+                  {tempRange.legal
+                    ? <><Scale className="w-3 h-3" strokeWidth={1.5} /> Wymóg prawny</>
+                    : <><ClipboardCheck className="w-3 h-3" strokeWidth={1.5} /> Dobra praktyka branżowa</>}
+                </span>
+              </div>
             </div>
           )}
 
