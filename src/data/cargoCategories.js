@@ -25,8 +25,14 @@ import {
 // `adrClass` = klasa ADR/IMDG, jeśli flaga jednoznacznie ją wyznacza.
 
 export const CARGO_FLAGS = {
-  chilled:        { label: 'Wymaga chłodzenia (2-8°C)',            icon: Thermometer,      adrClass: null },
-  frozen:         { label: 'Mrożony (−18°C i poniżej)',            icon: Snowflake,        adrClass: null },
+  // UWAGA: te etykiety celowo NIE zawierają liczb. Do 2026-08 flaga miała
+  // zaszyty jeden uniwersalny zakres ("2-8°C" dla WSZYSTKICH towarów chłodniczych,
+  // "−18°C i poniżej" dla wszystkich mrożonych) — nieprawdziwe dla większości
+  // towarów (np. mango dostaje chilling injury poniżej ~12°C, ryby świeże wymagają
+  // 0-3°C nie do 8°C). Realny, zweryfikowany źródłowo zakres transportu — jeśli
+  // istnieje dla danej podkategorii — jest teraz w CARGO_TEMP_RANGES niżej.
+  chilled:        { label: 'Wymaga chłodzenia',                    icon: Thermometer,      adrClass: null },
+  frozen:         { label: 'Mrożony',                              icon: Snowflake,        adrClass: null },
   dangerous:      { label: 'Towar niebezpieczny (DG)',             icon: AlertTriangle,    adrClass: 'różna' },
   flammable:      { label: 'Łatwopalny',                           icon: Flame,            adrClass: '3' },
   corrosive:      { label: 'Żrący',                                icon: Droplets,         adrClass: '8' },
@@ -420,7 +426,117 @@ export const CARGO_SUBCATEGORIES = [
   sub('def005', 'defence', 'Chemikalia bojowe (zakazane)', '2929.90.00', ['dual_use', 'military', 'dangerous', 'toxic'], ['CWC_compliance_check'], 'Konwencja o Zakazie Broni Chemicznej (CWC), eksport w celach wojskowych ZAKAZANY globalnie.'),
 ]
 
+// ── Zakresy temperatur TRANSPORTU (nie: przechowywania długoterminowego,
+//    nie: dojrzewania) ────────────────────────────────────────────────────────
+//
+// ZASADA: wpis tylko gdy jest skonkretny, cytowalny źródło mówiące wprost
+// o transporcie (kontener reefer / carrying temperature / regulacja obejmująca
+// transport). Brak wpisu = brak potwierdzonych danych = UI nic nie pokazuje
+// (patrz getTempRange). NIE zgadywać, nie dopisywać "na oko" dla towarów
+// spoza tej listy, nawet jeśli wyglądają na oczywiste (np. jabłka/gruszki/
+// pomidory/cytrusy/bazylia/papryka/ogórki/papaja/masło/ser NIE MAJĄ tu wpisu,
+// bo w trakcie researchu (2026-08) albo nie znaleziono źródła stricte
+// transportowego, albo źródła się kłóciły — patrz historia sesji).
+//
+// `legal: true`  = wynika z przepisu (do pokazania jako "wymóg prawny")
+// `legal: false` = dobra praktyka branżowa/przewoźnika (nie ma mocy prawa)
+// `max`/`min` mogą występować pojedynczo, gdy źródło podaje tylko sufit/próg
+// (np. przepis UE dla mięsa podaje WYŁĄCZNIE "nie więcej niż 7°C", bez dolnej
+// granicy) — formatTempRange() renderuje to jako "do 7°C", nie zmyśla dołu.
+export const CARGO_TEMP_RANGES = {
+  // ── Mięso świeże/chłodzone — Rozporządzenie (WE) 853/2004, Załącznik III,
+  // Sekcja I: mięso ssaków ≤7°C, drób ≤4°C, podroby ≤3°C. Koń = domowy
+  // nieparzystokopytny ("domestic solipeds"), objęty tą samą sekcją co
+  // bydło/trzoda/owce/kozy (Załącznik I, definicja "zwierząt kopytnych").
+  // https://www.legislation.gov.uk/eur/2004/853/annex/III/section/I
+  fa001: { max: 7, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sekcja I — mięso ssaków ≤7°C' }, // Wołowina świeża/chłodzona
+  fa003: { max: 7, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sekcja I — mięso ssaków ≤7°C' }, // Wieprzowina świeża/chłodzona
+  fa007: { max: 7, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sekcja I — mięso ssaków ≤7°C' }, // Mięso jagnięce/baranie
+  fa008: { max: 7, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sekcja I + Zał. I (konie = domestic solipeds, ta sama sekcja)' }, // Mięso końskie
+  fa005: { max: 4, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III — drób (białe mięso) ≤4°C' }, // Mięso drobiowe świeże (kurczak)
+
+  // ── Ryby/owoce morza świeże — Rozp. (WE) 853/2004, Zał. III, Sekcja VIII:
+  // "temperatura zbliżona do topniejącego lodu". Przepis nie podaje liczby
+  // wprost — 0-3°C to powszechna interpretacja branżowa tego sformułowania
+  // (0-2°C luzem / 0-3°C pakowane), stąd legal:true, ale zakres liczbowy jest
+  // operacjonalizacją, nie cytatem z tekstu regulacji.
+  // https://www.legislation.gov.uk/eur/2004/853/annex/III/section/VIII
+  fa011: { min: 0, max: 3, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sek. VIII "temp. zbliżona do topniejącego lodu"; 0-3°C = powszechna interpretacja branżowa' }, // Łosoś świeży/chłodzony
+  fa013: { min: 0, max: 3, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sek. VIII "temp. zbliżona do topniejącego lodu"; 0-3°C = powszechna interpretacja branżowa' }, // Tuńczyk świeży
+  fa015: { min: 0, max: 3, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sek. VIII "temp. zbliżona do topniejącego lodu"; 0-3°C = powszechna interpretacja branżowa' }, // Małże i ostrygi
+
+  // ── Ryby wędzone — UE, wymóg mikrobiologiczny (C. botulinum nie rośnie
+  // ≤3°C; branżowa/urzędowa wytyczna UE dla ryb lekko konserwowanych ≤4-5°C).
+  // https://food.ec.europa.eu/system/files/2018-10/biosafety_fh_guidance_essa_smoked-salted-marinated-fish.pdf
+  fa016: { max: 4, legal: true, source: 'EU Guide to Good Practice for Smoked/Salted/Marinated Fish (food.ec.europa.eu) — ≤4°C dla bezpieczeństwa mikrobiologicznego' }, // Ryby wędzone (łosoś wędzony)
+
+  // ── Mrożone (mięso/ryby/owoce/warzywa) — Dyrektywa 89/108/EWG: "quick-frozen
+  // foodstuffs" muszą być utrzymane w -18°C lub niżej PODCZAS TRANSPORTU
+  // (dopuszczalne krótkie wahania do +3°C). Dla ryb dodatkowo pokrywa się
+  // z Rozp. 853/2004 Zał. III Sek. VIII, które używa tego samego -18°C
+  // i wprost słowa "transport".
+  // https://eur-lex.europa.eu/EN/legal-content/summary/quick-frozen-food.html
+  fa002: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG — quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Wołowina mrożona
+  fa004: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG — quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Wieprzowina mrożona
+  fa006: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG — quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Mięso drobiowe mrożone
+  fa012: { max: -18, legal: true, source: 'Rozp. (WE) 853/2004 Zał. III Sek. VIII (transport ryb mrożonych) + Dyrektywa 89/108/EWG' }, // Łosoś mrożony
+  fa014: { max: -18, legal: true, source: 'Rozp. (WE) 853/2004 Zał. III Sek. VIII (transport ryb mrożonych) + Dyrektywa 89/108/EWG' }, // Krewetki mrożone
+  fp025: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG — quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Owoce mrożone
+  fp035: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG — quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Warzywa mrożone (mix)
+
+  // ── Awokado — DWA niezależne źródła transportowe (reefer), zbieżne:
+  // Maersk Commodity Database: 4-7°C. freshknowledge.eu (transport practices
+  // for avocado, jawnie "best transport temperature"): 5-7°C. Dotyczy odmian
+  // o umiarkowanej wrażliwości (Hass/Fuerte) — odmiany tropikalne (West Indian)
+  // wymagają cieplej (~13°C wg WFLO Storage Manual), ale to dane o
+  // PRZECHOWYWANIU nie transporcie, więc pominięte tutaj.
+  // https://www.maersk.com/support/glossaries/commodity-database
+  // https://www.freshknowledge.eu/en/increase-your-knowledge/crops/avocado/transport-practices-for-avocado.htm
+  fp016: { min: 4, max: 7, legal: false, source: 'Maersk Commodity Database (4-7°C) + freshknowledge.eu "transport practices for avocado" (5-7°C) — dot. odmian Hass/Fuerte' }, // Awokado świeże
+
+  // ── Kwiaty cięte — Sensitech, artykuł jawnie o transporcie kwiatów ciętych.
+  // Zakres dla większości gatunków; kwiaty tropikalne (storczyki i in.)
+  // potrzebują cieplej (13-18°C) — baza nie ma dziś osobnej podkategorii na
+  // kwiaty tropikalne, więc ten zakres NIE pasuje do wszystkich kwiatów w tej
+  // pozycji katalogu (do rozważenia rozbicie podkategorii w przyszłości).
+  // https://www.sensitech.com/en/blog/blog-articles/blog-fresh-cut-flowers.html
+  fp053: { min: -1, max: 4, legal: false, source: 'Sensitech — Temperature Control on the Transportation of Flowers; NIE dotyczy gatunków tropikalnych (potrzebują 13-18°C)' }, // Kwiaty cięte świeże
+
+  // ── Lody i mrożone desery — IDFA (International Dairy Foods Association):
+  // dystrybucja ≤-25°C — surowsze niż ogólny standard mrożonek (-18°C),
+  // bo niższa temperatura chroni teksturę (kryształki lodu).
+  // https://www.idfa.org/tips-on-storing-handling-ice-cream
+  pr011: { max: -25, legal: false, source: 'IDFA — Tips on Storing & Handling Ice Cream: dystrybucja ≤-25°C (surowsze niż ogólny standard mrożonek)' }, // Lody i mrożone desery
+
+  // ── Farmaceutyki / wyroby medyczne klasy III — standard "cold chain"
+  // 2-8°C, WHO + unijne wytyczne GDP (2013/C 343/01) dot. dystrybucji
+  // produktów leczniczych wymagających kontroli temperatury podczas
+  // transportu.
+  // https://gdp.gmp-compliance.org (European GDP Association)
+  med001: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01 — standardowy łańcuch chłodniczy farmaceutyków' }, // Leki gotowe, tabletki i kapsułki
+  med003: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01 — standardowy łańcuch chłodniczy farmaceutyków' }, // Szczepionki
+  med004: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01 — standardowy łańcuch chłodniczy farmaceutyków' }, // Penicyliny i pochodne
+  med006: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01 — standardowy łańcuch chłodniczy farmaceutyków' }, // Narkotyki i psychotropy (kontrolowane)
+  mdc003: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01 — standardowy łańcuch chłodniczy farmaceutyków' }, // Wyroby medyczne klasy III
+}
+
 // ── Helpery ────────────────────────────────────────────────────────────────────
+
+export function getTempRange(subcategoryId) {
+  return CARGO_TEMP_RANGES[subcategoryId] || null
+}
+
+// Renderuje zakres transportu po polsku. Nie zmyśla brakującej granicy: gdy
+// źródło ma tylko sufit (typowe dla przepisów o mięsie/mrożonkach — "nie
+// więcej niż X°C"), pokazujemy "do X°C" / "X°C i poniżej", nie wymyślony dół.
+export function formatTempRange(range) {
+  if (!range) return null
+  const { min, max } = range
+  if (min != null && max != null) return `od ${min} do ${max}°C`
+  if (max != null) return max < 0 ? `${max}°C i poniżej` : `do ${max}°C`
+  if (min != null) return `od ${min}°C`
+  return null
+}
 
 export function getCategory(categoryId) {
   return CARGO_CATEGORIES.find((c) => c.id === categoryId) || null
