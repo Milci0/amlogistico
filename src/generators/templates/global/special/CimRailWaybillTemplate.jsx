@@ -129,7 +129,10 @@ export function CimRailWaybillTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
           <div style={lbl}>Liczba opakowań / Packages:</div>
-          <div style={val}>{data.cargo?.packages || ''}</div>
+          <div style={val}>
+            {data.cargo?.packages || ''}
+            {data.cargo?.packageTypeName ? ` × ${data.cargo.packageTypeName} / ${data.cargo.packageTypeNameEn}` : ''}
+          </div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
           <div style={lbl}>Dokumenty dołączone / Attached docs:</div>

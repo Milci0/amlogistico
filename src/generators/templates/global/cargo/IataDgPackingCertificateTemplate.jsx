@@ -56,7 +56,9 @@ export function IataDgPackingCertificateTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
           <div style={lbl}>No. of packages packed:</div>
-          <div style={val}>{data.cargo?.packages || ''}</div>
+          <div style={val}>
+            {data.cargo?.packages || ''} {data.cargo?.packageTypeNameEn || ''}
+          </div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
           <div style={lbl}>Total net qty:</div>

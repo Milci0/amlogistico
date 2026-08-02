@@ -103,7 +103,7 @@ export function PackingListTemplate({ data }) {
         <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.name}</div>
         <div style={{ width: '65px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.hsCode}</div>
         <div style={{ width: '50px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packages}</div>
-        <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>szt.</div>
+        <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packageTypeUnCode || 'szt.'}</div>
         <div style={{ width: '75px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.weightNet || data.cargo?.weight}</div>
         <div style={{ width: '75px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.weight}</div>
         <div style={{ width: '95px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
@@ -117,7 +117,10 @@ export function PackingListTemplate({ data }) {
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 2, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>Łączna liczba opakowań Total packages:</div>
-          <div style={val}>{data.cargo?.packages}</div>
+          <div style={val}>
+            {data.cargo?.packages}
+            {data.cargo?.packageTypeName ? ` × ${data.cargo.packageTypeName} / ${data.cargo.packageTypeNameEn}` : ''}
+          </div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
           <div style={lbl}>Łączna waga netto Total net weight (kg):</div>

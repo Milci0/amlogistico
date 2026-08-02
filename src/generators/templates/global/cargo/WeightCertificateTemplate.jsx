@@ -74,7 +74,11 @@ export function WeightCertificateTemplate({ data }) {
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
           <div style={lbl}>Opakowanie / Packaging:</div>
-          <div style={val} />
+          <div style={val}>
+            {data.cargo?.packageTypeName && data.cargo?.packages
+              ? `${data.cargo.packages} × ${data.cargo.packageTypeName} / ${data.cargo.packageTypeNameEn}`
+              : ''}
+          </div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
           <div style={lbl}>Nr kontenera lub wagonu:</div>

@@ -127,7 +127,11 @@ export function ImdgDeclarationTemplate({ data }) {
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
           <div style={lbl}>Typ opakowania / Package type:</div>
-          <div style={val} />
+          <div style={val}>
+            {data.cargo?.packageTypeName
+              ? `${data.cargo.packageTypeName} / ${data.cargo.packageTypeNameEn} (${data.cargo.packageTypeUnCode})`
+              : ''}
+          </div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
           <div style={lbl}>Certyfikat opakowania / Package cert.:</div>
