@@ -1,4 +1,5 @@
 import { Truck, Ship, Plane, Waypoints, Thermometer } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { BRANCHES, TRACKING_STATUSES } from '../../data/trackingMock'
 
 const BRANCH_TITLE_ICON = { road: Truck, sea: Ship, air: Plane, multimodal: Waypoints }
@@ -13,14 +14,15 @@ function Field({ label, children }) {
 }
 
 function RoadDetails({ details }) {
+  const { t } = useTranslation('pages')
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <Field label="Przewoźnik">{details.carrier}</Field>
-      <Field label="Nr rejestracyjny">{details.vehicleReg}</Field>
-      <Field label="Kierowca">{details.driver}</Field>
+      <Field label={t('tracking.carrier')}>{details.carrier}</Field>
+      <Field label={t('tracking.vehicleReg')}>{details.vehicleReg}</Field>
+      <Field label={t('tracking.driver')}>{details.driver}</Field>
       {details.temperature != null && (
         <div>
-          <p className="text-[11px] text-gray-400 dark:text-slate-500">Temperatura (chłodnia)</p>
+          <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.temperature')}</p>
           <p className="text-sm font-medium text-gray-800 dark:text-slate-100 mt-0.5 flex items-center gap-1.5">
             <Thermometer className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
             {details.temperature}°C
@@ -32,16 +34,17 @@ function RoadDetails({ details }) {
 }
 
 function SeaDetails({ details }) {
+  const { t } = useTranslation('pages')
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <Field label="Nr kontenera">{details.containerNo}</Field>
-      <Field label="Statek / rejs">{details.vessel} · {details.voyageNo}</Field>
-      <Field label="Port załadunku">{details.portOfLoading}</Field>
-      <Field label="Port wyładunku">{details.portOfDischarge}</Field>
+      <Field label={t('tracking.containerNo')}>{details.containerNo}</Field>
+      <Field label={t('tracking.vesselVoyage')}>{details.vessel} · {details.voyageNo}</Field>
+      <Field label={t('tracking.portOfLoading')}>{details.portOfLoading}</Field>
+      <Field label={t('tracking.portOfDischarge')}>{details.portOfDischarge}</Field>
       <div className="sm:col-span-2">
-        <p className="text-[11px] text-gray-400 dark:text-slate-500">Przeładunki</p>
+        <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.transshipments')}</p>
         <p className="text-sm font-medium text-gray-800 dark:text-slate-100 mt-0.5">
-          {details.transshipments?.length ? details.transshipments.join(', ') : 'Bez przeładunków (bezpośredni)'}
+          {details.transshipments?.length ? details.transshipments.join(', ') : t('tracking.noTransshipments')}
         </p>
       </div>
     </div>
@@ -49,14 +52,15 @@ function SeaDetails({ details }) {
 }
 
 function AirDetails({ details }) {
+  const { t } = useTranslation('pages')
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <Field label="Nr AWB">{details.awbNo}</Field>
-      <Field label="Przewoźnik">{details.carrier}</Field>
+      <Field label={t('tracking.awbNo')}>{details.awbNo}</Field>
+      <Field label={t('tracking.carrier')}>{details.carrier}</Field>
       <div className="sm:col-span-2">
-        <p className="text-[11px] text-gray-400 dark:text-slate-500">Lotniska przesiadkowe</p>
+        <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.layoverAirports')}</p>
         <p className="text-sm font-medium text-gray-800 dark:text-slate-100 mt-0.5">
-          {details.layoverAirports?.length ? details.layoverAirports.join(', ') : 'Brak — lot bezpośredni'}
+          {details.layoverAirports?.length ? details.layoverAirports.join(', ') : t('tracking.directFlight')}
         </p>
       </div>
     </div>
@@ -64,6 +68,7 @@ function AirDetails({ details }) {
 }
 
 function MultimodalDetails({ details }) {
+  const { t } = useTranslation('pages')
   return (
     <div className="space-y-2.5">
       {details.legs.map((leg, i) => {
@@ -79,7 +84,7 @@ function MultimodalDetails({ details }) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-gray-800 dark:text-slate-100">
-                Odcinek {i + 1} · {BRANCHES[leg.branch].label}
+                {t('tracking.leg', { number: i + 1 })} · {t(`tracking.branches.${leg.branch}`)}
               </p>
               <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
                 {leg.fromCity} → {leg.toCity}
@@ -88,7 +93,7 @@ function MultimodalDetails({ details }) {
               </p>
             </div>
             <span className={`shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full ${status.badgeClass}`}>
-              {status.label}
+              {t(`tracking.statuses.${leg.status}`)}
             </span>
           </div>
         )
@@ -98,6 +103,7 @@ function MultimodalDetails({ details }) {
 }
 
 export default function BranchDetails({ shipment }) {
+  const { t } = useTranslation('pages')
   const Icon = BRANCH_TITLE_ICON[shipment.branch]
 
   return (
@@ -105,7 +111,7 @@ export default function BranchDetails({ shipment }) {
       <div className="flex items-center gap-2 mb-4">
         <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
         <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">
-          Szczegóły transportu — {BRANCHES[shipment.branch].label.toLowerCase()}
+          {t('tracking.detailsFor', { branch: t(`tracking.branches.${shipment.branch}`).toLowerCase() })}
         </h3>
       </div>
 

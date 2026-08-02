@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { generatePdf } from '../../generators/generatePdf'
-import { searchTemplates, GROUP_LABELS } from '../../data/templateCatalog'
+import { searchTemplates } from '../../data/templateCatalog'
 
 export default function TemplateSearch() {
+  const { t } = useTranslation('pages')
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [downloadingKey, setDownloadingKey] = useState(null)
@@ -40,7 +42,7 @@ export default function TemplateSearch() {
           value={query}
           onChange={e => { setQuery(e.target.value); setOpen(true) }}
           onFocus={() => setOpen(true)}
-          placeholder="Szukaj szablonu… (np. china, import, UE)"
+          placeholder={t('templateSearch.placeholder')}
           className="w-full pl-9 pr-3 py-2 text-sm rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
         />
       </div>
@@ -48,23 +50,23 @@ export default function TemplateSearch() {
       {open && (
         <div className="absolute left-0 right-0 mt-2 max-h-80 overflow-y-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50">
           <div className="sticky top-0 px-3 py-1.5 text-[11px] text-slate-400 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
-            {query.trim() ? `Wyniki` : `Wszystkie szablony`}
+            {query.trim() ? t('templateSearch.results') : t('templateSearch.allTemplates')}
           </div>
           {results.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-slate-400">Brak dopasowań.</div>
+            <div className="px-4 py-3 text-sm text-slate-400">{t('templateSearch.noMatches')}</div>
           ) : (
             results.map(doc => (
               <div key={doc.key} className="flex items-center justify-between gap-2 px-3 py-2 border-b last:border-b-0 border-slate-100 dark:border-slate-700">
                 <div className="min-w-0">
                   <p className="text-sm text-slate-900 dark:text-slate-100 truncate">{doc.name}</p>
-                  <p className="text-xs text-slate-400">{GROUP_LABELS[doc.grupa]}</p>
+                  <p className="text-xs text-slate-400">{t(`templateSearch.groups.${doc.grupa}`, { defaultValue: doc.grupa })}</p>
                 </div>
                 <button
                   onClick={() => handleDownload(doc)}
                   disabled={downloadingKey === doc.key}
                   className="shrink-0 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white px-3 py-1.5 rounded-lg transition-colors"
                 >
-                  {downloadingKey === doc.key ? 'Generuję…' : 'Pobierz PDF'}
+                  {downloadingKey === doc.key ? t('templateSearch.generating') : t('templateSearch.downloadPdf')}
                 </button>
               </div>
             ))

@@ -8,6 +8,9 @@ i otrzymuje komplet PDF-ów dopasowany do trasy (UE / poza UE) i typu transportu
 
 ## Stack
 - **Frontend:** React.js + Tailwind CSS + React Router (w folderze `src/`)
+- **Języki interfejsu:** i18next + react-i18next, EN (domyślny) i PL. Tłumaczenia
+  w `src/locales/{en,pl}/`, konfiguracja w `src/i18n.js`. Język dokumentów PDF to
+  ODDZIELNA warstwa, sterowana trasą przesyłki, nie tym przełącznikiem
 - **Backend:** Node.js + Express 5 (serverless), REST API w folderze **`api/`** (NIE `server/`);
   lokalnie `npm run server` (:3001), na Vercelu funkcja serverless. Gotowe: auth (+ rate-limit) +
   zestawy dokumentów (news/diesel/ecb). Do zrobienia: companies, subscription/Stripe
@@ -601,6 +604,59 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     lista polis, ClaimModal z danymi polisy, 375px. **ZERO zapytań sieciowych i zero błędów konsoli
     potwierdzone nasłuchem `page.on('request')`.**
 
+- **Dwujęzyczność interfejsu EN/PL — GOTOWE (2026-08-03):** cały widoczny tekst aplikacji
+  przeszedł na i18next; angielski jest domyślny, polski wybierany przełącznikiem.
+  **Język DOKUMENTÓW nietknięty** — szablony PDF, `generators/`, `documentEngine.js` oraz nazwy
+  dokumentów (`documentCatalog.js`, `templateCatalog.js`) zostały bez zmian.
+  - **Bez prefiksów w URL.** Trasy się nie zmieniły (aplikacja nie ma stron marketingowych,
+    wszystko siedzi pod `/`), język trzymany w `localStorage` pod kluczem `amlogistico:v1:lang`.
+    Przełączenie przerysowuje interfejs w miejscu, bez nawigacji.
+  - `src/i18n.js` — `fallbackLng: 'en'`, `supportedLngs: ['en','pl']`, `defaultNS: 'common'`,
+    `detection.order: ['localStorage']`. **`navigator` CELOWO POMINIĘTY**: użytkownik z polską
+    przeglądarką widzi wersję angielską, dopóki sam nie wybierze polskiej (decyzja produktowa).
+    Moduł sam pilnuje atrybutu `lang` na `<html>` przez nasłuch `languageChanged`.
+  - **7 namespace'ów, 1549 kluczy** w `src/locales/{en,pl}/`: `common` (layout, menu, akcje),
+    `wizard`, `pages` (treść wszystkich stron), `cargo` (19 kategorii + **262 podkategorie** +
+    37 flag + 135 ostrzeżeń), `countries` (**199 nazw krajów**, klucz = kod ISO), `incoterms`
+    (11 reguł: nazwa, opis, obowiązki stron, ostrzeżenie), `errors`.
+  - **Przełącznik:** `src/components/LanguageSwitcher.jsx` + własne SVG flag w
+    `src/components/flags/{FlagGB,FlagPL}.jsx` (**bez emoji** — na Windows nie renderują się).
+    Union Jack narysowany w proporcji 10:7 z przesuniętymi przekątnymi (clipPath), żeby obie flagi
+    miały ten sam rozmiar. Prawy górny róg Topbara na desktopie; poniżej `sm` przenosi się na górę
+    menu hamburger (Sidebar, `sm:hidden`); strony auth mają własny egzemplarz w rogu `AuthShell`.
+    Obsługa klawiatury (Enter/spacja otwiera, strzałki, Home/End, Escape), `role="listbox"`.
+  - **Wzorzec: dane trzymają identyfikatory, teksty idą z tłumaczeń.** Na klucze przeszły
+    `MENU_GROUPS`/`MENU_BOTTOM`/`HOME_STATS`/`PRICING_PLANS` (mockData), `FLOWS` (flowSteps —
+    `getStepLabel`/`getFlowLabel` przemianowane na `getStepLabelKey`/`getFlowLabelKey`, zwracają
+    KLUCZ), `DATA` w `IncotermsPage` (zostały tylko `type/sp/bp/warnType/modes`), `BRANCHES`/
+    `TRACKING_STATUSES` (trackingMock), `TYPE_OPTIONS` (admin), `LOAD_TYPES` (routes).
+  - **Czego NIE tłumaczymy (świadomie):** wartości zapisywane do `formData` i bazy —
+    `VEHICLE_TYPES` (`'Plandeka'/'Chłodnia'/'Mroźnia'` trafiają do szablonów PDF), `cargoLabel()`
+    (kanoniczny PL w `meta.cargoDescription` migawki audytowej), nazwy krajów w
+    `documentGeneration.js` (idą do PDF), identyfikatory zakładek profilu w `?tab=` (żywe linki).
+  - **Ostrzeżenia silnika doboru:** `documentEngine.js` NIETKNIĘTY (jego wynik ląduje też
+    w `engineResult.warnings` zapisywanym w bazie). Tłumaczenie dzieje się na wyjściu, przy
+    renderze: `src/utils/translateEngineWarning.js` (18 zdań stałych + 4 wzorce regex dla zdań
+    sklejanych z kodem kraju/listą krajów). Brak dopasowania = oryginał po polsku.
+  - **Dane makiet:** zdarzenia osi czasu w `trackingMock.js` i opisy ładunku w `MOCK_POLICIES`
+    mają angielskie odpowiedniki OBOK polskich (`descriptionEn`, `locationEn`,
+    `cargoDescriptionEn`), a nie w plikach tłumaczeń — to treść demonstracyjna, która zniknie
+    razem z makietą.
+  - **`scripts/check-locales.js`** (`npm run lint:locales`) — porównuje drzewa kluczy EN i PL,
+    zna sufiksy liczby mnogiej i18next (polski ma `_few`/`_many`, angielski nie), zgłasza puste
+    teksty, rozjazd typów i różne długości tablic. Kod wyjścia 1 przy problemach.
+  - **Zależności (3):** `i18next`, `react-i18next`, `i18next-browser-languagedetector`.
+  - Zweryfikowane: `npm run build` zielony, `npm run lint:locales` czysty (1549 kluczy),
+    E2E Playwright **13/13** na stronach publicznych (EN przy przeglądarce `pl-PL`, przełączenie
+    bez zmiany URL, `lang` na `<html>`, persystencja po reloadzie, `/login` + `/register`,
+    klawiatura, 375 px w menu hamburger, ciemny motyw) oraz osobny przebieg dla stron zza
+    logowania (tymczasowy entry Vite poza `src/`, skasowany po teście): Incoterms, Ubezpieczenia,
+    Trasy handlowe, Śledzenie, Puste szablony, Abonament, Firmy, Profil, Admin, Historia, Wersje
+    robocze i **oba przebiegi kreatora** — **0 brakujących kluczy i18n i 0 błędów konsoli w obu
+    językach**. W wersji EN zostają tylko nazwy własne (Gdańsk, Kraków, DCT Gdańsk).
+  - Skrypt kontrolny wychwycił dwa realne błędy: `TradeRoutesPage` i `TrackingPage` używały `t()`
+    bez wywołania hooka (strony wywaliłyby się w czasie działania) — poprawione.
+
 **Do zrobienia:**
 - Ubezpieczenia: integracja z ubezpieczycielem po podpisaniu umowy (endpointy, tabele
   `insurance_policies`/`insurance_claims`, realny zakup i certyfikat PDF)
@@ -611,7 +667,11 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 - Tabela `companies` w bazie — typ `carrier` (do wyboru z listy zapisanych firm, jak Nadawca/Odbiorca)
 - Opcjonalne: dedykowany krok wizarda „Przewoźnik" po wdrożeniu bazy firm
 - Reset hasła przez email („nie pamiętam hasła") — wymaga skonfigurowanego serwisu mailowego
-- Angielskie szablony JSX — po dodaniu odblokować opcję EN w `ProfilePage` (Preferencje → język)
+- Angielskie szablony JSX — po dodaniu odblokować opcję EN w `ProfilePage` (Preferencje → „Język
+  dokumentów"). UWAGA: to pole dotyczy JĘZYKA DOKUMENTÓW, a nie interfejsu — interfejs ma własny
+  przełącznik w Topbarze (`amlogistico:v1:lang`, niezależny od profilu i od `preferredLanguage`)
+- Opcjonalnie: zapamiętywanie języka interfejsu w profilu (osobne pole, np. `uiLanguage`) —
+  dziś wybór żyje wyłącznie w `localStorage`, więc nie wędruje między urządzeniami
 - Strony `/regulamin` i `/polityka-prywatnosci` (linki w rejestracji na razie `href="#"`)
 
 ### Backend: auth gotowy (serverless `/api`)

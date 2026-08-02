@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { inputCls, labelCls } from '../auth/AuthShell'
 import {
   BASE_RATES,
@@ -13,7 +14,9 @@ import {
 // Wynik wypycha do rodzica przez onQuoteChange, żeby karty ofert widziały tę samą wycenę.
 
 function CoverageChip({ code, active, onClick }) {
-  const { name, desc } = COVERAGE_LABELS[code]
+  const { t } = useTranslation('pages')
+  const name = t(`insurance.coverage.${code}.name`, { defaultValue: COVERAGE_LABELS[code].name })
+  const desc = t(`insurance.coverage.${code}.desc`, { defaultValue: COVERAGE_LABELS[code].desc })
   return (
     <button
       type="button"
@@ -71,6 +74,7 @@ const DEFAULTS = {
 export const DEFAULT_QUOTE = { ...DEFAULTS, premium: calculatePremiumLocally(DEFAULTS) }
 
 export default function InsuranceCalculator({ onQuoteChange }) {
+  const { t, i18n } = useTranslation('pages')
   const [cargoValue, setCargoValue]       = useState(DEFAULTS.cargoValue)
   const [currency, setCurrency]           = useState(DEFAULTS.currency)
   const [cargoCategory, setCargoCategory] = useState(DEFAULTS.cargoCategory)
@@ -111,15 +115,15 @@ export default function InsuranceCalculator({ onQuoteChange }) {
   return (
     <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-800 space-y-5">
       <div>
-        <p className="text-sm font-semibold text-gray-800 dark:text-slate-100">Kalkulator składki</p>
+        <p className="text-sm font-semibold text-gray-800 dark:text-slate-100">{t('insurance.calculator.title')}</p>
         <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-          Wynik przelicza się na bieżąco.
+          {t('insurance.calculator.subtitle')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 sm:items-end">
         <div>
-          <label className={labelCls} htmlFor="ins-value">Wartość ładunku</label>
+          <label className={labelCls} htmlFor="ins-value">{t('insurance.calculator.cargoValue')}</label>
           <input
             id="ins-value"
             type="number"
@@ -130,7 +134,7 @@ export default function InsuranceCalculator({ onQuoteChange }) {
           />
         </div>
         <div className="sm:w-32">
-          <label className={labelCls} htmlFor="ins-currency">Waluta</label>
+          <label className={labelCls} htmlFor="ins-currency">{t('insurance.calculator.currency')}</label>
           <select
             id="ins-currency"
             className={inputCls}
@@ -144,7 +148,7 @@ export default function InsuranceCalculator({ onQuoteChange }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className={labelCls} htmlFor="ins-category">Kategoria towaru</label>
+          <label className={labelCls} htmlFor="ins-category">{t('insurance.calculator.category')}</label>
           <select
             id="ins-category"
             className={inputCls}
@@ -153,13 +157,13 @@ export default function InsuranceCalculator({ onQuoteChange }) {
           >
             {Object.entries(RATE_CATEGORY_LABELS).map(([key, label]) => (
               <option key={key} value={key}>
-                {label} ({BASE_RATES[key].toFixed(2)}%)
+                {t(`insurance.rateCategories.${key}`, { defaultValue: label })} ({BASE_RATES[key].toFixed(2)}%)
               </option>
             ))}
           </select>
         </div>
         <div>
-          <label className={labelCls} htmlFor="ins-mode">Środek transportu</label>
+          <label className={labelCls} htmlFor="ins-mode">{t('insurance.calculator.mode')}</label>
           <select
             id="ins-mode"
             className={inputCls}
@@ -167,14 +171,14 @@ export default function InsuranceCalculator({ onQuoteChange }) {
             onChange={(e) => setTransportMode(e.target.value)}
           >
             {Object.entries(TRANSPORT_MODE_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+              <option key={key} value={key}>{t(`insurance.modes.${key}`, { defaultValue: label })}</option>
             ))}
           </select>
         </div>
       </div>
 
       <div>
-        <span className={labelCls}>Zakres ochrony</span>
+        <span className={labelCls}>{t('insurance.calculator.coverage')}</span>
         <div className="flex flex-wrap gap-2">
           {Object.keys(COVERAGE_LABELS).map((code) => (
             <CoverageChip
@@ -192,13 +196,13 @@ export default function InsuranceCalculator({ onQuoteChange }) {
           id="ins-dangerous"
           checked={dangerous}
           onChange={setDangerous}
-          label="Towary niebezpieczne (ADR/IMDG)"
+          label={t('insurance.calculator.dangerous')}
         />
         <CheckboxRow
           id="ins-perishable"
           checked={perishable}
           onChange={setPerishable}
-          label="Towar łatwo psujący się"
+          label={t('insurance.calculator.perishable')}
         />
       </div>
 
@@ -207,21 +211,22 @@ export default function InsuranceCalculator({ onQuoteChange }) {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">
-              Szacowana składka
+              {t('insurance.calculator.estimated')}
             </p>
             <p className="text-xs text-emerald-700/70 dark:text-emerald-400/70 mt-1">
-              Stawka bazowa {baseRate.toFixed(2)}% · {COVERAGE_LABELS[coverageType].name} ·{' '}
-              {TRANSPORT_MODE_LABELS[transportMode].toLowerCase()}
+              {t('insurance.calculator.baseRate', { rate: baseRate.toFixed(2) })} ·{' '}
+              {t(`insurance.coverage.${coverageType}.name`, { defaultValue: COVERAGE_LABELS[coverageType].name })} ·{' '}
+              {t(`insurance.modes.${transportMode}`, { defaultValue: TRANSPORT_MODE_LABELS[transportMode] }).toLowerCase()}
             </p>
           </div>
           <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 leading-none">
-            {premium.toLocaleString('pl-PL')} {currency}
+            {premium.toLocaleString(i18n.language)} {currency}
           </p>
         </div>
       </div>
 
       <p className="text-xs text-gray-400 dark:text-slate-500">
-        Szacunek własny na podstawie stawek rynkowych. Nie stanowi oferty ubezpieczyciela.
+        {t('insurance.calculator.note')}
       </p>
     </div>
   )

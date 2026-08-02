@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 // Modal z dowolną treścią (children) — uzupełnienie ConfirmDialog, który jest
 // dialogiem 2-przyciskowym bez miejsca na formularz.
@@ -11,6 +12,7 @@ import { X } from 'lucide-react'
 // dla którego portal ma UnsavedChangesGuard).
 
 export default function Modal({ title, onClose, children, maxWidth = 'max-w-xl' }) {
+  const { t } = useTranslation()
   // Escape zamyka; blokada scrolla tła, żeby przewijała się karta, nie strona pod nią.
   useEffect(() => {
     function onKeyDown(e) {
@@ -43,7 +45,7 @@ export default function Modal({ title, onClose, children, maxWidth = 'max-w-xl' 
           <button
             type="button"
             onClick={onClose}
-            aria-label="Zamknij"
+            aria-label={t('actions.close')}
             className="shrink-0 p-1.5 rounded-lg text-gray-400 dark:text-slate-500 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
           >
             <X className="w-4 h-4" />

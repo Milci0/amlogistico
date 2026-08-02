@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 import { useNews } from '../context/NewsContext'
 import AlertBox from '../components/ui/AlertBox'
 import StepTransition from '../components/StepTransition'
@@ -25,13 +26,14 @@ const TRANSPORT_COLOR = {
   drogowy: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
   cla:     'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300',
 }
-const TRANSPORT_LABEL = { morski: 'Morski', drogowy: 'Drogowy', cla: 'Cła' }
+// Etykiety kategorii i zakładek idą z tłumaczeń (`pages` → news.*); tutaj
+// zostają wyłącznie identyfikatory, bo służą też do filtrowania artykułów.
 
 const MAIN_TABS = [
-  { id: 'all',    label: 'Wszystkie' },
-  { id: 'polska', label: 'Polska' },
-  { id: 'swiat',  label: 'Świat' },
-  { id: 'alerty', label: 'Alerty', isAlert: true },
+  { id: 'all' },
+  { id: 'polska' },
+  { id: 'swiat' },
+  { id: 'alerty', isAlert: true },
 ]
 
 // ── Ikony (styl strokeWidth 1.5 jak w BlankTemplatesPage / Sidebar) ───────────
@@ -76,11 +78,11 @@ function IconAlert({ cls = 'w-3.5 h-3.5' }) {
 }
 
 const SUB_TABS = [
-  { id: 'all',    label: 'Wszystkie',        Icon: null },
-  { id: 'morski', label: 'Morski',           Icon: IconSea },
-  { id: 'drogowy',label: 'Drogowy',          Icon: IconTruck },
-  { id: 'cla',    label: 'Cła i regulacje',  Icon: IconCustoms },
-  { id: 'alerty', label: 'Alerty',           Icon: IconAlert },
+  { id: 'all',    Icon: null },
+  { id: 'morski', Icon: IconSea },
+  { id: 'drogowy', Icon: IconTruck },
+  { id: 'cla',    Icon: IconCustoms },
+  { id: 'alerty', Icon: IconAlert },
 ]
 
 const CACHE_KEY        = 'am_news_api_v1'
@@ -112,15 +114,17 @@ function fmtIsoDate(iso) {
   return y && m && d ? `${d}.${m}.${y}` : iso
 }
 
-function timeAgo(d) {
+// `t` i `locale` wstrzykiwane przez wywołującego — funkcja jest poza komponentem,
+// więc nie może sama sięgnąć po hook.
+function timeAgo(d, t, locale) {
   if (!d) return ''
   const dt = new Date(d)
   if (isNaN(dt)) return ''
   const h = Math.floor((Date.now() - dt) / 3_600_000)
-  const hhmm = dt.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
-  if (h < 24) return `Dziś, ${hhmm}`
-  if (h < 48) return 'Wczoraj'
-  return dt.toLocaleDateString('pl-PL', { day: '2-digit', month: 'short' })
+  const hhmm = dt.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  if (h < 24) return t('news.today', { time: hhmm })
+  if (h < 48) return t('news.yesterday')
+  return dt.toLocaleDateString(locale, { day: '2-digit', month: 'short' })
 }
 
 // ── Ikony transportu (duże, do tła kart) ──────────────────────────────────────
@@ -267,6 +271,7 @@ function NewsImage({ transport, isAlert }) {
 // siatki i zjadał miejsce potrzebne na 6-8 widocznych newsów bez scrolla).
 
 function ArticleCard({ a }) {
+  const { t: tr, i18n } = useTranslation('pages')
   const t = a.transport[0]
   return (
     <a href={a.link} target="_blank" rel="noopener noreferrer"
@@ -274,17 +279,17 @@ function ArticleCard({ a }) {
       <NewsImage transport={t} isAlert={a.isAlert} />
       <div className="flex-1 flex flex-col p-4">
         <div className="flex flex-wrap gap-1.5 mb-2 items-center">
-          {a.isAlert && <Tag cls="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">Alert</Tag>}
-          {t && <Tag cls={TRANSPORT_COLOR[t] || 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}>{TRANSPORT_LABEL[t]}</Tag>}
+          {a.isAlert && <Tag cls="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">{tr('news.mainTabs.alerty')}</Tag>}
+          {t && <Tag cls={TRANSPORT_COLOR[t] || 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}>{tr(`news.transport.${t}`, { defaultValue: t })}</Tag>}
           <Tag cls={SRC_COLOR[a.sourceId] || 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}>{a.sourceName}</Tag>
-          <span className="text-slate-400 dark:text-slate-500 text-xs ml-auto">{timeAgo(a.pubDate)}</span>
+          <span className="text-slate-400 dark:text-slate-500 text-xs ml-auto">{timeAgo(a.pubDate, tr, i18n.language)}</span>
         </div>
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug line-clamp-3 mb-3 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
           {a.title}
         </h3>
         {/* mt-auto przypina link do dołu niezależnie od długości (skróconego) tytułu,
             żeby kafelki w jednym wierszu wyglądały równo mimo różnej treści. */}
-        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-auto">Czytaj więcej →</span>
+        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-auto">{tr('news.readMore')}</span>
       </div>
     </a>
   )
@@ -293,6 +298,7 @@ function ArticleCard({ a }) {
 // ── Strona ────────────────────────────────────────────────────────────────────
 
 export default function NewsPage() {
+  const { t } = useTranslation('pages')
   const [articles, setArticles] = useState([])
   const [ticker, setTicker]     = useState([])
   const [diesel, setDiesel]     = useState(() => readRatesCache(DIESEL_CACHE_KEY))
@@ -328,10 +334,11 @@ export default function NewsPage() {
       notifyNewArticles(data.articles?.[0]?.pubDate)
       sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }))
     } catch {
-      setError('Nie udało się pobrać newsów. Sprawdź połączenie lub backend (/api/news).')
+      setError(t('news.loadError'))
     } finally {
       setLoading(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifyNewArticles])
 
   useEffect(() => {
@@ -383,10 +390,10 @@ export default function NewsPage() {
   const tickerItems = useMemo(() => {
     const num = v => v.toFixed(2).replace('.', ',') // 1.73 → "1,73"
     const extra = []
-    if (diesel) extra.push({ label: 'Diesel EU:',  value: `${num(diesel.value)} ${diesel.unit} (${fmtIsoDate(diesel.date)})` })
-    if (ecb)    extra.push({ label: 'Stopa EBC:',   value: `${num(ecb.value)}% (${fmtIsoDate(ecb.date)})` })
+    if (diesel) extra.push({ label: t('news.ticker.diesel'), value: `${num(diesel.value)} ${diesel.unit} (${fmtIsoDate(diesel.date)})` })
+    if (ecb)    extra.push({ label: t('news.ticker.ecb'),    value: `${num(ecb.value)}% (${fmtIsoDate(ecb.date)})` })
     return [...ticker, ...extra]
-  }, [ticker, diesel, ecb])
+  }, [ticker, diesel, ecb, t])
 
   const filtered = articles.filter(a => {
     if (mainTab === 'alerty' || subTab === 'alerty') return a.isAlert
@@ -396,8 +403,8 @@ export default function NewsPage() {
   })
 
   const alertCount = articles.filter(a => a.isAlert).length
-  const mainLabel  = MAIN_TABS.find(t => t.id === mainTab)?.label
-  const subLabel   = SUB_TABS.find(t => t.id === subTab)?.label
+  const mainLabel  = t(`news.mainTabs.${mainTab}`, { defaultValue: mainTab })
+  const subLabel   = t(`news.subTabs.${subTab}`, { defaultValue: subTab })
 
   return (
     <div className="h-full flex flex-col rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
@@ -416,19 +423,19 @@ export default function NewsPage() {
       `}</style>
 
       <Helmet>
-        <title>Newsy | AMLogistico</title>
+        <title>{t('news.metaTitle')}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
-        <h1 className="text-base font-bold text-slate-900 dark:text-white">Newsy transportowe</h1>
+        <h1 className="text-base font-bold text-slate-900 dark:text-white">{t('news.title')}</h1>
         <div className="flex items-center gap-3">
           {/* „Na żywo" tylko gdy ticker ma realne dane na żywo (kursy NBP / diesel) */}
           {tickerItems.length > 0 && (
             <span className="flex items-center gap-1.5 text-xs font-medium text-orange-500">
               <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-              Na żywo
+              {t('news.live')}
             </span>
           )}
           <button
@@ -436,7 +443,7 @@ export default function NewsPage() {
             disabled={loading}
             className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-600 rounded-md px-2.5 py-1 transition-colors disabled:opacity-40"
           >
-            Odśwież
+            {t('news.refresh')}
           </button>
         </div>
       </div>
@@ -455,7 +462,7 @@ export default function NewsPage() {
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
             }`}
           >
-            {tab.label}
+            {t(`news.mainTabs.${tab.id}`)}
             {tab.isAlert && alertCount > 0 && (
               <span className="text-[10px] bg-red-500 text-white font-bold rounded-full px-1.5 py-0.5 leading-none">
                 {alertCount}
@@ -478,7 +485,7 @@ export default function NewsPage() {
             }`}
           >
             {tab.Icon && <tab.Icon />}
-            {tab.label}
+            {t(`news.subTabs.${tab.id}`)}
           </button>
         ))}
       </div>
@@ -503,7 +510,7 @@ export default function NewsPage() {
               onClick={() => loadNews(true)}
               className="px-4 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
             >
-              Spróbuj ponownie
+              {t('news.retry')}
             </button>
           </div>
         )}
@@ -512,8 +519,8 @@ export default function NewsPage() {
           <StepTransition stepKey={`${mainTab}:${subTab}`} slide={false}>
             {filtered.length === 0 ? (
               <div className="p-4 md:p-5">
-                <AlertBox type="info" title="Brak artykułów dla wybranego filtra">
-                  Wybierz inną zakładkę lub kliknij „Odśwież".
+                <AlertBox type="info" title={t('news.emptyTitle')}>
+                  {t('news.emptyBody')}
                 </AlertBox>
               </div>
             ) : (
@@ -532,19 +539,18 @@ export default function NewsPage() {
       {/* Stopka — nota prawna */}
       <div className="shrink-0 border-t border-slate-200 dark:border-slate-700 px-5 py-2.5 bg-slate-50 dark:bg-slate-900">
         <p className="text-[11px] leading-relaxed text-slate-400 dark:text-slate-500 text-center">
-          Artykuły są własnością ich wydawców. AMLogistico wyświetla wyłącznie nagłówki i linki
-          do oryginalnych źródeł RSS.
+          {t('news.footer')}
         </p>
         {diesel && (
           <p className="text-[11px] leading-relaxed text-slate-400 dark:text-slate-500 text-center mt-1">
-            Cena diesla: „Weekly Oil Bulletin" © European Commission, licencja{' '}
+            {t('news.dieselCredit')}{' '}
             <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener"
                className="underline hover:text-slate-600 dark:hover:text-slate-300">CC BY 4.0</a>
           </p>
         )}
         {ecb && (
           <p className="text-[11px] leading-relaxed text-slate-400 dark:text-slate-500 text-center mt-1">
-            Stopa EBC: © European Central Bank (CC BY 4.0)
+            {t('news.ecbCredit')}
           </p>
         )}
       </div>

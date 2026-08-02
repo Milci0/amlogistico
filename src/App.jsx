@@ -18,6 +18,7 @@ import SubscriptionPage from './pages/SubscriptionPage'
 import ProfilePage from './pages/ProfilePage'
 import CalibratePage from './pages/CalibratePage'
 import PlaceholderPage from './pages/PlaceholderPage'
+import TranslatedPlaceholder from './pages/TranslatedPlaceholder'
 import IncotermsPage from './pages/IncotermsPage'
 import BlankTemplatesPage from './pages/BlankTemplatesPage'
 import NewsPage from './pages/NewsPage'
@@ -57,7 +58,7 @@ const router = createBrowserRouter([
             element: <RequireAuth />,
             children: [
               { path: 'new-document', element: <NewDocumentPage /> },
-              { path: 'quotation', element: <PlaceholderPage title="Wycena" description="Wycena frachtu i kosztów transportu." /> },
+              { path: 'quotation', element: <TranslatedPlaceholder titleKey="quotation.title" descriptionKey="quotation.description" /> },
               { path: 'history', element: <HistoryPage /> },
               { path: 'wersje-robocze', element: <DraftsPage /> },
               { path: 'companies', element: <CompaniesPage /> },

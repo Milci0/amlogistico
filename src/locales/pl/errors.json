@@ -1,0 +1,12 @@
+{
+  "invalidCredentials": "Nieprawidłowy email lub hasło.",
+  "noConnection": "Brak połączenia z serwerem. Spróbuj ponownie.",
+  "generic": "Coś poszło nie tak. Spróbuj ponownie.",
+  "fixFields": "Popraw zaznaczone pola.",
+  "passwordsMismatch": "Hasła nie są zgodne",
+  "emailTaken": "Konto z tym adresem email już istnieje. Zaloguj się.",
+  "requestFailed": "Błąd żądania ({{status}})",
+  "noConnectionShort": "Brak połączenia z serwerem",
+  "storageFull": "Brak miejsca w pamięci.",
+  "freightRatesFailed": "Nie udało się pobrać stawek"
+}

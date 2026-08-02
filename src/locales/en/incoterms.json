@@ -1,0 +1,237 @@
+{
+  "rules": {
+    "EXW": {
+      "name": "Ex Works",
+      "shortDesc": "The seller makes the goods available at their premises. The buyer arranges all transport and carries the risk from that point.",
+      "full": "Collection of the goods from the seller's premises",
+      "pt": "Risk passes the moment the goods are made available at the seller's premises",
+      "sl": [
+        "Making the goods available at the warehouse",
+        "Packing the goods"
+      ],
+      "bl": [
+        "Loading the goods",
+        "Export clearance",
+        "Carriage to the port or border",
+        "Main freight",
+        "Insurance",
+        "Import clearance and duty",
+        "Delivery to the final destination"
+      ],
+      "warn": "EXW puts maximum risk on the buyer, including export clearance, which is hard to handle without a presence in the seller's country. In practice FCA is often used instead."
+    },
+    "FCA": {
+      "name": "Free Carrier",
+      "shortDesc": "The seller delivers the goods to a carrier named by the buyer. Risk passes once the goods are loaded.",
+      "full": "Delivery of the goods to a named carrier",
+      "pt": "Risk passes once the goods are handed to the buyer's carrier at the agreed place",
+      "sl": [
+        "Packing and marking",
+        "Export clearance",
+        "Loading (if the place is the seller's premises)",
+        "Delivery to the carrier"
+      ],
+      "bl": [
+        "Main freight",
+        "Cargo insurance",
+        "Import clearance and duty",
+        "Final delivery"
+      ],
+      "warn": "FCA is the recommended replacement for FOB in container transport. Risk passes at the agreed place, before the goods reach the vessel."
+    },
+    "FAS": {
+      "name": "Free Alongside Ship",
+      "shortDesc": "The seller delivers the goods alongside the vessel at the port of loading. Sea freight only.",
+      "full": "Delivery alongside the vessel",
+      "pt": "Risk passes once the goods are alongside the vessel at the port of loading",
+      "sl": [
+        "Export clearance",
+        "Delivery to the port",
+        "Placing the goods alongside the vessel"
+      ],
+      "bl": [
+        "Loading on board",
+        "Sea freight",
+        "Insurance",
+        "Import clearance and duty"
+      ],
+      "warn": "FAS is used for bulk cargo such as grain, ore and coal. It is barely used for containers, where FCA is a better fit."
+    },
+    "FOB": {
+      "name": "Free On Board",
+      "shortDesc": "The seller delivers the goods on board the vessel. Risk passes once the goods are on board. Sea freight only.",
+      "full": "Delivery on board the vessel",
+      "pt": "Risk passes once the goods are loaded on board at the port of loading",
+      "sl": [
+        "Export clearance",
+        "Delivery to the port",
+        "Loading on board"
+      ],
+      "bl": [
+        "Sea freight",
+        "Cargo insurance",
+        "Import clearance and duty",
+        "Delivery to the final destination"
+      ],
+      "warn": "FOB is for sea freight only. For containers FCA is recommended, as it reflects what actually happens at the terminal."
+    },
+    "CFR": {
+      "name": "Cost and Freight",
+      "shortDesc": "The seller pays the freight to the port of destination, but risk passes once the goods are loaded. Sea freight only.",
+      "full": "Cost and freight to the port of destination",
+      "pt": "Risk passes once the goods are loaded on board; the seller pays the freight but not the insurance",
+      "sl": [
+        "Export clearance",
+        "Loading on board",
+        "Paying the freight to the destination port"
+      ],
+      "bl": [
+        "Cargo insurance (at own cost)",
+        "Import clearance and duty",
+        "Risk from loading onwards"
+      ],
+      "warn": "The seller pays the freight, but risk passes at loading. The buyer carries the risk for the whole voyage without choosing the carrier."
+    },
+    "CIF": {
+      "name": "Cost, Insurance and Freight",
+      "shortDesc": "As CFR, and the seller also pays for cargo insurance. Sea freight only.",
+      "full": "Cost, insurance and freight to the port of destination",
+      "pt": "Risk passes once the goods are loaded on board; the seller pays the freight and minimum insurance",
+      "sl": [
+        "Export clearance",
+        "Loading on board",
+        "Freight to the destination port",
+        "Insurance (minimum clause C)"
+      ],
+      "bl": [
+        "Unloading at the destination port",
+        "Import clearance and duty",
+        "Risk from loading onwards"
+      ],
+      "warn": "CIF only requires minimum insurance (clause C). For valuable goods consider CIP, which requires fuller cover (clause A)."
+    },
+    "CPT": {
+      "name": "Carriage Paid To",
+      "shortDesc": "The seller pays carriage to the destination. Risk passes when the goods are handed to the first carrier.",
+      "full": "Carriage paid to the destination",
+      "pt": "Risk passes when the goods are handed to the carrier, even though the seller pays the freight",
+      "sl": [
+        "Packing and export clearance",
+        "Paying the freight to the destination",
+        "Delivery to the carrier"
+      ],
+      "bl": [
+        "Cargo insurance (optional)",
+        "Import clearance and duty",
+        "Risk from the handover to the carrier"
+      ],
+      "warn": "Under CPT the seller pays for transport, but risk passes earlier, at the handover to the carrier. The buyer carries the risk during transport they do not pay for."
+    },
+    "CIP": {
+      "name": "Carriage and Insurance Paid To",
+      "shortDesc": "As CPT, and the seller also insures the goods for the whole journey.",
+      "full": "Carriage and insurance paid to the destination",
+      "pt": "Risk passes when the goods are handed to the carrier; the seller insures the transport for the full value",
+      "sl": [
+        "Packing and export clearance",
+        "Paying the freight",
+        "Cargo insurance (minimum 110% of value)",
+        "Delivery to the carrier"
+      ],
+      "bl": [
+        "Import clearance and duty",
+        "Unloading at the destination"
+      ],
+      "warn": "CIP requires cover at Institute Cargo Clauses (A) level, the widest protection. That is what separates it from CIF, which only requires clause (C)."
+    },
+    "DAP": {
+      "name": "Delivered At Place",
+      "shortDesc": "The seller delivers the goods ready for unloading at the agreed destination.",
+      "full": "Delivery to the agreed place",
+      "pt": "Risk passes once the goods reach the agreed destination, before unloading",
+      "sl": [
+        "All transport to the destination",
+        "Export clearance",
+        "Insurance (recommended)",
+        "Transit charges"
+      ],
+      "bl": [
+        "Unloading the goods",
+        "Import clearance and duty",
+        "Taxes and customs charges"
+      ],
+      "warn": "The seller is not responsible for unloading. If the delivery place does not let the seller unload, consider DPU."
+    },
+    "DPU": {
+      "name": "Delivered at Place Unloaded",
+      "shortDesc": "As DAP, but the seller is also responsible for unloading the goods at the destination.",
+      "full": "Delivery unloaded at the agreed place",
+      "pt": "Risk passes only after the goods are unloaded at the destination",
+      "sl": [
+        "All transport",
+        "Export clearance",
+        "Unloading at the destination",
+        "Insurance"
+      ],
+      "bl": [
+        "Import clearance and duty",
+        "Taxes and charges"
+      ],
+      "warn": "DPU is the only Incoterm where the seller is responsible for unloading. It was called DAT before and was renamed in Incoterms 2020."
+    },
+    "DDP": {
+      "name": "Delivered Duty Paid",
+      "shortDesc": "The seller delivers the goods cleared for import, with duty and taxes paid, ready for unloading.",
+      "full": "Delivery with duty paid",
+      "pt": "Risk passes only once the goods reach the destination with duty and taxes paid",
+      "sl": [
+        "All transport",
+        "Export and import clearance",
+        "Paying duty and VAT",
+        "Insurance"
+      ],
+      "bl": [
+        "Taking delivery of the goods at the destination"
+      ],
+      "warn": "DDP requires a VAT and EORI number in the country of import. It is awkward for non-EU sellers and not advisable without knowing the local rules."
+    }
+  },
+  "modes": {
+    "road": "Road",
+    "sea": "Sea",
+    "air": "Air",
+    "rail": "Rail",
+    "inland": "Inland waterway"
+  },
+  "page": {
+    "metaTitle": "Incoterms 2020 guide | AMLogistico",
+    "metaDescription": "A complete guide to Incoterms 2020. See how cost and risk split under EXW, FCA, FOB, CIF, DAP, DDP and the other delivery terms.",
+    "hint": "Click a card to see the details and how risk and responsibility split between seller and buyer.",
+    "filters": {
+      "all": "All",
+      "sea": "Sea",
+      "land": "Land and air"
+    },
+    "typeLand": "Land and air",
+    "typeLandShort": "Land/air",
+    "typeSea": "Sea",
+    "ctaQuestion": "Want to use {{code}} on a new order?",
+    "cta": "Use on a new order",
+    "seller": "Seller",
+    "sellerShort": "Sell.",
+    "buyer": "Buyer",
+    "buyerShort": "Buy.",
+    "sellerResponsible": "The seller is responsible for",
+    "buyerResponsible": "The buyer is responsible for",
+    "risk": {
+      "max": "Max.",
+      "veryHigh": "V. high",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "min": "Min."
+    },
+    "ctaQuestionPrefix": "Want to use",
+    "ctaQuestionSuffix": "on a new order?"
+  }
+}

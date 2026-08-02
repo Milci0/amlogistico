@@ -1,12 +1,16 @@
 import { Helmet } from 'react-helmet-async'
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthContext'
 import { ApiError } from '../lib/api'
 import AlertBox from '../components/ui/AlertBox'
 import AuthShell, { inputCls, labelCls, submitCls } from '../components/auth/AuthShell'
 
 export default function LoginPage() {
+  const { t } = useTranslation('pages')
+  const { t: tc } = useTranslation('common')
+  const { t: te } = useTranslation('errors')
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -26,11 +30,11 @@ export default function LoginPage() {
       navigate(from, { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
-        setError('Nieprawidłowy email lub hasło.')
+        setError(te('invalidCredentials'))
       } else if (err instanceof ApiError && err.status === 0) {
-        setError('Brak połączenia z serwerem. Spróbuj ponownie.')
+        setError(te('noConnection'))
       } else {
-        setError('Coś poszło nie tak. Spróbuj ponownie.')
+        setError(te('generic'))
       }
     } finally {
       setLoading(false)
@@ -40,17 +44,17 @@ export default function LoginPage() {
   return (
     <>
       <Helmet>
-        <title>Zaloguj się | AMLogistico</title>
+        <title>{t('auth.login.metaTitle')}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
       <AuthShell
-        title="Zaloguj się"
-      subtitle="Wejdź do panelu AMLogistico"
+        title={t('auth.login.title')}
+      subtitle={t('auth.login.subtitle')}
       footer={
         <>
-          Nie masz konta?{' '}
+          {t('auth.login.noAccount')}{' '}
           <Link to="/register" className="text-emerald-600 font-medium hover:underline">
-            Zarejestruj się
+            {tc('auth.register')}
           </Link>
         </>
       }
@@ -59,13 +63,13 @@ export default function LoginPage() {
         {error && <AlertBox type="error">{error}</AlertBox>}
 
         <div>
-          <label htmlFor="email" className={labelCls}>Email</label>
+          <label htmlFor="email" className={labelCls}>{t('auth.login.email')}</label>
           <input
             id="email"
             type="email"
             autoComplete="email"
             className={inputCls}
-            placeholder="ty@firma.pl"
+            placeholder={t('auth.login.emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -73,7 +77,7 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <label htmlFor="password" className={labelCls}>Hasło</label>
+          <label htmlFor="password" className={labelCls}>{t('auth.login.password')}</label>
           <input
             id="password"
             type="password"
@@ -87,7 +91,7 @@ export default function LoginPage() {
         </div>
 
         <button type="submit" className={submitCls} disabled={loading}>
-          {loading ? 'Logowanie…' : 'Zaloguj się'}
+          {loading ? t('auth.login.submitting') : t('auth.login.submit')}
         </button>
       </form>
       </AuthShell>

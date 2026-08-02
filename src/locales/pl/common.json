@@ -1,0 +1,108 @@
+{
+  "language": {
+    "switchLabel": "Zmień język"
+  },
+  "brand": {
+    "suffix": "Logistico"
+  },
+  "menu": {
+    "openMenu": "Otwórz menu",
+    "collapse": "Zwiń menu",
+    "expand": "Rozwiń menu",
+    "expandSection": "Rozwiń {{label}}",
+    "collapseSection": "Zwiń {{label}}",
+    "groups": {
+      "main": "Główne",
+      "tools": "Narzędzia",
+      "knowledge": "Wiedza",
+      "admin": "Administracja"
+    },
+    "items": {
+      "home": "Strona główna",
+      "quotation": "Wycena",
+      "documentation": "Dokumentacja",
+      "drafts": "Wersje robocze",
+      "insurance": "Ubezpieczenia",
+      "routes": "Trasy handlowe",
+      "tracking": "Śledzenie ładunku",
+      "blankTemplates": "Puste szablony",
+      "news": "Newsy",
+      "incoterms": "Incoterms",
+      "profile": "Profil",
+      "adminNotifications": "Powiadomienia"
+    },
+    "badges": {
+      "core": "Core",
+      "beta": "Beta"
+    }
+  },
+  "theme": {
+    "toggle": "Przełącz motyw"
+  },
+  "auth": {
+    "login": "Zaloguj się",
+    "register": "Zarejestruj się",
+    "logout": "Wyloguj się"
+  },
+  "account": {
+    "menuLabel": "Menu konta",
+    "fallbackName": "Moje konto",
+    "profile": "Mój profil",
+    "subscription": "Abonament",
+    "changePassword": "Zmień hasło"
+  },
+  "notifications": {
+    "title": "Powiadomienia",
+    "badge_one": "{{count}} nowe",
+    "badge_few": "{{count}} nowe",
+    "badge_many": "{{count}} nowych",
+    "badge_other": "{{count}} nowych",
+    "empty": "Brak nowych powiadomień",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "delete": "Usuń"
+  },
+  "nudge": {
+    "dismiss": "Odrzuć",
+    "remindLater": "Przypomnij później",
+    "title": "Dokończ konfigurację firmy",
+    "body": "Dodaj dane firmy raz, a my uzupełnimy je automatycznie w każdym dokumencie i zleceniu. Oszczędzasz czas przy każdej wysyłce.",
+    "cta": "Uzupełnij profil",
+    "later": "Później"
+  },
+  "actions": {
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "download": "Pobierz",
+    "edit": "Edytuj",
+    "close": "Zamknij",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "search": "Szukaj",
+    "clear": "Wyczyść",
+    "retry": "Spróbuj ponownie",
+    "refresh": "Odśwież",
+    "confirm": "Potwierdź",
+    "add": "Dodaj",
+    "select": "Wybierz"
+  },
+  "states": {
+    "loading": "Ładowanie...",
+    "saving": "Zapisywanie...",
+    "sending": "Wysyłanie...",
+    "empty": "Brak danych",
+    "notProvided": "Nie podano",
+    "none": "-"
+  },
+  "units": {
+    "kg": "kg",
+    "days": "dni"
+  },
+  "select": {
+    "country": "Wybierz kraj...",
+    "searchCountry": "Szukaj kraju...",
+    "noResults": "Brak wyników",
+    "pickCountryFirst": "Najpierw wybierz kraj",
+    "noCityHints": "Brak podpowiedzi, możesz wpisać nazwę ręcznie"
+  }
+}

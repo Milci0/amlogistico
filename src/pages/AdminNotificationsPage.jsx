@@ -1,15 +1,13 @@
 import { Helmet } from 'react-helmet-async'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ApiError } from '../lib/api'
 import { sendNotification } from '../services/notificationsRepo'
 import AlertBox from '../components/ui/AlertBox'
 import { inputCls, labelCls, submitCls } from '../components/auth/AuthShell'
 
-const TYPE_OPTIONS = [
-  { value: 'info', label: 'Info (niebieskie)' },
-  { value: 'success', label: 'Sukces (zielone)' },
-  { value: 'warning', label: 'Ważne (bursztynowe)' },
-]
+// Same wartości; etykiety idą z tłumaczeń (`pages` → admin.types).
+const TYPE_VALUES = ['info', 'success', 'warning']
 
 // Kolory kafelka podglądu wg typu — spójne z dzwonkiem (Topbar NOTIF_STYLE).
 const PREVIEW_TILE = {
@@ -29,6 +27,7 @@ function Field({ label, htmlFor, error, children }) {
 }
 
 export default function AdminNotificationsPage() {
+  const { t } = useTranslation('pages')
   const [target, setTarget] = useState('user')
   const [email, setEmail] = useState('')
   const [type, setType] = useState('info')
@@ -59,8 +58,8 @@ export default function AdminNotificationsPage() {
       setStatus('success')
       setMessage(
         target === 'all'
-          ? `Wysłano do wszystkich (${res.count} ${res.count === 1 ? 'konto' : 'kont'}).`
-          : `Wysłano do ${email}.`
+          ? t('admin.sentToAll', { count: res.count })
+          : t('admin.sentTo', { email })
       )
       // Wyczyść treść, zostaw ustawienia odbiorcy/typu na kolejną wysyłkę.
       setTitle(''); setBody(''); setCtaLabel(''); setCtaUrl('')
@@ -68,35 +67,35 @@ export default function AdminNotificationsPage() {
       if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
         setFieldErrors(err.data?.fields || {})
         setStatus('error')
-        setMessage(err.data?.fields ? '' : (err.message || 'Nie udało się wysłać.'))
+        setMessage(err.data?.fields ? '' : (err.message || t('admin.sendFailed')))
       } else {
         setStatus('error')
-        setMessage('Nie udało się wysłać powiadomienia. Spróbuj ponownie.')
+        setMessage(t('admin.sendFailedRetry'))
       }
     }
   }
 
-  const previewTitle = title.trim() || 'Tytuł powiadomienia'
-  const previewBody = body.trim() || 'Treść powiadomienia pojawi się tutaj.'
+  const previewTitle = title.trim() || t('admin.previewTitle')
+  const previewBody = body.trim() || t('admin.previewBody')
 
   return (
     <div className="max-w-2xl mx-auto">
       <Helmet>
-        <title>Wyślij powiadomienie | AMLogistico</title>
+        <title>{t('admin.metaTitle')}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Wyślij powiadomienie</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.title')}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Powiadomienie pojawi się w dzwonku odbiorcy, na dowolnym urządzeniu.
+          {t('admin.subtitle')}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 space-y-5">
         {/* Odbiorca */}
         <div>
-          <span className={labelCls}>Odbiorca</span>
+          <span className={labelCls}>{t('admin.recipient')}</span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
             <button
               type="button"
@@ -108,8 +107,8 @@ export default function AdminNotificationsPage() {
                   : 'border-gray-300 dark:border-slate-600 hover:border-emerald-400')
               }
             >
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Konkretne konto</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Po adresie email</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{t('admin.singleAccount')}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('admin.singleAccountHint')}</p>
             </button>
             <button
               type="button"
@@ -121,72 +120,72 @@ export default function AdminNotificationsPage() {
                   : 'border-gray-300 dark:border-slate-600 hover:border-emerald-400')
               }
             >
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Wszyscy użytkownicy</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Do każdego konta</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{t('admin.allUsers')}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('admin.allUsersHint')}</p>
             </button>
           </div>
         </div>
 
         {target === 'user' && (
-          <Field label="Email odbiorcy" htmlFor="notif-email" error={fieldErrors.email}>
+          <Field label={t('admin.email')} htmlFor="notif-email" error={fieldErrors.email}>
             <input
               id="notif-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="jan@firma.pl"
+              placeholder={t('admin.emailPlaceholder')}
               className={inputCls}
             />
           </Field>
         )}
 
-        <Field label="Typ" htmlFor="notif-type">
+        <Field label={t('admin.type')} htmlFor="notif-type">
           <select id="notif-type" value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
-            {TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {TYPE_VALUES.map((v) => <option key={v} value={v}>{t(`admin.types.${v}`)}</option>)}
           </select>
         </Field>
 
-        <Field label="Tytuł" htmlFor="notif-title" error={fieldErrors.title}>
+        <Field label={t('admin.notifTitle')} htmlFor="notif-title" error={fieldErrors.title}>
           <input
             id="notif-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="np. Nowa funkcja w platformie"
+            placeholder={t('admin.titlePlaceholder')}
             className={inputCls}
           />
         </Field>
 
-        <Field label="Treść" htmlFor="notif-body" error={fieldErrors.body}>
+        <Field label={t('admin.body')} htmlFor="notif-body" error={fieldErrors.body}>
           <textarea
             id="notif-body"
             rows={3}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Krótka wiadomość dla użytkownika…"
+            placeholder={t('admin.bodyPlaceholder')}
             className={inputCls + ' resize-y'}
           />
         </Field>
 
         {/* CTA (opcjonalne) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Etykieta przycisku (opcjonalnie)" htmlFor="notif-cta-label" error={fieldErrors.ctaLabel}>
+          <Field label={t('admin.ctaLabel')} htmlFor="notif-cta-label" error={fieldErrors.ctaLabel}>
             <input
               id="notif-cta-label"
               type="text"
               value={ctaLabel}
               onChange={(e) => setCtaLabel(e.target.value)}
-              placeholder="np. Uzupełnij profil"
+              placeholder={t('admin.ctaLabelPlaceholder')}
               className={inputCls}
             />
           </Field>
-          <Field label="Link przycisku (opcjonalnie)" htmlFor="notif-cta-url" error={fieldErrors.ctaUrl}>
+          <Field label={t('admin.ctaUrl')} htmlFor="notif-cta-url" error={fieldErrors.ctaUrl}>
             <input
               id="notif-cta-url"
               type="text"
               value={ctaUrl}
               onChange={(e) => setCtaUrl(e.target.value)}
-              placeholder="np. /profile?tab=firma"
+              placeholder={t('admin.ctaUrlPlaceholder')}
               className={inputCls}
             />
           </Field>
@@ -194,7 +193,7 @@ export default function AdminNotificationsPage() {
 
         {/* Podgląd */}
         <div>
-          <span className={labelCls}>Podgląd</span>
+          <span className={labelCls}>{t('admin.preview')}</span>
           <div className="mt-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3.5">
             <div className="flex items-start gap-3">
               <div className={'shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ' + PREVIEW_TILE[type]}>
@@ -216,11 +215,11 @@ export default function AdminNotificationsPage() {
           </div>
         </div>
 
-        {status === 'success' && message && <AlertBox type="success" title="Wysłano">{message}</AlertBox>}
-        {status === 'error' && message && <AlertBox type="error" title="Błąd">{message}</AlertBox>}
+        {status === 'success' && message && <AlertBox type="success" title={t('admin.sentTitle')}>{message}</AlertBox>}
+        {status === 'error' && message && <AlertBox type="error" title={t('admin.errorTitle')}>{message}</AlertBox>}
 
         <button type="submit" disabled={status === 'loading'} className={submitCls}>
-          {status === 'loading' ? 'Wysyłanie…' : 'Wyślij powiadomienie'}
+          {status === 'loading' ? t('admin.sending') : t('admin.send')}
         </button>
       </form>
     </div>

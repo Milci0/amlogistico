@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { Info, Search, ChevronDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import AlertBox from '../ui/AlertBox'
 import TempRangeNote from './TempRangeNote'
 import {
@@ -27,15 +28,17 @@ import {
 // natywnego <select> jest tu combobox z wyszukiwarką — ten sam wzorzec co
 // CountrySelect (klik otwiera listę, wpisywanie filtruje), tylko w akcencie emerald.
 function SubcategorySelect({ subcategories, value, onChange, placeholder }) {
+  const { t } = useTranslation('cargo')
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
   const selected = subcategories.find((s) => s.id === value) || null
+  const nameOf = (sub) => t(`subcategories.${sub.id}`, { defaultValue: sub.name })
   const q = query.trim().toLowerCase()
   const filtered = q
     ? subcategories.filter(
-        (s) => s.name.toLowerCase().includes(q) || s.hsCode.toLowerCase().includes(q)
+        (s) => nameOf(s).toLowerCase().includes(q) || s.hsCode.toLowerCase().includes(q)
       )
     : subcategories
 
@@ -70,7 +73,7 @@ function SubcategorySelect({ subcategories, value, onChange, placeholder }) {
       >
         {selected ? (
           <>
-            <span className="text-sm text-gray-800 dark:text-slate-100 flex-1">{selected.name}</span>
+            <span className="text-sm text-gray-800 dark:text-slate-100 flex-1">{nameOf(selected)}</span>
             <span className="text-xs text-gray-400 dark:text-slate-400">{selected.hsCode}</span>
           </>
         ) : (
@@ -88,7 +91,7 @@ function SubcategorySelect({ subcategories, value, onChange, placeholder }) {
                 autoFocus
                 type="text"
                 className="bg-transparent text-sm outline-none flex-1 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
-                placeholder="Wpisz nazwę towaru lub kod HS..."
+                placeholder={t('ui.searchPlaceholder')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -102,11 +105,11 @@ function SubcategorySelect({ subcategories, value, onChange, placeholder }) {
                 onClick={() => pick('')}
                 className="w-full px-3 py-2 text-sm text-left text-gray-500 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors"
               >
-                Wyczyść wybór
+                {t('ui.clearSelection')}
               </button>
             )}
             {filtered.length === 0 ? (
-              <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-4">Brak wyników</p>
+              <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-4">{t('ui.noResults')}</p>
             ) : (
               filtered.map((s) => (
                 <button
@@ -116,7 +119,7 @@ function SubcategorySelect({ subcategories, value, onChange, placeholder }) {
                   className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors
                     ${s.id === value ? 'bg-emerald-50 dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 font-medium' : 'text-gray-700 dark:text-slate-300'}`}
                 >
-                  <span className="flex-1">{s.name}</span>
+                  <span className="flex-1">{nameOf(s)}</span>
                   <span className="text-xs text-gray-400 dark:text-slate-500">{s.hsCode}</span>
                 </button>
               ))
@@ -132,8 +135,9 @@ export default function CargoCategoryPicker({
   categoryId = '',
   subcategoryId = '',
   onChange,
-  label = 'Kategoria towaru',
+  label,
 }) {
+  const { t } = useTranslation('cargo')
   const category = getCategory(categoryId)
   const subcategories = useMemo(() => (categoryId ? getSubcategories(categoryId) : []), [categoryId])
   const subcategory = getSubcategory(subcategoryId)
@@ -153,7 +157,7 @@ export default function CargoCategoryPicker({
 
   return (
     <div>
-      <p className="block text-sm text-gray-700 dark:text-slate-300 mb-2">{label}</p>
+      <p className="block text-sm text-gray-700 dark:text-slate-300 mb-2">{label ?? t('ui.categoryLabel')}</p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {CARGO_CATEGORIES.map((c) => {
@@ -174,7 +178,7 @@ export default function CargoCategoryPicker({
                 strokeWidth={1.5}
               />
               <span className={`text-xs font-medium leading-tight ${active ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-700 dark:text-slate-300'}`}>
-                {c.name}
+                {t(`categories.${c.id}.name`, { defaultValue: c.name })}
               </span>
             </button>
           )
@@ -184,20 +188,22 @@ export default function CargoCategoryPicker({
       {category && (
         <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-lg">
           <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.5} />
-          <p className="text-xs text-emerald-700 dark:text-emerald-300">{category.hint}</p>
+          <p className="text-xs text-emerald-700 dark:text-emerald-300">
+            {t(`categories.${category.id}.hint`, { defaultValue: category.hint })}
+          </p>
         </div>
       )}
 
       {category && (
         <div className="mt-4">
           <label className="block text-sm text-gray-700 dark:text-slate-300 mb-1.5">
-            Podkategoria (konkretny towar)
+            {t('ui.subcategoryLabel')}
           </label>
           <SubcategorySelect
             subcategories={subcategories}
             value={activeSub ? activeSub.id : ''}
             onChange={pickSubcategory}
-            placeholder="Wybierz lub wpisz towar..."
+            placeholder={t('ui.subcategoryPlaceholder')}
           />
         </div>
       )}
@@ -216,8 +222,14 @@ export default function CargoCategoryPicker({
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-[11px] text-gray-700 dark:text-slate-300"
                   >
                     <FlagIcon className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" strokeWidth={1.5} />
-                    {flag.label}
-                    {flag.adrClass && <span className="text-gray-400 dark:text-slate-500">ADR {flag.adrClass}</span>}
+                    {t(`flags.${key}`, { defaultValue: flag.label })}
+                    {flag.adrClass && (
+                      <span className="text-gray-400 dark:text-slate-500">
+                        {t('ui.adr', {
+                          class: flag.adrClass === 'różna' ? t('ui.adrVaries') : flag.adrClass,
+                        })}
+                      </span>
+                    )}
                   </span>
                 )
               })}
@@ -227,7 +239,9 @@ export default function CargoCategoryPicker({
           <TempRangeNote range={tempRange} />
 
           {activeSub.warning && (
-            <AlertBox type="warning">{activeSub.warning}</AlertBox>
+            <AlertBox type="warning">
+              {t(`warnings.${activeSub.id}`, { defaultValue: activeSub.warning })}
+            </AlertBox>
           )}
         </div>
       )}

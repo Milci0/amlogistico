@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { generateGrid, probePosition } from '../generators/calibrate'
 
 const TEMPLATES = [
@@ -16,6 +17,7 @@ const TEMPLATES = [
 const input = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100'
 
 export default function CalibratePage() {
+  const { t } = useTranslation('pages')
   const [template, setTemplate] = useState(TEMPLATES[0].path)
   const [probeX, setProbeX]     = useState('35')
   const [probeY, setProbeY]     = useState('125')
@@ -39,18 +41,17 @@ export default function CalibratePage() {
         {/* Nagłówek */}
         <div className="mb-6">
           <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-1 rounded mb-2">
-            Narzędzie deweloperskie
+            {t('calibrate.devTool')}
           </span>
-          <h1 className="text-2xl font-bold text-gray-900">Kalibracja PDF</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('calibrate.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Służy do wyznaczania dokładnych współrzędnych pól w szablonach PDF.
-            Nie jest widoczna w nawigacji aplikacji.
+            {t('calibrate.subtitle')}
           </p>
         </div>
 
         {/* Wybór szablonu */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Szablon PDF</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('calibrate.template')}</label>
           <select className={input} value={template} onChange={e => setTemplate(e.target.value)}>
             {TEMPLATES.map(t => (
               <option key={t.path} value={t.path}>{t.label}</option>
@@ -60,44 +61,44 @@ export default function CalibratePage() {
 
         {/* Sekcja: Siatka */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
-          <h2 className="text-base font-semibold text-gray-900 mb-1">Siatka współrzędnych</h2>
+          <h2 className="text-base font-semibold text-gray-900 mb-1">{t('calibrate.gridTitle')}</h2>
           <p className="text-xs text-gray-400 mb-4">
-            Pobierz PDF z siatką co 50 pt. Odczytaj z niej dokładne x, y każdego pola formularza.
+            {t('calibrate.gridHint')}
           </p>
           <button
             onClick={() => run(() => generateGrid(template), 'grid')}
             disabled={!!loading}
             className="w-full bg-gray-900 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl text-sm transition-colors"
           >
-            {loading === 'grid' ? 'Generuję…' : '↓ Pobierz z siatką'}
+            {loading === 'grid' ? t('calibrate.generating') : t('calibrate.downloadGrid')}
           </button>
         </div>
 
         {/* Sekcja: Celownik */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
-          <h2 className="text-base font-semibold text-gray-900 mb-1">Celownik (próbkowanie)</h2>
+          <h2 className="text-base font-semibold text-gray-900 mb-1">{t('calibrate.probeTitle')}</h2>
           <p className="text-xs text-gray-400 mb-4">
-            Wpisz współrzędne i tekst testowy. Pobierz PDF, sprawdź czy celownik trafia w właściwe pole.
+            {t('calibrate.probeHint')}
           </p>
 
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">X (od lewej, pt)</label>
+              <label className="block text-xs text-gray-500 mb-1">{t('calibrate.x')}</label>
               <input type="number" className={input} value={probeX} onChange={e => setProbeX(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Y (od góry, pt)</label>
+              <label className="block text-xs text-gray-500 mb-1">{t('calibrate.y')}</label>
               <input type="number" className={input} value={probeY} onChange={e => setProbeY(e.target.value)} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Tekst testowy</label>
+              <label className="block text-xs text-gray-500 mb-1">{t('calibrate.testText')}</label>
               <input type="text" className={input} value={probeText} onChange={e => setProbeText(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Rozmiar (pt)</label>
+              <label className="block text-xs text-gray-500 mb-1">{t('calibrate.size')}</label>
               <input type="number" className={input} value={probeSize} onChange={e => setProbeSize(e.target.value)} />
             </div>
           </div>
@@ -110,7 +111,7 @@ export default function CalibratePage() {
             disabled={!!loading}
             className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl text-sm transition-colors"
           >
-            {loading === 'probe' ? 'Generuję…' : '↓ Pobierz z celownikiem'}
+            {loading === 'probe' ? t('calibrate.generating') : t('calibrate.downloadProbe')}
           </button>
         </div>
 
@@ -122,13 +123,16 @@ export default function CalibratePage() {
 
         {/* Instrukcja */}
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 mt-2">
-          <p className="text-xs font-semibold text-blue-700 mb-2">Jak kalibrować nowy szablon:</p>
+          <p className="text-xs font-semibold text-blue-700 mb-2">{t('calibrate.howToTitle')}</p>
           <ol className="text-xs text-blue-600 space-y-1 list-decimal list-inside">
-            <li>Wybierz szablon z listy powyżej.</li>
-            <li>Kliknij "Pobierz z siatką", a potem otwórz wynikowy PDF.</li>
-            <li>Na siatce odczytaj x, y każdego pola formularza.</li>
-            <li>Wpisz te wartości w pola X/Y i kliknij "Pobierz z celownikiem" dla potwierdzenia.</li>
-            <li>Zaktualizuj współrzędne w <code className="bg-blue-100 px-1 rounded">src/generators/fillXxx.js</code>.</li>
+            <li>{t('calibrate.step1')}</li>
+            <li>{t('calibrate.step2')}</li>
+            <li>{t('calibrate.step3')}</li>
+            <li>{t('calibrate.step4')}</li>
+            <li>
+              {t('calibrate.step5prefix')}{' '}
+              <code className="bg-blue-100 px-1 rounded">src/generators/fillXxx.js</code>.
+            </li>
           </ol>
         </div>
 
