@@ -29,6 +29,7 @@ export function createEmptySnapshot() {
       weightNet: '',
       volume: '',
       packages: '',
+      packageType: '',
       value: '',
       currency: '',
       notes: '',

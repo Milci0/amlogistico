@@ -52,6 +52,7 @@ export function buildGeneratorData(snapshot) {
       weightNet: cargo.weightNet,
       volume: cargo.volume,
       packages: cargo.packages,
+      packageType: cargo.packageType || '',
       value: cargo.value,
       currency: cargo.currency,
       notes: cargo.notes,
