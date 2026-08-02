@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import DocumentCard from '../components/ui/DocumentCard'
 import DocumentFilterBar from '../components/documents/DocumentFilterBar'
 import DocumentsEmptyState from '../components/documents/DocumentsEmptyState'
@@ -8,16 +9,19 @@ import ConfirmDialog from '../components/ui/ConfirmDialog'
 import AlertBox from '../components/ui/AlertBox'
 import useDocumentSets, { useDocumentSetList } from '../hooks/useDocumentSets'
 
-const SORT_OPTIONS = [
-  { key: 'newest', label: 'Najnowsze' },
-  { key: 'oldest', label: 'Najstarsze' },
-  { key: 'name-asc', label: 'Nazwa A-Z' },
-  { key: 'last-edited', label: 'Ostatnio edytowane' },
-]
-
-const TRANSPORT_LABEL = { road: 'Drogowy', sea: 'Morski' }
+const SORT_KEYS = ['newest', 'oldest', 'name-asc', 'last-edited']
+const SORT_LABEL_KEY = {
+  newest: 'sort.newest',
+  oldest: 'sort.oldest',
+  'name-asc': 'sort.nameAsc',
+  'last-edited': 'sort.lastEdited',
+}
 
 export default function DraftsPage() {
+  const { t } = useTranslation('pages')
+  const transportLabel = (mode) =>
+    mode ? t(`documentCard.transport.${mode}`, { defaultValue: '' }) : ''
+  const SORT_OPTIONS = SORT_KEYS.map((key) => ({ key, label: t(SORT_LABEL_KEY[key]) }))
   const { remove } = useDocumentSets()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -33,14 +37,16 @@ export default function DraftsPage() {
   })
 
   const types = useMemo(() => {
-    const present = new Set(allDrafts.map((s) => TRANSPORT_LABEL[s.meta?.transportMode]).filter(Boolean))
+    const present = new Set(allDrafts.map((s) => transportLabel(s.meta?.transportMode)).filter(Boolean))
     return [...present].sort()
-  }, [allDrafts])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allDrafts, t])
 
   const visibleSets = useMemo(() => {
     if (typeFilter === 'all') return allDrafts
-    return allDrafts.filter((s) => TRANSPORT_LABEL[s.meta?.transportMode] === typeFilter)
-  }, [allDrafts, typeFilter])
+    return allDrafts.filter((s) => transportLabel(s.meta?.transportMode) === typeFilter)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allDrafts, typeFilter, t])
 
   function handleContinue(set) {
     navigate(`/new-document?draftId=${set.id}`)
@@ -51,7 +57,7 @@ export default function DraftsPage() {
     try {
       await remove(toDelete.id)
     } catch {
-      setRemoveError('Nie udało się usunąć wersji roboczej.')
+      setRemoveError(t('drafts.removeError'))
     }
     setToDelete(null)
   }
@@ -59,14 +65,14 @@ export default function DraftsPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <Helmet>
-        <title>Wersje robocze | AMLogistico</title>
+        <title>{t('drafts.metaTitle')}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Wersje robocze</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('drafts.title')}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Dokumenty w trakcie tworzenia.
+          {t('drafts.subtitle')}
         </p>
       </div>
 
@@ -83,21 +89,21 @@ export default function DraftsPage() {
 
       {(error || removeError) && (
         <div className="mb-4">
-          <AlertBox type="error" title="Błąd">
-            {removeError || 'Nie udało się wczytać wersji roboczych. Spróbuj ponownie później.'}
+          <AlertBox type="error" title={t('drafts.errorTitle')}>
+            {removeError || t('drafts.loadError')}
           </AlertBox>
         </div>
       )}
 
       <div className="flex flex-col gap-2">
         {loading ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">Ładowanie…</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">{t('drafts.loading')}</p>
         ) : visibleSets.length === 0 ? (
           <DocumentsEmptyState
             message={
               query.trim() || typeFilter !== 'all'
-                ? 'Brak dokumentów pasujących do filtrów.'
-                : 'Brak wersji roboczych.'
+                ? t('drafts.emptyFiltered')
+                : t('drafts.empty')
             }
             action={
               !query.trim() && typeFilter === 'all' && (
@@ -105,7 +111,7 @@ export default function DraftsPage() {
                   to="/new-document"
                   className="inline-block text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors"
                 >
-                  Rozpocznij nowy dokument
+                  {t('drafts.startNew')}
                 </Link>
               )
             }
@@ -124,9 +130,9 @@ export default function DraftsPage() {
 
       <ConfirmDialog
         open={!!toDelete}
-        title="Usunąć wersję roboczą?"
-        description="Tej operacji nie można cofnąć."
-        confirmLabel="Usuń"
+        title={t('drafts.deleteTitle')}
+        description={t('drafts.deleteBody')}
+        confirmLabel={t('actions.delete', { ns: 'common' })}
         destructive
         onConfirm={confirmRemove}
         onCancel={() => setToDelete(null)}

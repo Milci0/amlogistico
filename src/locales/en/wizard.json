@@ -1,0 +1,168 @@
+{
+  "flows": {
+    "have_transport": "I already have transport",
+    "find_transport": "I am looking for transport",
+    "blank_templates": "Blank templates"
+  },
+  "steps": {
+    "route": "Route",
+    "cargo": "Cargo",
+    "parties": "Parties",
+    "forwarders": "Forwarders",
+    "quote": "Quote",
+    "docs": "Documents",
+    "result": "Result"
+  },
+  "nav": {
+    "back": "← Back",
+    "next": "Next →"
+  },
+  "route": {
+    "transportType": "Transport mode",
+    "road": {
+      "label": "Road",
+      "sub": "TIR, truck"
+    },
+    "sea": {
+      "label": "Sea",
+      "sub": "FCL/LCL container"
+    },
+    "multimodal": {
+      "label": "Multimodal transport",
+      "hint": "The cargo travels by more than one mode, for example truck plus vessel. This adds an MTD document."
+    },
+    "from": "From",
+    "to": "To",
+    "country": "Country",
+    "cityPort": "City or port",
+    "loadDate": "Loading date"
+  },
+  "cargo": {
+    "sectionTitle": "Cargo description",
+    "name": "Cargo description",
+    "hsCode": "Commodity code (HS/CN)",
+    "grossWeight": "Gross weight (kg)",
+    "netWeight": "Net weight (kg)",
+    "volume": "Volume (m³)",
+    "value": "Cargo value",
+    "currency": "Currency",
+    "notes": "Notes and instructions",
+    "terms": {
+      "title": "Carriage terms",
+      "freightPrice": "Freight charges",
+      "freightCurrency": "Freight currency",
+      "paymentDays": "Payment terms (days)"
+    },
+    "road": {
+      "title": "Vehicle and road conditions",
+      "vehicleType": "Vehicle type",
+      "types": {
+        "Plandeka": "Curtainsider",
+        "Chłodnia": "Refrigerated",
+        "Mroźnia": "Frozen"
+      },
+      "tempFrom": "Temperature from (°C)",
+      "tempTo": "Temperature to (°C)",
+      "adr": "ADR (dangerous goods)",
+      "adrClass": "ADR class / UN number",
+      "vehicleReg": "Vehicle registration number (optional)"
+    },
+    "sea": {
+      "title": "Container and voyage details",
+      "hint": "These fields are optional. The carrier issues this data, so you can fill it in later.",
+      "containerType": "Container type",
+      "choose": "select",
+      "containerNo": "Container No.",
+      "sealNo": "Seal No.",
+      "marksNos": "Marks and numbers",
+      "vessel": "Vessel",
+      "voyageNo": "Voyage No.",
+      "bookingNo": "Booking No.",
+      "flag": "Flag",
+      "eta": "ETA (estimated time of arrival)",
+      "freightTerms": "Freight terms"
+    },
+    "incoterms": {
+      "title": "Incoterms",
+      "hint": "The trade rule that splits costs and risk between consignor and consignee"
+    }
+  },
+  "parties": {
+    "fillFromProfile": "Insert my company details",
+    "fillFasterPrefix": "Fill this in faster:",
+    "fillFasterLink": "add your company details to your profile",
+    "autofilled": "Filled in from your profile. You can change it.",
+    "autofilledCompleteLink": "Complete the rest of your company details",
+    "autofilledCompleteSuffix": " so that next time everything is filled in.",
+    "sender": "Consignor",
+    "receiver": "Consignee",
+    "carrier": "Carrier",
+    "carrierSubtitle": "Required. Appears on the CMR, transport order and POD",
+    "companyName": "Company name",
+    "vat": "VAT or Tax ID",
+    "address": "Address",
+    "contactPerson": "Contact person",
+    "phone": "Phone",
+    "bankDetails": "Bank details",
+    "iban": "IBAN",
+    "swift": "BIC / SWIFT",
+    "bankName": "Bank name"
+  },
+  "forwarders": {
+    "title": "Freight forwarders",
+    "comingSoon": "This step is coming soon."
+  },
+  "quote": {
+    "title": "Quote",
+    "cargoLabel": "1× 20' Standard FCL",
+    "portNotRecognised": "We could not match a port to this route. Check the rates on the Trade lanes tab.",
+    "roadSoon": "Road freight quotes are coming soon. Sea and air rates are on the Trade lanes tab."
+  },
+  "docs": {
+    "docsChangedTitle": "The document set has changed",
+    "docsChangedBody": "After your changes the list of required and optional documents differs from the original. Check the selection before you generate.",
+    "saveErrorTitle": "Could not save",
+    "savedTitle": "Saved to history",
+    "savedBody": "The document set has been saved.",
+    "savedLink": "Go to document history",
+    "summary": "Order summary",
+    "complete": "Complete",
+    "incomplete": "Incomplete",
+    "insuranceTitle": "Insure your shipment",
+    "insuranceBody": "Protect the cargo in transit against damage, theft and loss.",
+    "documents": "Documents",
+    "generatedCount": "{{done}}/{{total}} generated",
+    "downloadSelected": "Download selected documents",
+    "downloadAsNew": "Download as a new document",
+    "downloading": "Downloading...",
+    "selectAtLeastOne": "Select at least one document to download the files.",
+    "saveFailed": "We could not save the set to your history.",
+    "fields": {
+      "transportType": "Transport mode",
+      "route": "Route",
+      "cargo": "Cargo",
+      "customs": "Customs clearance",
+      "weightValue": "Weight / Value",
+      "weight": "Weight",
+      "value": "Value",
+      "incoterms": "Incoterms",
+      "sender": "Consignor",
+      "receiver": "Consignee",
+      "carrier": "Carrier"
+    },
+    "values": {
+      "road": "Road (TIR)",
+      "sea": "Sea (container)",
+      "customsNo": "No (movement inside the EU)",
+      "customsYes": "Yes"
+    }
+  },
+  "guard": {
+    "title": "Unfinished form",
+    "body": "The data you entered has not been generated yet. Save the current progress as a draft so you can come back to it?",
+    "saveErrorTitle": "Could not save",
+    "saveDraft": "Save draft",
+    "discard": "Discard changes",
+    "saveFailed": "We could not save the draft."
+  }
+}

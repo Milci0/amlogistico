@@ -8,6 +8,9 @@ import '@fontsource/inter/500.css'
 import '@fontsource/inter/600.css'
 import '@fontsource/inter/700.css'
 import './index.css'
+// Konfiguracja i18n musi wykonać się przed pierwszym renderem, żeby komponenty
+// od razu dostały właściwy język (bez migotania angielskich kluczy).
+import './i18n'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(

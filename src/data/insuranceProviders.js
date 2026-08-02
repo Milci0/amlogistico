@@ -4,6 +4,10 @@
 // do czasu podpisania umowy żadna z tych ofert nie jest ofertą w rozumieniu przepisów
 // i nic się realnie nie kupuje. `premiumMultiplier` koryguje szacunek z kalkulatora,
 // żeby karty różniły się między sobą tak jak w realnym porównaniu.
+//
+// UWAGA: `tagline`, `features` i `ctaLabel` są renderowane z tłumaczeń
+// (`pages` → insurance.providers.<id>), a wartości tutaj zostają jako zapasowy
+// tekst, gdyby brakowało klucza.
 
 export const PROVIDERS = [
   {

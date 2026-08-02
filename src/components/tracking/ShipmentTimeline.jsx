@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { EVENT_TYPES } from '../../data/trackingMock'
 import { formatDocumentDate } from '../../utils/formatDate'
 
@@ -6,6 +7,11 @@ import { formatDocumentDate } from '../../utils/formatDate'
 // (jeszcze nie zaszło) renderuje się przygaszone, z przerywaną linią.
 
 export default function ShipmentTimeline({ events }) {
+  const { t, i18n } = useTranslation('pages')
+  // Treść zdarzeń to dane makiety — angielskie wersje leżą obok polskich
+  // w trackingMock.js (locationEn / descriptionEn).
+  const isEn = i18n.language.startsWith('en')
+
   return (
     <div>
       {events.map((event, i) => {
@@ -43,12 +49,16 @@ export default function ShipmentTimeline({ events }) {
                 <span className="text-xs text-gray-400 dark:text-slate-500">{event.time}</span>
                 {event.planned && (
                   <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500 uppercase tracking-wide">
-                    Planowane
+                    {t('tracking.planned')}
                   </span>
                 )}
               </div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white mt-0.5">{event.location}</p>
-              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{event.description}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white mt-0.5">
+                {(isEn && event.locationEn) || event.location}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
+                {(isEn && event.descriptionEn) || event.description}
+              </p>
             </div>
           </div>
         )

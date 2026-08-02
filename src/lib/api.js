@@ -2,11 +2,13 @@
 // credentials:'include' → httpOnly cookie (token) leci z każdym żądaniem.
 // Błędy rzucane jako ApiError ze statusem i danymi (do rozróżnienia 401/409/400 w UI).
 
+import i18n from '../i18n'
+
 const BASE = '/api'
 
 export class ApiError extends Error {
   constructor(status, data) {
-    super(data?.error || `Błąd żądania (${status})`)
+    super(data?.error || i18n.t('requestFailed', { ns: 'errors', status }))
     this.name = 'ApiError'
     this.status = status
     this.data = data
@@ -24,7 +26,7 @@ async function request(path, { method = 'GET', body } = {}) {
     })
   } catch {
     // brak połączenia z serwerem
-    throw new ApiError(0, { error: 'Brak połączenia z serwerem' })
+    throw new ApiError(0, { error: i18n.t('noConnectionShort', { ns: 'errors' }) })
   }
 
   let data = null

@@ -1,16 +1,18 @@
 // Prosty modal potwierdzenia (2 przyciski). Używany m.in. przy „Usuń" w historii
 // i wersjach roboczych. Reużywa istniejących klas Tailwind — bez nowej stylistyki.
+import { useTranslation } from 'react-i18next'
 
 export default function ConfirmDialog({
   open,
   title,
   description,
-  confirmLabel = 'Potwierdź',
-  cancelLabel = 'Anuluj',
+  confirmLabel,
+  cancelLabel,
   destructive = false,
   onConfirm,
   onCancel,
 }) {
+  const { t } = useTranslation()
   if (!open) return null
   return (
     <div
@@ -28,7 +30,7 @@ export default function ConfirmDialog({
             onClick={onCancel}
             className="flex-1 text-sm font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
           >
-            {cancelLabel}
+            {cancelLabel ?? t('actions.cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -37,7 +39,7 @@ export default function ConfirmDialog({
               (destructive ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700')
             }
           >
-            {confirmLabel}
+            {confirmLabel ?? t('actions.confirm')}
           </button>
         </div>
       </div>

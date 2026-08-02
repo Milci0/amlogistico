@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Info, ShieldCheck, ArrowRight, Truck, Ship, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { COUNTRIES } from '../../data/mockData'
 import CountrySelect from '../ui/CountrySelect'
@@ -24,21 +25,13 @@ import { findSeaPortCode } from '../../data/seaPorts'
 
 const CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF']
 const CONTAINER_TYPES = ['', '20ft', '40ft', '40ft HC', 'LCL']
+// UWAGA: te wartości lądują w formData i w szablonach PDF, więc pozostają
+// literałami. Tłumaczona jest wyłącznie ETYKIETA przycisku.
 const VEHICLE_TYPES = ['Plandeka', 'Chłodnia', 'Mroźnia']
 
-const INCOTERMS = [
-  { code: 'EXW', label: 'Ex Works', desc: 'Sprzedający udostępnia towar w swoim zakładzie, kupujący organizuje cały transport i ponosi ryzyko od tego momentu.' },
-  { code: 'FCA', label: 'Free Carrier', desc: 'Sprzedający dostarcza towar do przewoźnika wskazanego przez kupującego, ryzyko przechodzi po załadunku.' },
-  { code: 'FAS', label: 'Free Alongside Ship', desc: 'Sprzedający dostarcza towar wzdłuż burty statku w porcie załadunku. Tylko transport morski.' },
-  { code: 'FOB', label: 'Free On Board', desc: 'Sprzedający dostarcza towar na pokład statku, ryzyko przechodzi po przejściu burty statku. Tylko transport morski.' },
-  { code: 'CFR', label: 'Cost and Freight', desc: 'Sprzedający opłaca fracht do portu przeznaczenia, ryzyko przechodzi już po załadunku na statek. Tylko transport morski.' },
-  { code: 'CIF', label: 'Cost, Insurance and Freight', desc: 'Jak CFR, dodatkowo sprzedający opłaca ubezpieczenie towaru. Tylko transport morski.' },
-  { code: 'CPT', label: 'Carriage Paid To', desc: 'Sprzedający opłaca przewóz do miejsca przeznaczenia, ryzyko przechodzi po przekazaniu towaru pierwszemu przewoźnikowi.' },
-  { code: 'CIP', label: 'Carriage and Insurance Paid To', desc: 'Jak CPT, dodatkowo sprzedający opłaca ubezpieczenie towaru na czas całego transportu.' },
-  { code: 'DAP', label: 'Delivered At Place', desc: 'Sprzedający dostarcza towar gotowy do rozładunku w uzgodnionym miejscu przeznaczenia.' },
-  { code: 'DPU', label: 'Delivered at Place Unloaded', desc: 'Jak DAP, ale sprzedający odpowiada również za rozładunek towaru w miejscu przeznaczenia.' },
-  { code: 'DDP', label: 'Delivered Duty Paid', desc: 'Sprzedający dostarcza towar odprawiony celnie, z opłaconym cłem i podatkami, gotowy do rozładunku.' },
-]
+// Kod Incoterm jest wartością zapisywaną w formData, więc zostaje literałem.
+// Nazwa i opis idą z tłumaczeń (namespace `incoterms`, klucz `rules.<CODE>`).
+const INCOTERM_CODES = ['EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP']
 
 const cls = {
   input: 'w-full bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900 transition-colors',
@@ -108,24 +101,26 @@ function Field({ label, hint, children }) {
 }
 
 function BackButton({ onClick }) {
+  const { t } = useTranslation('wizard')
   return (
     <button
       onClick={onClick}
       className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-slate-300 font-medium border border-gray-200 dark:border-slate-700 rounded-lg px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors mb-6"
     >
-      ← Wróć
+      {t('nav.back')}
     </button>
   )
 }
 
-function NextButton({ onClick, disabled, label = 'Dalej →' }) {
+function NextButton({ onClick, disabled, label }) {
+  const { t } = useTranslation('wizard')
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       className="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-100 dark:disabled:bg-slate-700 disabled:text-gray-400 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
     >
-      {label}
+      {label ?? t('nav.next')}
     </button>
   )
 }
@@ -133,15 +128,17 @@ function NextButton({ onClick, disabled, label = 'Dalej →' }) {
 // ── Step 1: Trasa ──────────────────────────────────────────────────────────────
 
 function Step1({ data, setData, onNext, canNext }) {
+  const { t } = useTranslation('wizard')
+
   return (
     <div>
-      <SectionLabel>Typ transportu</SectionLabel>
+      <SectionLabel>{t('route.transportType')}</SectionLabel>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         {[
           {
             id: 'road',
-            label: 'Drogowy',
-            sub: 'TIR, ciężarówka',
+            label: t('route.road.label'),
+            sub: t('route.road.sub'),
             svg: (active) => (
               <svg className={`w-7 h-7 ${active ? 'text-emerald-500' : 'text-gray-400 dark:text-slate-500'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3h1.4a2 2 0 0 1 1.7.9l1.7 2.6a2 2 0 0 1 .3 1V17h-2" />
@@ -152,8 +149,8 @@ function Step1({ data, setData, onNext, canNext }) {
           },
           {
             id: 'sea',
-            label: 'Morski',
-            sub: 'Kontener FCL/LCL',
+            label: t('route.sea.label'),
+            sub: t('route.sea.sub'),
             svg: (active) => (
               <svg className={`w-7 h-7 ${active ? 'text-emerald-500' : 'text-gray-400 dark:text-slate-500'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M2 21c.6.5 1.2 1 2.5 1C7 22 7 20 9.5 20c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
@@ -190,36 +187,36 @@ function Step1({ data, setData, onNext, canNext }) {
           onChange={e => setData(d => ({ ...d, multimodal: e.target.checked }))}
         />
         <div>
-          <p className="text-sm font-medium text-gray-800 dark:text-slate-200">Transport multimodalny</p>
-          <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Towar jedzie kilkoma środkami transportu (np. ciężarówka + statek). Generuje dodatkowy dokument MTD.</p>
+          <p className="text-sm font-medium text-gray-800 dark:text-slate-200">{t('route.multimodal.label')}</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{t('route.multimodal.hint')}</p>
         </div>
       </label>
 
       <div className="mb-5">
-        <SectionLabel>Skąd</SectionLabel>
+        <SectionLabel>{t('route.from')}</SectionLabel>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Kraj">
+          <Field label={t('route.country')}>
             <CountrySelect value={data.fromCountry} onChange={v => setData(d => ({ ...d, fromCountry: v }))} />
           </Field>
-          <Field label="Miasto / port">
+          <Field label={t('route.cityPort')}>
             <CitySelect country={data.fromCountry} value={data.fromCity} onChange={v => setData(d => ({ ...d, fromCity: v }))} />
           </Field>
         </div>
       </div>
 
       <div className="mb-5">
-        <SectionLabel>Dokąd</SectionLabel>
+        <SectionLabel>{t('route.to')}</SectionLabel>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Kraj">
+          <Field label={t('route.country')}>
             <CountrySelect value={data.toCountry} onChange={v => setData(d => ({ ...d, toCountry: v }))} />
           </Field>
-          <Field label="Miasto / port">
+          <Field label={t('route.cityPort')}>
             <CitySelect country={data.toCountry} value={data.toCity} onChange={v => setData(d => ({ ...d, toCity: v }))} />
           </Field>
         </div>
       </div>
 
-      <Field label="Data załadunku">
+      <Field label={t('route.loadDate')}>
         <input type="date" className={`${cls.input} cursor-pointer`} value={data.loadDate} onClick={openDatePicker} onChange={e => setData(d => ({ ...d, loadDate: e.target.value }))} />
       </Field>
 
@@ -231,13 +228,15 @@ function Step1({ data, setData, onNext, canNext }) {
 // ── Step 2: Towar ──────────────────────────────────────────────────────────────
 
 function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, transport, fromCountry, toCountry, isAdmin, findMode, onNext, onBack, canNext }) {
+  const { t } = useTranslation('wizard')
+  const { t: ti } = useTranslation('incoterms')
   const needsTemp = road.vehicleType === 'Chłodnia' || road.vehicleType === 'Mroźnia'
-  const selectedIncoterm = INCOTERMS.find(it => it.code === terms.incoterms)
+  const selectedIncoterm = INCOTERM_CODES.includes(terms.incoterms) ? terms.incoterms : null
 
   return (
     <div>
       <BackButton onClick={onBack} />
-      <SectionLabel>Opis towaru</SectionLabel>
+      <SectionLabel>{t('cargo.sectionTitle')}</SectionLabel>
 
       {/* Kategoria → podkategoria → dopiero potem nazwa i kod HS. Kolejność ma
           znaczenie: wybór podkategorii podpowiada oba pola poniżej, więc muszą być
@@ -274,22 +273,22 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        <Field label="Nazwa towaru">
+        <Field label={t('cargo.name')}>
           <input className={cls.input} value={data.cargoName} onChange={e => setData(d => ({ ...d, cargoName: e.target.value }))} />
         </Field>
-        <Field label="Kod celny (HS/CN)">
+        <Field label={t('cargo.hsCode')}>
           <input className={cls.input} value={data.hsCode} onChange={e => setData(d => ({ ...d, hsCode: e.target.value }))} />
         </Field>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-        <Field label="Waga brutto (kg)">
+        <Field label={t('cargo.grossWeight')}>
           <input type="number" className={cls.input} value={data.weight} onChange={e => setData(d => ({ ...d, weight: e.target.value }))} />
         </Field>
-        <Field label="Waga netto (kg)">
+        <Field label={t('cargo.netWeight')}>
           <input type="number" className={cls.input} value={data.weightNet} onChange={e => setData(d => ({ ...d, weightNet: e.target.value }))} />
         </Field>
-        <Field label="Objętość (m³)">
+        <Field label={t('cargo.volume')}>
           <input type="number" className={cls.input} value={data.volume} onChange={e => setData(d => ({ ...d, volume: e.target.value }))} />
         </Field>
       </div>
@@ -303,10 +302,10 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        <Field label="Wartość towaru">
+        <Field label={t('cargo.value')}>
           <input type="number" className={cls.input} value={data.value} onChange={e => setData(d => ({ ...d, value: e.target.value }))} />
         </Field>
-        <Field label="Waluta">
+        <Field label={t('cargo.currency')}>
           <select className={cls.input} value={data.currency} onChange={e => setData(d => ({ ...d, currency: e.target.value }))}>
             <option value="">-</option>
             {CURRENCIES.map(c => <option key={c}>{c}</option>)}
@@ -315,7 +314,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
       </div>
 
       <div className="mb-6">
-        <Field label="Uwagi / instrukcje">
+        <Field label={t('cargo.notes')}>
           <textarea
             className={`${cls.input} resize-none`}
             rows={3}
@@ -328,18 +327,18 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
       {/* ── Warunki przewozu (oba typy; nieznane przy szukaniu transportu) ── */}
       {!findMode && (
         <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">Warunki przewozu</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">{t('cargo.terms.title')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Field label="Koszt frachtu">
+            <Field label={t('cargo.terms.freightPrice')}>
               <input type="number" className={cls.input} value={terms.freightPrice} onChange={e => setTerms(t => ({ ...t, freightPrice: e.target.value }))} />
             </Field>
-            <Field label="Waluta frachtu">
+            <Field label={t('cargo.terms.freightCurrency')}>
               <select className={cls.input} value={terms.freightCurrency} onChange={e => setTerms(t => ({ ...t, freightCurrency: e.target.value }))}>
                 <option value="">-</option>
                 {CURRENCIES.map(c => <option key={c}>{c}</option>)}
               </select>
             </Field>
-            <Field label="Termin płatności (dni)">
+            <Field label={t('cargo.terms.paymentDays')}>
               <input type="number" className={cls.input} value={terms.paymentDays} onChange={e => setTerms(t => ({ ...t, paymentDays: e.target.value }))} />
             </Field>
           </div>
@@ -349,10 +348,10 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
       {/* ── Sekcja: Transport Drogowy ────────────────────────────── */}
       {transport === 'road' && (
         <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">Pojazd i warunki drogowe</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">{t('cargo.road.title')}</p>
 
           <div className="mb-4">
-            <p className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Typ pojazdu</p>
+            <p className="block text-sm text-gray-700 dark:text-slate-300 mb-2">{t('cargo.road.vehicleType')}</p>
             <div className="flex flex-wrap gap-2">
               {VEHICLE_TYPES.map(vt => (
                 <button
@@ -364,7 +363,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
                       ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
                       : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'}`}
                 >
-                  {vt}
+                  {t(`cargo.road.types.${vt}`)}
                 </button>
               ))}
             </div>
@@ -372,10 +371,10 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
 
           {needsTemp && (
             <div className="grid grid-cols-2 gap-3 mb-4">
-              <Field label="Temperatura od (°C)">
+              <Field label={t('cargo.road.tempFrom')}>
                 <input type="number" className={cls.input} value={road.tempFrom} onChange={e => setRoad(r => ({ ...r, tempFrom: e.target.value }))} />
               </Field>
-              <Field label="Temperatura do (°C)">
+              <Field label={t('cargo.road.tempTo')}>
                 <input type="number" className={cls.input} value={road.tempTo} onChange={e => setRoad(r => ({ ...r, tempTo: e.target.value }))} />
               </Field>
             </div>
@@ -389,19 +388,19 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
                 checked={road.adr}
                 onChange={e => setRoad(r => ({ ...r, adr: e.target.checked, adrClass: e.target.checked ? r.adrClass : '' }))}
               />
-              <span className="text-sm text-gray-700 dark:text-slate-300">ADR (towary niebezpieczne)</span>
+              <span className="text-sm text-gray-700 dark:text-slate-300">{t('cargo.road.adr')}</span>
             </label>
           </div>
 
           {road.adr && (
             <div className="mb-4">
-              <Field label="Klasa ADR / Numer UN">
+              <Field label={t('cargo.road.adrClass')}>
                 <input className={cls.input} value={road.adrClass} onChange={e => setRoad(r => ({ ...r, adrClass: e.target.value }))} />
               </Field>
             </div>
           )}
 
-          <Field label="Nr rejestracyjny pojazdu (opcjonalne)">
+          <Field label={t('cargo.road.vehicleReg')}>
             <input className={cls.input} value={road.vehicleReg} onChange={e => setRoad(r => ({ ...r, vehicleReg: e.target.value }))} />
           </Field>
         </div>
@@ -410,55 +409,55 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
       {/* ── Sekcja: Transport Morski (szczegóły nieznane przy szukaniu transportu) ── */}
       {!findMode && transport === 'sea' && (
         <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">Szczegóły kontenera i rejsu</p>
-          <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">Pola opcjonalne, dane nadawane przez armatora. Możesz uzupełnić je później.</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">{t('cargo.sea.title')}</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">{t('cargo.sea.hint')}</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            <Field label="Typ kontenera">
+            <Field label={t('cargo.sea.containerType')}>
               <select className={cls.input} value={sea.containerType} onChange={e => setSea(s => ({ ...s, containerType: e.target.value }))}>
-                {CONTAINER_TYPES.map(ct => <option key={ct} value={ct}>{ct || 'wybierz'}</option>)}
+                {CONTAINER_TYPES.map(ct => <option key={ct} value={ct}>{ct || t('cargo.sea.choose')}</option>)}
               </select>
             </Field>
-            <Field label="Numer kontenera (Container No.)">
+            <Field label={t('cargo.sea.containerNo')}>
               <input className={cls.input} value={sea.containerNo} onChange={e => setSea(s => ({ ...s, containerNo: e.target.value }))} />
             </Field>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            <Field label="Numer plomby (Seal No.)">
+            <Field label={t('cargo.sea.sealNo')}>
               <input className={cls.input} value={sea.sealNo} onChange={e => setSea(s => ({ ...s, sealNo: e.target.value }))} />
             </Field>
-            <Field label="Znaki i numery (Marks & Nos)">
+            <Field label={t('cargo.sea.marksNos')}>
               <input className={cls.input} value={sea.marksNos} onChange={e => setSea(s => ({ ...s, marksNos: e.target.value }))} />
             </Field>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            <Field label="Statek (Vessel)">
+            <Field label={t('cargo.sea.vessel')}>
               <input className={cls.input} value={sea.vessel} onChange={e => setSea(s => ({ ...s, vessel: e.target.value }))} />
             </Field>
-            <Field label="Nr rejsu (Voyage No.)">
+            <Field label={t('cargo.sea.voyageNo')}>
               <input className={cls.input} value={sea.voyageNo} onChange={e => setSea(s => ({ ...s, voyageNo: e.target.value }))} />
             </Field>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            <Field label="Numer rezerwacji (Booking No.)">
+            <Field label={t('cargo.sea.bookingNo')}>
               <input className={cls.input} value={sea.bookingNo} onChange={e => setSea(s => ({ ...s, bookingNo: e.target.value }))} />
             </Field>
-            <Field label="Bandera (Flag)">
+            <Field label={t('cargo.sea.flag')}>
               <input className={cls.input} value={sea.flag} onChange={e => setSea(s => ({ ...s, flag: e.target.value }))} />
             </Field>
           </div>
 
           <div className="mb-4">
-            <Field label="ETA (planowana data przybycia)">
+            <Field label={t('cargo.sea.eta')}>
               <input type="date" className={`${cls.input} cursor-pointer`} value={sea.eta} onClick={openDatePicker} onChange={e => setSea(s => ({ ...s, eta: e.target.value }))} />
             </Field>
           </div>
 
           <div>
-            <p className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Warunki frachtu</p>
+            <p className="block text-sm text-gray-700 dark:text-slate-300 mb-2">{t('cargo.sea.freightTerms')}</p>
             <div className="flex gap-3">
               {['Prepaid', 'Collect'].map(ft => (
                 <button
@@ -480,20 +479,20 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
 
       {/* ── Incoterms — na końcu, wymaga już pełnego obrazu przesyłki ───── */}
       <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
-        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">Incoterms</p>
-        <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">Reguła handlowa określająca podział kosztów i ryzyka między nadawcą a odbiorcą</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">{t('cargo.incoterms.title')}</p>
+        <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">{t('cargo.incoterms.hint')}</p>
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-          {INCOTERMS.map(it => {
-            const active = terms.incoterms === it.code
+          {INCOTERM_CODES.map(code => {
+            const active = terms.incoterms === code
             return (
               <button
-                key={it.code}
+                key={code}
                 type="button"
-                onClick={() => setTerms(t => ({ ...t, incoterms: t.incoterms === it.code ? '' : it.code }))}
+                onClick={() => setTerms(prev => ({ ...prev, incoterms: prev.incoterms === code ? '' : code }))}
                 className={`px-3 py-2.5 rounded-lg text-sm font-semibold border transition-colors
                   ${active ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'}`}
               >
-                {it.code}
+                {code}
               </button>
             )
           })}
@@ -502,8 +501,8 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
           <div className="mt-3 flex items-start gap-2 px-3.5 py-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-lg">
             <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.5} />
             <div>
-              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-0.5">{selectedIncoterm.code}: {selectedIncoterm.label}</p>
-              <p className="text-xs text-emerald-700 dark:text-emerald-300">{selectedIncoterm.desc}</p>
+              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-0.5">{selectedIncoterm}: {ti(`rules.${selectedIncoterm}.name`)}</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-300">{ti(`rules.${selectedIncoterm}.shortDesc`)}</p>
             </div>
           </div>
         )}
@@ -517,6 +516,7 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
 // ── Step 3: Strony ─────────────────────────────────────────────────────────────
 
 function PartySection({ title, subtitle, data, onChange, showBank = false }) {
+  const { t } = useTranslation('wizard')
   const upd = (key, val) => onChange({ ...data, [key]: val })
   return (
     <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
@@ -524,15 +524,15 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
       {subtitle && <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">{subtitle}</p>}
       {!subtitle && <div className="mb-4" />}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-        <Field label="Nazwa firmy">
+        <Field label={t('parties.companyName')}>
           <input className={cls.input} value={data.name} onChange={e => upd('name', e.target.value)} />
         </Field>
-        <Field label="NIP / VAT lub Tax ID">
+        <Field label={t('parties.vat')}>
           <input className={cls.input} value={data.vat} onChange={e => upd('vat', e.target.value)} />
         </Field>
       </div>
       <div className="mb-3">
-        <Field label="Adres">
+        <Field label={t('parties.address')}>
           <input
             className={cls.input}
             value={data.address}
@@ -541,25 +541,25 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
         </Field>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Field label="Osoba kontaktowa">
+        <Field label={t('parties.contactPerson')}>
           <input className={cls.input} value={data.contact} onChange={e => upd('contact', e.target.value)} />
         </Field>
-        <Field label="Telefon">
+        <Field label={t('parties.phone')}>
           <input className={cls.input} value={data.phone} onChange={e => upd('phone', e.target.value)} />
         </Field>
       </div>
       {showBank && (
         <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-3">Dane bankowe</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-3">{t('parties.bankDetails')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            <Field label="IBAN">
+            <Field label={t('parties.iban')}>
               <input className={cls.input} value={data.iban} onChange={e => upd('iban', e.target.value)} />
             </Field>
-            <Field label="BIC / SWIFT">
+            <Field label={t('parties.swift')}>
               <input className={cls.input} value={data.swift} onChange={e => upd('swift', e.target.value)} />
             </Field>
           </div>
-          <Field label="Nazwa banku">
+          <Field label={t('parties.bankName')}>
             <input className={cls.input} value={data.bank} onChange={e => upd('bank', e.target.value)} />
           </Field>
         </div>
@@ -596,6 +596,7 @@ function isSenderEmpty(sender) {
 }
 
 function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext }) {
+  const { t } = useTranslation('wizard')
   const profileReady = hasCompanyDataToFill(user)
   const [autofilled, setAutofilled] = useState(false)
 
@@ -626,49 +627,49 @@ function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext })
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" />
           </svg>
-          Wstaw moje dane firmy
+          {t('parties.fillFromProfile')}
         </button>
       )}
       {!profileReady && user && (
         <p className="mb-3 text-xs text-gray-400 dark:text-slate-500">
-          Wypełniaj to szybciej:{' '}
+          {t('parties.fillFasterPrefix')}{' '}
           <Link to="/profile?tab=firma" className="text-emerald-600 hover:underline">
-            uzupełnij dane firmy w profilu
+            {t('parties.fillFasterLink')}
           </Link>
           .
         </p>
       )}
 
       <PartySection
-        title="Nadawca"
+        title={t('parties.sender')}
         data={data.sender}
         onChange={s => setData(d => ({ ...d, sender: s }))}
         showBank
       />
       {autofilled && (
         <p className="-mt-2 mb-4 text-xs text-gray-400 dark:text-slate-500">
-          Wypełnione danymi z Twojego profilu. Możesz je zmienić.
+          {t('parties.autofilled')}
           {user?.profileCompleted !== true && (
             <>
               {' '}
               <Link to="/profile?tab=firma" className="text-emerald-600 hover:underline">
-                Uzupełnij resztę danych firmy
+                {t('parties.autofilledCompleteLink')}
               </Link>
-              , żeby następnym razem wstawiły się w całości.
+              {t('parties.autofilledCompleteSuffix')}
             </>
           )}
         </p>
       )}
       <PartySection
-        title="Odbiorca"
+        title={t('parties.receiver')}
         data={data.receiver}
         onChange={r => setData(d => ({ ...d, receiver: r }))}
       />
       {/* Przewoźnik nieznany, dopóki użytkownik szuka transportu (ścieżka B). */}
       {!findMode && (
         <PartySection
-          title="Przewoźnik"
-          subtitle="Wymagane. Pojawia się w CMR, Zleceniu Transportowym i POD"
+          title={t('parties.carrier')}
+          subtitle={t('parties.carrierSubtitle')}
           data={data.carrier}
           onChange={c => setData(d => ({ ...d, carrier: c }))}
         />
@@ -683,11 +684,12 @@ function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext })
 // wyceny frachtu). Zero pól i zero zapisu do formData.
 
 function ForwardersStep({ onNext, onBack }) {
+  const { t } = useTranslation('wizard')
   return (
     <div>
       <BackButton onClick={onBack} />
-      <SectionLabel>Spedytorzy</SectionLabel>
-      <p className="text-sm text-gray-400 dark:text-slate-400">Ten krok będzie dostępny wkrótce.</p>
+      <SectionLabel>{t('forwarders.title')}</SectionLabel>
+      <p className="text-sm text-gray-400 dark:text-slate-400">{t('forwarders.comingSoon')}</p>
       <NextButton onClick={onNext} />
     </div>
   )
@@ -699,6 +701,7 @@ function ForwardersStep({ onNext, onBack }) {
 // się rozpoznać jako port. Fracht drogowy — Freightos go nie obejmuje, informacja +
 // link do „Trasy handlowe". „Dalej" zawsze aktywne, niezależnie od wyniku.
 function QuoteStep({ route, onNext, onBack }) {
+  const { t } = useTranslation('wizard')
   const { loading, result, searched, search } = useFreightRates()
   const isSea = route.transport === 'sea' || route.multimodal
 
@@ -716,7 +719,7 @@ function QuoteStep({ route, onNext, onBack }) {
   return (
     <div>
       <BackButton onClick={onBack} />
-      <SectionLabel>Wycena</SectionLabel>
+      <SectionLabel>{t('quote.title')}</SectionLabel>
 
       {isSea ? (
         portsResolved ? (
@@ -726,24 +729,18 @@ function QuoteStep({ route, onNext, onBack }) {
               loading={loading}
               searched={searched}
               routeLabel={`${route.fromCity} – ${route.toCity}`}
-              cargoLabel="1× 20' Standard FCL"
+              cargoLabel={t('quote.cargoLabel')}
               compact
             />
           </div>
         ) : (
           <div className="mb-6">
-            <AlertBox type="warning">
-              Nie rozpoznano portu dla tej trasy. Stawki możesz sprawdzić w zakładce
-              Trasy handlowe.
-            </AlertBox>
+            <AlertBox type="warning">{t('quote.portNotRecognised')}</AlertBox>
           </div>
         )
       ) : (
         <div className="mb-6">
-          <AlertBox type="info">
-            Wycena frachtu drogowego będzie dostępna wkrótce. Stawki morskie i lotnicze
-            sprawdzisz w zakładce Trasy handlowe.
-          </AlertBox>
+          <AlertBox type="info">{t('quote.roadSoon')}</AlertBox>
         </div>
       )}
 
@@ -756,14 +753,17 @@ function QuoteStep({ route, onNext, onBack }) {
 
 // Jedna funkcja formatująca wartości karty podsumowania: puste pole pokazuje
 // „Nie podano" (jasnoszary) zamiast myślnika. Używana we wszystkich komórkach.
-function formatSummaryValue(v) {
+function formatSummaryValue(v, notProvidedLabel) {
   if (v == null || String(v).trim() === '' || String(v).trim() === '-') {
-    return <span className="text-gray-300 dark:text-slate-600">Nie podano</span>
+    return <span className="text-gray-300 dark:text-slate-600">{notProvidedLabel}</span>
   }
   return v
 }
 
 function Step4({ onBack }) {
+  const { t } = useTranslation('wizard')
+  const { t: tc } = useTranslation('common')
+  const { t: tCountry } = useTranslation('countries')
   const wiz = useWizard()
   const { snapshot, mode, originalEngineResult, flow } = wiz
 
@@ -800,7 +800,7 @@ function Step4({ onBack }) {
     autoSavedRef.current = true
     wiz.recordGenerated(Array.from(selected))
       .then((saved) => setSavedSetId(saved.id))
-      .catch((err) => setSaveError(err.message || 'Nie udało się zapisać zestawu w historii.'))
+      .catch((err) => setSaveError(err.message || t('docs.saveFailed')))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -827,19 +827,21 @@ function Step4({ onBack }) {
 
   const summary = [
     {
-      label: 'Typ transportu',
-      value: snapshot.route.transport === 'road' ? 'Drogowy (TIR)' : 'Morski (Kontener)',
+      label: t('docs.fields.transportType'),
+      value: snapshot.route.transport === 'road' ? t('docs.values.road') : t('docs.values.sea'),
       icon: <TransportIcon className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" strokeWidth={1.75} />,
     },
     {
-      label: 'Trasa',
-      value: routeReady ? `${fromCountry.name} → ${toCountry.name}` : '',
+      label: t('docs.fields.route'),
+      value: routeReady
+        ? `${tCountry(fromCountry.code, { defaultValue: fromCountry.name })} → ${tCountry(toCountry.code, { defaultValue: toCountry.name })}`
+        : '',
       icon: routeReady ? <ArrowRight className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" strokeWidth={1.75} /> : null,
     },
-    { label: 'Towar', value: snapshot.cargo.cargoName || '' },
+    { label: t('docs.fields.cargo'), value: snapshot.cargo.cargoName || '' },
     {
-      label: 'Odprawa celna',
-      value: routeReady ? (bothEU ? 'Nie (ruch wewnątrz UE)' : 'Tak') : '',
+      label: t('docs.fields.customs'),
+      value: routeReady ? (bothEU ? t('docs.values.customsNo') : t('docs.values.customsYes')) : '',
       icon: routeReady
         ? bothEU
           ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={1.75} />
@@ -849,13 +851,13 @@ function Step4({ onBack }) {
     },
     // Waga i Wartość: jedna komórka gdy oba puste, w przeciwnym razie dwie osobne.
     ...(!weightVal && !valueVal
-      ? [{ label: 'Waga / Wartość', value: '' }]
-      : [{ label: 'Waga', value: weightVal }, { label: 'Wartość', value: valueVal }]),
-    { label: 'Incoterms', value: snapshot.terms.incoterms || '' },
-    { label: 'Nadawca', value: snapshot.parties.sender.name || '' },
-    { label: 'Odbiorca', value: snapshot.parties.receiver.name || '' },
+      ? [{ label: t('docs.fields.weightValue'), value: '' }]
+      : [{ label: t('docs.fields.weight'), value: weightVal }, { label: t('docs.fields.value'), value: valueVal }]),
+    { label: t('docs.fields.incoterms'), value: snapshot.terms.incoterms || '' },
+    { label: t('docs.fields.sender'), value: snapshot.parties.sender.name || '' },
+    { label: t('docs.fields.receiver'), value: snapshot.parties.receiver.name || '' },
     ...(snapshot.parties.carrier.name
-      ? [{ label: 'Przewoźnik', value: snapshot.parties.carrier.name }]
+      ? [{ label: t('docs.fields.carrier'), value: snapshot.parties.carrier.name }]
       : []),
   ]
 
@@ -883,7 +885,7 @@ function Step4({ onBack }) {
     try {
       saved = await wiz.recordGenerated(keys)
     } catch (err) {
-      setSaveError(err.message || 'Nie udało się zapisać zestawu w historii.')
+      setSaveError(err.message || t('docs.saveFailed'))
       return
     }
 
@@ -892,7 +894,7 @@ function Step4({ onBack }) {
     setSavedSetId(saved.id)
   }
 
-  const generateLabel = mode === 'edit' ? 'Pobierz jako nowy dokument' : 'Pobierz wybrane dokumenty'
+  const generateLabel = mode === 'edit' ? t('docs.downloadAsNew') : t('docs.downloadSelected')
   const selectListDocs = docsList.map(d => ({
     id: d.key,
     namePl: d.name,
@@ -900,7 +902,7 @@ function Step4({ onBack }) {
     required: d.required,
   }))
   const selectionError = selectedDocs.length === 0
-    ? 'Zaznacz co najmniej jeden dokument, aby pobrać pliki.'
+    ? t('docs.selectAtLeastOne')
     : null
 
   return (
@@ -909,40 +911,39 @@ function Step4({ onBack }) {
 
       {docsChanged && (
         <div className="mb-4">
-          <AlertBox type="warning" title="Zmienił się zestaw dokumentów">
-            Po Twoich zmianach lista wymaganych/opcjonalnych dokumentów różni się od pierwotnej.
-            Sprawdź zaznaczenia przed wygenerowaniem.
+          <AlertBox type="warning" title={t('docs.docsChangedTitle')}>
+            {t('docs.docsChangedBody')}
           </AlertBox>
         </div>
       )}
 
       {saveError && (
         <div className="mb-4">
-          <AlertBox type="error" title="Nie udało się zapisać">{saveError}</AlertBox>
+          <AlertBox type="error" title={t('docs.saveErrorTitle')}>{saveError}</AlertBox>
         </div>
       )}
 
       {savedSetId && (
         <div className="mb-4">
-          <AlertBox type="success" title="Zapisano w historii">
-            Zestaw dokumentów został zapisany.{' '}
-            <Link to="/history" className="font-medium underline">Przejdź do historii dokumentów</Link>.
+          <AlertBox type="success" title={t('docs.savedTitle')}>
+            {t('docs.savedBody')}{' '}
+            <Link to="/history" className="font-medium underline">{t('docs.savedLink')}</Link>.
           </AlertBox>
         </div>
       )}
 
       <div className="border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden mb-6 bg-white dark:bg-slate-800">
         <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-gray-100 dark:border-slate-700">
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-slate-500">Podsumowanie zlecenia</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-slate-500">{t('docs.summary')}</p>
           {isComplete ? (
             <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-full px-2.5 py-1">
               <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2} />
-              Kompletne
+              {t('docs.complete')}
             </span>
           ) : (
             <span className="flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800 rounded-full px-2.5 py-1">
               <AlertTriangle className="w-3.5 h-3.5" strokeWidth={2} />
-              Niekompletne
+              {t('docs.incomplete')}
             </span>
           )}
         </div>
@@ -956,7 +957,7 @@ function Step4({ onBack }) {
                 <p className="text-xs text-gray-400 dark:text-slate-500 mb-0.5">{cell.label}</p>
                 <div className={`flex items-center gap-1.5 text-sm font-medium ${cell.tone || 'text-gray-900 dark:text-slate-100'}`}>
                   {cell.icon}
-                  <span className="min-w-0">{formatSummaryValue(cell.value)}</span>
+                  <span className="min-w-0">{formatSummaryValue(cell.value, tc('states.notProvided'))}</span>
                 </div>
               </div>
             )
@@ -972,16 +973,18 @@ function Step4({ onBack }) {
           <ShieldCheck className="w-5 h-5 text-emerald-600" strokeWidth={1.75} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-emerald-900 dark:text-emerald-200">Ubezpiecz swoją przesyłkę</p>
-          <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">Chroń towar na czas transportu przed uszkodzeniem, kradzieżą i zagubieniem.</p>
+          <p className="text-sm font-medium text-emerald-900 dark:text-emerald-200">{t('docs.insuranceTitle')}</p>
+          <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">{t('docs.insuranceBody')}</p>
         </div>
         <ArrowRight className="w-4 h-4 text-emerald-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
       </Link>
 
       <div className="flex items-center justify-between mb-3">
-        <SectionLabel>Dokumenty</SectionLabel>
+        <SectionLabel>{t('docs.documents')}</SectionLabel>
         {doneCount > 0 && (
-          <span className="text-xs text-green-600 font-medium">{doneCount}/{selectedDocs.length} wygenerowano</span>
+          <span className="text-xs text-green-600 font-medium">
+            {t('docs.generatedCount', { done: doneCount, total: selectedDocs.length })}
+          </span>
         )}
       </div>
 
@@ -995,7 +998,7 @@ function Step4({ onBack }) {
         errorMessage={selectionError}
         statusFor={(id) => statuses[id]}
         actionLoading={isAnyLoading}
-        loadingLabel="Pobieranie..."
+        loadingLabel={t('docs.downloading')}
       />
     </div>
   )
@@ -1006,6 +1009,7 @@ function Step4({ onBack }) {
 // na istniejące Stepy i renderuje właściwy krok wg definicji ścieżki (flowSteps).
 
 export default function DocumentWizard() {
+  const { t } = useTranslation('wizard')
   const wiz = useWizard()
   const { user } = useAuth()
   const { snapshot, currentStep, maxStepReached, flow, mode, next, prev, goToStep } = wiz
@@ -1018,7 +1022,7 @@ export default function DocumentWizard() {
   const setTerms   = (u) => wiz.setStepData('terms', u)
 
   const canNext = wiz.validateStep(currentStep)
-  const stepLabels = flow.steps.map(s => s.label)
+  const stepLabels = flow.steps.map(s => t(s.labelKey))
   // Render sterowany rejestrem flow (klucz kroku), nie numerem — dzięki temu ta
   // sama sekwencja obsługuje 4 kroki ścieżki A i 6 kroków ścieżki B.
   const stepKey = flow.steps[currentStep - 1]?.key

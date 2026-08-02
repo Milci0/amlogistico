@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import AlertBox from '../ui/AlertBox'
 
 // ── Prezentacja stawek frachtowych ────────────────────────────────────────────
@@ -5,13 +6,6 @@ import AlertBox from '../ui/AlertBox'
 // Komponent czysto prezentacyjny — dane bierze z useFreightRates.
 // Wariant `compact` (mniejsze paddingi, bez badge „Najlepsza opcja", bez trasy
 // na każdej karcie) jest pod osadzenie w kreatorze.
-
-const MODE_LABELS = {
-  FCL:     'Morski FCL (pełny kontener)',
-  LCL:     'Morski LCL (drobnica)',
-  AIR:     'Lotniczy',
-  EXPRESS: 'Ekspresowy',
-}
 
 const MODE_COLORS = {
   FCL:     'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800',
@@ -47,8 +41,8 @@ function ModeIcon({ mode }) {
   )
 }
 
-function formatPrice(min, max, currency) {
-  const fmt = new Intl.NumberFormat('pl-PL', {
+function formatPrice(min, max, currency, locale) {
+  const fmt = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: currency || 'USD',
     maximumFractionDigits: 0,
@@ -77,6 +71,8 @@ export default function FreightRates({
     )
   }
 
+  const { t, i18n } = useTranslation('pages')
+
   if (!searched || !result) return null
 
   const rates = result.rates ?? []
@@ -97,18 +93,17 @@ export default function FreightRates({
         >
           <span>
             {result.source === 'freightos'
-              ? 'Stawki pobrane z Freightos'
-              : 'Stawki orientacyjne z danych lokalnych. Freightos nie zwrócił wyniku dla tej trasy.'}
+              ? t('freightRates.sourceFreightos')
+              : t('freightRates.sourceFallback')}
           </span>
-          {result.cached && <span className="ml-auto shrink-0 opacity-70">z cache (5 min)</span>}
+          {result.cached && <span className="ml-auto shrink-0 opacity-70">{t('freightRates.cached')}</span>}
         </div>
       )}
 
       {/* ── Stan pusty ────────────────────────────────────────────────────── */}
       {isEmpty ? (
-        <AlertBox type="warning" title="Brak stawek dla tej trasy">
-          Ta wyszukiwarka obejmuje fracht morski i lotniczy. Dla transportu drogowego
-          w Unii Europejskiej stawki nie są dostępne.
+        <AlertBox type="warning" title={t('freightRates.emptyTitle')}>
+          {t('freightRates.emptyBody')}
         </AlertBox>
       ) : (
         /* ── Karty stawek ────────────────────────────────────────────────── */
@@ -129,26 +124,29 @@ export default function FreightRates({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-sm font-semibold text-gray-800 dark:text-slate-100">
-                      {MODE_LABELS[rate.mode] ?? rate.mode}
+                      {t(`freightRates.modes.${rate.mode}`, { defaultValue: rate.mode })}
                     </span>
                     {!compact && i === 0 && (
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-medium">
-                        Najlepsza opcja
+                        {t('freightRates.bestOption')}
                       </span>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-slate-400">
                     <span>
-                      Tranzyt: <strong className="text-gray-700 dark:text-slate-300 font-medium">{rate.transitMin}–{rate.transitMax} dni</strong>
+                      {t('freightRates.transit')}{' '}
+                      <strong className="text-gray-700 dark:text-slate-300 font-medium">
+                        {t('freightRates.transitDays', { min: rate.transitMin, max: rate.transitMax })}
+                      </strong>
                     </span>
                     {cargoLabel && (
                       <span>
-                        Ładunek: <strong className="text-gray-700 dark:text-slate-300 font-medium">{cargoLabel}</strong>
+                        {t('freightRates.cargo')} <strong className="text-gray-700 dark:text-slate-300 font-medium">{cargoLabel}</strong>
                       </span>
                     )}
                     {!compact && routeLabel && (
                       <span>
-                        Trasa: <strong className="text-gray-700 dark:text-slate-300 font-medium">{routeLabel}</strong>
+                        {t('freightRates.route')} <strong className="text-gray-700 dark:text-slate-300 font-medium">{routeLabel}</strong>
                       </span>
                     )}
                   </div>
@@ -156,7 +154,7 @@ export default function FreightRates({
 
                 <div className="text-right shrink-0">
                   <div className={`font-semibold text-gray-900 dark:text-white ${compact ? 'text-sm' : 'text-base'}`}>
-                    {formatPrice(rate.priceMin, rate.priceMax, rate.currency)}
+                    {formatPrice(rate.priceMin, rate.priceMax, rate.currency, i18n.language)}
                   </div>
                   <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{rate.currency}</div>
                 </div>

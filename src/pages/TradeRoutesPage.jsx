@@ -1,19 +1,15 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import FreightRates from '../components/freight/FreightRates'
 import useFreightRates from '../hooks/useFreightRates'
 import { inputCls, labelCls } from '../components/auth/AuthShell'
 
 // ── Opcje formularza ────────────────────────────────────────────────────────────
 
-const LOAD_TYPES = [
-  { value: 'container20',   label: "20' Standard FCL" },
-  { value: 'container40',   label: "40' Standard FCL" },
-  { value: 'container40HC', label: "40' High Cube FCL" },
-  { value: 'pallets',       label: 'Palety (LCL)' },
-  { value: 'boxes',         label: 'Paczki (LCL)' },
-]
+// Same wartości; etykiety idą z tłumaczeń (`pages` → routes.loadTypes).
+const LOAD_TYPE_VALUES = ['container20', 'container40', 'container40HC', 'pallets', 'boxes']
 
 // Chipy szybkiego wyboru — kody UN/LOCODE zgodne z PORT_CODES w api/_lib/freightos.js
 const PORT_SUGGESTIONS = {
@@ -26,7 +22,7 @@ const PORT_SUGGESTIONS = {
   to: [
     { label: 'Port Newark', code: 'USNWK' },
     { label: 'Shanghai',    code: 'CNSHA' },
-    { label: 'Singapur',    code: 'SGSIN' },
+    { label: 'Singapore',   code: 'SGSIN' },
     { label: 'Felixstowe',  code: 'GBFXT' },
     { label: 'Jebel Ali',   code: 'AEJEA' },
     { label: 'Santos',      code: 'BRSSZ' },
@@ -107,6 +103,7 @@ function RouteDash({ arrow = false }) {
 // ── Strona ──────────────────────────────────────────────────────────────────────
 
 export default function TradeRoutesPage() {
+  const { t } = useTranslation('pages')
   const navigate = useNavigate()
   const { loading, result, searched, search } = useFreightRates()
 
@@ -138,12 +135,12 @@ export default function TradeRoutesPage() {
   }
 
   const routeLabel = `${origin.toUpperCase()} – ${destination.toUpperCase()}`
-  const cargoLabel = `${quantity}× ${LOAD_TYPES.find(l => l.value === loadtype)?.label ?? loadtype}`
+  const cargoLabel = `${quantity}× ${t(`routes.loadTypes.${loadtype}`, { defaultValue: loadtype })}`
 
   return (
     <div className="max-w-3xl mx-auto">
       <Helmet>
-        <title>Trasy handlowe | AMLogistico</title>
+        <title>{t('routes.metaTitle')}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -153,9 +150,9 @@ export default function TradeRoutesPage() {
           <RouteIcon className="w-[26px] h-[26px]" />
         </div>
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Trasy handlowe</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('routes.title')}</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Sprawdź orientacyjne stawki frachtu morskiego i lotniczego.
+            {t('routes.subtitle')}
           </p>
         </div>
       </div>
@@ -164,13 +161,13 @@ export default function TradeRoutesPage() {
       <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6 bg-white dark:bg-slate-800 space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:items-end">
           <div>
-            <label className={labelCls} htmlFor="freight-origin">Skąd</label>
+            <label className={labelCls} htmlFor="freight-origin">{t('routes.from')}</label>
             <div className="relative">
               <NodeDot />
               <input
                 id="freight-origin"
                 className={`${inputCls} pl-8`}
-                placeholder="np. PLGDN"
+                placeholder={t('routes.originPlaceholder')}
                 value={origin}
                 onChange={e => setOrigin(e.target.value)}
               />
@@ -182,8 +179,8 @@ export default function TradeRoutesPage() {
             <button
               type="button"
               onClick={handleSwap}
-              title="Zamień kierunek"
-              aria-label="Zamień kierunek"
+              title={t('routes.swap')}
+              aria-label={t('routes.swap')}
               className="h-[42px] px-3 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-500 dark:text-slate-400 hover:border-gray-300 dark:hover:border-slate-500 hover:text-gray-700 dark:hover:text-slate-200 transition-colors shrink-0"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8}
@@ -196,13 +193,13 @@ export default function TradeRoutesPage() {
           </div>
 
           <div>
-            <label className={labelCls} htmlFor="freight-destination">Dokąd</label>
+            <label className={labelCls} htmlFor="freight-destination">{t('routes.to')}</label>
             <div className="relative">
               <NodeDot hollow />
               <input
                 id="freight-destination"
                 className={`${inputCls} pl-8`}
-                placeholder="np. USNWK"
+                placeholder={t('routes.destinationPlaceholder')}
                 value={destination}
                 onChange={e => setDestination(e.target.value)}
               />
@@ -211,7 +208,7 @@ export default function TradeRoutesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-gray-400 dark:text-slate-500 w-11 shrink-0">Skąd</span>
+          <span className="text-xs font-medium text-gray-400 dark:text-slate-500 w-11 shrink-0">{t('routes.from')}</span>
           {originPorts.map(p => (
             <PortChip
               key={p.code}
@@ -223,7 +220,7 @@ export default function TradeRoutesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-gray-400 dark:text-slate-500 w-11 shrink-0">Dokąd</span>
+          <span className="text-xs font-medium text-gray-400 dark:text-slate-500 w-11 shrink-0">{t('routes.to')}</span>
           {destinationPorts.map(p => (
             <PortChip
               key={p.code}
@@ -236,20 +233,20 @@ export default function TradeRoutesPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label className={labelCls} htmlFor="freight-loadtype">Typ ładunku</label>
+            <label className={labelCls} htmlFor="freight-loadtype">{t('routes.loadType')}</label>
             <select
               id="freight-loadtype"
               className={inputCls}
               value={loadtype}
               onChange={e => setLoadtype(e.target.value)}
             >
-              {LOAD_TYPES.map(l => (
-                <option key={l.value} value={l.value}>{l.label}</option>
+              {LOAD_TYPE_VALUES.map(v => (
+                <option key={v} value={v}>{t(`routes.loadTypes.${v}`)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className={labelCls} htmlFor="freight-quantity">Ilość (szt.)</label>
+            <label className={labelCls} htmlFor="freight-quantity">{t('routes.quantity')}</label>
             <input
               id="freight-quantity"
               type="number"
@@ -261,7 +258,7 @@ export default function TradeRoutesPage() {
             />
           </div>
           <div>
-            <label className={labelCls} htmlFor="freight-weight">Waga (kg)</label>
+            <label className={labelCls} htmlFor="freight-weight">{t('routes.weight')}</label>
             <input
               id="freight-weight"
               type="number"
@@ -284,7 +281,7 @@ export default function TradeRoutesPage() {
             <circle cx="11" cy="11" r="7" />
             <path d="m21 21-4.3-4.3" />
           </svg>
-          Szukaj stawek
+          {t('routes.search')}
         </button>
       </div>
 
@@ -306,10 +303,9 @@ export default function TradeRoutesPage() {
               <path d="M9 20 3 17V4l6 3m0 13 6-3m-6 3V7m6 10 6 3V7l-6-3m0 13V4m0 0L9 7" />
             </svg>
           </div>
-          <p className="font-medium text-gray-700 dark:text-slate-200">Wybierz porty i sprawdź stawki</p>
+          <p className="font-medium text-gray-700 dark:text-slate-200">{t('routes.emptyTitle')}</p>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 max-w-sm">
-            Podane kwoty to szacunki rynkowe, a nie oferta handlowa. Rzeczywistą cenę
-            potwierdza przewoźnik lub spedytor.
+            {t('routes.emptyBody')}
           </p>
         </div>
       )}
@@ -318,9 +314,9 @@ export default function TradeRoutesPage() {
       {searched && !loading && (
         <div className="mt-6 border border-gray-200 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-800 flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-800 dark:text-slate-100">Dokumenty na tej trasie</p>
+            <p className="text-sm font-semibold text-gray-800 dark:text-slate-100">{t('routes.docsTitle')}</p>
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-              Sprawdź, jakie dokumenty są wymagane dla tej trasy.
+              {t('routes.docsBody')}
             </p>
           </div>
           <button
@@ -328,19 +324,19 @@ export default function TradeRoutesPage() {
             onClick={() => navigate('/blank-templates')}
             className="shrink-0 px-5 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200 text-sm font-medium hover:border-gray-300 dark:hover:border-slate-500 transition-colors"
           >
-            Dobierz dokumenty
+            {t('routes.docsCta')}
           </button>
         </div>
       )}
 
       {/* Warunki API Freightos wymagają wskazania źródła wraz z linkiem. */}
       <p className="text-xs text-gray-400 dark:text-slate-500 mt-4 text-center text-pretty">
-        Stawki szacunkowe na podstawie{' '}
+        {t('routes.creditPrefix')}{' '}
         <a href="https://www.freightos.com" target="_blank" rel="noopener noreferrer"
           className="underline hover:text-gray-600 dark:hover:text-slate-300">
           Freightos
         </a>
-        . Wartości orientacyjne, nie stanowią oferty handlowej.
+        {t('routes.creditSuffix')}
       </p>
     </div>
   )

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Shield } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import InsuranceCalculator, { DEFAULT_QUOTE } from '../components/insurance/InsuranceCalculator'
 import OfferCard from '../components/insurance/OfferCard'
 import PolicyPurchaseModal from '../components/insurance/PolicyPurchaseModal'
@@ -21,6 +22,7 @@ function SectionHeading({ children }) {
 }
 
 export default function InsurancePage() {
+  const { t } = useTranslation('pages')
   const [quote, setQuote] = useState(DEFAULT_QUOTE)
   const [purchase, setPurchase] = useState(null)   // { provider, premium }
   const [claimPolicy, setClaimPolicy] = useState(null)
@@ -30,7 +32,7 @@ export default function InsurancePage() {
     <>
     <div className="max-w-3xl mx-auto">
       <Helmet>
-        <title>Ubezpieczenia | AMLogistico</title>
+        <title>{t('insurance.metaTitle')}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -40,9 +42,9 @@ export default function InsurancePage() {
           <Shield className="w-[26px] h-[26px]" />
         </div>
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Ubezpieczenia cargo</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('insurance.title')}</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Ochrona ładunku na czas transportu, od utraty po uszkodzenie.
+            {t('insurance.subtitle')}
           </p>
         </div>
       </div>
@@ -52,7 +54,7 @@ export default function InsurancePage() {
       </div>
 
       <div className="mb-6">
-        <SectionHeading>Dostępne oferty</SectionHeading>
+        <SectionHeading>{t('insurance.offers')}</SectionHeading>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {PROVIDERS.map((provider) => (
             <OfferCard
@@ -66,7 +68,7 @@ export default function InsurancePage() {
       </div>
 
       <div className="mb-6">
-        <SectionHeading>Moje polisy</SectionHeading>
+        <SectionHeading>{t('insurance.myPolicies')}</SectionHeading>
         <PolicyList
           policies={MOCK_POLICIES}
           onCertificate={setCertificatePolicy}
@@ -81,8 +83,7 @@ export default function InsurancePage() {
           Na pełnej szerokości obszaru treści mieści się; text-pretty pilnuje podziału,
           gdy okno jest na tyle wąskie, że złamanie i tak musi nastąpić. */}
       <p className="text-xs text-gray-400 dark:text-slate-500 text-pretty text-center">
-        AmLogistico nie jest ubezpieczycielem. Prezentowane kwoty są szacunkami orientacyjnymi
-        i nie stanowią oferty w rozumieniu przepisów prawa.
+        {t('insurance.disclaimer')}
       </p>
 
       {purchase && (
@@ -100,13 +101,13 @@ export default function InsurancePage() {
 
       {certificatePolicy && (
         <Modal
-          title="Certyfikat ubezpieczenia"
+          title={t('insurance.certificateTitle')}
           onClose={() => setCertificatePolicy(null)}
           maxWidth="max-w-md"
         >
-          <AlertBox type="info" title="Funkcja w przygotowaniu">
-            Certyfikaty będą do pobrania po uruchomieniu obsługi polis. Polisa{' '}
-            <span className="font-mono">{certificatePolicy.ref}</span> jest wpisem przykładowym.
+          <AlertBox type="info" title={t('insurance.certificateSoonTitle')}>
+            {t('insurance.certificateSoonPrefix')}{' '}
+            <span className="font-mono">{certificatePolicy.ref}</span> {t('insurance.certificateSoonSuffix')}
           </AlertBox>
           <div className="flex justify-end mt-5">
             <button
@@ -114,7 +115,7 @@ export default function InsurancePage() {
               onClick={() => setCertificatePolicy(null)}
               className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors"
             >
-              Zamknij
+              {t('actions.close', { ns: 'common' })}
             </button>
           </div>
         </Modal>

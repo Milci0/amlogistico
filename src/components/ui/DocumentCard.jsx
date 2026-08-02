@@ -1,17 +1,23 @@
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { formatDocumentDate } from '../../utils/formatDate'
 import { COUNTRIES } from '../../data/mockData'
-import { getStepLabel, getFlowLabel } from '../wizard/flowSteps'
+import { getStepLabelKey, getFlowLabelKey } from '../wizard/flowSteps'
 import { getSet } from '../../services/documentSetsRepo'
 
-const TRANSPORT_LABEL = { road: 'Drogowy', sea: 'Morski' }
-
-function countryName(code) {
-  return COUNTRIES.find((c) => c.code === code)?.name || code || '-'
+// Nazwa kraju z tłumaczeń (klucz = kod ISO); nazwa z mockData jako fallback.
+function useCountryName() {
+  const { t } = useTranslation('countries')
+  return (code) => {
+    if (!code) return '-'
+    const fallback = COUNTRIES.find((c) => c.code === code)?.name || code
+    return t(code, { defaultValue: fallback })
+  }
 }
 
 function DocRowStatus({ status }) {
+  const { t } = useTranslation('pages')
   if (status === 'loading') {
     return (
       <svg className="w-3.5 h-3.5 animate-spin text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24">
@@ -21,12 +27,13 @@ function DocRowStatus({ status }) {
     )
   }
   if (status === 'error') {
-    return <span className="text-[11px] font-medium text-red-600 shrink-0">Błąd</span>
+    return <span className="text-[11px] font-medium text-red-600 shrink-0">{t('documentCard.error')}</span>
   }
   return null
 }
 
 function DocGroup({ title, docs, isDraft, docStatuses, onDownload }) {
+  const { t } = useTranslation('pages')
   return (
     <div>
       <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 px-3 mb-1">{title}</p>
@@ -40,7 +47,7 @@ function DocGroup({ title, docs, isDraft, docStatuses, onDownload }) {
                 {doc.desc && <p className="text-[11px] text-gray-400 dark:text-slate-500 truncate">{doc.desc}</p>}
               </div>
               {isDraft ? (
-                <span className="shrink-0 text-[11px] text-gray-400 dark:text-slate-500">Niewygenerowany</span>
+                <span className="shrink-0 text-[11px] text-gray-400 dark:text-slate-500">{t('documentCard.notGenerated')}</span>
               ) : (
                 <>
                   <DocRowStatus status={status} />
@@ -52,7 +59,7 @@ function DocGroup({ title, docs, isDraft, docStatuses, onDownload }) {
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    {status === 'done' ? 'Pobierz ponownie' : 'Pobierz'}
+                    {status === 'done' ? t('documentCard.downloadAgain') : t('actions.download', { ns: 'common' })}
                   </button>
                 </>
               )}
@@ -76,13 +83,18 @@ export default function DocumentCard({
   onContinue,
   onRemove,
 }) {
+  const { t } = useTranslation('pages')
+  const { t: tw } = useTranslation('wizard')
+  const countryName = useCountryName()
   const isDraft = set.status === 'draft'
   const isBlank = set.kind === 'blank'
   const meta = set.meta || {}
-  const title = meta.cargoDescription?.trim() || 'Zestaw dokumentów'
+  const title = meta.cargoDescription?.trim() || t('documentCard.fallbackTitle')
   const route = `${countryName(meta.routeFrom)} → ${countryName(meta.routeTo)}`
-  const transportLabel = TRANSPORT_LABEL[meta.transportMode] || meta.transportMode || '-'
-  const flowLabel = getFlowLabel(set.flowType)
+  const transportLabel = meta.transportMode
+    ? t(`documentCard.transport.${meta.transportMode}`, { defaultValue: meta.transportMode })
+    : '-'
+  const flowLabel = tw(getFlowLabelKey(set.flowType))
   const dateLabel = formatDocumentDate(isDraft ? set.updatedAt : set.createdAt)
   const docCount = set.selectedDocs?.length || 0
   // Tylko gotowe zestawy z realnie wygenerowanym kompletem da się rozwinąć.
@@ -145,7 +157,7 @@ export default function DocumentCard({
         role={canExpand ? 'button' : undefined}
         tabIndex={canExpand ? 0 : undefined}
         aria-expanded={canExpand ? expanded : undefined}
-        aria-label={canExpand ? (expanded ? 'Ukryj dokumenty' : 'Pokaż dokumenty') : undefined}
+        aria-label={canExpand ? (expanded ? t('documentCard.hideDocuments') : t('documentCard.showDocuments')) : undefined}
         onKeyDown={
           canExpand
             ? (e) => {
@@ -179,7 +191,13 @@ export default function DocumentCard({
           {isDraft ? (
             <div className="mt-1">
               <p className="text-xs text-gray-400 dark:text-slate-500">
-                {route} · Krok {set.lastStep} z {set.totalSteps}: {getStepLabel(set.flowType, set.lastStep)} · edytowano {dateLabel}
+                {route} ·{' '}
+                {t('documentCard.stepOf', {
+                  current: set.lastStep,
+                  total: set.totalSteps,
+                  label: tw(getStepLabelKey(set.flowType, set.lastStep)),
+                })}{' '}
+                · {t('documentCard.editedAt', { date: dateLabel })}
               </p>
               <div className="w-32 h-1 bg-gray-100 dark:bg-slate-700 rounded-full mt-1.5 overflow-hidden">
                 <div
@@ -191,7 +209,7 @@ export default function DocumentCard({
           ) : (
             <>
               <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                {route} · {docCount} {docCount === 1 ? 'dokument' : 'dokumentów'} · {dateLabel}
+                {route} · {t('documentCard.docCount', { count: docCount })} · {dateLabel}
               </p>
             </>
           )}
@@ -205,7 +223,7 @@ export default function DocumentCard({
             (isDraft ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300')
           }
         >
-          {isDraft ? 'Szkic' : 'Gotowy'}
+          {isDraft ? t('documentCard.statusDraft') : t('documentCard.statusReady')}
         </span>
 
         {isDraft ? (
@@ -216,7 +234,7 @@ export default function DocumentCard({
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
-            Kontynuuj
+            {t('documentCard.continue')}
           </button>
         ) : (
           <>
@@ -228,7 +246,7 @@ export default function DocumentCard({
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              {downloading ? 'Generuję…' : 'Pobierz wszystko'}
+              {downloading ? t('documentCard.generating') : t('documentCard.downloadAll')}
             </button>
             {!isBlank && (
               <button
@@ -238,7 +256,7 @@ export default function DocumentCard({
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                Edytuj
+                {t('actions.edit', { ns: 'common' })}
               </button>
             )}
           </>
@@ -250,7 +268,7 @@ export default function DocumentCard({
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
-          Usuń
+          {t('actions.delete', { ns: 'common' })}
         </button>
       </div>
       </div>
@@ -258,14 +276,14 @@ export default function DocumentCard({
       {expanded && canExpand && (
         <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700 space-y-3">
           {detailsLoading ? (
-            <p className="text-xs text-gray-400 dark:text-slate-500 px-3 py-2">Ładowanie…</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 px-3 py-2">{t('documentCard.loading')}</p>
           ) : detailsError ? (
-            <p className="text-xs text-red-600 px-3 py-2">Nie udało się wczytać dokumentów.</p>
+            <p className="text-xs text-red-600 px-3 py-2">{t('documentCard.loadDocsError')}</p>
           ) : (
             <>
               {requiredDocs.length > 0 && (
                 <DocGroup
-                  title="Wymagane"
+                  title={t('documentCard.required')}
                   docs={requiredDocs}
                   isDraft={isDraft}
                   docStatuses={docStatuses}
@@ -274,7 +292,7 @@ export default function DocumentCard({
               )}
               {optionalDocs.length > 0 && (
                 <DocGroup
-                  title="Opcjonalne"
+                  title={t('documentCard.optional')}
                   docs={optionalDocs}
                   isDraft={isDraft}
                   docStatuses={docStatuses}

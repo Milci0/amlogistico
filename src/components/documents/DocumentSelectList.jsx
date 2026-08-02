@@ -5,6 +5,8 @@
 // czy jest akurat zaznaczony — required steruje stylem sekcji, nie checked).
 // Komponent nie zna kontekstu (puste vs gotowe) — wszystko przez propsy.
 
+import { useTranslation } from 'react-i18next'
+
 function DocIcon() {
   return (
     <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -31,6 +33,7 @@ function DownloadTrayIcon() {
 }
 
 function StatusBadge({ status }) {
+  const { t } = useTranslation('pages')
   if (status === 'loading') return <SpinnerIcon className="w-4 h-4 text-emerald-400 shrink-0" />
   if (status === 'done') {
     return (
@@ -38,17 +41,18 @@ function StatusBadge({ status }) {
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
         </svg>
-        Gotowe
+        {t('documentList.ready')}
       </span>
     )
   }
   if (status === 'error') {
-    return <span className="shrink-0 text-xs font-medium text-red-600">Błąd</span>
+    return <span className="shrink-0 text-xs font-medium text-red-600">{t('documentList.error')}</span>
   }
   return null
 }
 
 function DocRow({ doc, checked, onToggle, status }) {
+  const { t } = useTranslation('pages')
   return (
     <div
       onClick={() => onToggle(doc.id)}
@@ -68,7 +72,7 @@ function DocRow({ doc, checked, onToggle, status }) {
           <p className="text-sm font-medium text-gray-900 dark:text-slate-100">{doc.namePl}</p>
           {doc.required && (
             <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-0.5 rounded">
-              Wymagany
+              {t('documentList.requiredBadge')}
             </span>
           )}
         </div>
@@ -95,6 +99,7 @@ export default function DocumentSelectList({
   actionLoading = false,
   loadingLabel = null,
 }) {
+  const { t } = useTranslation('pages')
   const required = documents.filter((d) => d.required)
   const optional = documents.filter((d) => !d.required)
   const selectedCount = documents.filter((d) => selectedIds.has(d.id)).length
@@ -103,7 +108,7 @@ export default function DocumentSelectList({
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2">
-        Wymagane ({required.length})
+        {t('documentList.required', { count: required.length })}
       </p>
       <div className="space-y-2 mb-4">
         {required.map((doc) => (
@@ -120,7 +125,7 @@ export default function DocumentSelectList({
       {optional.length > 0 && (
         <>
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2">
-            Opcjonalne ({optional.length})
+            {t('documentList.optional', { count: optional.length })}
           </p>
           <div className="space-y-2 mb-6">
             {optional.map((doc) => (

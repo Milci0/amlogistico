@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Search, PackageSearch } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { MOCK_SHIPMENTS, TRACKING_STATUSES } from '../../data/trackingMock'
 import ShipmentCard from './ShipmentCard'
 
@@ -9,6 +10,7 @@ const inputCls =
 const STATUS_FILTERS = ['all', ...Object.keys(TRACKING_STATUSES)]
 
 export default function TrackingList() {
+  const { t } = useTranslation('pages')
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
@@ -28,7 +30,7 @@ export default function TrackingList() {
         <input
           type="text"
           className="bg-transparent text-sm outline-none flex-1 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
-          placeholder="Szukaj po numerze przesyłki (np. SHP-2026-1042)..."
+          placeholder={t('tracking.searchPlaceholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -37,7 +39,7 @@ export default function TrackingList() {
       <div className="flex flex-wrap gap-2 mb-5">
         {STATUS_FILTERS.map((key) => {
           const active = statusFilter === key
-          const label = key === 'all' ? 'Wszystkie' : TRACKING_STATUSES[key].label
+          const label = key === 'all' ? t('tracking.allStatuses') : t(`tracking.statuses.${key}`)
           return (
             <button
               key={key}
@@ -57,11 +59,11 @@ export default function TrackingList() {
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center text-center py-16 px-4 border border-dashed border-gray-200 dark:border-slate-700 rounded-xl">
           <PackageSearch className="w-9 h-9 text-gray-300 dark:text-slate-600 mb-3" strokeWidth={1.5} />
-          <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Brak przesyłek</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-slate-300">{t('tracking.emptyTitle')}</p>
           <p className="text-xs text-gray-400 dark:text-slate-500 mt-1 max-w-xs">
             {query.trim() || statusFilter !== 'all'
-              ? 'Żadna przesyłka nie pasuje do wyszukiwania lub wybranego filtra.'
-              : 'Nie znaleziono żadnych przesyłek do wyświetlenia.'}
+              ? t('tracking.emptyFiltered')
+              : t('tracking.emptyAll')}
           </p>
         </div>
       ) : (

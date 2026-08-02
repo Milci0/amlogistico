@@ -1,0 +1,106 @@
+{
+  "language": {
+    "switchLabel": "Change language"
+  },
+  "brand": {
+    "suffix": "Logistico"
+  },
+  "menu": {
+    "openMenu": "Open menu",
+    "collapse": "Collapse menu",
+    "expand": "Expand menu",
+    "expandSection": "Expand {{label}}",
+    "collapseSection": "Collapse {{label}}",
+    "groups": {
+      "main": "Main",
+      "tools": "Tools",
+      "knowledge": "Knowledge",
+      "admin": "Administration"
+    },
+    "items": {
+      "home": "Home",
+      "quotation": "Quotation",
+      "documentation": "Documentation",
+      "drafts": "Drafts",
+      "insurance": "Insurance",
+      "routes": "Trade lanes",
+      "tracking": "Shipment tracking",
+      "blankTemplates": "Blank templates",
+      "news": "News",
+      "incoterms": "Incoterms",
+      "profile": "Profile",
+      "adminNotifications": "Notifications"
+    },
+    "badges": {
+      "core": "Core",
+      "beta": "Beta"
+    }
+  },
+  "theme": {
+    "toggle": "Switch theme"
+  },
+  "auth": {
+    "login": "Log in",
+    "register": "Sign up",
+    "logout": "Log out"
+  },
+  "account": {
+    "menuLabel": "Account menu",
+    "fallbackName": "My account",
+    "profile": "My profile",
+    "subscription": "Subscription",
+    "changePassword": "Change password"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "badge_one": "{{count}} new",
+    "badge_other": "{{count}} new",
+    "empty": "No new notifications",
+    "markAllRead": "Mark all as read",
+    "delete": "Delete"
+  },
+  "nudge": {
+    "dismiss": "Dismiss",
+    "remindLater": "Remind me later",
+    "title": "Finish setting up your company",
+    "body": "Add your company details once and we fill them in automatically on every document and order. You save time on every shipment.",
+    "cta": "Complete profile",
+    "later": "Later"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "download": "Download",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "clear": "Clear",
+    "retry": "Try again",
+    "refresh": "Refresh",
+    "confirm": "Confirm",
+    "add": "Add",
+    "select": "Select"
+  },
+  "states": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "sending": "Sending...",
+    "empty": "No data",
+    "notProvided": "Not provided",
+    "none": "-"
+  },
+  "units": {
+    "kg": "kg",
+    "days": "days"
+  },
+  "select": {
+    "country": "Select a country...",
+    "searchCountry": "Search countries...",
+    "noResults": "No results",
+    "pickCountryFirst": "Select a country first",
+    "noCityHints": "No suggestions, you can type the name yourself"
+  }
+}

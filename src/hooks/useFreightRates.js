@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react'
+import i18n from '../i18n'
+
 import { api } from '../lib/api'
 
 // ── Pobieranie orientacyjnych stawek frachtowych ──────────────────────────────
@@ -40,7 +42,7 @@ export default function useFreightRates() {
         source: 'freightos',
         cached: false,
         rates: [],
-        error: 'Nie udało się pobrać stawek',
+        error: i18n.t('freightRatesFailed', { ns: 'errors' }),
       })
     } finally {
       setLoading(false)

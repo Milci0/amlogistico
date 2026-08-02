@@ -1,6 +1,7 @@
 import { FileText, TriangleAlert } from 'lucide-react'
 import AlertBox from '../ui/AlertBox'
 import { formatDocumentDate } from '../../utils/formatDate'
+import { useTranslation } from 'react-i18next'
 import { COVERAGE_LABELS } from '../../data/insuranceRates'
 
 // Lista polis — dane przykładowe z MOCK_POLICIES. Żadne z działań nie sięga na serwer:
@@ -8,34 +9,32 @@ import { COVERAGE_LABELS } from '../../data/insuranceRates'
 
 const STATUS_STYLES = {
   ACTIVE: {
-    label: 'Aktywna',
     cls: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
   },
   EXPIRED: {
-    label: 'Wygasła',
     cls: 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-600',
   },
   CANCELLED: {
-    label: 'Anulowana',
     cls: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
   },
 }
 
 function StatusBadge({ status }) {
+  const { t } = useTranslation('pages')
   const s = STATUS_STYLES[status] ?? STATUS_STYLES.EXPIRED
   return (
     <span className={`shrink-0 text-[11px] font-medium px-1.5 py-0.5 rounded border ${s.cls}`}>
-      {s.label}
+      {t(`insurance.policies.status.${status}`, { defaultValue: status })}
     </span>
   )
 }
 
 export default function PolicyList({ policies, onCertificate, onClaim }) {
+  const { t, i18n } = useTranslation('pages')
+
   return (
     <div className="space-y-3">
-      <AlertBox type="warning">
-        To są dane przykładowe. Własne polisy pojawią się tutaj po uruchomieniu funkcji.
-      </AlertBox>
+      <AlertBox type="warning">{t('insurance.policies.sample')}</AlertBox>
 
       <div className="border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 divide-y divide-gray-100 dark:divide-slate-700">
         {policies.map((policy) => (
@@ -52,16 +51,20 @@ export default function PolicyList({ policies, onCertificate, onClaim }) {
               </div>
 
               <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-                {policy.cargoDescription}
+                {(i18n.language.startsWith('en') && policy.cargoDescriptionEn) || policy.cargoDescription}
               </p>
 
               <p className="text-xs text-gray-400 dark:text-slate-500 mt-1.5">
                 <span className="font-mono">{policy.ref}</span> · {policy.provider} ·{' '}
-                {COVERAGE_LABELS[policy.coverageType]?.name ?? policy.coverageType} · składka{' '}
-                {policy.premium.toLocaleString('pl-PL')} {policy.currency}
+                {t(`insurance.coverage.${policy.coverageType}.name`, { defaultValue: COVERAGE_LABELS[policy.coverageType]?.name ?? policy.coverageType })}
+                {' '}· {t('insurance.policies.premium')}{' '}
+                {policy.premium.toLocaleString(i18n.language)} {policy.currency}
               </p>
               <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                Ważna od {formatDocumentDate(policy.issuedAt)} do {formatDocumentDate(policy.expiresAt)}
+                {t('insurance.policies.validFrom', {
+                  from: formatDocumentDate(policy.issuedAt),
+                  to: formatDocumentDate(policy.expiresAt),
+                })}
               </p>
             </div>
 
@@ -72,7 +75,7 @@ export default function PolicyList({ policies, onCertificate, onClaim }) {
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200 text-sm font-medium hover:border-gray-300 dark:hover:border-slate-500 transition-colors"
               >
                 <FileText className="w-4 h-4" />
-                Certyfikat
+                {t('insurance.policies.certificate')}
               </button>
               <button
                 type="button"
@@ -80,7 +83,7 @@ export default function PolicyList({ policies, onCertificate, onClaim }) {
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200 text-sm font-medium hover:border-gray-300 dark:hover:border-slate-500 transition-colors"
               >
                 <TriangleAlert className="w-4 h-4" />
-                Zgłoś szkodę
+                {t('insurance.policies.claim')}
               </button>
             </div>
           </div>

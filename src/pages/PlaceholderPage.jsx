@@ -1,6 +1,9 @@
 import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 
 export default function PlaceholderPage({ title, description }) {
+  const { t } = useTranslation('pages')
+
   return (
     <div className="max-w-5xl mx-auto">
       <Helmet>
@@ -17,8 +20,8 @@ export default function PlaceholderPage({ title, description }) {
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <p className="font-medium text-slate-700 dark:text-slate-200">Wkrótce dostępne</p>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Ten moduł jest w przygotowaniu.</p>
+        <p className="font-medium text-slate-700 dark:text-slate-200">{t('placeholder.comingSoon')}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('placeholder.inProgress')}</p>
       </div>
     </div>
   )

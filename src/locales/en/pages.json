@@ -1,0 +1,724 @@
+{
+  "auth": {
+    "login": {
+      "metaTitle": "Log in | AMLogistico",
+      "title": "Log in",
+      "subtitle": "Enter the AMLogistico panel",
+      "noAccount": "No account yet?",
+      "email": "Email",
+      "emailPlaceholder": "you@company.com",
+      "password": "Password",
+      "submit": "Log in",
+      "submitting": "Logging in..."
+    },
+    "register": {
+      "metaTitle": "Sign up | AMLogistico",
+      "title": "Create an account",
+      "subtitle": "Start generating freight documents",
+      "hasAccount": "Already have an account?",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "John Smith",
+      "email": "Email",
+      "emailPlaceholder": "you@company.com",
+      "phone": "Phone number",
+      "phonePlaceholder": "+44 7700 900123",
+      "password": "Password",
+      "passwordPlaceholder": "min. 8 characters",
+      "confirmPassword": "Repeat password",
+      "confirmPasswordPlaceholder": "repeat password",
+      "companyName": "Company name",
+      "optional": "(optional)",
+      "companyNamePlaceholder": "e.g. ABC Ltd",
+      "termsPrefix": "I accept the",
+      "termsLink": "terms of service",
+      "termsAnd": "and the",
+      "privacyLink": "privacy policy",
+      "marketing": "Send me news and special offers",
+      "submit": "Sign up",
+      "submitting": "Creating account..."
+    }
+  },
+  "home": {
+    "metaTitle": "AMLogistico - online freight document generator",
+    "metaDescription": "Generate CMR, packing lists, commercial invoices, sea waybills and other freight documents automatically. Fill in one form and download the PDFs in seconds.",
+    "headline1": "Manage transport and documents",
+    "headline2": "in one place",
+    "subtitle": "Freight quotes, cargo insurance, trade lanes, documentation and invoices",
+    "subtitleStrong": "generated automatically",
+    "start": "Get started",
+    "learnMore": "Learn more",
+    "guestHint": "Log in to generate documents.",
+    "stats": {
+      "countries": "countries in the database",
+      "documents": "freight documents",
+      "transportModes": "transport modes",
+      "incoterms": "Incoterms rules"
+    }
+  },
+  "about": {
+    "title": "How it works",
+    "subtitle": "From cargo details to documents, freight and insurance",
+    "step": "Step {{number}}",
+    "steps": {
+      "cargo": {
+        "title": "Describe the cargo",
+        "desc": "Category, weight, units. We suggest the HS code and temperature requirements for you."
+      },
+      "route": {
+        "title": "Choose route and transport",
+        "desc": "Road, sea, air or multimodal. Incoterms explained and matched to your needs."
+      },
+      "requirements": {
+        "title": "Check the requirements",
+        "desc": "Phytosanitary certificates, ADR, customs papers. We show what your destination needs."
+      },
+      "documents": {
+        "title": "Generate the documents",
+        "desc": "CMR, packing list, invoice, bill of lading. Over 99 templates, filled with your data."
+      },
+      "protect": {
+        "title": "Protect the cargo",
+        "desc": "Freight quotes and cargo insurance in the same place."
+      }
+    }
+  },
+  "pathSelect": {
+    "metaTitle": "How would you like to start? | AMLogistico",
+    "back": "Back",
+    "logout": "Log out",
+    "backHome": "Back to home page",
+    "title": "How would you like to start?",
+    "subtitle": "Pick the path that matches your situation. Both end with a full set of documents.",
+    "choose": "Choose",
+    "a": {
+      "title": "I already have transport",
+      "description": "You have a carrier or freight forwarder booked and only need documents, plus insurance if you want it."
+    },
+    "b": {
+      "title": "I am looking for transport",
+      "description": "We help you find a freight forwarder, show the quote and prepare the full set of documents."
+    },
+    "steps": {
+      "shipmentData": "Shipment details",
+      "insurance": "Insurance (optional)",
+      "generate": "Generate documents",
+      "forwarders": "Available forwarders",
+      "quote": "Freight quote"
+    }
+  },
+  "newDocument": {
+    "metaTitle": "New order | AMLogistico",
+    "loadingSet": "Loading the set...",
+    "loadErrorTitle": "Loading failed",
+    "loadErrorBody": "We could not load the set. Refresh the page or try again later.",
+    "notFoundTitle": "Set not found",
+    "notFoundBody": "The set you are trying to open does not exist or has been deleted.",
+    "titleEdit": "Edit order",
+    "titleNew": "New order",
+    "subtitle": "Fill in the form and we select the documents for you."
+  },
+  "placeholder": {
+    "comingSoon": "Coming soon",
+    "inProgress": "This section is under construction."
+  },
+  "quotation": {
+    "title": "Quotation",
+    "description": "Freight and transport cost quotation."
+  },
+  "documentCard": {
+    "fallbackTitle": "Document set",
+    "transport": {
+      "road": "Road",
+      "sea": "Sea"
+    },
+    "showDocuments": "Show documents",
+    "hideDocuments": "Hide documents",
+    "stepOf": "Step {{current}} of {{total}}: {{label}}",
+    "editedAt": "edited {{date}}",
+    "docCount_one": "{{count}} document",
+    "docCount_other": "{{count}} documents",
+    "statusDraft": "Draft",
+    "statusReady": "Ready",
+    "continue": "Continue",
+    "downloadAll": "Download all",
+    "generating": "Generating...",
+    "loading": "Loading...",
+    "loadDocsError": "We could not load the documents.",
+    "required": "Required",
+    "optional": "Optional",
+    "notGenerated": "Not generated",
+    "downloadAgain": "Download again",
+    "error": "Error"
+  },
+  "documentList": {
+    "required": "Required ({{count}})",
+    "optional": "Optional ({{count}})",
+    "requiredBadge": "Required",
+    "ready": "Ready",
+    "error": "Error"
+  },
+  "filterBar": {
+    "searchPlaceholder": "Search by name, type or route...",
+    "allTypes": "All types"
+  },
+  "sort": {
+    "newest": "Newest",
+    "oldest": "Oldest",
+    "nameAsc": "Name A-Z",
+    "lastEdited": "Last edited"
+  },
+  "history": {
+    "metaTitle": "Document history | AMLogistico",
+    "title": "Document history",
+    "subtitle": "All your finished documents.",
+    "downloadErrorTitle": "Download failed",
+    "loadErrorTitle": "Loading failed",
+    "loadErrorBody": "We could not load your documents. Refresh the page or try again later.",
+    "loading": "Loading...",
+    "emptyFiltered": "No documents match the filters.",
+    "empty": "No finished documents yet.",
+    "deleteTitle": "Delete this document set?",
+    "deleteBody": "This cannot be undone. Only this entry is removed.",
+    "errors": {
+      "partialGenerate": "Some documents could not be generated.",
+      "download": "We could not download the documents.",
+      "loadSet": "We could not load the set.",
+      "downloadOne": "We could not download the document.",
+      "generateOne": "We could not generate the document.",
+      "remove": "We could not delete the set."
+    }
+  },
+  "drafts": {
+    "metaTitle": "Drafts | AMLogistico",
+    "title": "Drafts",
+    "subtitle": "Documents still in progress.",
+    "errorTitle": "Error",
+    "loadError": "We could not load your drafts. Try again later.",
+    "removeError": "We could not delete the draft.",
+    "loading": "Loading...",
+    "emptyFiltered": "No documents match the filters.",
+    "empty": "No drafts yet.",
+    "startNew": "Start a new document",
+    "deleteTitle": "Delete this draft?",
+    "deleteBody": "This cannot be undone."
+  },
+  "companies": {
+    "metaTitle": "My companies | AMLogistico",
+    "title": "My companies",
+    "subtitle": "Saved company details for filling documents quickly.",
+    "add": "+ Add company",
+    "roles": {
+      "sender": "Consignor",
+      "receiver": "Consignee",
+      "carrier": "Carrier"
+    }
+  },
+  "subscription": {
+    "metaTitle": "Subscription | AMLogistico",
+    "title": "Subscription",
+    "currentPlanPrefix": "Current plan:",
+    "currentPlanSuffix": "Pick the plan that fits your needs.",
+    "mostPopular": "Most popular",
+    "contact": "Contact us",
+    "free": "Free",
+    "perMonth": "{{price}} PLN/month",
+    "plans": {
+      "free": {
+        "description": "For individual users and testing",
+        "cta": "Start for free",
+        "features": [
+          "5 documents per month",
+          "CMR and packing list",
+          "PDF export",
+          "Email support"
+        ]
+      },
+      "pro": {
+        "description": "For small and medium freight forwarders",
+        "cta": "Choose Pro",
+        "features": [
+          "Unlimited documents",
+          "Every document type",
+          "PDF and Excel export",
+          "Manage multiple companies",
+          "Priority support",
+          "Two years of document history"
+        ]
+      },
+      "enterprise": {
+        "description": "For large companies and API integration",
+        "cta": "Get in touch",
+        "features": [
+          "Everything in Pro",
+          "API integration",
+          "Dedicated account manager",
+          "99.9% SLA",
+          "Custom templates",
+          "Team training"
+        ]
+      }
+    }
+  },
+  "profile": {
+    "metaTitle": "Profile | AMLogistico",
+    "title": "Profile",
+    "subtitle": "Manage your account, company details and preferences.",
+    "tabs": {
+      "personal": "Personal details",
+      "company": "Company details",
+      "preferences": "Preferences",
+      "security": "Security",
+      "consents": "Consents"
+    },
+    "save": "Save changes",
+    "saving": "Saving...",
+    "saved": "Changes saved.",
+    "fixFields": "Correct the highlighted fields.",
+    "saveFailed": "We could not save. Try again.",
+    "personal": {
+      "fullName": "Full name",
+      "email": "Email",
+      "phone": "Phone"
+    },
+    "company": {
+      "companyName": "Company name",
+      "vatNumber": "VAT number",
+      "eoriNumber": "EORI",
+      "address": "Address (street and number)",
+      "postalCode": "Postcode",
+      "city": "City",
+      "country": "Country"
+    },
+    "preferences": {
+      "defaultCurrency": "Default currency",
+      "noCurrency": "No default currency",
+      "documentLanguage": "Document language",
+      "polish": "Polish",
+      "englishSoon": "English (coming soon)",
+      "documentLanguageHint": "Documents are currently generated in Polish only. The English version is in preparation."
+    },
+    "security": {
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Repeat new password",
+      "submit": "Change password",
+      "changed": "Your password has been changed.",
+      "mismatch": "Passwords do not match",
+      "tooManyAttempts": "Too many attempts. Try again in a few minutes.",
+      "failed": "We could not change the password. Try again.",
+      "forgotHint": "Forgotten your password? Contact us. Password recovery by email is coming soon."
+    },
+    "consents": {
+      "marketing": "Send me news and special offers",
+      "termsAccepted": "Terms accepted on:"
+    }
+  },
+  "blankTemplates": {
+    "title": "Freight document selector",
+    "subtitle": "Give us the route, the goods and the conditions, and we pick the full set of blank forms to download.",
+    "origin": "Country of dispatch",
+    "destination": "Country of destination",
+    "transportMode": "Transport mode",
+    "modes": {
+      "road": {
+        "label": "Road",
+        "sub": "TIR, truck"
+      },
+      "sea": {
+        "label": "Sea",
+        "sub": "FCL/LCL container"
+      }
+    },
+    "extraConditions": "Additional conditions",
+    "flags": {
+      "woodenPackaging": "Wooden packaging (pallets, crates)",
+      "temporaryExport": "Temporary export (ATA carnet)",
+      "transhipment": "Transhipment at an intermediate port",
+      "reExport": "Re-export"
+    },
+    "generate": "Select documents",
+    "routeCharacter": "Route type",
+    "warningsTitle": "Worth checking",
+    "noDocuments": "No documents for this configuration.",
+    "zipping": "Building the ZIP...",
+    "downloadZip": "Download selected (ZIP)",
+    "downloadZipCount": "Download selected (ZIP) ({{count}})",
+    "selectAtLeastOne": "Select at least one document to download the files.",
+    "zipError": "We could not build the ZIP file. Try again."
+  },
+  "routeLabel": {
+    "Wewnątrz UE": "Within the EU",
+    "Eksport z UE": "Export from the EU",
+    "Import do UE": "Import into the EU",
+    "Poza UE": "Outside the EU"
+  },
+  "templateSearch": {
+    "placeholder": "Search templates... (for example china, import, EU)",
+    "results": "Results",
+    "allTemplates": "All templates",
+    "noMatches": "No matches.",
+    "generating": "Generating...",
+    "downloadPdf": "Download PDF",
+    "groups": {
+      "ue": "EU",
+      "celne_export": "Customs (export)",
+      "celne_import": "Customs (import)",
+      "transport": "Transport",
+      "swiadectwo": "Certificate",
+      "towary_niebezp": "Dangerous goods",
+      "finansowe": "Financial",
+      "inne": "Other"
+    }
+  },
+  "insurance": {
+    "metaTitle": "Insurance | AMLogistico",
+    "title": "Cargo insurance",
+    "subtitle": "Protect the goods in transit, from loss through to damage.",
+    "offers": "Available offers",
+    "myPolicies": "My policies",
+    "disclaimer": "AmLogistico is not an insurer. The amounts shown are indicative estimates and do not constitute an offer in the legal sense.",
+    "certificateTitle": "Insurance certificate",
+    "certificateSoonTitle": "Coming soon",
+    "certificateSoonPrefix": "Certificates will be downloadable once policy handling goes live. Policy",
+    "certificateSoonSuffix": "is a sample entry.",
+    "calculator": {
+      "title": "Premium calculator",
+      "subtitle": "The result updates as you type.",
+      "cargoValue": "Cargo value",
+      "currency": "Currency",
+      "category": "Cargo category",
+      "mode": "Transport mode",
+      "coverage": "Cover",
+      "dangerous": "Dangerous goods (ADR/IMDG)",
+      "perishable": "Perishable goods",
+      "estimated": "Estimated premium",
+      "baseRate": "Base rate {{rate}}%",
+      "note": "Our own estimate based on market rates. This is not an insurer's offer."
+    },
+    "coverage": {
+      "ICC_A": {
+        "name": "ICC (A), all risks",
+        "desc": "The widest cover"
+      },
+      "ICC_B": {
+        "name": "ICC (B), named perils",
+        "desc": "Selected risks"
+      },
+      "ICC_C": {
+        "name": "ICC (C), basic",
+        "desc": "Minimum cover"
+      }
+    },
+    "rateCategories": {
+      "general": "General goods",
+      "machinery": "Machinery and equipment",
+      "electronics": "Electronics",
+      "food_chilled": "Chilled food",
+      "food_frozen": "Frozen food",
+      "valuable": "High value goods",
+      "chemicals": "Chemicals",
+      "vehicles": "Vehicles",
+      "textiles": "Textiles",
+      "metals": "Metals",
+      "medicines": "Pharmaceuticals",
+      "dangerous": "Dangerous goods"
+    },
+    "modes": {
+      "sea": "Sea",
+      "air": "Air",
+      "road": "Road",
+      "rail": "Rail"
+    },
+    "offer": {
+      "recommended": "Recommended",
+      "deductible": "Deductible",
+      "scope": "Cover"
+    },
+    "providers": {
+      "loadsure": {
+        "tagline": "Instant policy",
+        "cta": "Buy now",
+        "features": [
+          "PDF certificate in under a minute",
+          "All risks cover, ICC (A)",
+          "Claims filed online"
+        ]
+      },
+      "marsh": {
+        "tagline": "Broker quote",
+        "cta": "Request a quote",
+        "features": [
+          "Individual broker quote",
+          "Negotiated terms on larger loads",
+          "Dedicated policy manager"
+        ]
+      }
+    },
+    "policies": {
+      "sample": "These are sample entries. Your own policies will appear here once the feature goes live.",
+      "premium": "premium",
+      "validFrom": "Valid from {{from}} to {{to}}",
+      "certificate": "Certificate",
+      "claim": "File a claim",
+      "status": {
+        "ACTIVE": "Active",
+        "EXPIRED": "Expired",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "purchase": {
+      "title": "Buy cargo insurance",
+      "limit": "limit",
+      "deductible": "deductible",
+      "oneOffPremium": "one-off premium",
+      "doneTitle": "Thank you",
+      "doneBody": "Buying policies will be available once we sign the agreement with the insurer. We have kept your details and will be in touch when the feature is ready.",
+      "steps": {
+        "parties": "Parties",
+        "details": "Details"
+      },
+      "sender": "Consignor",
+      "receiver": "Consignee",
+      "companyName": "Company name *",
+      "email": "Email *",
+      "country": "Country *",
+      "taxId": "VAT / EORI number",
+      "departureDate": "Loading date *",
+      "vesselName": "Vessel name",
+      "containerNo": "Container No.",
+      "blNumber": "Bill of lading No.",
+      "shipmentId": "AmLogistico order ID",
+      "shipmentIdPlaceholder": "Optional, links this to an order",
+      "buy": "Buy the policy"
+    },
+    "claim": {
+      "title": "File a claim",
+      "coverageUpTo": "cover up to",
+      "doneTitle": "Coming soon",
+      "doneBody": "Claims will be available once policy handling goes live.",
+      "lossDate": "Date of loss *",
+      "claimAmount": "Claim amount *",
+      "claimAmountPlaceholder": "e.g. 5000",
+      "currency": "Currency",
+      "description": "Description of the loss *",
+      "descriptionPlaceholder": "Describe what happened, when and where.",
+      "submit": "File the claim"
+    }
+  },
+  "news": {
+    "metaTitle": "News | AMLogistico",
+    "title": "Freight news",
+    "live": "Live",
+    "refresh": "Refresh",
+    "mainTabs": {
+      "all": "All",
+      "polska": "Poland",
+      "swiat": "World",
+      "alerty": "Alerts"
+    },
+    "subTabs": {
+      "all": "All",
+      "morski": "Sea",
+      "drogowy": "Road",
+      "cla": "Customs and regulation",
+      "alerty": "Alerts"
+    },
+    "transport": {
+      "morski": "Sea",
+      "drogowy": "Road",
+      "cla": "Customs"
+    },
+    "readMore": "Read more →",
+    "loadError": "We could not load the news. Check your connection or the backend (/api/news).",
+    "retry": "Try again",
+    "emptyTitle": "No articles for this filter",
+    "emptyBody": "Pick another tab or press Refresh.",
+    "ticker": {
+      "diesel": "EU diesel:",
+      "ecb": "ECB rate:"
+    },
+    "footer": "Articles belong to their publishers. AMLogistico shows only headlines and links to the original RSS sources.",
+    "dieselCredit": "Diesel price: Weekly Oil Bulletin, European Commission, licence",
+    "ecbCredit": "ECB rate: European Central Bank (CC BY 4.0)",
+    "today": "Today, {{time}}",
+    "yesterday": "Yesterday"
+  },
+  "routes": {
+    "metaTitle": "Trade lanes | AMLogistico",
+    "title": "Trade lanes",
+    "subtitle": "Check indicative sea and air freight rates.",
+    "from": "From",
+    "to": "To",
+    "originPlaceholder": "e.g. PLGDN",
+    "destinationPlaceholder": "e.g. USNWK",
+    "swap": "Swap direction",
+    "loadType": "Load type",
+    "quantity": "Quantity (units)",
+    "weight": "Weight (kg)",
+    "search": "Search rates",
+    "emptyTitle": "Pick the ports and check the rates",
+    "emptyBody": "These amounts are market estimates, not a commercial offer. The carrier or freight forwarder confirms the real price.",
+    "docsTitle": "Documents for this lane",
+    "docsBody": "Check which documents this lane requires.",
+    "docsCta": "Select documents",
+    "creditPrefix": "Indicative rates based on",
+    "creditSuffix": ". Indicative values, not a commercial offer.",
+    "loadTypes": {
+      "container20": "20' Standard FCL",
+      "container40": "40' Standard FCL",
+      "container40HC": "40' High Cube FCL",
+      "pallets": "Pallets (LCL)",
+      "boxes": "Boxes (LCL)"
+    }
+  },
+  "freightRates": {
+    "modes": {
+      "FCL": "Sea FCL (full container)",
+      "LCL": "Sea LCL (groupage)",
+      "AIR": "Air",
+      "EXPRESS": "Express"
+    },
+    "sourceFreightos": "Rates from Freightos",
+    "sourceFallback": "Indicative rates from local data. Freightos returned no result for this lane.",
+    "cached": "from cache (5 min)",
+    "emptyTitle": "No rates for this lane",
+    "emptyBody": "This search covers sea and air freight. Road freight inside the European Union is not available here.",
+    "bestOption": "Best option",
+    "transit": "Transit:",
+    "transitDays": "{{min}} to {{max}} days",
+    "cargo": "Load:",
+    "route": "Lane:"
+  },
+  "tracking": {
+    "metaTitle": "Shipment tracking | AMLogistico",
+    "title": "Shipment tracking",
+    "subtitle": "Status and timeline for your shipments: road, sea, air and multimodal.",
+    "notFoundTitle": "Shipment not found",
+    "notFoundBody": "Shipment \"{{id}}\" does not exist in this mock-up. Pick one from the list below.",
+    "searchPlaceholder": "Search by shipment number (e.g. SHP-2026-1042)...",
+    "emptyTitle": "No shipments",
+    "emptyFiltered": "No shipment matches the search or the selected filter.",
+    "emptyAll": "There are no shipments to show.",
+    "backToList": "Back to the list",
+    "timeline": "Shipment timeline",
+    "mapSoon": "Coming soon: space for a map integration",
+    "cargo": "Cargo",
+    "detailsFor": "Transport details: {{branch}}",
+    "carrier": "Carrier",
+    "temperature": "Temperature (reefer)",
+    "portOfLoading": "Port of loading",
+    "portOfDischarge": "Port of discharge",
+    "transshipments": "Transhipments",
+    "noTransshipments": "No transhipment (direct)",
+    "directFlight": "None, direct flight",
+    "branches": {
+      "road": "Road",
+      "sea": "Sea",
+      "air": "Air",
+      "multimodal": "Multimodal"
+    },
+    "statuses": {
+      "in_transit": "In transit",
+      "delivered": "Delivered",
+      "delayed": "Delayed",
+      "pending": "Pending"
+    },
+    "toBeAssigned": "to be assigned",
+    "allStatuses": "All",
+    "planned": "Planned",
+    "routeMap": "Route map",
+    "category": "Category",
+    "units": "Units",
+    "weight": "Weight",
+    "vehicleReg": "Registration number",
+    "driver": "Driver",
+    "containerNo": "Container No.",
+    "vesselVoyage": "Vessel / voyage",
+    "awbNo": "AWB No.",
+    "layoverAirports": "Layover airports",
+    "eta": "ETA",
+    "leg": "Leg {{number}}"
+  },
+  "admin": {
+    "metaTitle": "Send a notification | AMLogistico",
+    "title": "Send a notification",
+    "subtitle": "The notification appears in the recipient's bell, on any device.",
+    "recipient": "Recipient",
+    "singleAccount": "A specific account",
+    "singleAccountHint": "By email address",
+    "allUsers": "All users",
+    "allUsersHint": "To every account",
+    "email": "Recipient email",
+    "emailPlaceholder": "john@company.com",
+    "type": "Type",
+    "types": {
+      "info": "Info (blue)",
+      "success": "Success (green)",
+      "warning": "Important (amber)"
+    },
+    "notifTitle": "Title",
+    "titlePlaceholder": "e.g. New feature on the platform",
+    "body": "Message",
+    "bodyPlaceholder": "A short message for the user...",
+    "ctaLabel": "Button label (optional)",
+    "ctaLabelPlaceholder": "e.g. Complete your profile",
+    "ctaUrl": "Button link (optional)",
+    "ctaUrlPlaceholder": "e.g. /profile?tab=firma",
+    "preview": "Preview",
+    "previewTitle": "Notification title",
+    "previewBody": "The notification text will appear here.",
+    "sentTitle": "Sent",
+    "errorTitle": "Error",
+    "sentToAll_one": "Sent to everyone ({{count}} account).",
+    "sentToAll_other": "Sent to everyone ({{count}} accounts).",
+    "sentTo": "Sent to {{email}}.",
+    "sendFailed": "Sending failed.",
+    "sendFailedRetry": "We could not send the notification. Try again.",
+    "sending": "Sending...",
+    "send": "Send notification"
+  },
+  "hsFinder": {
+    "openPrompt": "Cannot find your goods? Describe them and we will find the commodity code",
+    "title": "Commodity code finder",
+    "collapse": "Collapse the finder",
+    "placeholder": "e.g. powdered laundry detergent in capsules, 40 units",
+    "searching": "Searching...",
+    "search": "Find the code",
+    "searchFailed": "We could not find a code.",
+    "use": "Use",
+    "noMatch": "No match found. Refine the description and try again.",
+    "verifyNote": "This code is a suggestion. Verify it before you continue.",
+    "euExportNote": "The code applies to EU export documents. Import clearance in the destination country needs a separate code from its own tariff.",
+    "importCode": "Code for import clearance",
+    "importCodeIn": "Code for import clearance in {{country}}",
+    "nationalCodeNote": "The customs agent in the country of import adds the national code (the full tariff extension).",
+    "verifiedIn": "Verified in {{system}}",
+    "officialTariff": "the official tariff",
+    "viewSource": "View the source",
+    "unverified": "AI suggestion, unverified. Confirm the code with a customs agent in the destination country before using it.",
+    "confirmVerified": "I have verified this code in the destination country tariff"
+  },
+  "calibrate": {
+    "devTool": "Developer tool",
+    "title": "PDF calibration",
+    "subtitle": "Used to work out exact field coordinates in the PDF templates. It is not linked from the app navigation.",
+    "template": "PDF template",
+    "gridTitle": "Coordinate grid",
+    "gridHint": "Download a PDF with a 50 pt grid. Read the exact x and y of every form field from it.",
+    "generating": "Generating...",
+    "downloadGrid": "↓ Download with grid",
+    "probeTitle": "Crosshair (probe)",
+    "probeHint": "Enter the coordinates and a test string. Download the PDF and check whether the crosshair lands on the right field.",
+    "x": "X (from the left, pt)",
+    "y": "Y (from the top, pt)",
+    "testText": "Test text",
+    "size": "Size (pt)",
+    "downloadProbe": "↓ Download with crosshair",
+    "howToTitle": "How to calibrate a new template:",
+    "step1": "Pick a template from the list above.",
+    "step2": "Press Download with grid, then open the resulting PDF.",
+    "step3": "Read the x and y of every form field off the grid.",
+    "step4": "Enter those values in the X and Y fields and press Download with crosshair to confirm.",
+    "step5prefix": "Update the coordinates in"
+  }
+}

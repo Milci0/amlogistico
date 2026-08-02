@@ -1,0 +1,237 @@
+{
+  "rules": {
+    "EXW": {
+      "name": "Ex Works",
+      "shortDesc": "Sprzedający udostępnia towar w swoim zakładzie, kupujący organizuje cały transport i ponosi ryzyko od tego momentu.",
+      "full": "Odbiór towaru z magazynu sprzedającego",
+      "pt": "Ryzyko przechodzi w momencie udostępnienia towaru w miejscu sprzedającego",
+      "sl": [
+        "Udostępnienie towaru w magazynie",
+        "Pakowanie towaru"
+      ],
+      "bl": [
+        "Załadunek towaru",
+        "Odprawa eksportowa",
+        "Transport do portu/granicy",
+        "Fracht główny",
+        "Ubezpieczenie",
+        "Odprawa importowa i cło",
+        "Dostawa do miejsca docelowego"
+      ],
+      "warn": "EXW nakłada na kupującego maksymalne ryzyko, w tym odprawę eksportową, którą trudno przeprowadzić bez obecności w kraju sprzedającego. W praktyce często zastępowane przez FCA."
+    },
+    "FCA": {
+      "name": "Free Carrier",
+      "shortDesc": "Sprzedający dostarcza towar do przewoźnika wskazanego przez kupującego, ryzyko przechodzi po załadunku.",
+      "full": "Dostarczenie towaru do wskazanego przewoźnika",
+      "pt": "Ryzyko przechodzi po wydaniu towaru przewoźnikowi kupującego w uzgodnionym miejscu",
+      "sl": [
+        "Opakowanie i oznakowanie",
+        "Odprawa eksportowa",
+        "Załadunek (jeśli miejsce u sprzedającego)",
+        "Dostarczenie do przewoźnika"
+      ],
+      "bl": [
+        "Fracht główny",
+        "Ubezpieczenie cargo",
+        "Odprawa importowa i cło",
+        "Dostawa końcowa"
+      ],
+      "warn": "FCA to rekomendowany zamiennik FOB przy transporcie kontenerowym, ryzyko przechodzi w uzgodnionym miejscu, zanim towar trafi na statek."
+    },
+    "FAS": {
+      "name": "Free Alongside Ship",
+      "shortDesc": "Sprzedający dostarcza towar wzdłuż burty statku w porcie załadunku. Tylko transport morski.",
+      "full": "Dostarczenie wzdłuż burty statku",
+      "pt": "Ryzyko przechodzi gdy towar znajdzie się wzdłuż burty statku w porcie załadunku",
+      "sl": [
+        "Odprawa eksportowa",
+        "Dostarczenie do portu",
+        "Umieszczenie wzdłuż burty statku"
+      ],
+      "bl": [
+        "Załadunek na statek",
+        "Fracht morski",
+        "Ubezpieczenie",
+        "Odprawa importowa i cło"
+      ],
+      "warn": "FAS stosowany przy ładunkach masowych (zboże, ruda, węgiel). Przy kontenerach praktycznie nieużywany, lepszy FCA."
+    },
+    "FOB": {
+      "name": "Free On Board",
+      "shortDesc": "Sprzedający dostarcza towar na pokład statku, ryzyko przechodzi po przejściu burty statku. Tylko transport morski.",
+      "full": "Dostarczenie na pokład statku",
+      "pt": "Ryzyko przechodzi po załadowaniu towaru na pokład statku w porcie załadunku",
+      "sl": [
+        "Odprawa eksportowa",
+        "Dostarczenie do portu",
+        "Załadunek na statek"
+      ],
+      "bl": [
+        "Fracht morski",
+        "Ubezpieczenie cargo",
+        "Odprawa importowa i cło",
+        "Dostawa do miejsca docelowego"
+      ],
+      "warn": "FOB stosowany wyłącznie dla transportu morskiego. Przy kontenerach zalecany FCA, lepiej oddaje rzeczywistość załadunku w terminalu."
+    },
+    "CFR": {
+      "name": "Cost and Freight",
+      "shortDesc": "Sprzedający opłaca fracht do portu przeznaczenia, ryzyko przechodzi już po załadunku na statek. Tylko transport morski.",
+      "full": "Koszt i fracht do portu docelowego",
+      "pt": "Ryzyko przechodzi po załadowaniu na statek, sprzedający płaci za fracht, ale nie za ubezpieczenie",
+      "sl": [
+        "Odprawa eksportowa",
+        "Załadunek na statek",
+        "Opłacenie frachtu do portu docelowego"
+      ],
+      "bl": [
+        "Ubezpieczenie cargo (własny koszt)",
+        "Odprawa importowa i cło",
+        "Ryzyko od momentu załadunku"
+      ],
+      "warn": "Sprzedający płaci za fracht, ale ryzyko przechodzi już przy załadunku. Kupujący ponosi ryzyko przez cały rejs, mimo że nie kontroluje wyboru armatora."
+    },
+    "CIF": {
+      "name": "Cost, Insurance and Freight",
+      "shortDesc": "Jak CFR, dodatkowo sprzedający opłaca ubezpieczenie towaru. Tylko transport morski.",
+      "full": "Koszt, ubezpieczenie i fracht do portu docelowego",
+      "pt": "Ryzyko przechodzi po załadowaniu na statek, sprzedający opłaca fracht i minimalne ubezpieczenie",
+      "sl": [
+        "Odprawa eksportowa",
+        "Załadunek na statek",
+        "Fracht do portu docelowego",
+        "Ubezpieczenie (min. klauzula C)"
+      ],
+      "bl": [
+        "Rozładunek w porcie docelowym",
+        "Odprawa importowa i cło",
+        "Ryzyko od momentu załadunku"
+      ],
+      "warn": "CIF wymaga jedynie minimalnego ubezpieczenia (klauzula C). Dla cennych towarów rozważ CIP, który wymaga pełniejszej ochrony (klauzula A)."
+    },
+    "CPT": {
+      "name": "Carriage Paid To",
+      "shortDesc": "Sprzedający opłaca przewóz do miejsca przeznaczenia, ryzyko przechodzi po przekazaniu towaru pierwszemu przewoźnikowi.",
+      "full": "Fracht opłacony do miejsca docelowego",
+      "pt": "Ryzyko przechodzi po wydaniu towaru przewoźnikowi, mimo że sprzedający płaci za fracht",
+      "sl": [
+        "Opakowanie i odprawa eksportowa",
+        "Opłacenie frachtu do miejsca docelowego",
+        "Dostarczenie do przewoźnika"
+      ],
+      "bl": [
+        "Ubezpieczenie cargo (opcjonalne)",
+        "Odprawa importowa i cło",
+        "Ryzyko od momentu wydania przewoźnikowi"
+      ],
+      "warn": "Przy CPT sprzedający płaci za transport, ale ryzyko przechodzi wcześniej, już przy wydaniu przewoźnikowi. Kupujący ponosi ryzyko w trakcie transportu, za który nie płaci."
+    },
+    "CIP": {
+      "name": "Carriage and Insurance Paid To",
+      "shortDesc": "Jak CPT, dodatkowo sprzedający opłaca ubezpieczenie towaru na czas całego transportu.",
+      "full": "Fracht i ubezpieczenie opłacone do miejsca docelowego",
+      "pt": "Ryzyko przechodzi po wydaniu towaru przewoźnikowi, sprzedający ubezpiecza transport na pełną wartość",
+      "sl": [
+        "Opakowanie i odprawa eksportowa",
+        "Opłacenie frachtu",
+        "Ubezpieczenie cargo (min. 110% wartości)",
+        "Dostarczenie do przewoźnika"
+      ],
+      "bl": [
+        "Odprawa importowa i cło",
+        "Rozładunek w miejscu docelowym"
+      ],
+      "warn": "CIP wymaga ubezpieczenia na poziomie Institute Cargo Clauses (A), najszersza ochrona. Różni go od CIF, który wymaga tylko klauzuli (C)."
+    },
+    "DAP": {
+      "name": "Delivered At Place",
+      "shortDesc": "Sprzedający dostarcza towar gotowy do rozładunku w uzgodnionym miejscu przeznaczenia.",
+      "full": "Dostawa do uzgodnionego miejsca",
+      "pt": "Ryzyko przechodzi po dostarczeniu towaru do uzgodnionego miejsca, przed rozładunkiem",
+      "sl": [
+        "Cały transport do miejsca docelowego",
+        "Odprawa eksportowa",
+        "Ubezpieczenie (zalecane)",
+        "Opłaty za tranzyt"
+      ],
+      "bl": [
+        "Rozładunek towaru",
+        "Odprawa importowa i cło",
+        "Podatki i opłaty celne"
+      ],
+      "warn": "Sprzedający nie odpowiada za rozładunek, jeśli miejsce dostawy nie umożliwia rozładunku przez sprzedającego, rozważ DPU."
+    },
+    "DPU": {
+      "name": "Delivered at Place Unloaded",
+      "shortDesc": "Jak DAP, ale sprzedający odpowiada również za rozładunek towaru w miejscu przeznaczenia.",
+      "full": "Dostawa z rozładunkiem w uzgodnionym miejscu",
+      "pt": "Ryzyko przechodzi dopiero po rozładunku towaru w miejscu docelowym",
+      "sl": [
+        "Cały transport",
+        "Odprawa eksportowa",
+        "Rozładunek w miejscu docelowym",
+        "Ubezpieczenie"
+      ],
+      "bl": [
+        "Odprawa importowa i cło",
+        "Podatki i opłaty"
+      ],
+      "warn": "DPU to jedyny Incoterm gdzie sprzedający odpowiada za rozładunek. Wcześniej nazywany DAT, zmieniony w Incoterms 2020."
+    },
+    "DDP": {
+      "name": "Delivered Duty Paid",
+      "shortDesc": "Sprzedający dostarcza towar odprawiony celnie, z opłaconym cłem i podatkami, gotowy do rozładunku.",
+      "full": "Dostawa z opłaconym cłem",
+      "pt": "Ryzyko przechodzi dopiero po dostarczeniu do miejsca docelowego z opłaconym cłem i podatkami",
+      "sl": [
+        "Cały transport",
+        "Odprawa eksportowa i importowa",
+        "Opłacenie ceł i podatków VAT",
+        "Ubezpieczenie"
+      ],
+      "bl": [
+        "Przyjęcie towaru w miejscu docelowym"
+      ],
+      "warn": "DDP wymaga posiadania numeru VAT i EORI w kraju importu. Problematyczny dla sprzedających spoza UE, niezalecany bez znajomości lokalnych przepisów."
+    }
+  },
+  "modes": {
+    "road": "Drogowy",
+    "sea": "Morski",
+    "air": "Lotniczy",
+    "rail": "Kolejowy",
+    "inland": "Śródlądowy"
+  },
+  "page": {
+    "metaTitle": "Incoterms 2020: przewodnik | AMLogistico",
+    "metaDescription": "Kompletny przewodnik po Incoterms 2020. Sprawdź podział kosztów i ryzyka dla EXW, FCA, FOB, CIF, DAP, DDP i pozostałych warunków dostawy.",
+    "hint": "Kliknij kartę, aby zobaczyć szczegóły, podział ryzyka i odpowiedzialności między sprzedającym a kupującym.",
+    "filters": {
+      "all": "Wszystkie",
+      "sea": "Morski",
+      "land": "Lądowy i lotniczy"
+    },
+    "typeLand": "Lądowy i lotniczy",
+    "typeLandShort": "Ląd./lot.",
+    "typeSea": "Morski",
+    "ctaQuestion": "Chcesz zastosować {{code}} w nowym zleceniu?",
+    "cta": "Użyj w nowym zleceniu",
+    "seller": "Sprzedający",
+    "sellerShort": "Sp.",
+    "buyer": "Kupujący",
+    "buyerShort": "Kup.",
+    "sellerResponsible": "Sprzedający odpowiada za",
+    "buyerResponsible": "Kupujący odpowiada za",
+    "risk": {
+      "max": "Maks.",
+      "veryHigh": "B. wys.",
+      "high": "Wysokie",
+      "medium": "Średnie",
+      "low": "Niskie",
+      "min": "Min."
+    },
+    "ctaQuestionPrefix": "Chcesz zastosować",
+    "ctaQuestionSuffix": "w nowym zleceniu?"
+  }
+}

@@ -236,99 +236,61 @@ export const COUNTRIES = [
   { code: 'TV', name: 'Tuvalu', flag: '🇹🇻' },
 ]
 
-// Pogrupowane menu boczne (układ wg projektu — GŁÓWNE / NARZĘDZIA / WIEDZA)
+// Pogrupowane menu boczne (układ wg projektu — GŁÓWNE / NARZĘDZIA / WIEDZA).
+// `titleKey`/`labelKey` to klucze i18n (namespace `common`) — Sidebar tłumaczy je
+// przy renderze, żeby menu reagowało na przełącznik języka bez przeładowania.
 export const MENU_GROUPS = [
   {
-    title: 'Główne',
+    titleKey: 'menu.groups.main',
     items: [
-      { label: 'Strona główna', path: '/', icon: 'home' },
-      { label: 'Wycena', path: '/quotation', icon: 'calculator', badge: 'Core' },
-      { label: 'Dokumentacja', path: '/history', icon: 'document', badge: 'Core' },
-      { label: 'Wersje robocze', path: '/wersje-robocze', icon: 'pencil' },
+      { labelKey: 'menu.items.home', path: '/', icon: 'home' },
+      { labelKey: 'menu.items.quotation', path: '/quotation', icon: 'calculator', badge: 'Core' },
+      { labelKey: 'menu.items.documentation', path: '/history', icon: 'document', badge: 'Core' },
+      { labelKey: 'menu.items.drafts', path: '/wersje-robocze', icon: 'pencil' },
     ],
   },
   {
-    title: 'Narzędzia',
+    titleKey: 'menu.groups.tools',
     items: [
-      { label: 'Ubezpieczenia', path: '/insurance', icon: 'shield' },
+      { labelKey: 'menu.items.insurance', path: '/insurance', icon: 'shield' },
       {
-        label: 'Trasy handlowe', path: '/routes', icon: 'map',
+        labelKey: 'menu.items.routes', path: '/routes', icon: 'map',
         children: [
-          { label: 'Śledzenie ładunku', path: '/tracking', icon: 'pin' },
+          { labelKey: 'menu.items.tracking', path: '/tracking', icon: 'pin' },
         ],
       },
-      { label: 'Puste szablony', path: '/blank-templates', icon: 'template' },
+      { labelKey: 'menu.items.blankTemplates', path: '/blank-templates', icon: 'template' },
     ],
   },
   {
-    title: 'Wiedza',
+    titleKey: 'menu.groups.knowledge',
     items: [
-      { label: 'Newsy', path: '/news', icon: 'news' },
-      { label: 'Incoterms', path: '/incoterms', icon: 'globe' },
+      { labelKey: 'menu.items.news', path: '/news', icon: 'news' },
+      { labelKey: 'menu.items.incoterms', path: '/incoterms', icon: 'globe' },
     ],
   },
 ]
 
 // Dolne pozycje sidebara (Ustawienia scalone z Profilem — została jedna pozycja)
 export const MENU_BOTTOM = [
-  { label: 'Profil', path: '/profile', icon: 'user' },
+  { labelKey: 'menu.items.profile', path: '/profile', icon: 'user' },
 ]
 
-// Statystyki na stronie głównej (hero)
+// Statystyki na stronie głównej (hero). `labelKey` → namespace `pages`.
 export const HOME_STATS = [
-  { value: '+150', label: 'krajów w bazie',             icon: 'pin',   color: 'teal'   },
-  { value: '+99',  label: 'dokumentów transportowych',  icon: 'docs',  color: 'blue'   },
-  { value: '4',    label: 'środki transportu',          icon: 'truck', color: 'orange' },
-  { value: '11',   label: 'warunków Incoterms',         icon: 'globe', color: 'red'    },
+  { value: '+150', labelKey: 'home.stats.countries',      icon: 'pin',   color: 'teal'   },
+  { value: '+99',  labelKey: 'home.stats.documents',      icon: 'docs',  color: 'blue'   },
+  { value: '4',    labelKey: 'home.stats.transportModes', icon: 'truck', color: 'orange' },
+  { value: '11',   labelKey: 'home.stats.incoterms',      icon: 'globe', color: 'red'    },
 ]
 
+// Plany abonamentowe. Teksty (opis, lista funkcji, CTA) siedzą w tłumaczeniach
+// pod kluczem `subscription.plans.<id>` w namespace `pages` — tutaj zostaje tylko
+// identyfikator, cena i wyróżnienie.
 export const PRICING_PLANS = [
-  {
-    name: 'Free',
-    price: 0,
-    period: 'zawsze',
-    description: 'Dla pojedynczych użytkowników i testów',
-    highlighted: false,
-    features: [
-      '5 dokumentów miesięcznie',
-      'CMR i Packing List',
-      'Eksport PDF',
-      'Wsparcie e-mail',
-    ],
-    cta: 'Zacznij bezpłatnie',
-  },
-  {
-    name: 'Pro',
-    price: 49,
-    period: 'miesięcznie',
-    description: 'Dla małych i średnich firm spedycyjnych',
-    highlighted: true,
-    features: [
-      'Nieograniczone dokumenty',
-      'Wszystkie typy dokumentów',
-      'Eksport PDF i Excel',
-      'Zarządzanie wieloma firmami',
-      'Priorytetowe wsparcie',
-      'Historia dokumentów 2 lata',
-    ],
-    cta: 'Wybierz Pro',
-  },
-  {
-    name: 'Enterprise',
-    price: null,
-    period: '',
-    description: 'Dla dużych firm i integracji API',
-    highlighted: false,
-    features: [
-      'Wszystko z planu Pro',
-      'Integracja API',
-      'Dedykowany opiekun',
-      'SLA 99.9%',
-      'Niestandardowe szablony',
-      'Szkolenie zespołu',
-    ],
-    cta: 'Skontaktuj się',
-  },
+  { id: 'free', name: 'Free', price: 0, highlighted: false },
+  { id: 'pro', name: 'Pro', price: 49, highlighted: true },
+  { id: 'enterprise', name: 'Enterprise', price: null, highlighted: false },
 ]
 
 export const HOW_IT_WORKS_STEPS = [
@@ -388,13 +350,15 @@ export const MOCK_METRICS = [
 
 // Przykładowe polisy na zakładce /insurance. Dane wyłącznie poglądowe — obsługa polis
 // ruszy po podpisaniu umowy z ubezpieczycielem, do tego czasu nic tu nie jest prawdziwe.
+// Opis ładunku to treść demonstracyjna: wersja angielska leży obok polskiej
+// (`cargoDescriptionEn`), tak samo jak w trackingMock.js.
 export const MOCK_POLICIES = [
   {
     id: 'pol_001', ref: 'LSR-2026-41287', status: 'ACTIVE',
     provider: 'Loadsure', coverageType: 'ICC_A',
     premium: 187, currency: 'EUR', coverageLimit: 50000, deductible: 500,
     origin: 'Gdańsk', destination: 'Newark',
-    cargoDescription: 'Części elektroniczne',
+    cargoDescription: 'Części elektroniczne', cargoDescriptionEn: 'Electronic components',
     issuedAt: '2026-07-02', expiresAt: '2026-08-31',
   },
   {
@@ -402,7 +366,7 @@ export const MOCK_POLICIES = [
     provider: 'Loadsure', coverageType: 'ICC_B',
     premium: 95, currency: 'EUR', coverageLimit: 30000, deductible: 500,
     origin: 'Hamburg', destination: 'Felixstowe',
-    cargoDescription: 'Meble biurowe',
+    cargoDescription: 'Meble biurowe', cargoDescriptionEn: 'Office furniture',
     issuedAt: '2026-04-18', expiresAt: '2026-06-10',
   },
   {
@@ -410,7 +374,7 @@ export const MOCK_POLICIES = [
     provider: 'Marsh', coverageType: 'ICC_C',
     premium: 240, currency: 'EUR', coverageLimit: 85000, deductible: 1000,
     origin: 'Gdynia', destination: 'Szanghaj',
-    cargoDescription: 'Maszyny CNC',
+    cargoDescription: 'Maszyny CNC', cargoDescriptionEn: 'CNC machines',
     issuedAt: '2026-05-06', expiresAt: '2026-07-15',
   },
 ]

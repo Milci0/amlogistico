@@ -1,12 +1,16 @@
 import { Helmet } from 'react-helmet-async'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthContext'
 import { ApiError } from '../lib/api'
 import AlertBox from '../components/ui/AlertBox'
 import AuthShell, { inputCls, labelCls, submitCls } from '../components/auth/AuthShell'
 
 export default function RegisterPage() {
+  const { t } = useTranslation('pages')
+  const { t: tc } = useTranslation('common')
+  const { t: te } = useTranslation('errors')
   const { register } = useAuth()
   const navigate = useNavigate()
 
@@ -33,8 +37,8 @@ export default function RegisterPage() {
 
     // Walidacja zgodności haseł po stronie klienta
     if (form.password !== form.confirmPassword) {
-      setFieldErrors({ confirmPassword: 'Hasła nie są zgodne' })
-      setError('Popraw zaznaczone pola.')
+      setFieldErrors({ confirmPassword: te('passwordsMismatch') })
+      setError(te('fixFields'))
       return
     }
 
@@ -52,14 +56,14 @@ export default function RegisterPage() {
       navigate('/', { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        setError('Konto z tym adresem email już istnieje. Zaloguj się.')
+        setError(te('emailTaken'))
       } else if (err instanceof ApiError && err.status === 400) {
         setFieldErrors(err.data?.fields || {})
-        setError('Popraw zaznaczone pola.')
+        setError(te('fixFields'))
       } else if (err instanceof ApiError && err.status === 0) {
-        setError('Brak połączenia z serwerem. Spróbuj ponownie.')
+        setError(te('noConnection'))
       } else {
-        setError('Coś poszło nie tak. Spróbuj ponownie.')
+        setError(te('generic'))
       }
     } finally {
       setLoading(false)
@@ -69,17 +73,17 @@ export default function RegisterPage() {
   return (
     <>
       <Helmet>
-        <title>Rejestracja | AMLogistico</title>
+        <title>{t('auth.register.metaTitle')}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
       <AuthShell
-        title="Załóż konto"
-        subtitle="Zacznij generować dokumenty spedycyjne"
+        title={t('auth.register.title')}
+        subtitle={t('auth.register.subtitle')}
         footer={
           <>
-            Masz już konto?{' '}
+            {t('auth.register.hasAccount')}{' '}
             <Link to="/login" className="text-emerald-600 font-medium hover:underline">
-              Zaloguj się
+              {tc('auth.login')}
             </Link>
           </>
         }
@@ -88,13 +92,13 @@ export default function RegisterPage() {
           {error && <AlertBox type="error">{error}</AlertBox>}
 
           <div>
-            <label htmlFor="fullName" className={labelCls}>Imię i nazwisko</label>
+            <label htmlFor="fullName" className={labelCls}>{t('auth.register.fullName')}</label>
             <input
               id="fullName"
               type="text"
               autoComplete="name"
               className={inputCls}
-              placeholder="Jan Kowalski"
+              placeholder={t('auth.register.fullNamePlaceholder')}
               value={form.fullName}
               onChange={upd('fullName')}
               required
@@ -103,13 +107,13 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="email" className={labelCls}>Email</label>
+            <label htmlFor="email" className={labelCls}>{t('auth.register.email')}</label>
             <input
               id="email"
               type="email"
               autoComplete="email"
               className={inputCls}
-              placeholder="ty@firma.pl"
+              placeholder={t('auth.register.emailPlaceholder')}
               value={form.email}
               onChange={upd('email')}
               required
@@ -118,13 +122,13 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="phone" className={labelCls}>Numer telefonu</label>
+            <label htmlFor="phone" className={labelCls}>{t('auth.register.phone')}</label>
             <input
               id="phone"
               type="tel"
               autoComplete="tel"
               className={inputCls}
-              placeholder="+48 500 600 700"
+              placeholder={t('auth.register.phonePlaceholder')}
               value={form.phone}
               onChange={upd('phone')}
               required
@@ -133,13 +137,13 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className={labelCls}>Hasło</label>
+            <label htmlFor="password" className={labelCls}>{t('auth.register.password')}</label>
             <input
               id="password"
               type="password"
               autoComplete="new-password"
               className={inputCls}
-              placeholder="min. 8 znaków"
+              placeholder={t('auth.register.passwordPlaceholder')}
               value={form.password}
               onChange={upd('password')}
               required
@@ -148,13 +152,13 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className={labelCls}>Powtórz hasło</label>
+            <label htmlFor="confirmPassword" className={labelCls}>{t('auth.register.confirmPassword')}</label>
             <input
               id="confirmPassword"
               type="password"
               autoComplete="new-password"
               className={inputCls}
-              placeholder="powtórz hasło"
+              placeholder={t('auth.register.confirmPasswordPlaceholder')}
               value={form.confirmPassword}
               onChange={upd('confirmPassword')}
               required
@@ -164,14 +168,14 @@ export default function RegisterPage() {
 
           <div>
             <label htmlFor="companyName" className={labelCls}>
-              Nazwa firmy <span className="text-gray-400 font-normal">(opcjonalnie)</span>
+              {t('auth.register.companyName')} <span className="text-gray-400 font-normal">{t('auth.register.optional')}</span>
             </label>
             <input
               id="companyName"
               type="text"
               autoComplete="organization"
               className={inputCls}
-              placeholder="np. ABC Sp. z o.o."
+              placeholder={t('auth.register.companyNamePlaceholder')}
               value={form.companyName}
               onChange={upd('companyName')}
             />
@@ -186,10 +190,11 @@ export default function RegisterPage() {
               onChange={(e) => setTermsAccepted(e.target.checked)}
             />
             <span className="text-sm text-gray-600 dark:text-slate-300">
-              Akceptuję{' '}
+              {t('auth.register.termsPrefix')}{' '}
               {/* TODO: podłączyć /regulamin i /polityka-prywatnosci */}
-              <a href="#" className="text-emerald-600 hover:underline">regulamin</a>{' '}i{' '}
-              <a href="#" className="text-emerald-600 hover:underline">politykę prywatności</a>
+              <a href="#" className="text-emerald-600 hover:underline">{t('auth.register.termsLink')}</a>{' '}
+              {t('auth.register.termsAnd')}{' '}
+              <a href="#" className="text-emerald-600 hover:underline">{t('auth.register.privacyLink')}</a>
             </span>
           </label>
 
@@ -201,12 +206,12 @@ export default function RegisterPage() {
               onChange={(e) => setMarketingConsent(e.target.checked)}
             />
             <span className="text-sm text-gray-600 dark:text-slate-300">
-              Chcę otrzymywać informacje o nowościach i promocjach
+              {t('auth.register.marketing')}
             </span>
           </label>
 
           <button type="submit" className={submitCls} disabled={loading || !termsAccepted}>
-            {loading ? 'Tworzenie konta…' : 'Zarejestruj się'}
+            {loading ? t('auth.register.submitting') : t('auth.register.submit')}
           </button>
         </form>
       </AuthShell>
