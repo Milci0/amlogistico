@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import DocumentCard from '../components/ui/DocumentCard'
 import DocumentFilterBar from '../components/documents/DocumentFilterBar'
 import DocumentsEmptyState from '../components/documents/DocumentsEmptyState'
@@ -11,15 +12,17 @@ import { generateDocuments } from '../services/documentGeneration'
 import { downloadBlankDocument, downloadBlankZip } from '../utils/blankDocuments'
 import { getSet } from '../services/documentSetsRepo'
 
-const SORT_OPTIONS = [
-  { key: 'newest', label: 'Najnowsze' },
-  { key: 'oldest', label: 'Najstarsze' },
-  { key: 'name-asc', label: 'Nazwa A-Z' },
-]
-
-const TRANSPORT_LABEL = { road: 'Drogowy', sea: 'Morski' }
+const SORT_KEYS = ['newest', 'oldest', 'name-asc']
+const SORT_LABEL_KEY = { newest: 'sort.newest', oldest: 'sort.oldest', 'name-asc': 'sort.nameAsc' }
 
 export default function HistoryPage() {
+  const { t } = useTranslation('pages')
+  // Etykiety filtra typu transportu są jednocześnie jego wartościami, więc muszą
+  // być liczone w komponencie — inaczej przełączenie języka zostawiłoby filtr
+  // ustawiony na etykietę z poprzedniego języka.
+  const transportLabel = (mode) =>
+    mode ? t(`documentCard.transport.${mode}`, { defaultValue: '' }) : ''
+  const SORT_OPTIONS = SORT_KEYS.map((key) => ({ key, label: t(SORT_LABEL_KEY[key]) }))
   const { remove } = useDocumentSets()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -36,14 +39,16 @@ export default function HistoryPage() {
   })
 
   const types = useMemo(() => {
-    const present = new Set(allCompleted.map((s) => TRANSPORT_LABEL[s.meta?.transportMode]).filter(Boolean))
+    const present = new Set(allCompleted.map((s) => transportLabel(s.meta?.transportMode)).filter(Boolean))
     return [...present].sort()
-  }, [allCompleted])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allCompleted, t])
 
   const visibleSets = useMemo(() => {
     if (typeFilter === 'all') return allCompleted
-    return allCompleted.filter((s) => TRANSPORT_LABEL[s.meta?.transportMode] === typeFilter)
-  }, [allCompleted, typeFilter])
+    return allCompleted.filter((s) => transportLabel(s.meta?.transportMode) === typeFilter)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allCompleted, typeFilter, t])
 
   // Lista zestawów (GET /document-sets) NIE niesie formData/engineResult — są
   // odcinane dla oszczędności transferu (patrz backend toClientListItem). Do
@@ -70,11 +75,11 @@ export default function HistoryPage() {
         await downloadBlankZip(docs, `dokumenty_${full.meta?.routeFrom}_${full.meta?.routeTo}.zip`)
       } else {
         const { failed } = await generateDocuments(full.formData, full.selectedDocs || [], undefined, full.meta?.documentLanguage)
-        if (failed.length > 0) setDownloadError('Nie udało się wygenerować części dokumentów.')
+        if (failed.length > 0) setDownloadError(t('history.errors.partialGenerate'))
       }
     } catch (err) {
       console.error('Błąd pobierania dokumentów:', err)
-      setDownloadError('Nie udało się pobrać dokumentów.')
+      setDownloadError(t('history.errors.download'))
     } finally {
       setDownloadingId(null)
     }
@@ -90,7 +95,7 @@ export default function HistoryPage() {
     } catch (err) {
       console.error('Błąd ładowania zestawu:', err)
       onStatus?.(key, 'error')
-      setDownloadError('Nie udało się wczytać zestawu.')
+      setDownloadError(t('history.errors.loadSet'))
       return
     }
     if (full.kind === 'blank') {
@@ -103,16 +108,16 @@ export default function HistoryPage() {
       } catch (err) {
         console.error('Błąd pobierania pliku:', err)
         onStatus?.(key, 'error')
-        setDownloadError('Nie udało się pobrać dokumentu.')
+        setDownloadError(t('history.errors.downloadOne'))
       }
       return
     }
     try {
       const { failed } = await generateDocuments(full.formData, [key], onStatus, full.meta?.documentLanguage)
-      if (failed.length > 0) setDownloadError('Nie udało się wygenerować dokumentu.')
+      if (failed.length > 0) setDownloadError(t('history.errors.generateOne'))
     } catch (err) {
       console.error('Błąd generowania PDF:', err)
-      setDownloadError('Nie udało się wygenerować dokumentu.')
+      setDownloadError(t('history.errors.generateOne'))
     }
   }
 
@@ -125,7 +130,7 @@ export default function HistoryPage() {
     try {
       await remove(toDelete.id)
     } catch {
-      setDownloadError('Nie udało się usunąć zestawu.')
+      setDownloadError(t('history.errors.remove'))
     }
     setToDelete(null)
   }
@@ -133,14 +138,14 @@ export default function HistoryPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <Helmet>
-        <title>Historia dokumentów | AMLogistico</title>
+        <title>{t('history.metaTitle')}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Historia dokumentów</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('history.title')}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Wszystkie Twoje gotowe dokumenty.
+          {t('history.subtitle')}
         </p>
       </div>
 
@@ -157,27 +162,27 @@ export default function HistoryPage() {
 
       {downloadError && (
         <div className="mb-4">
-          <AlertBox type="error" title="Błąd pobierania">{downloadError}</AlertBox>
+          <AlertBox type="error" title={t('history.downloadErrorTitle')}>{downloadError}</AlertBox>
         </div>
       )}
 
       {error && (
         <div className="mb-4">
-          <AlertBox type="error" title="Błąd ładowania">
-            Nie udało się wczytać dokumentów. Odśwież stronę lub spróbuj ponownie później.
+          <AlertBox type="error" title={t('history.loadErrorTitle')}>
+            {t('history.loadErrorBody')}
           </AlertBox>
         </div>
       )}
 
       <div className="flex flex-col gap-2">
         {loading ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">Ładowanie…</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">{t('history.loading')}</p>
         ) : visibleSets.length === 0 ? (
           <DocumentsEmptyState
             message={
               query.trim() || typeFilter !== 'all'
-                ? 'Brak dokumentów pasujących do filtrów.'
-                : 'Brak gotowych dokumentów.'
+                ? t('history.emptyFiltered')
+                : t('history.empty')
             }
           />
         ) : (
@@ -197,9 +202,9 @@ export default function HistoryPage() {
 
       <ConfirmDialog
         open={!!toDelete}
-        title="Usunąć zestaw dokumentów?"
-        description="Tej operacji nie można cofnąć. Usuwany jest tylko ten wpis."
-        confirmLabel="Usuń"
+        title={t('history.deleteTitle')}
+        description={t('history.deleteBody')}
+        confirmLabel={t('actions.delete', { ns: 'common' })}
         destructive
         onConfirm={confirmRemove}
         onCancel={() => setToDelete(null)}

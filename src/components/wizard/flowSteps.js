@@ -35,27 +35,30 @@ const validatePartiesNoCarrier = (s) =>
   nonEmpty(s.parties.sender.name) &&
   nonEmpty(s.parties.receiver.name)
 
+// Etykiety są kluczami i18n (namespace `wizard`), nie gotowym tekstem — tłumaczy
+// je warstwa widoku (StepBar, DocumentCard), żeby pasek kroków reagował na
+// przełącznik języka.
 export const FLOWS = {
   have_transport: {
     flowType: 'have_transport',
-    label: 'Mam już transport',
+    labelKey: 'flows.have_transport',
     steps: [
-      { key: 'route', label: 'Trasa', validate: validateRoute },
-      { key: 'cargo', label: 'Towar', validate: validateCargo },
-      { key: 'parties', label: 'Strony', validate: validateParties },
-      { key: 'docs', label: 'Dokumenty', validate: () => true },
+      { key: 'route', labelKey: 'steps.route', validate: validateRoute },
+      { key: 'cargo', labelKey: 'steps.cargo', validate: validateCargo },
+      { key: 'parties', labelKey: 'steps.parties', validate: validateParties },
+      { key: 'docs', labelKey: 'steps.docs', validate: () => true },
     ],
   },
   find_transport: {
     flowType: 'find_transport',
-    label: 'Szukam transportu',
+    labelKey: 'flows.find_transport',
     steps: [
-      { key: 'route', label: 'Trasa', validate: validateRoute },
-      { key: 'cargo', label: 'Towar', validate: validateCargo },
-      { key: 'parties', label: 'Strony', validate: validatePartiesNoCarrier },
-      { key: 'forwarders', label: 'Spedytorzy', validate: () => true },
-      { key: 'quote', label: 'Wycena', validate: () => true },
-      { key: 'docs', label: 'Dokumenty', validate: () => true },
+      { key: 'route', labelKey: 'steps.route', validate: validateRoute },
+      { key: 'cargo', labelKey: 'steps.cargo', validate: validateCargo },
+      { key: 'parties', labelKey: 'steps.parties', validate: validatePartiesNoCarrier },
+      { key: 'forwarders', labelKey: 'steps.forwarders', validate: () => true },
+      { key: 'quote', labelKey: 'steps.quote', validate: () => true },
+      { key: 'docs', labelKey: 'steps.docs', validate: () => true },
     ],
   },
   // Nie jest ścieżką kreatora (nie ma stron w wizardzie) — istnieje wyłącznie po to,
@@ -63,8 +66,8 @@ export const FLOWS = {
   // pochodzących z /blank-templates (patrz kind:'blank' w documentSetsRepo).
   blank_templates: {
     flowType: 'blank_templates',
-    label: 'Puste szablony',
-    steps: [{ key: 'result', label: 'Wynik', validate: () => true }],
+    labelKey: 'flows.blank_templates',
+    steps: [{ key: 'result', labelKey: 'steps.result', validate: () => true }],
   },
 }
 
@@ -85,11 +88,12 @@ export function getTotalSteps(flowType) {
   return getFlow(flowType).steps.length
 }
 
-export function getStepLabel(flowType, stepNumber) {
+// Zwracają KLUCZ i18n (namespace `wizard`) — wywołujący przepuszcza go przez t().
+export function getStepLabelKey(flowType, stepNumber) {
   const steps = getFlow(flowType).steps
-  return steps[stepNumber - 1]?.label || ''
+  return steps[stepNumber - 1]?.labelKey || ''
 }
 
-export function getFlowLabel(flowType) {
-  return getFlow(flowType).label
+export function getFlowLabelKey(flowType) {
+  return getFlow(flowType).labelKey
 }

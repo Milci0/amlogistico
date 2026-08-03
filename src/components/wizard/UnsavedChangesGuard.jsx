@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useBlocker } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useWizard } from './WizardContext'
 import AlertBox from '../ui/AlertBox'
 
@@ -11,6 +12,8 @@ import AlertBox from '../ui/AlertBox'
 // (to zmiana stanu, nie nawigacja routera) ani po udanym generowaniu
 // (markSaved gasi isDirty, allowNextNavigation ustawia bypass).
 export default function UnsavedChangesGuard() {
+  const { t } = useTranslation('wizard')
+  const { t: tc } = useTranslation('common')
   const wiz = useWizard()
   const [saveError, setSaveError] = useState(null)
 
@@ -39,7 +42,7 @@ export default function UnsavedChangesGuard() {
       await wiz.saveDraftAndMark()
     } catch (err) {
       // Błąd zapisu (np. sieć/serwer) — nie przechodzimy dalej, pokazujemy komunikat.
-      setSaveError(err.message || 'Nie udało się zapisać wersji roboczej.')
+      setSaveError(err.message || t('guard.saveFailed'))
       return
     }
     blocker.proceed()
@@ -59,14 +62,13 @@ export default function UnsavedChangesGuard() {
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
       <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg shadow-slate-900/10 dark:shadow-black/30 p-6 animate-page-in">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Niedokończony formularz</h3>
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('guard.title')}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-          Wprowadzone dane nie zostały jeszcze wygenerowane. Zapisać bieżący postęp jako wersję
-          roboczą, aby wrócić do niego później?
+          {t('guard.body')}
         </p>
         {saveError && (
           <div className="mt-4">
-            <AlertBox type="error" title="Nie udało się zapisać">{saveError}</AlertBox>
+            <AlertBox type="error" title={t('guard.saveErrorTitle')}>{saveError}</AlertBox>
           </div>
         )}
         <div className="flex flex-col gap-2.5 mt-6">
@@ -74,19 +76,19 @@ export default function UnsavedChangesGuard() {
             onClick={handleSaveDraft}
             className="w-full text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-4 py-2.5 transition-colors"
           >
-            Zapisz wersję roboczą
+            {t('guard.saveDraft')}
           </button>
           <button
             onClick={handleDiscard}
             className="w-full text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-2.5 transition-colors"
           >
-            Odrzuć zmiany
+            {t('guard.discard')}
           </button>
           <button
             onClick={() => blocker.reset()}
             className="w-full text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg px-4 py-2.5 transition-colors"
           >
-            Anuluj
+            {tc('actions.cancel')}
           </button>
         </div>
       </div>

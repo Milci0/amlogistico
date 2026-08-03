@@ -6,3 +6,7 @@ dist
 
 # ISZTAR — lokalny cache migawek nomenklatury (nie commitować)
 scripts/.cache/
+
+# Specyfikacje API ubezpieczycieli — materiał referencyjny od dostawcy,
+# trzymany lokalnie (nic w kodzie ich nie importuje)
+docs/insurance-ref/*.yml

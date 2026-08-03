@@ -1,0 +1,728 @@
+{
+  "auth": {
+    "login": {
+      "metaTitle": "Zaloguj się | AMLogistico",
+      "title": "Zaloguj się",
+      "subtitle": "Wejdź do panelu AMLogistico",
+      "noAccount": "Nie masz konta?",
+      "email": "Email",
+      "emailPlaceholder": "ty@firma.pl",
+      "password": "Hasło",
+      "submit": "Zaloguj się",
+      "submitting": "Logowanie..."
+    },
+    "register": {
+      "metaTitle": "Rejestracja | AMLogistico",
+      "title": "Załóż konto",
+      "subtitle": "Zacznij generować dokumenty spedycyjne",
+      "hasAccount": "Masz już konto?",
+      "fullName": "Imię i nazwisko",
+      "fullNamePlaceholder": "Jan Kowalski",
+      "email": "Email",
+      "emailPlaceholder": "ty@firma.pl",
+      "phone": "Numer telefonu",
+      "phonePlaceholder": "+48 500 600 700",
+      "password": "Hasło",
+      "passwordPlaceholder": "min. 8 znaków",
+      "confirmPassword": "Powtórz hasło",
+      "confirmPasswordPlaceholder": "powtórz hasło",
+      "companyName": "Nazwa firmy",
+      "optional": "(opcjonalnie)",
+      "companyNamePlaceholder": "np. ABC Sp. z o.o.",
+      "termsPrefix": "Akceptuję",
+      "termsLink": "regulamin",
+      "termsAnd": "i",
+      "privacyLink": "politykę prywatności",
+      "marketing": "Chcę otrzymywać informacje o nowościach i promocjach",
+      "submit": "Zarejestruj się",
+      "submitting": "Tworzenie konta..."
+    }
+  },
+  "home": {
+    "metaTitle": "AMLogistico - generator dokumentów transportowych online",
+    "metaDescription": "Generuj CMR, Packing List, Fakturę handlową, Sea Waybill i inne dokumenty spedycyjne automatycznie. Wypełnij formularz i pobierz PDF w kilka sekund.",
+    "headline1": "Zarządzaj transportem i dokumentami",
+    "headline2": "w jednym miejscu",
+    "subtitle": "Wyceny frachtu, ubezpieczenia cargo, trasy handlowe, dokumentacja i faktury",
+    "subtitleStrong": "wygenerowane automatycznie",
+    "start": "Rozpocznij",
+    "learnMore": "Dowiedz się więcej",
+    "guestHint": "Zaloguj się, aby uzyskać dostęp do generowania dokumentów.",
+    "stats": {
+      "countries": "krajów w bazie",
+      "documents": "dokumentów transportowych",
+      "transportModes": "środki transportu",
+      "incoterms": "warunków Incoterms"
+    }
+  },
+  "about": {
+    "title": "Jak to działa",
+    "subtitle": "Od opisu ładunku po dokumenty, fracht i ubezpieczenie",
+    "step": "Krok {{number}}",
+    "steps": {
+      "cargo": {
+        "title": "Opisz ładunek",
+        "desc": "Kategoria, waga, jednostki. Aplikacja sama podpowie kod HS i wymogi temperaturowe."
+      },
+      "route": {
+        "title": "Wybierz trasę i transport",
+        "desc": "Drogowy, morski, lotniczy lub multimodalny. Warunki Incoterms wyjaśnione i dopasowane do potrzeb."
+      },
+      "requirements": {
+        "title": "Sprawdź wymogi",
+        "desc": "Świadectwa fitosanitarne, ADR, dokumenty celne. System wskaże, co jest potrzebne dla Twojego kierunku."
+      },
+      "documents": {
+        "title": "Wygeneruj dokumenty",
+        "desc": "CMR, Packing List, faktura, konosament. Ponad 99 szablonów, wypełnionych Twoimi danymi."
+      },
+      "protect": {
+        "title": "Zabezpiecz ładunek",
+        "desc": "Wycena frachtu i ubezpieczenie cargo w tym samym miejscu."
+      }
+    }
+  },
+  "pathSelect": {
+    "metaTitle": "Jak chcesz zacząć? | AMLogistico",
+    "back": "Wróć",
+    "logout": "Wyloguj",
+    "backHome": "Wróć do strony głównej",
+    "title": "Jak chcesz zacząć?",
+    "subtitle": "Wybierz ścieżkę dopasowaną do Twojej sytuacji, obie prowadzą do kompletu dokumentów.",
+    "choose": "Wybierz",
+    "a": {
+      "title": "Mam już transport",
+      "description": "Masz umówionego przewoźnika lub spedytora, potrzebujesz tylko dokumentów i opcjonalnie ubezpieczenia."
+    },
+    "b": {
+      "title": "Szukam transportu",
+      "description": "Pomożemy znaleźć spedytora, pokażemy wycenę i przygotujemy komplet dokumentów."
+    },
+    "steps": {
+      "shipmentData": "Dane przesyłki",
+      "insurance": "Ubezpieczenie (opcjonalnie)",
+      "generate": "Generuj dokumenty",
+      "forwarders": "Dostępni spedytorzy",
+      "quote": "Wycena frachtu"
+    }
+  },
+  "newDocument": {
+    "metaTitle": "Nowe zlecenie | AMLogistico",
+    "loadingSet": "Ładowanie zestawu...",
+    "loadErrorTitle": "Błąd ładowania",
+    "loadErrorBody": "Nie udało się wczytać zestawu. Odśwież stronę lub spróbuj ponownie później.",
+    "notFoundTitle": "Nie znaleziono zestawu",
+    "notFoundBody": "Zestaw, który próbujesz otworzyć, nie istnieje lub został usunięty.",
+    "titleEdit": "Edytuj zlecenie",
+    "titleNew": "Nowe zlecenie",
+    "subtitle": "Wypełnij formularz a my dobierzemy dokumenty automatycznie."
+  },
+  "placeholder": {
+    "comingSoon": "Wkrótce",
+    "inProgress": "Ta sekcja jest w przygotowaniu."
+  },
+  "quotation": {
+    "title": "Wycena",
+    "description": "Wycena frachtu i kosztów transportu."
+  },
+  "documentCard": {
+    "fallbackTitle": "Zestaw dokumentów",
+    "transport": {
+      "road": "Drogowy",
+      "sea": "Morski"
+    },
+    "showDocuments": "Pokaż dokumenty",
+    "hideDocuments": "Ukryj dokumenty",
+    "stepOf": "Krok {{current}} z {{total}}: {{label}}",
+    "editedAt": "edytowano {{date}}",
+    "docCount_one": "{{count}} dokument",
+    "docCount_few": "{{count}} dokumenty",
+    "docCount_many": "{{count}} dokumentów",
+    "docCount_other": "{{count}} dokumentów",
+    "statusDraft": "Szkic",
+    "statusReady": "Gotowy",
+    "continue": "Kontynuuj",
+    "downloadAll": "Pobierz wszystko",
+    "generating": "Generuję...",
+    "loading": "Ładowanie...",
+    "loadDocsError": "Nie udało się wczytać dokumentów.",
+    "required": "Wymagane",
+    "optional": "Opcjonalne",
+    "notGenerated": "Niewygenerowany",
+    "downloadAgain": "Pobierz ponownie",
+    "error": "Błąd"
+  },
+  "documentList": {
+    "required": "Wymagane ({{count}})",
+    "optional": "Opcjonalne ({{count}})",
+    "requiredBadge": "Wymagany",
+    "ready": "Gotowe",
+    "error": "Błąd"
+  },
+  "filterBar": {
+    "searchPlaceholder": "Szukaj po nazwie, typie lub trasie...",
+    "allTypes": "Wszystkie typy"
+  },
+  "sort": {
+    "newest": "Najnowsze",
+    "oldest": "Najstarsze",
+    "nameAsc": "Nazwa A-Z",
+    "lastEdited": "Ostatnio edytowane"
+  },
+  "history": {
+    "metaTitle": "Historia dokumentów | AMLogistico",
+    "title": "Historia dokumentów",
+    "subtitle": "Wszystkie Twoje gotowe dokumenty.",
+    "downloadErrorTitle": "Błąd pobierania",
+    "loadErrorTitle": "Błąd ładowania",
+    "loadErrorBody": "Nie udało się wczytać dokumentów. Odśwież stronę lub spróbuj ponownie później.",
+    "loading": "Ładowanie...",
+    "emptyFiltered": "Brak dokumentów pasujących do filtrów.",
+    "empty": "Brak gotowych dokumentów.",
+    "deleteTitle": "Usunąć zestaw dokumentów?",
+    "deleteBody": "Tej operacji nie można cofnąć. Usuwany jest tylko ten wpis.",
+    "errors": {
+      "partialGenerate": "Nie udało się wygenerować części dokumentów.",
+      "download": "Nie udało się pobrać dokumentów.",
+      "loadSet": "Nie udało się wczytać zestawu.",
+      "downloadOne": "Nie udało się pobrać dokumentu.",
+      "generateOne": "Nie udało się wygenerować dokumentu.",
+      "remove": "Nie udało się usunąć zestawu."
+    }
+  },
+  "drafts": {
+    "metaTitle": "Wersje robocze | AMLogistico",
+    "title": "Wersje robocze",
+    "subtitle": "Dokumenty w trakcie tworzenia.",
+    "errorTitle": "Błąd",
+    "loadError": "Nie udało się wczytać wersji roboczych. Spróbuj ponownie później.",
+    "removeError": "Nie udało się usunąć wersji roboczej.",
+    "loading": "Ładowanie...",
+    "emptyFiltered": "Brak dokumentów pasujących do filtrów.",
+    "empty": "Brak wersji roboczych.",
+    "startNew": "Rozpocznij nowy dokument",
+    "deleteTitle": "Usunąć wersję roboczą?",
+    "deleteBody": "Tej operacji nie można cofnąć."
+  },
+  "companies": {
+    "metaTitle": "Moje firmy | AMLogistico",
+    "title": "Moje firmy",
+    "subtitle": "Zapisane dane firm do szybkiego uzupełniania dokumentów.",
+    "add": "+ Dodaj firmę",
+    "roles": {
+      "sender": "Nadawca",
+      "receiver": "Odbiorca",
+      "carrier": "Przewoźnik"
+    }
+  },
+  "subscription": {
+    "metaTitle": "Abonament | AMLogistico",
+    "title": "Abonament",
+    "currentPlanPrefix": "Aktualny plan:",
+    "currentPlanSuffix": "Wybierz plan dopasowany do Twoich potrzeb.",
+    "mostPopular": "Najpopularniejszy",
+    "contact": "Kontakt",
+    "free": "Gratis",
+    "perMonth": "{{price}} zł/mies.",
+    "plans": {
+      "free": {
+        "description": "Dla pojedynczych użytkowników i testów",
+        "cta": "Zacznij bezpłatnie",
+        "features": [
+          "5 dokumentów miesięcznie",
+          "CMR i Packing List",
+          "Eksport PDF",
+          "Wsparcie e-mail"
+        ]
+      },
+      "pro": {
+        "description": "Dla małych i średnich firm spedycyjnych",
+        "cta": "Wybierz Pro",
+        "features": [
+          "Nieograniczone dokumenty",
+          "Wszystkie typy dokumentów",
+          "Eksport PDF i Excel",
+          "Zarządzanie wieloma firmami",
+          "Priorytetowe wsparcie",
+          "Historia dokumentów 2 lata"
+        ]
+      },
+      "enterprise": {
+        "description": "Dla dużych firm i integracji API",
+        "cta": "Skontaktuj się",
+        "features": [
+          "Wszystko z planu Pro",
+          "Integracja API",
+          "Dedykowany opiekun",
+          "SLA 99.9%",
+          "Niestandardowe szablony",
+          "Szkolenie zespołu"
+        ]
+      }
+    }
+  },
+  "profile": {
+    "metaTitle": "Profil | AMLogistico",
+    "title": "Profil",
+    "subtitle": "Zarządzaj swoim kontem, danymi firmy i preferencjami.",
+    "tabs": {
+      "personal": "Dane osobowe",
+      "company": "Dane firmy",
+      "preferences": "Preferencje",
+      "security": "Bezpieczeństwo",
+      "consents": "Zgody"
+    },
+    "save": "Zapisz zmiany",
+    "saving": "Zapisywanie...",
+    "saved": "Zapisano zmiany.",
+    "fixFields": "Popraw zaznaczone pola.",
+    "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
+    "personal": {
+      "fullName": "Imię i nazwisko",
+      "email": "Email",
+      "phone": "Telefon"
+    },
+    "company": {
+      "companyName": "Nazwa firmy",
+      "vatNumber": "NIP / VAT",
+      "eoriNumber": "EORI",
+      "address": "Adres (ulica i nr)",
+      "postalCode": "Kod pocztowy",
+      "city": "Miasto",
+      "country": "Kraj"
+    },
+    "preferences": {
+      "defaultCurrency": "Domyślna waluta",
+      "noCurrency": "Bez domyślnej waluty",
+      "documentLanguage": "Język dokumentów",
+      "polish": "Polski",
+      "english": "Angielski",
+      "documentLanguageHint": "Niezależne od języka interfejsu — dotyczy wyłącznie treści generowanych dokumentów PDF."
+    },
+    "security": {
+      "currentPassword": "Aktualne hasło",
+      "newPassword": "Nowe hasło",
+      "confirmPassword": "Powtórz nowe hasło",
+      "submit": "Zmień hasło",
+      "changed": "Hasło zostało zmienione.",
+      "mismatch": "Hasła nie są zgodne",
+      "tooManyAttempts": "Zbyt wiele prób. Spróbuj ponownie za kilka minut.",
+      "failed": "Nie udało się zmienić hasła. Spróbuj ponownie.",
+      "forgotHint": "Nie pamiętasz hasła? Skontaktuj się z nami, odzyskiwanie hasła przez email będzie dostępne wkrótce."
+    },
+    "consents": {
+      "marketing": "Chcę otrzymywać informacje o nowościach i promocjach",
+      "termsAccepted": "Regulamin zaakceptowany:"
+    }
+  },
+  "blankTemplates": {
+    "title": "Dobór dokumentów transportowych",
+    "subtitle": "Wskaż trasę, towar i warunki a system dobierze komplet pustych formularzy do pobrania.",
+    "origin": "Kraj nadania",
+    "destination": "Kraj przeznaczenia",
+    "transportMode": "Środek transportu",
+    "modes": {
+      "road": {
+        "label": "Drogowy",
+        "sub": "TIR, ciężarówka"
+      },
+      "sea": {
+        "label": "Morski",
+        "sub": "Kontener FCL/LCL"
+      }
+    },
+    "extraConditions": "Warunki dodatkowe",
+    "flags": {
+      "woodenPackaging": "Drewniane opakowania (palety, skrzynie)",
+      "temporaryExport": "Eksport tymczasowy (Karnet ATA)",
+      "transhipment": "Przeładunek w porcie pośrednim",
+      "reExport": "Re-eksport"
+    },
+    "generate": "Generuj dokumenty",
+    "routeCharacter": "Charakter trasy",
+    "warningsTitle": "Zwróć uwagę",
+    "noDocuments": "Brak dokumentów dla tej konfiguracji.",
+    "zipping": "Pakuję ZIP...",
+    "downloadZip": "Pobierz zaznaczone (ZIP)",
+    "downloadZipCount": "Pobierz zaznaczone (ZIP) ({{count}})",
+    "selectAtLeastOne": "Zaznacz co najmniej jeden dokument, aby pobrać pliki.",
+    "zipError": "Nie udało się spakować plików. Spróbuj ponownie."
+  },
+  "routeLabel": {
+    "Wewnątrz UE": "Wewnątrz UE",
+    "Eksport z UE": "Eksport z UE",
+    "Import do UE": "Import do UE",
+    "Poza UE": "Poza UE"
+  },
+  "templateSearch": {
+    "placeholder": "Szukaj szablonu... (np. china, import, UE)",
+    "results": "Wyniki",
+    "allTemplates": "Wszystkie szablony",
+    "noMatches": "Brak dopasowań.",
+    "generating": "Generuję...",
+    "downloadPdf": "Pobierz PDF",
+    "groups": {
+      "ue": "UE",
+      "celne_export": "Celne (eksport)",
+      "celne_import": "Celne (import)",
+      "transport": "Transport",
+      "swiadectwo": "Świadectwo",
+      "towary_niebezp": "Towary niebezpieczne",
+      "finansowe": "Finansowe",
+      "inne": "Inne"
+    }
+  },
+  "insurance": {
+    "metaTitle": "Ubezpieczenia | AMLogistico",
+    "title": "Ubezpieczenia cargo",
+    "subtitle": "Ochrona ładunku na czas transportu, od utraty po uszkodzenie.",
+    "offers": "Dostępne oferty",
+    "myPolicies": "Moje polisy",
+    "disclaimer": "AmLogistico nie jest ubezpieczycielem. Prezentowane kwoty są szacunkami orientacyjnymi i nie stanowią oferty w rozumieniu przepisów prawa.",
+    "certificateTitle": "Certyfikat ubezpieczenia",
+    "certificateSoonTitle": "Funkcja w przygotowaniu",
+    "certificateSoonPrefix": "Certyfikaty będą do pobrania po uruchomieniu obsługi polis. Polisa",
+    "certificateSoonSuffix": "jest wpisem przykładowym.",
+    "calculator": {
+      "title": "Kalkulator składki",
+      "subtitle": "Wynik przelicza się na bieżąco.",
+      "cargoValue": "Wartość ładunku",
+      "currency": "Waluta",
+      "category": "Kategoria towaru",
+      "mode": "Środek transportu",
+      "coverage": "Zakres ochrony",
+      "dangerous": "Towary niebezpieczne (ADR/IMDG)",
+      "perishable": "Towar łatwo psujący się",
+      "estimated": "Szacowana składka",
+      "baseRate": "Stawka bazowa {{rate}}%",
+      "note": "Szacunek własny na podstawie stawek rynkowych. Nie stanowi oferty ubezpieczyciela."
+    },
+    "coverage": {
+      "ICC_A": {
+        "name": "ICC (A), all risk",
+        "desc": "Najszerszy zakres ochrony"
+      },
+      "ICC_B": {
+        "name": "ICC (B), named perils",
+        "desc": "Wybrane ryzyka"
+      },
+      "ICC_C": {
+        "name": "ICC (C), podstawowy",
+        "desc": "Zakres minimalny"
+      }
+    },
+    "rateCategories": {
+      "general": "Towary ogólne",
+      "machinery": "Maszyny i urządzenia",
+      "electronics": "Elektronika",
+      "food_chilled": "Żywność chłodzona",
+      "food_frozen": "Żywność mrożona",
+      "valuable": "Towary wartościowe",
+      "chemicals": "Chemikalia",
+      "vehicles": "Pojazdy",
+      "textiles": "Tekstylia",
+      "metals": "Metale",
+      "medicines": "Farmaceutyki",
+      "dangerous": "Towary niebezpieczne"
+    },
+    "modes": {
+      "sea": "Morski",
+      "air": "Lotniczy",
+      "road": "Drogowy",
+      "rail": "Kolejowy"
+    },
+    "offer": {
+      "recommended": "Polecane",
+      "deductible": "Franszyza",
+      "scope": "Zakres"
+    },
+    "providers": {
+      "loadsure": {
+        "tagline": "Polisa natychmiastowa",
+        "cta": "Kup teraz",
+        "features": [
+          "Certyfikat PDF w kilkadziesiąt sekund",
+          "Zakres all-risk ICC (A)",
+          "Zgłoszenie szkody online"
+        ]
+      },
+      "marsh": {
+        "tagline": "Wycena brokerska",
+        "cta": "Poproś o wycenę",
+        "features": [
+          "Indywidualna wycena brokera",
+          "Negocjowane warunki przy większych ładunkach",
+          "Opiekun polisy"
+        ]
+      }
+    },
+    "policies": {
+      "sample": "To są dane przykładowe. Własne polisy pojawią się tutaj po uruchomieniu funkcji.",
+      "premium": "składka",
+      "validFrom": "Ważna od {{from}} do {{to}}",
+      "certificate": "Certyfikat",
+      "claim": "Zgłoś szkodę",
+      "status": {
+        "ACTIVE": "Aktywna",
+        "EXPIRED": "Wygasła",
+        "CANCELLED": "Anulowana"
+      }
+    },
+    "purchase": {
+      "title": "Kup ubezpieczenie cargo",
+      "limit": "limit",
+      "deductible": "franszyza",
+      "oneOffPremium": "jednorazowa składka",
+      "doneTitle": "Dziękujemy",
+      "doneBody": "Zakup polis będzie dostępny po podpisaniu umowy z ubezpieczycielem. Zapisaliśmy Twoje dane, odezwiemy się, gdy funkcja będzie gotowa.",
+      "steps": {
+        "parties": "Strony",
+        "details": "Szczegóły"
+      },
+      "sender": "Nadawca",
+      "receiver": "Odbiorca",
+      "companyName": "Nazwa firmy *",
+      "email": "Email *",
+      "country": "Kraj *",
+      "taxId": "NIP / VAT / EORI",
+      "departureDate": "Data załadunku *",
+      "vesselName": "Nazwa statku",
+      "containerNo": "Nr kontenera",
+      "blNumber": "Nr Bill of Lading",
+      "shipmentId": "ID zlecenia AmLogistico",
+      "shipmentIdPlaceholder": "Opcjonalne, powiązanie ze zleceniem",
+      "buy": "Kup polisę"
+    },
+    "claim": {
+      "title": "Zgłoś szkodę",
+      "coverageUpTo": "pokrycie do",
+      "doneTitle": "Funkcja w przygotowaniu",
+      "doneBody": "Zgłoszenia szkód będą dostępne po uruchomieniu obsługi polis.",
+      "lossDate": "Data szkody *",
+      "claimAmount": "Kwota roszczenia *",
+      "claimAmountPlaceholder": "np. 5000",
+      "currency": "Waluta",
+      "description": "Opis szkody *",
+      "descriptionPlaceholder": "Opisz co się stało, kiedy i gdzie.",
+      "submit": "Zgłoś szkodę"
+    }
+  },
+  "news": {
+    "metaTitle": "Newsy | AMLogistico",
+    "title": "Newsy transportowe",
+    "live": "Na żywo",
+    "refresh": "Odśwież",
+    "mainTabs": {
+      "all": "Wszystkie",
+      "polska": "Polska",
+      "swiat": "Świat",
+      "alerty": "Alerty"
+    },
+    "subTabs": {
+      "all": "Wszystkie",
+      "morski": "Morski",
+      "drogowy": "Drogowy",
+      "cla": "Cła i regulacje",
+      "alerty": "Alerty"
+    },
+    "transport": {
+      "morski": "Morski",
+      "drogowy": "Drogowy",
+      "cla": "Cła"
+    },
+    "readMore": "Czytaj więcej →",
+    "loadError": "Nie udało się pobrać newsów. Sprawdź połączenie lub backend (/api/news).",
+    "retry": "Spróbuj ponownie",
+    "emptyTitle": "Brak artykułów dla wybranego filtra",
+    "emptyBody": "Wybierz inną zakładkę lub kliknij „Odśwież”.",
+    "ticker": {
+      "diesel": "Diesel EU:",
+      "ecb": "Stopa EBC:"
+    },
+    "footer": "Artykuły są własnością ich wydawców. AMLogistico wyświetla wyłącznie nagłówki i linki do oryginalnych źródeł RSS.",
+    "dieselCredit": "Cena diesla: „Weekly Oil Bulletin” © European Commission, licencja",
+    "ecbCredit": "Stopa EBC: © European Central Bank (CC BY 4.0)",
+    "today": "Dziś, {{time}}",
+    "yesterday": "Wczoraj"
+  },
+  "routes": {
+    "metaTitle": "Trasy handlowe | AMLogistico",
+    "title": "Trasy handlowe",
+    "subtitle": "Sprawdź orientacyjne stawki frachtu morskiego i lotniczego.",
+    "from": "Skąd",
+    "to": "Dokąd",
+    "originPlaceholder": "np. PLGDN",
+    "destinationPlaceholder": "np. USNWK",
+    "swap": "Zamień kierunek",
+    "loadType": "Typ ładunku",
+    "quantity": "Ilość (szt.)",
+    "weight": "Waga (kg)",
+    "search": "Szukaj stawek",
+    "emptyTitle": "Wybierz porty i sprawdź stawki",
+    "emptyBody": "Podane kwoty to szacunki rynkowe, a nie oferta handlowa. Rzeczywistą cenę potwierdza przewoźnik lub spedytor.",
+    "docsTitle": "Dokumenty na tej trasie",
+    "docsBody": "Sprawdź, jakie dokumenty są wymagane dla tej trasy.",
+    "docsCta": "Dobierz dokumenty",
+    "creditPrefix": "Stawki szacunkowe na podstawie",
+    "creditSuffix": ". Wartości orientacyjne, nie stanowią oferty handlowej.",
+    "loadTypes": {
+      "container20": "20' Standard FCL",
+      "container40": "40' Standard FCL",
+      "container40HC": "40' High Cube FCL",
+      "pallets": "Palety (LCL)",
+      "boxes": "Paczki (LCL)"
+    }
+  },
+  "freightRates": {
+    "modes": {
+      "FCL": "Morski FCL (pełny kontener)",
+      "LCL": "Morski LCL (drobnica)",
+      "AIR": "Lotniczy",
+      "EXPRESS": "Ekspresowy"
+    },
+    "sourceFreightos": "Stawki pobrane z Freightos",
+    "sourceFallback": "Stawki orientacyjne z danych lokalnych. Freightos nie zwrócił wyniku dla tej trasy.",
+    "cached": "z cache (5 min)",
+    "emptyTitle": "Brak stawek dla tej trasy",
+    "emptyBody": "Ta wyszukiwarka obejmuje fracht morski i lotniczy. Dla transportu drogowego w Unii Europejskiej stawki nie są dostępne.",
+    "bestOption": "Najlepsza opcja",
+    "transit": "Tranzyt:",
+    "transitDays": "{{min}}-{{max}} dni",
+    "cargo": "Ładunek:",
+    "route": "Trasa:"
+  },
+  "tracking": {
+    "metaTitle": "Śledzenie ładunku | AMLogistico",
+    "title": "Śledzenie ładunku",
+    "subtitle": "Status i oś czasu Twoich przesyłek: drogowych, morskich, lotniczych i multimodalnych.",
+    "notFoundTitle": "Nie znaleziono przesyłki",
+    "notFoundBody": "Przesyłka o numerze „{{id}}” nie istnieje w tej makiecie. Wybierz jedną z listy poniżej.",
+    "searchPlaceholder": "Szukaj po numerze przesyłki (np. SHP-2026-1042)...",
+    "emptyTitle": "Brak przesyłek",
+    "emptyFiltered": "Żadna przesyłka nie pasuje do wyszukiwania lub wybranego filtra.",
+    "emptyAll": "Nie znaleziono żadnych przesyłek do wyświetlenia.",
+    "backToList": "Wróć do listy",
+    "timeline": "Oś czasu przesyłki",
+    "mapSoon": "Wkrótce: miejsce na integrację z mapą",
+    "cargo": "Ładunek",
+    "detailsFor": "Szczegóły transportu: {{branch}}",
+    "carrier": "Przewoźnik",
+    "temperature": "Temperatura (chłodnia)",
+    "portOfLoading": "Port załadunku",
+    "portOfDischarge": "Port wyładunku",
+    "transshipments": "Przeładunki",
+    "noTransshipments": "Bez przeładunków (bezpośredni)",
+    "directFlight": "Brak, lot bezpośredni",
+    "branches": {
+      "road": "Drogowy",
+      "sea": "Morski",
+      "air": "Lotniczy",
+      "multimodal": "Multimodalny"
+    },
+    "statuses": {
+      "in_transit": "W drodze",
+      "delivered": "Dostarczone",
+      "delayed": "Opóźnione",
+      "pending": "Oczekujące"
+    },
+    "toBeAssigned": "do przydzielenia",
+    "allStatuses": "Wszystkie",
+    "planned": "Planowane",
+    "routeMap": "Mapa trasy",
+    "category": "Kategoria",
+    "units": "Jednostki",
+    "weight": "Waga",
+    "vehicleReg": "Nr rejestracyjny",
+    "driver": "Kierowca",
+    "containerNo": "Nr kontenera",
+    "vesselVoyage": "Statek / rejs",
+    "awbNo": "Nr AWB",
+    "layoverAirports": "Lotniska przesiadkowe",
+    "eta": "ETA",
+    "leg": "Odcinek {{number}}"
+  },
+  "admin": {
+    "metaTitle": "Wyślij powiadomienie | AMLogistico",
+    "title": "Wyślij powiadomienie",
+    "subtitle": "Powiadomienie pojawi się w dzwonku odbiorcy, na dowolnym urządzeniu.",
+    "recipient": "Odbiorca",
+    "singleAccount": "Konkretne konto",
+    "singleAccountHint": "Po adresie email",
+    "allUsers": "Wszyscy użytkownicy",
+    "allUsersHint": "Do każdego konta",
+    "email": "Email odbiorcy",
+    "emailPlaceholder": "jan@firma.pl",
+    "type": "Typ",
+    "types": {
+      "info": "Info (niebieskie)",
+      "success": "Sukces (zielone)",
+      "warning": "Ważne (bursztynowe)"
+    },
+    "notifTitle": "Tytuł",
+    "titlePlaceholder": "np. Nowa funkcja w platformie",
+    "body": "Treść",
+    "bodyPlaceholder": "Krótka wiadomość dla użytkownika...",
+    "ctaLabel": "Etykieta przycisku (opcjonalnie)",
+    "ctaLabelPlaceholder": "np. Uzupełnij profil",
+    "ctaUrl": "Link przycisku (opcjonalnie)",
+    "ctaUrlPlaceholder": "np. /profile?tab=firma",
+    "preview": "Podgląd",
+    "previewTitle": "Tytuł powiadomienia",
+    "previewBody": "Treść powiadomienia pojawi się tutaj.",
+    "sentTitle": "Wysłano",
+    "errorTitle": "Błąd",
+    "sentToAll_one": "Wysłano do wszystkich ({{count}} konto).",
+    "sentToAll_few": "Wysłano do wszystkich ({{count}} konta).",
+    "sentToAll_many": "Wysłano do wszystkich ({{count}} kont).",
+    "sentToAll_other": "Wysłano do wszystkich ({{count}} kont).",
+    "sentTo": "Wysłano do {{email}}.",
+    "sendFailed": "Nie udało się wysłać.",
+    "sendFailedRetry": "Nie udało się wysłać powiadomienia. Spróbuj ponownie.",
+    "sending": "Wysyłanie...",
+    "send": "Wyślij powiadomienie"
+  },
+  "hsFinder": {
+    "openPrompt": "Nie znajdujesz swojego towaru? Opisz go, a znajdziemy kod celny",
+    "title": "Wyszukiwarka kodu celnego",
+    "collapse": "Zwiń wyszukiwarkę",
+    "placeholder": "np. sproszkowany detergent do prania w kapsułkach, 40 sztuk",
+    "searching": "Szukam...",
+    "search": "Znajdź kod",
+    "searchFailed": "Nie udało się wyszukać kodu.",
+    "use": "Użyj",
+    "noMatch": "Nie znaleziono dopasowania. Doprecyzuj opis towaru i spróbuj ponownie.",
+    "verifyNote": "Kod sugerowany, zweryfikuj go przed kontynuacją.",
+    "euExportNote": "Kod obowiązuje w dokumentach eksportowych UE. Odprawa importowa w kraju docelowym wymaga osobnego kodu z tamtejszej taryfy.",
+    "importCode": "Kod dla odprawy importowej",
+    "importCodeIn": "Kod dla odprawy importowej w {{country}}",
+    "nationalCodeNote": "Kod krajowy (pełne rozszerzenie taryfy) uzupełnia agent celny w kraju importu.",
+    "verifiedIn": "Zweryfikowano w {{system}}",
+    "officialTariff": "oficjalnej taryfie",
+    "viewSource": "Zobacz źródło",
+    "unverified": "Sugestia AI, niezweryfikowana. Potwierdź kod u agenta celnego w kraju docelowym przed użyciem.",
+    "confirmVerified": "Zweryfikowałem ten kod w taryfie kraju docelowego"
+  },
+  "calibrate": {
+    "devTool": "Narzędzie deweloperskie",
+    "title": "Kalibracja PDF",
+    "subtitle": "Służy do wyznaczania dokładnych współrzędnych pól w szablonach PDF. Nie jest widoczna w nawigacji aplikacji.",
+    "template": "Szablon PDF",
+    "gridTitle": "Siatka współrzędnych",
+    "gridHint": "Pobierz PDF z siatką co 50 pt. Odczytaj z niej dokładne x, y każdego pola formularza.",
+    "generating": "Generuję...",
+    "downloadGrid": "↓ Pobierz z siatką",
+    "probeTitle": "Celownik (próbkowanie)",
+    "probeHint": "Wpisz współrzędne i tekst testowy. Pobierz PDF, sprawdź czy celownik trafia w właściwe pole.",
+    "x": "X (od lewej, pt)",
+    "y": "Y (od góry, pt)",
+    "testText": "Tekst testowy",
+    "size": "Rozmiar (pt)",
+    "downloadProbe": "↓ Pobierz z celownikiem",
+    "howToTitle": "Jak kalibrować nowy szablon:",
+    "step1": "Wybierz szablon z listy powyżej.",
+    "step2": "Kliknij „Pobierz z siatką”, a potem otwórz wynikowy PDF.",
+    "step3": "Na siatce odczytaj x, y każdego pola formularza.",
+    "step4": "Wpisz te wartości w pola X/Y i kliknij „Pobierz z celownikiem” dla potwierdzenia.",
+    "step5prefix": "Zaktualizuj współrzędne w"
+  }
+}

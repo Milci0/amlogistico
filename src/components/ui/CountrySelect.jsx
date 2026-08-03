@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { COUNTRIES } from '../../data/mockData'
 
 function FlagImg({ code, size = 20 }) {
@@ -14,13 +15,15 @@ function FlagImg({ code, size = 20 }) {
   )
 }
 
-export default function CountrySelect({ value, onChange, placeholder = 'Wybierz kraj...' }) {
+export default function CountrySelect({ value, onChange, placeholder }) {
+  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
+  const countryName = (c) => t(c.code, { ns: 'countries', defaultValue: c.name })
   const filtered = COUNTRIES.filter(c =>
-    c.name.toLowerCase().includes(query.toLowerCase()) ||
+    countryName(c).toLowerCase().includes(query.toLowerCase()) ||
     c.code.toLowerCase().includes(query.toLowerCase())
   )
 
@@ -43,10 +46,10 @@ export default function CountrySelect({ value, onChange, placeholder = 'Wybierz 
         {selected ? (
           <>
             <FlagImg code={selected.code} size={20} />
-            <span className="text-sm text-gray-800 dark:text-slate-100 flex-1">{selected.name}</span>
+            <span className="text-sm text-gray-800 dark:text-slate-100 flex-1">{countryName(selected)}</span>
           </>
         ) : (
-          <span className="text-sm text-gray-400 dark:text-slate-500 flex-1">{placeholder}</span>
+          <span className="text-sm text-gray-400 dark:text-slate-500 flex-1">{placeholder ?? t('select.country')}</span>
         )}
         <svg className="w-4 h-4 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -65,7 +68,7 @@ export default function CountrySelect({ value, onChange, placeholder = 'Wybierz 
                 autoFocus
                 type="text"
                 className="bg-transparent text-sm outline-none flex-1 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
-                placeholder="Szukaj kraju..."
+                placeholder={t('select.searchCountry')}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
               />
@@ -75,7 +78,7 @@ export default function CountrySelect({ value, onChange, placeholder = 'Wybierz 
           {/* Lista */}
           <div className="overflow-y-auto">
             {filtered.length === 0 ? (
-              <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-4">Brak wyników</p>
+              <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-4">{t('select.noResults')}</p>
             ) : (
               filtered.map(country => (
                 <button
@@ -85,7 +88,7 @@ export default function CountrySelect({ value, onChange, placeholder = 'Wybierz 
                   onClick={() => { onChange(country.code); setOpen(false); setQuery('') }}
                 >
                   <FlagImg code={country.code} size={20} />
-                  <span>{country.name}</span>
+                  <span>{countryName(country)}</span>
                   <span className="ml-auto text-xs text-gray-400 dark:text-slate-500">{country.code}</span>
                 </button>
               ))

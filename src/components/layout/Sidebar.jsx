@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { MENU_GROUPS, MENU_BOTTOM } from '../../data/mockData'
 import { useNews } from '../../context/NewsContext'
 import { useDraftCount } from '../../hooks/useDocumentSets'
 import { useAuth } from '../../auth/AuthContext'
+import LanguageSwitcher from '../LanguageSwitcher'
 
 // Pozycja menu widoczna tylko dla adminów (panel wysyłki powiadomień).
-const ADMIN_ITEM = { path: '/admin/powiadomienia', label: 'Powiadomienia', icon: 'megaphone' }
+const ADMIN_ITEM = { path: '/admin/powiadomienia', labelKey: 'menu.items.adminNotifications', icon: 'megaphone' }
 
 const ICONS = {
   home: (
@@ -121,12 +123,15 @@ function Badge({ children }) {
 }
 
 function MenuLink({ item, onClose, dot, collapsed }) {
+  const { t } = useTranslation()
+  const label = t(item.labelKey)
+
   return (
     <NavLink
       to={item.path}
       onClick={onClose}
       end={item.path === '/'}
-      title={collapsed ? item.label : undefined}
+      title={collapsed ? label : undefined}
       className={({ isActive }) =>
         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ' +
         (collapsed ? 'justify-center' : '') + ' ' +
@@ -144,7 +149,7 @@ function MenuLink({ item, onClose, dot, collapsed }) {
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900" />
             )}
           </span>
-          {!collapsed && <span className="truncate">{item.label}</span>}
+          {!collapsed && <span className="truncate">{label}</span>}
           {!collapsed && dot && <span className="ml-auto w-2 h-2 rounded-full bg-red-500 shrink-0" />}
           {!collapsed && item.badge && !dot && <Badge>{item.badge}</Badge>}
         </>
@@ -158,6 +163,9 @@ function MenuLink({ item, onClose, dot, collapsed }) {
 // listę dzieci. W trybie zwiniętym paska (tylko ikony) nie ma miejsca na
 // zagnieżdżoną listę — pozycja zachowuje się jak zwykły MenuLink do `item.path`.
 function MenuLinkGroup({ item, onClose, collapsed, expanded, onToggle, isChildActive }) {
+  const { t } = useTranslation()
+  const label = t(item.labelKey)
+
   if (collapsed) {
     return <MenuLink item={item} onClose={onClose} collapsed={collapsed} />
   }
@@ -180,14 +188,14 @@ function MenuLinkGroup({ item, onClose, collapsed, expanded, onToggle, isChildAc
               <span className={'shrink-0 ' + ((isActive || isChildActive) ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500')}>
                 {ICONS[item.icon]}
               </span>
-              <span className="truncate">{item.label}</span>
+              <span className="truncate">{label}</span>
             </>
           )}
         </NavLink>
         <button
           type="button"
           onClick={onToggle}
-          aria-label={expanded ? `Zwiń ${item.label}` : `Rozwiń ${item.label}`}
+          aria-label={expanded ? t('menu.collapseSection', { label }) : t('menu.expandSection', { label })}
           aria-expanded={expanded}
           className="shrink-0 p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
@@ -208,6 +216,7 @@ function MenuLinkGroup({ item, onClose, collapsed, expanded, onToggle, isChildAc
 }
 
 export default function Sidebar({ onClose, collapsed, onToggleCollapse }) {
+  const { t } = useTranslation()
   const { hasUnread } = useNews()
   const draftCount = useDraftCount()
   const { user } = useAuth()
@@ -258,7 +267,7 @@ export default function Sidebar({ onClose, collapsed, onToggleCollapse }) {
                 d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10h10zM13 8h4l3 4v4h-7V8z" />
             </svg>
           </span>
-          {!collapsed && <span className="truncate">AM<span className="text-emerald-600">Logistico</span></span>}
+          {!collapsed && <span className="truncate">AM<span className="text-emerald-600">{t('brand.suffix')}</span></span>}
         </Link>
 
         <div className="flex items-center gap-1 shrink-0">
@@ -266,8 +275,8 @@ export default function Sidebar({ onClose, collapsed, onToggleCollapse }) {
           {onToggleCollapse && (
             <button
               onClick={onToggleCollapse}
-              title={collapsed ? 'Rozwiń menu' : 'Zwiń menu'}
-              aria-label={collapsed ? 'Rozwiń menu' : 'Zwiń menu'}
+              title={collapsed ? t('menu.expand') : t('menu.collapse')}
+              aria-label={collapsed ? t('menu.expand') : t('menu.collapse')}
               className="hidden md:flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,11 +308,17 @@ export default function Sidebar({ onClose, collapsed, onToggleCollapse }) {
 
       {/* Menu pogrupowane */}
       <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-6">
+        {/* Przełącznik języka na samej górze — tylko wariant mobilny (na desktopie
+            siedzi w Topbarze, a ten sidebar i tak jest wtedy ukryty). */}
+        <div className="sm:hidden px-3 pb-1">
+          <LanguageSwitcher />
+        </div>
+
         {MENU_GROUPS.map(group => (
-          <div key={group.title}>
+          <div key={group.titleKey}>
             {!collapsed && (
               <p className="px-3 mb-1.5 text-[11px] font-semibold tracking-wider uppercase text-slate-400 dark:text-slate-500">
-                {group.title}
+                {t(group.titleKey)}
               </p>
             )}
             <div className="space-y-0.5">
@@ -340,7 +355,7 @@ export default function Sidebar({ onClose, collapsed, onToggleCollapse }) {
           <div>
             {!collapsed && (
               <p className="px-3 mb-1.5 text-[11px] font-semibold tracking-wider uppercase text-slate-400 dark:text-slate-500">
-                Administracja
+                {t('menu.groups.admin')}
               </p>
             )}
             <div className="space-y-0.5">

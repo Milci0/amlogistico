@@ -1,0 +1,12 @@
+{
+  "invalidCredentials": "Incorrect email or password.",
+  "noConnection": "No connection to the server. Try again.",
+  "generic": "Something went wrong. Try again.",
+  "fixFields": "Correct the highlighted fields.",
+  "passwordsMismatch": "Passwords do not match",
+  "emailTaken": "An account with this email already exists. Log in instead.",
+  "requestFailed": "Request failed ({{status}})",
+  "noConnectionShort": "No connection to the server",
+  "storageFull": "Storage is full.",
+  "freightRatesFailed": "We could not load the rates"
+}

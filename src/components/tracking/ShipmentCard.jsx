@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { BRANCHES, TRACKING_STATUSES } from '../../data/trackingMock'
 import { formatDocumentDate } from '../../utils/formatDate'
 
 export default function ShipmentCard({ shipment }) {
+  const { t } = useTranslation('pages')
   const branch = BRANCHES[shipment.branch]
   const status = TRACKING_STATUSES[shipment.status]
   const BranchIcon = branch.icon
@@ -13,7 +15,7 @@ export default function ShipmentCard({ shipment }) {
       to={`/tracking?shipmentId=${shipment.id}`}
       className="flex items-center gap-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all"
     >
-      <div className="shrink-0 w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center" title={branch.label}>
+      <div className="shrink-0 w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center" title={t(`tracking.branches.${shipment.branch}`)}>
         <BranchIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
       </div>
 
@@ -30,7 +32,7 @@ export default function ShipmentCard({ shipment }) {
       </div>
 
       <span className={`shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full ${status.badgeClass}`}>
-        {status.label}
+        {t(`tracking.statuses.${shipment.status}`)}
       </span>
 
       <ChevronRight className="w-4 h-4 text-gray-300 dark:text-slate-600 shrink-0" />

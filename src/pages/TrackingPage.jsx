@@ -1,5 +1,6 @@
 import { useSearchParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 import { Navigation } from 'lucide-react'
 import AlertBox from '../components/ui/AlertBox'
 import { getShipment } from '../data/trackingMock'
@@ -12,6 +13,7 @@ import TrackingDetail from '../components/tracking/TrackingDetail'
 // funkcja śledzenia.
 
 export default function TrackingPage() {
+  const { t } = useTranslation('pages')
   const [searchParams] = useSearchParams()
   const shipmentId = searchParams.get('shipmentId')
   const shipment = shipmentId ? getShipment(shipmentId) : null
@@ -19,7 +21,7 @@ export default function TrackingPage() {
   return (
     <div className="max-w-5xl mx-auto">
       <Helmet>
-        <title>Śledzenie ładunku | AMLogistico</title>
+        <title>{t('tracking.metaTitle')}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -29,9 +31,9 @@ export default function TrackingPage() {
             <Navigation className="w-[26px] h-[26px]" strokeWidth={1.5} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Śledzenie ładunku</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('tracking.title')}</h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-              Status i oś czasu Twoich przesyłek — drogowych, morskich, lotniczych i multimodalnych.
+              {t('tracking.subtitle')}
             </p>
           </div>
         </div>
@@ -39,8 +41,8 @@ export default function TrackingPage() {
 
       {shipmentId && !shipment && (
         <div className="mb-6">
-          <AlertBox type="warning" title="Nie znaleziono przesyłki">
-            Przesyłka o numerze „{shipmentId}" nie istnieje w tej makiecie. Wybierz jedną z listy poniżej.
+          <AlertBox type="warning" title={t('tracking.notFoundTitle')}>
+            {t('tracking.notFoundBody', { id: shipmentId })}
           </AlertBox>
         </div>
       )}

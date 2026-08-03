@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Modal from '../ui/Modal'
 import AlertBox from '../ui/AlertBox'
 import { inputCls, labelCls } from '../auth/AuthShell'
@@ -11,6 +12,7 @@ const openDatePicker = (e) => {
 }
 
 export default function ClaimModal({ policy, onClose }) {
+  const { t, i18n } = useTranslation('pages')
   const [done, setDone] = useState(false)
   const [lossDate, setLossDate] = useState('')
   const [lossAmount, setLossAmount] = useState('')
@@ -18,23 +20,25 @@ export default function ClaimModal({ policy, onClose }) {
   const [description, setDescription] = useState('')
 
   return (
-    <Modal title="Zgłoś szkodę" onClose={onClose}>
+    <Modal title={t('insurance.claim.title')} onClose={onClose}>
       {/* Polisa, której dotyczy zgłoszenie */}
       <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40 p-4 mb-5">
         <p className="text-sm font-semibold text-gray-800 dark:text-slate-100">
           {policy.origin} → {policy.destination}
         </p>
         <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-          <span className="font-mono">{policy.ref}</span> · {policy.provider} · pokrycie do{' '}
-          {policy.coverageLimit.toLocaleString('pl-PL')} {policy.currency}
+          <span className="font-mono">{policy.ref}</span> · {policy.provider} · {t('insurance.claim.coverageUpTo')}{' '}
+          {policy.coverageLimit.toLocaleString(i18n.language)} {policy.currency}
         </p>
-        <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{policy.cargoDescription}</p>
+        <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+          {(i18n.language.startsWith('en') && policy.cargoDescriptionEn) || policy.cargoDescription}
+        </p>
       </div>
 
       {done ? (
         <>
-          <AlertBox type="info" title="Funkcja w przygotowaniu">
-            Zgłoszenia szkód będą dostępne po uruchomieniu obsługi polis.
+          <AlertBox type="info" title={t('insurance.claim.doneTitle')}>
+            {t('insurance.claim.doneBody')}
           </AlertBox>
           <div className="flex justify-end mt-5 pt-5 border-t border-gray-200 dark:border-slate-700">
             <button
@@ -42,7 +46,7 @@ export default function ClaimModal({ policy, onClose }) {
               onClick={onClose}
               className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors"
             >
-              Zamknij
+              {t('actions.close', { ns: 'common' })}
             </button>
           </div>
         </>
@@ -51,7 +55,7 @@ export default function ClaimModal({ policy, onClose }) {
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className={labelCls} htmlFor="claim-date">Data szkody *</label>
+                <label className={labelCls} htmlFor="claim-date">{t('insurance.claim.lossDate')}</label>
                 <input
                   id="claim-date"
                   type="date"
@@ -63,7 +67,7 @@ export default function ClaimModal({ policy, onClose }) {
               </div>
               <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
                 <div>
-                  <label className={labelCls} htmlFor="claim-amount">Kwota roszczenia *</label>
+                  <label className={labelCls} htmlFor="claim-amount">{t('insurance.claim.claimAmount')}</label>
                   <input
                     id="claim-amount"
                     type="number"
@@ -71,11 +75,11 @@ export default function ClaimModal({ policy, onClose }) {
                     className={inputCls}
                     value={lossAmount}
                     onChange={(e) => setLossAmount(e.target.value)}
-                    placeholder="np. 5000"
+                    placeholder={t('insurance.claim.claimAmountPlaceholder')}
                   />
                 </div>
                 <div className="w-24">
-                  <label className={labelCls} htmlFor="claim-currency">Waluta</label>
+                  <label className={labelCls} htmlFor="claim-currency">{t('insurance.claim.currency')}</label>
                   <select
                     id="claim-currency"
                     className={inputCls}
@@ -89,14 +93,14 @@ export default function ClaimModal({ policy, onClose }) {
             </div>
 
             <div>
-              <label className={labelCls} htmlFor="claim-description">Opis szkody *</label>
+              <label className={labelCls} htmlFor="claim-description">{t('insurance.claim.description')}</label>
               <textarea
                 id="claim-description"
                 rows={4}
                 className={`${inputCls} resize-none`}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Opisz co się stało, kiedy i gdzie."
+                placeholder={t('insurance.claim.descriptionPlaceholder')}
               />
             </div>
           </div>
@@ -107,14 +111,14 @@ export default function ClaimModal({ policy, onClose }) {
               onClick={onClose}
               className="px-5 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200 text-sm font-medium hover:border-gray-300 dark:hover:border-slate-500 transition-colors"
             >
-              Anuluj
+              {t('actions.cancel', { ns: 'common' })}
             </button>
             <button
               type="button"
               onClick={() => setDone(true)}
               className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors"
             >
-              Zgłoś szkodę
+              {t('insurance.claim.submit')}
             </button>
           </div>
         </>

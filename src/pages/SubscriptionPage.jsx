@@ -1,16 +1,21 @@
 import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 import { PRICING_PLANS } from '../data/mockData'
 
 export default function SubscriptionPage() {
+  const { t } = useTranslation('pages')
+
   return (
     <div className="max-w-4xl mx-auto">
       <Helmet>
-        <title>Abonament | AMLogistico</title>
+        <title>{t('subscription.metaTitle')}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Abonament</h1>
-        <p className="text-gray-500 text-sm mt-1">Aktualny plan: <strong>Free</strong>. Wybierz plan dopasowany do Twoich potrzeb.</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('subscription.title')}</h1>
+        <p className="text-gray-500 text-sm mt-1">
+          {t('subscription.currentPlanPrefix')} <strong>Free</strong>. {t('subscription.currentPlanSuffix')}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -25,7 +30,7 @@ export default function SubscriptionPage() {
           >
             {plan.highlighted && (
               <span className="inline-block bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-2">
-                Najpopularniejszy
+                {t('subscription.mostPopular')}
               </span>
             )}
             <h3 className={`text-lg font-bold mb-1 ${plan.highlighted ? 'text-white' : 'text-gray-900'}`}>
@@ -33,15 +38,15 @@ export default function SubscriptionPage() {
             </h3>
             <div className="mb-4">
               {plan.price === null ? (
-                <p className={`text-2xl font-extrabold ${plan.highlighted ? 'text-white' : 'text-gray-900'}`}>Kontakt</p>
+                <p className={`text-2xl font-extrabold ${plan.highlighted ? 'text-white' : 'text-gray-900'}`}>{t('subscription.contact')}</p>
               ) : (
                 <p className={`text-2xl font-extrabold ${plan.highlighted ? 'text-white' : 'text-gray-900'}`}>
-                  {plan.price === 0 ? 'Gratis' : `${plan.price} zł/mies.`}
+                  {plan.price === 0 ? t('subscription.free') : t('subscription.perMonth', { price: plan.price })}
                 </p>
               )}
             </div>
             <ul className="space-y-2 mb-5">
-              {plan.features.map(f => (
+              {t(`subscription.plans.${plan.id}.features`, { returnObjects: true }).map(f => (
                 <li key={f} className={`flex items-start gap-2 text-sm ${plan.highlighted ? 'text-blue-50' : 'text-gray-600'}`}>
                   <svg className="w-4 h-4 mt-0.5 shrink-0 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -55,7 +60,7 @@ export default function SubscriptionPage() {
                 ? 'bg-white text-blue-600 hover:bg-blue-50'
                 : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}>
-              {plan.cta}
+              {t(`subscription.plans.${plan.id}.cta`)}
             </button>
           </div>
         ))}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Sparkles, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react'
 import AlertBox from '../ui/AlertBox'
 import { api, ApiError } from '../../lib/api'
@@ -12,6 +13,7 @@ import { api, ApiError } from '../../lib/api'
 //  - onUseCode(code) — wstawia wybrany kod do pola „Kod celny (HS/CN)" i zwija panel
 
 export default function HsCodeFinder({ fromCountry, toCountry, onUseCode }) {
+  const { t } = useTranslation('pages')
   const [open, setOpen] = useState(false)
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
@@ -36,9 +38,9 @@ export default function HsCodeFinder({ fromCountry, toCountry, onUseCode }) {
       setResult(data)
     } catch (e) {
       if (e instanceof ApiError) {
-        setError(e.data?.error || 'Nie udało się wyszukać kodu.')
+        setError(e.data?.error || t('hsFinder.searchFailed'))
       } else {
-        setError('Nie udało się wyszukać kodu.')
+        setError(t('hsFinder.searchFailed'))
       }
     } finally {
       setLoading(false)
@@ -82,7 +84,7 @@ export default function HsCodeFinder({ fromCountry, toCountry, onUseCode }) {
       >
         <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={1.75} />
         <span className="flex-1 text-sm text-emerald-800 dark:text-emerald-300">
-          Nie znajdujesz swojego towaru? Opisz go, a znajdziemy kod celny
+          {t('hsFinder.openPrompt')}
         </span>
         <ChevronRight className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={2} />
       </button>
@@ -96,7 +98,7 @@ export default function HsCodeFinder({ fromCountry, toCountry, onUseCode }) {
     <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-900/20 p-4">
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={1.75} />
-        <span className="text-sm font-medium text-gray-800 dark:text-slate-100">Wyszukiwarka kodu celnego</span>
+        <span className="text-sm font-medium text-gray-800 dark:text-slate-100">{t('hsFinder.title')}</span>
         <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 dark:bg-emerald-800/60 text-emerald-700 dark:text-emerald-300">
           {routeLabel}
         </span>
@@ -104,7 +106,7 @@ export default function HsCodeFinder({ fromCountry, toCountry, onUseCode }) {
           type="button"
           onClick={() => setOpen(false)}
           className="ml-auto text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
-          aria-label="Zwiń wyszukiwarkę"
+          aria-label={t('hsFinder.collapse')}
         >
           <ChevronDown className="w-4 h-4" strokeWidth={2} />
         </button>
@@ -115,7 +117,7 @@ export default function HsCodeFinder({ fromCountry, toCountry, onUseCode }) {
         maxLength={200}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        placeholder="np. sproszkowany detergent do prania w kapsułkach, 40 sztuk"
+        placeholder={t('hsFinder.placeholder')}
         className="w-full resize-none border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 outline-none focus:border-emerald-400 dark:focus:border-emerald-500"
       />
 
@@ -128,7 +130,7 @@ export default function HsCodeFinder({ fromCountry, toCountry, onUseCode }) {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
         >
           {loading && <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
-          {loading ? 'Szukam...' : 'Znajdź kod'}
+          {loading ? t('hsFinder.searching') : t('hsFinder.search')}
         </button>
       </div>
 
@@ -144,6 +146,7 @@ export default function HsCodeFinder({ fromCountry, toCountry, onUseCode }) {
 }
 
 function Results({ result, destVerified, setDestVerified, onUse }) {
+  const { t } = useTranslation('pages')
   const { suggestions = [], destination, destinationReason, toEU, hs6, destinationCountry } = result
   const hasSuggestions = suggestions.length > 0
 
@@ -174,26 +177,25 @@ function Results({ result, destVerified, setDestVerified, onUse }) {
                 onClick={() => onUse(s.code)}
                 className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-500 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
               >
-                Użyj
+                {t('hsFinder.use')}
               </button>
             </div>
           ))}
         </div>
       ) : (
         <p className="text-sm text-gray-500 dark:text-slate-400">
-          Nie znaleziono dopasowania. Doprecyzuj opis towaru i spróbuj ponownie.
+          {t('hsFinder.noMatch')}
         </p>
       )}
 
       {/* Notka pod wynikami */}
       {hasSuggestions && (
         <p className="text-xs text-gray-500 dark:text-slate-400">
-          Kod sugerowany, zweryfikuj go przed kontynuacją.
+          {t('hsFinder.verifyNote')}
           {!toEU && (
             <>
               {' '}
-              Kod obowiązuje w dokumentach eksportowych UE. Odprawa importowa w kraju docelowym
-              wymaga osobnego kodu z tamtejszej taryfy.
+              {t('hsFinder.euExportNote')}
             </>
           )}
         </p>
@@ -212,7 +214,9 @@ function Results({ result, destVerified, setDestVerified, onUse }) {
         destinationReason && (
           <div className="pt-2 border-t border-emerald-100 dark:border-emerald-800/60">
             <p className="text-sm font-medium text-gray-800 dark:text-slate-100 mb-1">
-              Kod dla odprawy importowej{destinationCountry ? ` w ${destinationCountry}` : ''}
+              {destinationCountry
+                ? t('hsFinder.importCodeIn', { country: destinationCountry })
+                : t('hsFinder.importCode')}
             </p>
             {hs6 && (
               <p className="font-mono text-sm text-gray-700 dark:text-slate-200 mb-1">
@@ -220,7 +224,7 @@ function Results({ result, destVerified, setDestVerified, onUse }) {
               </p>
             )}
             <p className="text-xs text-gray-500 dark:text-slate-400">
-              Kod krajowy (pełne rozszerzenie taryfy) uzupełnia agent celny w kraju importu.
+              {t('hsFinder.nationalCodeNote')}
             </p>
           </div>
         )
@@ -230,6 +234,7 @@ function Results({ result, destVerified, setDestVerified, onUse }) {
 }
 
 function DestinationSection({ destination, verified, setVerified, onUse }) {
+  const { t } = useTranslation('pages')
   const { code, description, sourceUrl, systemName, countryName } = destination
   const isVerified = destination.verified
 
@@ -242,7 +247,7 @@ function DestinationSection({ destination, verified, setVerified, onUse }) {
       }`}
     >
       <p className="text-sm font-medium text-gray-800 dark:text-slate-100 mb-1.5">
-        Kod dla odprawy importowej{countryName ? ` w ${countryName}` : ''}
+        {countryName ? t('hsFinder.importCodeIn', { country: countryName }) : t('hsFinder.importCode')}
       </p>
 
       <p className="font-mono text-sm font-semibold text-gray-800 dark:text-slate-100">{code}</p>
@@ -251,7 +256,7 @@ function DestinationSection({ destination, verified, setVerified, onUse }) {
       {isVerified ? (
         <div className="mt-2 space-y-1">
           <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
-            Zweryfikowano w {systemName || 'oficjalnej taryfie'}
+            {t('hsFinder.verifiedIn', { system: systemName || t('hsFinder.officialTariff') })}
           </p>
           {sourceUrl && (
             <a
@@ -261,13 +266,13 @@ function DestinationSection({ destination, verified, setVerified, onUse }) {
               className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
             >
               <ExternalLink className="w-3.5 h-3.5" strokeWidth={2} />
-              Zobacz źródło
+              {t('hsFinder.viewSource')}
             </a>
           )}
         </div>
       ) : (
         <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
-          Sugestia AI, niezweryfikowana. Potwierdź kod u agenta celnego w kraju docelowym przed użyciem.
+          {t('hsFinder.unverified')}
         </p>
       )}
 
@@ -280,7 +285,7 @@ function DestinationSection({ destination, verified, setVerified, onUse }) {
           className="mt-0.5 w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-400"
         />
         <span className="text-xs text-gray-700 dark:text-slate-300">
-          Zweryfikowałem ten kod w taryfie kraju docelowego
+          {t('hsFinder.confirmVerified')}
         </span>
       </label>
 
@@ -294,7 +299,7 @@ function DestinationSection({ destination, verified, setVerified, onUse }) {
             disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400
             disabled:hover:bg-gray-100 dark:disabled:border-slate-700 dark:disabled:bg-slate-800 dark:disabled:text-slate-500 dark:disabled:hover:bg-slate-800"
         >
-          Użyj
+          {t('hsFinder.use')}
         </button>
       </div>
     </div>

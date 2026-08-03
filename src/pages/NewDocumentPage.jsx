@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import DocumentWizard from '../components/wizard/DocumentWizard'
 import { WizardProvider, UnsavedChangesGuard, clearAutosave, PATH_TO_FLOW } from '../components/wizard'
 import { useAuth } from '../auth/AuthContext'
@@ -8,6 +9,7 @@ import { getSet } from '../services/documentSetsRepo'
 import AlertBox from '../components/ui/AlertBox'
 
 export default function NewDocumentPage() {
+  const { t } = useTranslation('pages')
   const { user } = useAuth()
   const [params] = useSearchParams()
   const editId = params.get('editId')
@@ -58,8 +60,8 @@ export default function NewDocumentPage() {
   if (sourceId && sourceLoading) {
     return (
       <div className="max-w-2xl mx-auto">
-        <Helmet><title>Nowe zlecenie | AMLogistico</title></Helmet>
-        <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">Ładowanie zestawu…</p>
+        <Helmet><title>{t('newDocument.metaTitle')}</title></Helmet>
+        <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">{t('newDocument.loadingSet')}</p>
       </div>
     )
   }
@@ -68,9 +70,9 @@ export default function NewDocumentPage() {
   if (sourceId && sourceError) {
     return (
       <div className="max-w-2xl mx-auto">
-        <Helmet><title>Nowe zlecenie | AMLogistico</title></Helmet>
-        <AlertBox type="error" title="Błąd ładowania">
-          Nie udało się wczytać zestawu. Odśwież stronę lub spróbuj ponownie później.
+        <Helmet><title>{t('newDocument.metaTitle')}</title></Helmet>
+        <AlertBox type="error" title={t('newDocument.loadErrorTitle')}>
+          {t('newDocument.loadErrorBody')}
         </AlertBox>
       </div>
     )
@@ -80,9 +82,9 @@ export default function NewDocumentPage() {
   if (sourceId && !sourceSet) {
     return (
       <div className="max-w-2xl mx-auto">
-        <Helmet><title>Nowe zlecenie | AMLogistico</title></Helmet>
-        <AlertBox type="error" title="Nie znaleziono zestawu">
-          Zestaw, który próbujesz otworzyć, nie istnieje lub został usunięty.
+        <Helmet><title>{t('newDocument.metaTitle')}</title></Helmet>
+        <AlertBox type="error" title={t('newDocument.notFoundTitle')}>
+          {t('newDocument.notFoundBody')}
         </AlertBox>
       </div>
     )
@@ -99,15 +101,15 @@ export default function NewDocumentPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <Helmet>
-        <title>Nowe zlecenie | AMLogistico</title>
+        <title>{t('newDocument.metaTitle')}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          {mode === 'edit' ? 'Edytuj zlecenie' : 'Nowe zlecenie'}
+          {mode === 'edit' ? t('newDocument.titleEdit') : t('newDocument.titleNew')}
         </h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Wypełnij formularz a my dobierzemy dokumenty automatycznie.
+          {t('newDocument.subtitle')}
         </p>
       </div>
       <WizardProvider

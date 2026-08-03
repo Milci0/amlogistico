@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../auth/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { shouldShowNudge, snoozeNudge } from '../../utils/profileNudge'
 import { useNotifications } from '../../hooks/useNotifications'
 import { markRead as markNotifRead, markAllRead, deleteNotification } from '../../services/notificationsRepo'
 import TemplateSearch from './TemplateSearch'
+import LanguageSwitcher from '../LanguageSwitcher'
 
 // Typ powiadomienia z serwera → ikona + kolory kafelka.
 const NOTIF_STYLE = {
@@ -67,6 +69,7 @@ function useDismissable(open, setOpen, ref) {
 // Newsy NIE są tu pokazywane — nowe artykuły sygnalizuje czerwona kropka przy
 // pozycji „Newsy" w menu bocznym (Sidebar + NewsContext).
 function NotificationsBell({ user }) {
+  const { t } = useTranslation()
   const { items: notifs, unreadCount } = useNotifications()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -113,7 +116,7 @@ function NotificationsBell({ user }) {
 
   return (
     <div className="relative" ref={ref}>
-      <IconBtn onClick={() => setOpen((o) => !o)} label="Powiadomienia">
+      <IconBtn onClick={() => setOpen((o) => !o)} label={t('notifications.title')}>
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -128,10 +131,10 @@ function NotificationsBell({ user }) {
       {open && (
         <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl ring-1 ring-black/5 overflow-hidden z-50">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Powiadomienia</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('notifications.title')}</p>
             {count > 0 && (
               <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/40 px-2 py-0.5 rounded-full">
-                {count} {count % 10 >= 5 || count % 10 === 0 || (count % 100 >= 11 && count % 100 <= 14) ? 'nowych' : 'nowe'}
+                {t('notifications.badge', { count })}
               </span>
             )}
           </div>
@@ -144,7 +147,7 @@ function NotificationsBell({ user }) {
                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Brak nowych powiadomień</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">{t('notifications.empty')}</p>
             </div>
           )}
 
@@ -166,7 +169,7 @@ function NotificationsBell({ user }) {
                 >
                   <button
                     onClick={(e) => removeNotif(e, n.id)}
-                    aria-label="Usuń"
+                    aria-label={t('notifications.delete')}
                     className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/70 transition-colors"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,7 +210,7 @@ function NotificationsBell({ user }) {
                 onClick={() => markAllRead().catch(() => {})}
                 className="w-full text-center text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
               >
-                Oznacz wszystkie jako przeczytane
+                {t('notifications.markAllRead')}
               </button>
             )}
 
@@ -215,8 +218,8 @@ function NotificationsBell({ user }) {
               <div className="relative rounded-xl border border-emerald-200/70 dark:border-emerald-800/60 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/25 dark:to-slate-800 p-3.5">
                 <button
                   onClick={dismissNudge}
-                  aria-label="Odrzuć"
-                  title="Przypomnij później"
+                  aria-label={t('nudge.dismiss')}
+                  title={t('nudge.remindLater')}
                   className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/70 transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,10 +235,9 @@ function NotificationsBell({ user }) {
                     </svg>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Dokończ konfigurację firmy</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{t('nudge.title')}</p>
                     <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                      Dodaj dane firmy raz, a my uzupełnimy je automatycznie w każdym dokumencie
-                      i zleceniu. Oszczędzasz czas przy każdej wysyłce.
+                      {t('nudge.body')}
                     </p>
                   </div>
                 </div>
@@ -245,7 +247,7 @@ function NotificationsBell({ user }) {
                     onClick={openNudge}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 rounded-lg shadow-sm transition-colors"
                   >
-                    Uzupełnij profil
+                    {t('nudge.cta')}
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
@@ -254,7 +256,7 @@ function NotificationsBell({ user }) {
                     onClick={dismissNudge}
                     className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-2 py-2 rounded-lg transition-colors"
                   >
-                    Później
+                    {t('nudge.later')}
                   </button>
                 </div>
               </div>
@@ -269,23 +271,24 @@ function NotificationsBell({ user }) {
 
 // ── Menu konta (avatar) ─────────────────────────────────────────────────────────
 function AccountMenu({ user, onLogout }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   useDismissable(open, setOpen, ref)
 
-  const displayName = user?.fullName || user?.companyName || 'Moje konto'
+  const displayName = user?.fullName || user?.companyName || t('account.fallbackName')
 
   const items = [
-    { label: 'Mój profil', to: '/profile' },
-    { label: 'Abonament', to: '/subscription' },
-    { label: 'Zmień hasło', to: '/profile?tab=bezpieczenstwo' },
+    { label: t('account.profile'), to: '/profile' },
+    { label: t('account.subscription'), to: '/subscription' },
+    { label: t('account.changePassword'), to: '/profile?tab=bezpieczenstwo' },
   ]
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        aria-label="Menu konta"
+        aria-label={t('account.menuLabel')}
         className="w-9 h-9 rounded-full bg-slate-900 dark:bg-slate-600 text-white flex items-center justify-center text-xs font-bold hover:opacity-80 transition-opacity"
       >
         {initials(user)}
@@ -315,7 +318,7 @@ function AccountMenu({ user, onLogout }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            Wyloguj się
+            {t('auth.logout')}
           </button>
         </div>
       )}
@@ -324,6 +327,7 @@ function AccountMenu({ user, onLogout }) {
 }
 
 export default function Topbar({ onOpenSidebar }) {
+  const { t } = useTranslation()
   const { user, loading, logout } = useAuth()
   const { dark, toggle } = useTheme()
   const navigate = useNavigate()
@@ -341,7 +345,7 @@ export default function Topbar({ onOpenSidebar }) {
       <button
         onClick={onOpenSidebar}
         className="md:hidden p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        aria-label="Otwórz menu"
+        aria-label={t('menu.openMenu')}
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -358,20 +362,21 @@ export default function Topbar({ onOpenSidebar }) {
       {/* Niezalogowany */}
       {!loading && !user && (
         <div className="flex items-center gap-2 ml-auto">
-          <IconBtn onClick={toggle} label="Przełącz motyw">
+          <LanguageSwitcher className="hidden sm:block" />
+          <IconBtn onClick={toggle} label={t('theme.toggle')}>
             {dark ? <SunIcon /> : <MoonIcon />}
           </IconBtn>
           <Link
             to="/login"
             className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 px-3 py-2 transition-colors"
           >
-            Zaloguj się
+            {t('auth.login')}
           </Link>
           <Link
             to="/register"
             className="text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
-            Zarejestruj się
+            {t('auth.register')}
           </Link>
         </div>
       )}
@@ -379,8 +384,9 @@ export default function Topbar({ onOpenSidebar }) {
       {/* Zalogowany */}
       {!loading && user && (
         <div className="flex items-center gap-2 ml-auto">
+          <LanguageSwitcher className="hidden sm:block" />
           <NotificationsBell user={user} />
-          <IconBtn onClick={toggle} label="Przełącz motyw">
+          <IconBtn onClick={toggle} label={t('theme.toggle')}>
             {dark ? <SunIcon /> : <MoonIcon />}
           </IconBtn>
           <AccountMenu user={user} onLogout={handleLogout} />

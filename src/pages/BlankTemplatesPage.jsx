@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import CountrySelect from '../components/ui/CountrySelect'
 import AlertBox from '../components/ui/AlertBox'
 import DocumentSelectList from '../components/documents/DocumentSelectList'
@@ -7,20 +8,13 @@ import { cargoLabel, engineCategoryFor } from '../data/cargoCategories'
 import { getDocuments, getRouteLabel } from '../utils/documentEngine'
 import { downloadBlankZip, hasBlankSource } from '../utils/blankDocuments'
 import { completeSet } from '../services/documentSetsRepo'
+import { translateEngineWarning } from '../utils/translateEngineWarning'
 
 // ── Opcje formularza ────────────────────────────────────────────────────────────
 
-const TRANSPORT_MODES = [
-  { id: 'road', label: 'Drogowy', sub: 'TIR, ciężarówka' },
-  { id: 'sea', label: 'Morski', sub: 'Kontener FCL/LCL' },
-]
-
-const FLAG_OPTIONS = [
-  { key: 'woodenPackaging', label: 'Drewniane opakowania (palety, skrzynie)' },
-  { key: 'temporaryExport', label: 'Eksport tymczasowy (Karnet ATA)' },
-  { key: 'transhipment', label: 'Przeładunek w porcie pośrednim' },
-  { key: 'reExport', label: 'Re-eksport' },
-]
+// Identyfikatory (nie etykiety) — etykiety idą z tłumaczeń.
+const TRANSPORT_MODE_IDS = ['road', 'sea']
+const FLAG_KEYS = ['woodenPackaging', 'temporaryExport', 'transhipment', 'reExport']
 
 // ── Ikony ───────────────────────────────────────────────────────────────────────
 
@@ -54,6 +48,7 @@ function ModeIcon({ id }) {
 // ── Strona ──────────────────────────────────────────────────────────────────────
 
 export default function BlankTemplatesPage() {
+  const { t, i18n } = useTranslation('pages')
   const [origin, setOrigin] = useState('PL')
   const [destination, setDestination] = useState('US')
   const [mode, setMode] = useState('road')
@@ -163,9 +158,9 @@ export default function BlankTemplatesPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dobór dokumentów transportowych</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('blankTemplates.title')}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Wskaż trasę, towar i warunki a system dobierze komplet pustych formularzy do pobrania.
+          {t('blankTemplates.subtitle')}
         </p>
       </div>
 
@@ -174,34 +169,34 @@ export default function BlankTemplatesPage() {
         {/* Trasa */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm text-gray-700 dark:text-slate-300 mb-1">Kraj nadania</label>
+            <label className="block text-sm text-gray-700 dark:text-slate-300 mb-1">{t('blankTemplates.origin')}</label>
             <CountrySelect value={origin} onChange={setOrigin} />
           </div>
           <div>
-            <label className="block text-sm text-gray-700 dark:text-slate-300 mb-1">Kraj przeznaczenia</label>
+            <label className="block text-sm text-gray-700 dark:text-slate-300 mb-1">{t('blankTemplates.destination')}</label>
             <CountrySelect value={destination} onChange={setDestination} />
           </div>
         </div>
 
         {/* Środek transportu */}
         <div>
-          <label className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Środek transportu</label>
+          <label className="block text-sm text-gray-700 dark:text-slate-300 mb-2">{t('blankTemplates.transportMode')}</label>
           <div className="flex flex-wrap gap-2">
-            {TRANSPORT_MODES.map(m => {
-              const active = mode === m.id
+            {TRANSPORT_MODE_IDS.map(id => {
+              const active = mode === id
               return (
                 <button
-                  key={m.id}
+                  key={id}
                   type="button"
-                  onClick={() => setMode(m.id)}
-                  title={m.sub}
+                  onClick={() => setMode(id)}
+                  title={t(`blankTemplates.modes.${id}.sub`)}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors
                     ${active
                       ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
                       : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'}`}
                 >
-                  <ModeIcon id={m.id} />
-                  {m.label}
+                  <ModeIcon id={id} />
+                  {t(`blankTemplates.modes.${id}.label`)}
                 </button>
               )
             })}
@@ -220,20 +215,20 @@ export default function BlankTemplatesPage() {
 
         {/* Flagi / warunki dodatkowe */}
         <div>
-          <label className="block text-sm text-gray-700 dark:text-slate-300 mb-2">Warunki dodatkowe</label>
+          <label className="block text-sm text-gray-700 dark:text-slate-300 mb-2">{t('blankTemplates.extraConditions')}</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {FLAG_OPTIONS.map(f => (
+            {FLAG_KEYS.map(key => (
               <label
-                key={f.key}
+                key={key}
                 className="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-700 rounded-lg cursor-pointer bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
               >
                 <input
                   type="checkbox"
                   className="w-4 h-4 accent-emerald-600 cursor-pointer shrink-0"
-                  checked={flags[f.key]}
-                  onChange={e => setFlags(prev => ({ ...prev, [f.key]: e.target.checked }))}
+                  checked={flags[key]}
+                  onChange={e => setFlags(prev => ({ ...prev, [key]: e.target.checked }))}
                 />
-                <span className="text-sm text-gray-700 dark:text-slate-300">{f.label}</span>
+                <span className="text-sm text-gray-700 dark:text-slate-300">{t(`blankTemplates.flags.${key}`)}</span>
               </label>
             ))}
           </div>
@@ -247,7 +242,7 @@ export default function BlankTemplatesPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          Generuj dokumenty
+          {t('blankTemplates.generate')}
         </button>
       </div>
 
@@ -256,18 +251,18 @@ export default function BlankTemplatesPage() {
       <>
       {/* Etykieta trasy */}
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">Charakter trasy</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">{t('blankTemplates.routeCharacter')}</span>
         <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-          {getRouteLabel(origin, destination)}
+          {t(`routeLabel.${getRouteLabel(origin, destination)}`, { defaultValue: getRouteLabel(origin, destination) })}
         </span>
       </div>
 
       {/* Ostrzeżenia */}
       {result.warnings.length > 0 && (
         <div className="mb-6">
-          <AlertBox type="warning" title="Zwróć uwagę">
+          <AlertBox type="warning" title={t('blankTemplates.warningsTitle')}>
             <ul className="list-disc pl-4 space-y-1 mt-1">
-              {result.warnings.map((w, i) => <li key={i}>{w}</li>)}
+              {result.warnings.map((w, i) => <li key={i}>{translateEngineWarning(w, i18n.language)}</li>)}
             </ul>
           </AlertBox>
         </div>
@@ -275,7 +270,7 @@ export default function BlankTemplatesPage() {
 
       {/* Lista dokumentów do zaznaczenia — wspólny komponent z krokiem 4/6 kreatora */}
       {selectListDocs.length === 0 ? (
-        <p className="text-sm text-gray-400 dark:text-slate-500">Brak dokumentów dla tej konfiguracji.</p>
+        <p className="text-sm text-gray-400 dark:text-slate-500">{t('blankTemplates.noDocuments')}</p>
       ) : (
         <DocumentSelectList
           documents={selectListDocs}
@@ -283,17 +278,19 @@ export default function BlankTemplatesPage() {
           onToggle={toggleDoc}
           actionLabel={
             zipState === 'loading'
-              ? 'Pakuję ZIP…'
-              : `Pobierz zaznaczone (ZIP)${selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}`
+              ? t('blankTemplates.zipping')
+              : selectedIds.size > 0
+                ? t('blankTemplates.downloadZipCount', { count: selectedIds.size })
+                : t('blankTemplates.downloadZip')
           }
           onAction={downloadZip}
           disabled={zipState === 'loading'}
           actionLoading={zipState === 'loading'}
           errorMessage={
             selectedIds.size === 0
-              ? 'Zaznacz co najmniej jeden dokument, aby pobrać pliki.'
+              ? t('blankTemplates.selectAtLeastOne')
               : zipState === 'error'
-                ? 'Nie udało się spakować plików. Spróbuj ponownie.'
+                ? t('blankTemplates.zipError')
                 : null
           }
         />

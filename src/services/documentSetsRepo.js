@@ -17,6 +17,7 @@
 
 import { api } from '../lib/api'
 import { TEMPLATE_VERSION } from '../config/templateVersion'
+import i18n from '../i18n'
 
 // Powiadomienie o zmianie danych — listy/liczniki w różnych komponentach nasłuchują
 // i odświeżają się po zapisie/usunięciu (patrz useDocumentSets).
@@ -30,7 +31,7 @@ function notifyChange() {
 // Backend nie ma limitu quota — klasa zostaje, by ewentualne importy nie padły.
 export class StorageQuotaError extends Error {
   constructor() {
-    super('Brak miejsca w pamięci.')
+    super(i18n.t('storageFull', { ns: 'errors' }))
     this.name = 'StorageQuotaError'
   }
 }

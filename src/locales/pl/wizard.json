@@ -1,0 +1,168 @@
+{
+  "flows": {
+    "have_transport": "Mam już transport",
+    "find_transport": "Szukam transportu",
+    "blank_templates": "Puste szablony"
+  },
+  "steps": {
+    "route": "Trasa",
+    "cargo": "Towar",
+    "parties": "Strony",
+    "forwarders": "Spedytorzy",
+    "quote": "Wycena",
+    "docs": "Dokumenty",
+    "result": "Wynik"
+  },
+  "nav": {
+    "back": "← Wróć",
+    "next": "Dalej →"
+  },
+  "route": {
+    "transportType": "Typ transportu",
+    "road": {
+      "label": "Drogowy",
+      "sub": "TIR, ciężarówka"
+    },
+    "sea": {
+      "label": "Morski",
+      "sub": "Kontener FCL/LCL"
+    },
+    "multimodal": {
+      "label": "Transport multimodalny",
+      "hint": "Towar jedzie kilkoma środkami transportu (np. ciężarówka + statek). Generuje dodatkowy dokument MTD."
+    },
+    "from": "Skąd",
+    "to": "Dokąd",
+    "country": "Kraj",
+    "cityPort": "Miasto / port",
+    "loadDate": "Data załadunku"
+  },
+  "cargo": {
+    "sectionTitle": "Opis towaru",
+    "name": "Nazwa towaru",
+    "hsCode": "Kod celny (HS/CN)",
+    "grossWeight": "Waga brutto (kg)",
+    "netWeight": "Waga netto (kg)",
+    "volume": "Objętość (m³)",
+    "value": "Wartość towaru",
+    "currency": "Waluta",
+    "notes": "Uwagi / instrukcje",
+    "terms": {
+      "title": "Warunki przewozu",
+      "freightPrice": "Koszt frachtu",
+      "freightCurrency": "Waluta frachtu",
+      "paymentDays": "Termin płatności (dni)"
+    },
+    "road": {
+      "title": "Pojazd i warunki drogowe",
+      "vehicleType": "Typ pojazdu",
+      "types": {
+        "Plandeka": "Plandeka",
+        "Chłodnia": "Chłodnia",
+        "Mroźnia": "Mroźnia"
+      },
+      "tempFrom": "Temperatura od (°C)",
+      "tempTo": "Temperatura do (°C)",
+      "adr": "ADR (towary niebezpieczne)",
+      "adrClass": "Klasa ADR / Numer UN",
+      "vehicleReg": "Nr rejestracyjny pojazdu (opcjonalne)"
+    },
+    "sea": {
+      "title": "Szczegóły kontenera i rejsu",
+      "hint": "Pola opcjonalne, dane nadawane przez armatora. Możesz uzupełnić je później.",
+      "containerType": "Typ kontenera",
+      "choose": "wybierz",
+      "containerNo": "Numer kontenera (Container No.)",
+      "sealNo": "Numer plomby (Seal No.)",
+      "marksNos": "Znaki i numery (Marks & Nos)",
+      "vessel": "Statek (Vessel)",
+      "voyageNo": "Nr rejsu (Voyage No.)",
+      "bookingNo": "Numer rezerwacji (Booking No.)",
+      "flag": "Bandera (Flag)",
+      "eta": "ETA (planowana data przybycia)",
+      "freightTerms": "Warunki frachtu"
+    },
+    "incoterms": {
+      "title": "Incoterms",
+      "hint": "Reguła handlowa określająca podział kosztów i ryzyka między nadawcą a odbiorcą"
+    }
+  },
+  "parties": {
+    "fillFromProfile": "Wstaw moje dane firmy",
+    "fillFasterPrefix": "Wypełniaj to szybciej:",
+    "fillFasterLink": "uzupełnij dane firmy w profilu",
+    "autofilled": "Wypełnione danymi z Twojego profilu. Możesz je zmienić.",
+    "autofilledCompleteLink": "Uzupełnij resztę danych firmy",
+    "autofilledCompleteSuffix": ", żeby następnym razem wstawiły się w całości.",
+    "sender": "Nadawca",
+    "receiver": "Odbiorca",
+    "carrier": "Przewoźnik",
+    "carrierSubtitle": "Wymagane. Pojawia się w CMR, Zleceniu Transportowym i POD",
+    "companyName": "Nazwa firmy",
+    "vat": "NIP / VAT lub Tax ID",
+    "address": "Adres",
+    "contactPerson": "Osoba kontaktowa",
+    "phone": "Telefon",
+    "bankDetails": "Dane bankowe",
+    "iban": "IBAN",
+    "swift": "BIC / SWIFT",
+    "bankName": "Nazwa banku"
+  },
+  "forwarders": {
+    "title": "Spedytorzy",
+    "comingSoon": "Ten krok będzie dostępny wkrótce."
+  },
+  "quote": {
+    "title": "Wycena",
+    "cargoLabel": "1× 20' Standard FCL",
+    "portNotRecognised": "Nie rozpoznano portu dla tej trasy. Stawki możesz sprawdzić w zakładce Trasy handlowe.",
+    "roadSoon": "Wycena frachtu drogowego będzie dostępna wkrótce. Stawki morskie i lotnicze sprawdzisz w zakładce Trasy handlowe."
+  },
+  "docs": {
+    "docsChangedTitle": "Zmienił się zestaw dokumentów",
+    "docsChangedBody": "Po Twoich zmianach lista wymaganych/opcjonalnych dokumentów różni się od pierwotnej. Sprawdź zaznaczenia przed wygenerowaniem.",
+    "saveErrorTitle": "Nie udało się zapisać",
+    "savedTitle": "Zapisano w historii",
+    "savedBody": "Zestaw dokumentów został zapisany.",
+    "savedLink": "Przejdź do historii dokumentów",
+    "summary": "Podsumowanie zlecenia",
+    "complete": "Kompletne",
+    "incomplete": "Niekompletne",
+    "insuranceTitle": "Ubezpiecz swoją przesyłkę",
+    "insuranceBody": "Chroń towar na czas transportu przed uszkodzeniem, kradzieżą i zagubieniem.",
+    "documents": "Dokumenty",
+    "generatedCount": "{{done}}/{{total}} wygenerowano",
+    "downloadSelected": "Pobierz wybrane dokumenty",
+    "downloadAsNew": "Pobierz jako nowy dokument",
+    "downloading": "Pobieranie...",
+    "selectAtLeastOne": "Zaznacz co najmniej jeden dokument, aby pobrać pliki.",
+    "saveFailed": "Nie udało się zapisać zestawu w historii.",
+    "fields": {
+      "transportType": "Typ transportu",
+      "route": "Trasa",
+      "cargo": "Towar",
+      "customs": "Odprawa celna",
+      "weightValue": "Waga / Wartość",
+      "weight": "Waga",
+      "value": "Wartość",
+      "incoterms": "Incoterms",
+      "sender": "Nadawca",
+      "receiver": "Odbiorca",
+      "carrier": "Przewoźnik"
+    },
+    "values": {
+      "road": "Drogowy (TIR)",
+      "sea": "Morski (Kontener)",
+      "customsNo": "Nie (ruch wewnątrz UE)",
+      "customsYes": "Tak"
+    }
+  },
+  "guard": {
+    "title": "Niedokończony formularz",
+    "body": "Wprowadzone dane nie zostały jeszcze wygenerowane. Zapisać bieżący postęp jako wersję roboczą, aby wrócić do niego później?",
+    "saveErrorTitle": "Nie udało się zapisać",
+    "saveDraft": "Zapisz wersję roboczą",
+    "discard": "Odrzuć zmiany",
+    "saveFailed": "Nie udało się zapisać wersji roboczej."
+  }
+}

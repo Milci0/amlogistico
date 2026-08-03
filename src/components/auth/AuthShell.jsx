@@ -1,12 +1,22 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import LanguageSwitcher from '../LanguageSwitcher'
 
 // Wspólny wygląd stron logowania/rejestracji — jasne tło, wyśrodkowana karta, logo
 export default function AuthShell({ title, subtitle, children, footer }) {
+  const { t } = useTranslation()
+
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-slate-50 to-emerald-50 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center justify-center px-4 py-10">
+    <div className="relative min-h-dvh bg-gradient-to-b from-slate-50 to-emerald-50 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center justify-center px-4 py-10">
+      {/* Strony auth stoją poza AppShell, więc nie mają Topbara — przełącznik
+          języka dostaje własne miejsce w prawym górnym rogu. */}
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
+
       <Link to="/" className="flex items-center gap-2 font-bold text-2xl text-gray-900 dark:text-white mb-6">
         <span className="bg-emerald-500 text-white rounded-lg w-9 h-9 flex items-center justify-center text-base font-black">A</span>
-        <span>AM<span className="text-emerald-600">Logistico</span></span>
+        <span>AM<span className="text-emerald-600">{t('brand.suffix')}</span></span>
       </Link>
 
       <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-7 sm:p-8">
