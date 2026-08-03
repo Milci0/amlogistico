@@ -172,8 +172,8 @@ export function ZlecenieTemplate({ data }) {
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '36px' }}>
           <div style={lbl}>Typ pojazdu / Vehicle type:</div>
           {data.vehicle?.type
-            ? <div style={{ ...val, fontWeight: 'bold', marginTop: '2px' }}>{data.vehicle.type}</div>
-            : <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Plandeka &nbsp; &#9634; Chłodnia &nbsp; &#9634; Mroźnia</div>}
+            ? <div style={{ ...val, fontWeight: 'bold', marginTop: '2px' }}>{data.vehicle.type}{data.vehicle?.typeEn ? ` / ${data.vehicle.typeEn}` : ''}</div>
+            : <div style={{ fontSize: '8px', marginTop: '2px' }}>&#9634; Plandeka/Tarpaulin &nbsp; &#9634; Chłodnia/Reefer &nbsp; &#9634; Mroźnia/Freezer</div>}
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '36px' }}>
           <div style={lbl}>Temperatura / Temp. (°C):</div>

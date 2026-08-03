@@ -1,4 +1,5 @@
 import { formatDocumentDate } from '../../../../utils/formatDate'
+import { docLabel } from '../../../../utils/docLabels'
 
 export function AustraliaExportDeclarationTemplate({ data }) {
   const today = formatDocumentDate(new Date())
@@ -99,7 +100,7 @@ export function AustraliaExportDeclarationTemplate({ data }) {
 
       {/* TABELA NAGŁÓWEK */}
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '25px' }}>Lp.</div>
+        <div style={{ ...thStyle, width: '25px' }}>{docLabel('no', data.language)}</div>
         <div style={{ ...thStyle, flex: 1 }}>Opis towaru<br />Description</div>
         <div style={{ ...thStyle, width: '55px' }}>Kod HS<br />HS Code</div>
         <div style={{ ...thStyle, width: '40px' }}>Ilość<br />Qty</div>

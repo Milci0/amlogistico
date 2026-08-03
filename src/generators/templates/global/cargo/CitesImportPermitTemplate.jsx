@@ -1,4 +1,5 @@
 import { formatDocumentDate } from '../../../../utils/formatDate'
+import { docLabel } from '../../../../utils/docLabels'
 
 export function CitesImportPermitTemplate({ data }) {
   const today = formatDocumentDate(new Date())
@@ -87,13 +88,13 @@ export function CitesImportPermitTemplate({ data }) {
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '25px' }}>Lp.</div>
+        <div style={{ ...thStyle, width: '25px' }}>{docLabel('no', data.language)}</div>
         <div style={{ ...thStyle, flex: 1 }}>Opis / Description</div>
-        <div style={{ ...thStyle, width: '45px' }}>Kod HS</div>
-        <div style={{ ...thStyle, width: '35px' }}>Ilość</div>
-        <div style={{ ...thStyle, width: '35px' }}>Jedn.</div>
-        <div style={{ ...thStyle, width: '40px' }}>Waga kg</div>
-        <div style={{ ...thStyle, width: '45px' }}>Wartość</div>
+        <div style={{ ...thStyle, width: '45px' }}>{docLabel('hsCode', data.language)}</div>
+        <div style={{ ...thStyle, width: '35px' }}>{docLabel('quantity', data.language)}</div>
+        <div style={{ ...thStyle, width: '35px' }}>{docLabel('unit', data.language)}</div>
+        <div style={{ ...thStyle, width: '40px' }}>{docLabel('weightKg', data.language)}</div>
+        <div style={{ ...thStyle, width: '45px' }}>{docLabel('value', data.language)}</div>
         <div style={{ ...thStyle, width: '55px' }}>Appendix<br />I/II/III</div>
         <div style={{ ...thStyle, width: '55px' }}>Gatunek<br />naukowy</div>
         <div style={{ ...thStyle, width: '45px' }}>Cel<br />Purpose</div>

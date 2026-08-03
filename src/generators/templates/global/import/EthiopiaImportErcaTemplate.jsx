@@ -1,4 +1,5 @@
 import { formatDocumentDate } from '../../../../utils/formatDate'
+import { docLabel } from '../../../../utils/docLabels'
 
 export function EthiopiaImportErcaTemplate({ data }) {
   const today = formatDocumentDate(new Date())
@@ -105,13 +106,13 @@ export function EthiopiaImportErcaTemplate({ data }) {
 
       {/* TABELA NAGŁÓWEK */}
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '25px' }}>Lp.</div>
+        <div style={{ ...thStyle, width: '25px' }}>{docLabel('no', data.language)}</div>
         <div style={{ ...thStyle, flex: 1 }}>Opis / Description</div>
-        <div style={{ ...thStyle, width: '55px' }}>Kod HS</div>
-        <div style={{ ...thStyle, width: '45px' }}>Ilość</div>
-        <div style={{ ...thStyle, width: '40px' }}>Jedn.</div>
-        <div style={{ ...thStyle, width: '55px' }}>Waga kg</div>
-        <div style={{ ...thStyle, width: '60px', borderRight: b }}>Wartość</div>
+        <div style={{ ...thStyle, width: '55px' }}>{docLabel('hsCode', data.language)}</div>
+        <div style={{ ...thStyle, width: '45px' }}>{docLabel('quantity', data.language)}</div>
+        <div style={{ ...thStyle, width: '40px' }}>{docLabel('unit', data.language)}</div>
+        <div style={{ ...thStyle, width: '55px' }}>{docLabel('weightKg', data.language)}</div>
+        <div style={{ ...thStyle, width: '60px', borderRight: b }}>{docLabel('value', data.language)}</div>
       </div>
 
       {/* Wiersz z danymi */}

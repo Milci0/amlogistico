@@ -1,4 +1,5 @@
 import { formatDocumentDate } from '../../../../utils/formatDate'
+import { docLabel } from '../../../../utils/docLabels'
 
 export function EadSadExportTemplate({ data }) {
   const today = formatDocumentDate(new Date())
@@ -91,7 +92,7 @@ export function EadSadExportTemplate({ data }) {
 
       {/* TABELA NAGŁÓWEK */}
       <div style={{ display: 'flex', borderLeft: b }}>
-        <div style={{ ...thStyle, width: '25px' }}>Lp.</div>
+        <div style={{ ...thStyle, width: '25px' }}>{docLabel('no', data.language)}</div>
         <div style={{ ...thStyle, flex: 1 }}>Opis towaru<br />Description</div>
         <div style={{ ...thStyle, width: '65px' }}>Kod CN/HS<br />(8 cyfr)</div>
         <div style={{ ...thStyle, width: '55px' }}>Kraj poch.<br />Origin</div>

@@ -175,13 +175,12 @@ function PreferencesTab({ user, updateUser }) {
           </select>
         </Field>
         <Field label="Język dokumentów" htmlFor="preferredLanguage">
-          {/* TODO: odblokować EN po dodaniu angielskich szablonów JSX */}
           <select id="preferredLanguage" className={inputCls} value={form.preferredLanguage} onChange={upd('preferredLanguage')}>
             <option value="PL">Polski</option>
-            <option value="EN" disabled>Angielski (wkrótce)</option>
+            <option value="EN">Angielski</option>
           </select>
           <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
-            Obecnie dokumenty generowane są wyłącznie po polsku. Wersja angielska w przygotowaniu.
+            Niezależne od języka interfejsu — dotyczy wyłącznie treści generowanych dokumentów PDF.
           </p>
         </Field>
         <SaveBar status={status} message={message} />

@@ -6,7 +6,13 @@ export function MsdsSafetyDataSheetTemplate({ data }) {
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
   const val = { fontSize: '9px', minHeight: '11px' }
 
-  const sections = [
+  // 16 sekcji karty charakterystyki — nazwy ustandaryzowane międzynarodowo
+  // (GHS/UN Purple Book, REACH Annex II, OSHA HazCom) — jedyny szablon, gdzie
+  // przełącznik języka ma realne uzasadnienie prawne: SDS/MSDS ma prawo/obowiązek
+  // być w języku kraju użycia. Tłumaczenie 1:1 do standardowej nomenklatury,
+  // nie parafraza.
+  const isEn = data.language === 'EN'
+  const sectionsPl = [
     'Identyfikacja substancji/mieszaniny i identyfikacja przedsiębiorstwa',
     'Identyfikacja zagrożeń — piktogramy GHS, hasła ostrzegawcze H/P',
     'Skład / informacja o składnikach — wzór chemiczny, stężenia',
@@ -24,14 +30,36 @@ export function MsdsSafetyDataSheetTemplate({ data }) {
     'Informacje dotyczące przepisów prawnych — regulacje UE/lokalne',
     'Inne informacje — data ostatniej rewizji, źródła',
   ]
+  const sectionsEn = [
+    'Identification of the substance/mixture and of the company/undertaking',
+    'Hazard(s) identification — GHS pictograms, hazard/precautionary statements H/P',
+    'Composition/information on ingredients — chemical formula, concentrations',
+    'First-aid measures — skin, eye, inhalation exposure',
+    'Fire-fighting measures — extinguishing media, temperatures',
+    'Accidental release measures',
+    'Handling and storage',
+    'Exposure controls/personal protection — PPE',
+    'Physical and chemical properties — flash point, density, pH',
+    'Stability and reactivity — conditions to avoid',
+    'Toxicological information — LD50, LC50, exposure routes',
+    'Ecological information — ecotoxicity, biodegradation',
+    'Disposal considerations — disposal methods',
+    'Transport information — UN No., class, PG, EmS',
+    'Regulatory information — EU/local regulations',
+    'Other information — date of last revision, sources',
+  ]
+  const sections = isEn ? sectionsEn : sectionsPl
 
   return (
     <div style={{ width: '794px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '8px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box', padding: '8px 10px' }}>
 
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>MSDS — MATERIAL SAFETY DATA SHEET</div>
-        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Karta Charakterystyki Substancji Niebezpiecznej · GHS / SDS</div>
-        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Wymagana przez armatora dla towarów niebezpiecznych, chemikaliów i baterii litowych. Format GHS. 16 sekcji obowiązkowych.</div>
+        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Karta Charakterystyki Substancji Niebezpiecznej / Safety Data Sheet · GHS / SDS</div>
+        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>
+          Wymagana przez armatora dla towarów niebezpiecznych, chemikaliów i baterii litowych. Format GHS. 16 sekcji obowiązkowych.
+          {' / '}Required by the carrier for dangerous goods, chemicals and lithium batteries. GHS format. 16 mandatory sections.
+        </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
@@ -48,14 +76,14 @@ export function MsdsSafetyDataSheetTemplate({ data }) {
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Data sporządzenia:</div>
+          <div style={lbl}>Data sporządzenia / Date of preparation:</div>
           <div style={val}>{today}</div>
         </div>
       </div>
 
       {sections.map((desc, i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: i === 0 ? b : 'none', borderBottom: b, minHeight: '18px' }}>
-          <div style={{ width: '65px', padding: '3px 4px', borderRight: b, fontSize: '7px', fontWeight: 'bold', color: '#fff', backgroundColor: '#2c5fa8', display: 'flex', alignItems: 'center' }}>SEKCJA {i + 1}</div>
+          <div style={{ width: '65px', padding: '3px 4px', borderRight: b, fontSize: '7px', fontWeight: 'bold', color: '#fff', backgroundColor: '#2c5fa8', display: 'flex', alignItems: 'center' }}>{isEn ? 'SECTION' : 'SEKCJA'} {i + 1}</div>
           <div style={{ flex: 1, padding: '3px 5px', borderRight: b, fontSize: '8px', display: 'flex', alignItems: 'center' }}>{desc}</div>
           <div style={{ width: '90px', padding: '3px 5px' }} />
         </div>
@@ -63,7 +91,9 @@ export function MsdsSafetyDataSheetTemplate({ data }) {
 
       <div style={{ borderLeft: b, borderRight: b, borderBottom: b, padding: '3px 5px', textAlign: 'center' }}>
         <span style={{ fontSize: '6.5px', color: '#666' }}>
-          Sekcja 14 — najważniejsza dla przewoźników: UN No., Proper Shipping Name, Class, Packing Group, Marine Pollutant (Y/N)
+          {isEn
+            ? 'Section 14 — most important for carriers: UN No., Proper Shipping Name, Class, Packing Group, Marine Pollutant (Y/N)'
+            : 'Sekcja 14 — najważniejsza dla przewoźników: UN No., Proper Shipping Name, Class, Packing Group, Marine Pollutant (Y/N)'}
         </span>
       </div>
 

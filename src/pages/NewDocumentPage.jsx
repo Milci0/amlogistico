@@ -116,6 +116,7 @@ export default function NewDocumentPage() {
         mode={mode}
         initialSet={initialSet}
         defaultCurrency={mode === 'create' ? user?.defaultCurrency : null}
+        documentLanguage={user?.preferredLanguage}
       >
         <UnsavedChangesGuard />
         <DocumentWizard />
