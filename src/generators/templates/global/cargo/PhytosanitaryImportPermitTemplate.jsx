@@ -2,6 +2,7 @@ import { formatDocumentDate } from '../../../../utils/formatDate'
 
 export function PhytosanitaryImportPermitTemplate({ data }) {
   const today = formatDocumentDate(new Date())
+  const isEn = data.language === 'EN'
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
   const val = { fontSize: '9px', minHeight: '11px' }
@@ -11,21 +12,33 @@ export function PhytosanitaryImportPermitTemplate({ data }) {
     backgroundColor: '#2c5fa8', verticalAlign: 'top',
   }
 
-  const requirements = [
-    ['Organizmy kwarantannowe / Prohibited pests', 'Towar musi być wolny od następujących organizmów:'],
-    ['Traktowanie / Treatment', '☐ Fumigacja MB ☐ Obróbka cieplna HT ☐ Inne:'],
-    ['Inspekcja / Inspection', '☐ Pre-shipment ☐ Port of entry ☐ Obydwie'],
-    ['Świadectwo fitosanitarne / Phyto cert.', 'Wymagane wystawione przez:'],
-    ['Inne warunki / Other conditions', ''],
-  ]
+  const requirements = isEn
+    ? [
+        ['Prohibited pests', 'The goods must be free from the following organisms:'],
+        ['Treatment', '☐ Fumigation MB ☐ Heat treatment HT ☐ Other:'],
+        ['Inspection', '☐ Pre-shipment ☐ Port of entry ☐ Both'],
+        ['Phytosanitary cert.', 'Required, issued by:'],
+        ['Other conditions', ''],
+      ]
+    : [
+        ['Organizmy kwarantannowe', 'Towar musi być wolny od następujących organizmów:'],
+        ['Traktowanie', '☐ Fumigacja MB ☐ Obróbka cieplna HT ☐ Inne:'],
+        ['Inspekcja', '☐ Pre-shipment ☐ Port of entry ☐ Obydwie'],
+        ['Świadectwo fitosanitarne', 'Wymagane wystawione przez:'],
+        ['Inne warunki', ''],
+      ]
 
   return (
     <div style={{ width: '794px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '8px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box', padding: '8px 10px' }}>
 
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>PHYTOSANITARY IMPORT PERMIT</div>
-        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Pozwolenie na Przywóz Fitosanitarne · Import Permit for Plants</div>
-        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Wymagane przez kraj importu ZANIM eksporter wyśle towar. Nr pozwolenia wpisywany na świadectwie fitosanitarnym.</div>
+        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>{isEn ? 'Import Permit for Plants' : 'Pozwolenie na Przywóz Fitosanitarne · Import Permit for Plants'}</div>
+        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>
+          {isEn
+            ? 'Required by the country of import BEFORE the exporter ships the goods. Permit No. is entered on the phytosanitary certificate.'
+            : 'Wymagane przez kraj importu ZANIM eksporter wyśle towar. Nr pozwolenia wpisywany na świadectwie fitosanitarnym.'}
+        </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
@@ -34,22 +47,22 @@ export function PhytosanitaryImportPermitTemplate({ data }) {
           <div style={val}>{data.customs?.permitNo || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Data wydania / Issue date:</div>
+          <div style={lbl}>{isEn ? 'Issue date:' : 'Data wydania:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Ważne do / Valid until:</div>
+          <div style={lbl}>{isEn ? 'Valid until:' : 'Ważne do:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Organ wystawiający / Issuing authority:</div>
+          <div style={lbl}>{isEn ? 'Issuing authority:' : 'Organ wystawiający:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Kraj / Country:</div>
+          <div style={lbl}>{isEn ? 'Country:' : 'Kraj:'}</div>
           <div style={val}>{data.toCountry || ''}</div>
         </div>
       </div>
@@ -71,7 +84,7 @@ export function PhytosanitaryImportPermitTemplate({ data }) {
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Kraj eksportu / Country of export:</div>
+          <div style={lbl}>{isEn ? 'Country of export:' : 'Kraj eksportu:'}</div>
           <div style={val}>{data.fromCountry || ''}</div>
         </div>
       </div>
@@ -82,26 +95,26 @@ export function PhytosanitaryImportPermitTemplate({ data }) {
           <div style={val}>{data.cargo?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Botaniczna nazwa:</div>
+          <div style={lbl}>{isEn ? 'Botanical name:' : 'Botaniczna nazwa:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Ilość / Qty:</div>
+          <div style={lbl}>Qty:</div>
           <div style={val}>{data.cargo?.quantity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Jednostka:</div>
+          <div style={lbl}>{isEn ? 'Unit:' : 'Jednostka:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>WYMAGANIA FITOSANITARNE / PHYTOSANITARY REQUIREMENTS</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'PHYTOSANITARY REQUIREMENTS' : 'WYMAGANIA FITOSANITARNE'}</span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '190px' }}>Wymóg / Requirement</div>
-        <div style={{ ...thStyle, flex: 1, borderRight: b }}>Szczegóły / Details</div>
+        <div style={{ ...thStyle, width: '190px' }}>{isEn ? 'Requirement' : 'Wymóg'}</div>
+        <div style={{ ...thStyle, flex: 1, borderRight: b }}>{isEn ? 'Details' : 'Szczegóły'}</div>
       </div>
       {requirements.map(([req, det], i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '24px' }}>

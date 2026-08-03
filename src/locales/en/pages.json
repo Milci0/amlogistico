@@ -294,8 +294,8 @@
       "noCurrency": "No default currency",
       "documentLanguage": "Document language",
       "polish": "Polish",
-      "englishSoon": "English (coming soon)",
-      "documentLanguageHint": "Documents are currently generated in Polish only. The English version is in preparation."
+      "english": "English",
+      "documentLanguageHint": "Independent of the interface language — applies only to the content of generated PDF documents."
     },
     "security": {
       "currentPassword": "Current password",

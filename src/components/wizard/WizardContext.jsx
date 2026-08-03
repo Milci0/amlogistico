@@ -74,7 +74,7 @@ export function useWizard() {
 //   'create' — nowy zestaw (derivedFromId = null)
 //   'resume' — wznowienie draftu (setId = id draftu, upsert)
 //   'edit'   — edycja gotowego (setId = id ORYGINAŁU → zapisywany jako derivedFromId)
-export function WizardProvider({ children, flowType = 'have_transport', mode = 'create', initialSet = null, defaultCurrency = null }) {
+export function WizardProvider({ children, flowType = 'have_transport', mode = 'create', initialSet = null, defaultCurrency = null, documentLanguage = null }) {
   const flow = getFlow(flowType)
   const totalSteps = flow.steps.length
 
@@ -158,7 +158,7 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
       formData: snap,
       engineResult: buildEngineResult(snap),
       selectedDocs: generatedDocsRef.current,
-      meta: buildMeta(snap),
+      meta: buildMeta(snap, documentLanguage),
       derivedFromId,
     }
     const saved = await upsertProgress(activeRecordIdRef.current, partial, status)

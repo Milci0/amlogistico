@@ -74,7 +74,7 @@ export default function HistoryPage() {
           .filter(Boolean)
         await downloadBlankZip(docs, `dokumenty_${full.meta?.routeFrom}_${full.meta?.routeTo}.zip`)
       } else {
-        const { failed } = await generateDocuments(full.formData, full.selectedDocs || [])
+        const { failed } = await generateDocuments(full.formData, full.selectedDocs || [], undefined, full.meta?.documentLanguage)
         if (failed.length > 0) setDownloadError(t('history.errors.partialGenerate'))
       }
     } catch (err) {
@@ -113,7 +113,7 @@ export default function HistoryPage() {
       return
     }
     try {
-      const { failed } = await generateDocuments(full.formData, [key], onStatus)
+      const { failed } = await generateDocuments(full.formData, [key], onStatus, full.meta?.documentLanguage)
       if (failed.length > 0) setDownloadError(t('history.errors.generateOne'))
     } catch (err) {
       console.error('Błąd generowania PDF:', err)

@@ -296,8 +296,8 @@
       "noCurrency": "Bez domyślnej waluty",
       "documentLanguage": "Język dokumentów",
       "polish": "Polski",
-      "englishSoon": "Angielski (wkrótce)",
-      "documentLanguageHint": "Obecnie dokumenty generowane są wyłącznie po polsku. Wersja angielska w przygotowaniu."
+      "english": "Angielski",
+      "documentLanguageHint": "Niezależne od języka interfejsu — dotyczy wyłącznie treści generowanych dokumentów PDF."
     },
     "security": {
       "currentPassword": "Aktualne hasło",

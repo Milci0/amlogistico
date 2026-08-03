@@ -183,10 +183,9 @@ function PreferencesTab({ user, updateUser }) {
           </select>
         </Field>
         <Field label={t('profile.preferences.documentLanguage')} htmlFor="preferredLanguage">
-          {/* TODO: odblokować EN po dodaniu angielskich szablonów JSX */}
           <select id="preferredLanguage" className={inputCls} value={form.preferredLanguage} onChange={upd('preferredLanguage')}>
             <option value="PL">{t('profile.preferences.polish')}</option>
-            <option value="EN" disabled>{t('profile.preferences.englishSoon')}</option>
+            <option value="EN">{t('profile.preferences.english')}</option>
           </select>
           <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
             {t('profile.preferences.documentLanguageHint')}

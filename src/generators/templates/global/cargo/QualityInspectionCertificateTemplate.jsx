@@ -2,6 +2,7 @@ import { formatDocumentDate } from '../../../../utils/formatDate'
 
 export function QualityInspectionCertificateTemplate({ data }) {
   const today = formatDocumentDate(new Date())
+  const isEn = data.language === 'EN'
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
   const val = { fontSize: '9px', minHeight: '11px' }
@@ -11,96 +12,101 @@ export function QualityInspectionCertificateTemplate({ data }) {
     backgroundColor: '#2c5fa8', verticalAlign: 'top',
   }
 
-  const params = ['Wygląd / Appearance', 'Wymiary / Dimensions', 'Waga / Weight', 'Oznakowanie / Marking', 'Opakowanie / Packaging', 'Inne / Other:']
+  const params = isEn
+    ? ['Appearance', 'Dimensions', 'Weight', 'Marking', 'Packaging', 'Other:']
+    : ['Wygląd', 'Wymiary', 'Waga', 'Oznakowanie', 'Opakowanie', 'Inne:']
 
   return (
     <div style={{ width: '794px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '8px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box', padding: '8px 10px' }}>
 
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>QUALITY / INSPECTION CERTIFICATE</div>
-        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Świadectwo Jakości i Inspekcji · Certificate of Quality &amp; Inspection</div>
-        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Wystawiany przez niezależną firmę inspekcyjną (SGS, Bureau Veritas, Intertek, TÜV) na zlecenie kupującego lub banku (L/C). Potwierdza zgodność towaru ze specyfikacją.</div>
+        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>
+          {isEn
+            ? 'Issued by an independent inspection company (SGS, Bureau Veritas, Intertek, TÜV) on behalf of the buyer or bank (L/C). Confirms that the goods conform to specification.'
+            : 'Wystawiany przez niezależną firmę inspekcyjną (SGS, Bureau Veritas, Intertek, TÜV) na zlecenie kupującego lub banku (L/C). Potwierdza zgodność towaru ze specyfikacją.'}
+        </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Nr raportu / Report No.:</div>
+          <div style={lbl}>{isEn ? 'Report No.:' : 'Nr raportu:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Data inspekcji / Date of inspection:</div>
+          <div style={lbl}>{isEn ? 'Date of inspection:' : 'Data inspekcji:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Inspektor / Inspector:</div>
+          <div style={lbl}>{isEn ? 'Inspector:' : 'Inspektor:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Firma / Company:</div>
+          <div style={lbl}>{isEn ? 'Company:' : 'Firma:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Zleceniodawca / Client:</div>
+          <div style={lbl}>{isEn ? 'Client:' : 'Zleceniodawca:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Kontakt:</div>
+          <div style={lbl}>{isEn ? 'Contact:' : 'Kontakt:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Sprzedający / Seller:</div>
+          <div style={lbl}>{isEn ? 'Seller:' : 'Sprzedający:'}</div>
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Kupujący / Buyer:</div>
+          <div style={lbl}>{isEn ? 'Buyer:' : 'Kupujący:'}</div>
           <div style={val}>{data.receiver?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Nr kontraktu:</div>
+          <div style={lbl}>{isEn ? 'Contract No.:' : 'Nr kontraktu:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Miejsce inspekcji / Place of inspection:</div>
+          <div style={lbl}>{isEn ? 'Place of inspection:' : 'Miejsce inspekcji:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Adres:</div>
+          <div style={lbl}>{isEn ? 'Address:' : 'Adres:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Nr faktury / Invoice No.:</div>
+          <div style={lbl}>{isEn ? 'Invoice No.:' : 'Nr faktury:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Nr L/C (jeśli):</div>
+          <div style={lbl}>{isEn ? 'L/C No. (if any):' : 'Nr L/C (jeśli):'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>WYNIKI INSPEKCJI / INSPECTION RESULTS</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'INSPECTION RESULTS' : 'WYNIKI INSPEKCJI'}</span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Opis towaru / Description of goods:</div>
+          <div style={lbl}>{isEn ? 'Description of goods:' : 'Opis towaru:'}</div>
           <div style={val}>{data.cargo?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Ilość / Quantity:</div>
+          <div style={lbl}>{isEn ? 'Quantity:' : 'Ilość:'}</div>
           <div style={val}>{data.cargo?.quantity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Jednostka:</div>
+          <div style={lbl}>{isEn ? 'Unit:' : 'Jednostka:'}</div>
           <div style={val} />
         </div>
       </div>
@@ -111,27 +117,27 @@ export function QualityInspectionCertificateTemplate({ data }) {
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Nr normy / Standard No.:</div>
+          <div style={lbl}>{isEn ? 'Standard No.:' : 'Nr normy:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Metoda próbkowania / Sampling method:</div>
+          <div style={lbl}>{isEn ? 'Sampling method:' : 'Metoda próbkowania:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Liczba próbek / No. of samples:</div>
+          <div style={lbl}>{isEn ? 'No. of samples:' : 'Liczba próbek:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '160px' }}>Parametr / Parameter</div>
-        <div style={{ ...thStyle, flex: 1 }}>Wymaganie / Requirement</div>
-        <div style={{ ...thStyle, flex: 1 }}>Wynik / Result</div>
-        <div style={{ ...thStyle, width: '90px', borderRight: b }}>Zgodność / Conformity</div>
+        <div style={{ ...thStyle, width: '160px' }}>{isEn ? 'Parameter' : 'Parametr'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Requirement' : 'Wymaganie'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Result' : 'Wynik'}</div>
+        <div style={{ ...thStyle, width: '90px', borderRight: b }}>{isEn ? 'Conformity' : 'Zgodność'}</div>
       </div>
       {params.map((p, i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '20px' }}>
@@ -144,7 +150,7 @@ export function QualityInspectionCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Wniosek / Conclusion:</div>
+          <div style={lbl}>{isEn ? 'Conclusion:' : 'Wniosek:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
@@ -155,12 +161,12 @@ export function QualityInspectionCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Inspektor / Inspector</div>
+          <div style={lbl}>{isEn ? 'Inspector' : 'Inspektor'}</div>
           <div style={{ flex: 1 }} />
           <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Firma inspekcyjna / Inspection Co.</div>
+          <div style={lbl}>{isEn ? 'Inspection Co.' : 'Firma inspekcyjna'}</div>
           <div style={{ flex: 1 }} />
           <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
         </div>

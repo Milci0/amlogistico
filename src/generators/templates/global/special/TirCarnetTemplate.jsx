@@ -70,8 +70,8 @@ export function TirCarnetTemplate({ data }) {
           <div style={val}>{data.vehicle?.reg || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Typ pojazdu:</div>
-          <div style={val}>{data.vehicle?.type || ''}</div>
+          <div style={lbl}>Typ pojazdu / Vehicle type:</div>
+          <div style={val}>{data.vehicle?.type || ''}{data.vehicle?.typeEn ? ` / ${data.vehicle.typeEn}` : ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
           <div style={lbl}>Nr naczepy:</div>

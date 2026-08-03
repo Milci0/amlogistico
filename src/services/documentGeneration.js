@@ -12,6 +12,16 @@ import { COUNTRIES } from '../data/mockData'
 import { cargoLabel } from '../data/cargoCategories'
 import { getUnitType } from '../data/cargoUnits'
 
+// Rodzaj pojazdu drogowego (Plandeka/Chłodnia/Mroźnia, Krok 3 kreatora) — PL
+// zostaje jedynym źródłem wartości w UI (checkbox/toggle), ale dokumenty
+// Grupy A (Zlecenie, TIR Carnet) pokazują PL/EN jak reszta ich etykiet, więc
+// dokładamy tu odpowiednik EN zamiast wpisywać go na sztywno w szablonach.
+const VEHICLE_TYPE_EN = {
+  'Plandeka': 'Tarpaulin (curtainsider)',
+  'Chłodnia': 'Refrigerated (reefer)',
+  'Mroźnia': 'Freezer',
+}
+
 // Lista kodów UE — spójna z DocumentWizard/EU_CODES.
 const EU_CODES = [
   'PL', 'DE', 'FR', 'NL', 'BE', 'CZ', 'SK', 'AT', 'IT', 'ES', 'PT', 'SE', 'DK',
@@ -29,14 +39,23 @@ export function getDocsForSnapshot(snapshot) {
   return getDocsList(snapshot.route.transport, computeBothEU(snapshot.route), snapshot.route.multimodal)
 }
 
+// Język dokumentu — JEDNO źródło prawdy, przekazywane w dół do buildGeneratorData
+// zamiast każdy szablon miałby sam decydować, skąd wziąć preferencję usera.
+// Niezależne od języka interfejsu (osobne ustawienie w Profil → Preferencje).
+// Nieznana/pusta wartość => 'PL' (m.in. stare zapisane zestawy bez tego pola).
+function normalizeLanguage(language) {
+  return language === 'EN' ? 'EN' : 'PL'
+}
+
 // Migawka kreatora → płaski ładunek konsumowany przez szablony JSX.
 // (Mapowanie przeniesione 1:1 z dawnego Step4 — nie zmieniać kształtu bez zmiany szablonów.)
-export function buildGeneratorData(snapshot) {
+export function buildGeneratorData(snapshot, language) {
   const { route, cargo, parties, road, sea, terms } = snapshot
   // Typ jednostki ładunku (PLT/CTN/…) rozwiązany raz do PL/EN nazwy + kodu
   // UN/ECE Rec 21, żeby szablony PDF nie musiały same importować cargoUnits.js.
   const unitType = getUnitType(cargo.packageType)
   return {
+    language: normalizeLanguage(language),
     transport: route.transport,
     multimodal: route.multimodal,
     fromCountry: route.fromCountry,
@@ -91,6 +110,7 @@ export function buildGeneratorData(snapshot) {
     },
     vehicle: {
       type: road.vehicleType,
+      typeEn: VEHICLE_TYPE_EN[road.vehicleType] || '',
       tempFrom: road.tempFrom,
       tempTo: road.tempTo,
       adr: road.adr,
@@ -127,22 +147,26 @@ export function buildEngineResult(snapshot) {
   }
 }
 
-// Metadane karty/wyszukiwarki.
-export function buildMeta(snapshot) {
+// Metadane karty/wyszukiwarki. `documentLanguage` zapisywany tu (nie tylko użyty
+// przy generowaniu), żeby regeneracja/pobranie STAREGO zestawu z historii
+// odtwarzała dokument w JĘZYKU, w którym powstał — a nie w aktualnej preferencji
+// profilu, która mogła się od tamtej pory zmienić (ten sam powód co templateVersion).
+export function buildMeta(snapshot, language) {
   return {
     routeFrom: snapshot.route.fromCountry,
     routeTo: snapshot.route.toCountry,
     transportMode: snapshot.route.transport,
     cargoDescription: snapshot.cargo.cargoName,
     transportDate: snapshot.route.loadDate,
+    documentLanguage: normalizeLanguage(language),
   }
 }
 
 // Generuje wybrane dokumenty z migawki. onStatus(key, 'loading'|'done'|'error')
 // pozwala kreatorowi pokazywać status na żywo. Zwraca { failed: [key...] } —
 // nie rzuca, aby jeden błędny szablon nie wywalił reszty.
-export async function generateDocuments(snapshot, keys, onStatus) {
-  const data = buildGeneratorData(snapshot)
+export async function generateDocuments(snapshot, keys, onStatus, language) {
+  const data = buildGeneratorData(snapshot, language)
   const docs = getDocsForSnapshot(snapshot).filter((d) => keys.includes(d.key))
   const failed = []
   for (const doc of docs) {

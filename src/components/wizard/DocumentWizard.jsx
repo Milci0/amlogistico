@@ -766,6 +766,7 @@ function Step4({ onBack }) {
   const { t: tCountry } = useTranslation('countries')
   const wiz = useWizard()
   const { snapshot, mode, originalEngineResult, flow } = wiz
+  const { user } = useAuth()
 
   const docsList = useMemo(() => getDocsForSnapshot(snapshot), [snapshot])
   const bothEU = computeBothEU(snapshot.route)
@@ -877,7 +878,7 @@ function Step4({ onBack }) {
     setSaveError(null)
     const keys = selectedDocs.map(d => d.key)
     const { failed } = await generateDocuments(snapshot, keys, (k, st) =>
-      setStatuses(s => ({ ...s, [k]: st }))
+      setStatuses(s => ({ ...s, [k]: st })), user?.preferredLanguage
     )
     if (failed.length > 0) return
 

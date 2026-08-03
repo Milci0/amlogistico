@@ -2,6 +2,7 @@ import { formatDocumentDate } from '../../../../utils/formatDate'
 
 export function NonGmoCertificateTemplate({ data }) {
   const today = formatDocumentDate(new Date())
+  const isEn = data.language === 'EN'
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
   const val = { fontSize: '9px', minHeight: '11px' }
@@ -12,10 +13,10 @@ export function NonGmoCertificateTemplate({ data }) {
   }
 
   const tests = [
-    ['GMO screening (ogólny)', 'PCR ISO 21569', '0.1%'],
+    [isEn ? 'GMO screening (general)' : 'GMO screening (ogólny)', 'PCR ISO 21569', '0.1%'],
     ['Roundup Ready soya GTS40-3-2', 'Real-time PCR', '0.1%'],
-    ['Bt kukurydza MON810', 'Real-time PCR', '0.1%'],
-    ['MON88302 (rzepak)', 'Real-time PCR', '0.1%'],
+    [isEn ? 'Bt maize MON810' : 'Bt kukurydza MON810', 'Real-time PCR', '0.1%'],
+    [isEn ? 'MON88302 (rapeseed)' : 'MON88302 (rzepak)', 'Real-time PCR', '0.1%'],
   ]
 
   return (
@@ -23,8 +24,11 @@ export function NonGmoCertificateTemplate({ data }) {
 
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>NON-GMO CERTIFICATE</div>
-        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Świadectwo Braku GMO · Non-GMO Certificate</div>
-        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Wymagane dla żywności i pasz do UE, Japonii, Korei, Australii i innych rynków z restrykcjami GMO</div>
+        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>
+          {isEn
+            ? 'Required for food and feed exported to the EU, Japan, Korea, Australia and other markets with GMO restrictions'
+            : 'Wymagane dla żywności i pasz do UE, Japonii, Korei, Australii i innych rynków z restrykcjami GMO'}
+        </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
@@ -33,11 +37,11 @@ export function NonGmoCertificateTemplate({ data }) {
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Data / Date:</div>
+          <div style={lbl}>{isEn ? 'Date:' : 'Data:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Organ / Certifying body:</div>
+          <div style={lbl}>{isEn ? 'Certifying body:' : 'Organ certyfikujący:'}</div>
           <div style={val} />
         </div>
       </div>
@@ -48,7 +52,7 @@ export function NonGmoCertificateTemplate({ data }) {
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Kraj / Country:</div>
+          <div style={lbl}>{isEn ? 'Country:' : 'Kraj:'}</div>
           <div style={val}>{data.sender?.country || ''}</div>
         </div>
       </div>
@@ -59,29 +63,29 @@ export function NonGmoCertificateTemplate({ data }) {
           <div style={val}>{data.cargo?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Gatunek / Species:</div>
+          <div style={lbl}>{isEn ? 'Species:' : 'Gatunek:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Nr partii / Lot No.:</div>
+          <div style={lbl}>{isEn ? 'Lot No.:' : 'Nr partii:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Ilość / Qty (kg):</div>
+          <div style={lbl}>{isEn ? 'Qty (kg):' : 'Ilość (kg):'}</div>
           <div style={val}>{data.cargo?.weight || ''}</div>
         </div>
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>WYNIKI TESTÓW / TEST RESULTS</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'TEST RESULTS' : 'WYNIKI TESTÓW'}</span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, flex: 1 }}>Test / Parameter</div>
-        <div style={{ ...thStyle, width: '100px' }}>Metoda / Method</div>
-        <div style={{ ...thStyle, width: '90px' }}>Próg / Detection limit</div>
-        <div style={{ ...thStyle, width: '80px' }}>Wynik / Result</div>
-        <div style={{ ...thStyle, width: '80px', borderRight: b }}>Zgodność</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Test / Parameter' : 'Test / Parametr'}</div>
+        <div style={{ ...thStyle, width: '100px' }}>{isEn ? 'Method' : 'Metoda'}</div>
+        <div style={{ ...thStyle, width: '90px' }}>{isEn ? 'Detection limit' : 'Próg wykrywalności'}</div>
+        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Result' : 'Wynik'}</div>
+        <div style={{ ...thStyle, width: '80px', borderRight: b }}>{isEn ? 'Compliance' : 'Zgodność'}</div>
       </div>
       {tests.map(([name, method, limit], i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '20px' }}>
@@ -89,18 +93,18 @@ export function NonGmoCertificateTemplate({ data }) {
           <div style={{ width: '100px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px', textAlign: 'center' }}>{method}</div>
           <div style={{ width: '90px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px', textAlign: 'center' }}>{limit}</div>
           <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-          <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px' }}>☐ Negatywny</div>
+          <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px' }}>☐ {isEn ? 'Negative' : 'Negatywny'}</div>
         </div>
       ))}
 
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Akredytowane laboratorium</div>
+          <div style={lbl}>{isEn ? 'Accredited laboratory' : 'Akredytowane laboratorium'}</div>
           <div style={{ flex: 1 }} />
           <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Nr akredytacji / Accreditation No.</div>
+          <div style={lbl}>{isEn ? 'Accreditation No.' : 'Nr akredytacji'}</div>
           <div style={{ flex: 1 }} />
           <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
         </div>
