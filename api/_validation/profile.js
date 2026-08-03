@@ -13,7 +13,7 @@ export const updateProfileSchema = z.object({
   city: z.string().trim().max(120).optional(),
   postalCode: z.string().trim().max(20).optional(),
   country: z.string().trim().max(80).optional(),
-  defaultCurrency: z.enum(['EUR', 'PLN', 'USD', 'CHF']).optional(),
+  defaultCurrency: z.union([z.literal(''), z.enum(['EUR', 'PLN', 'USD', 'CHF'])]).optional(),
   preferredLanguage: z.enum(['PL', 'EN']).optional(),
   marketingConsent: z.boolean().optional(),
 })
