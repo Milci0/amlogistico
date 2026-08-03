@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Info, ShieldCheck, ArrowRight, Truck, Ship, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Info, ShieldCheck, ArrowRight, Truck, Ship, Train, Plane, Route, Plus, X, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { COUNTRIES } from '../../data/mockData'
 import CountrySelect from '../ui/CountrySelect'
 import CitySelect from '../ui/CitySelect'
@@ -11,14 +11,19 @@ import { useAuth } from '../../auth/AuthContext'
 import { useWizard } from './WizardContext'
 import {
   getDocsForSnapshot,
+  getEngineResultForSnapshot,
   computeBothEU,
   generateDocuments,
 } from '../../services/documentGeneration'
+import ConfirmDialog from '../ui/ConfirmDialog'
 import DocumentSelectList from '../documents/DocumentSelectList'
 import CargoCategoryPicker from '../cargo/CargoCategoryPicker'
 import CargoUnitField from '../cargo/CargoUnitField'
 import HsCodeFinder from '../cargo/HsCodeFinder'
 import StepTransition from '../StepTransition'
+import { SLICE_INITIALIZERS, TRANSPORT_MODES, hasBranchData, initMultimodalLeg } from './wizardState'
+import { toCatalogId } from '../../data/documentIdAliases'
+import { translateEngineWarning } from '../../utils/translateEngineWarning'
 import FreightRates from '../freight/FreightRates'
 import useFreightRates from '../../hooks/useFreightRates'
 import { findSeaPortCode } from '../../data/seaPorts'
@@ -127,70 +132,66 @@ function NextButton({ onClick, disabled, label }) {
 
 // ── Step 1: Trasa ──────────────────────────────────────────────────────────────
 
-function Step1({ data, setData, onNext, canNext }) {
+// Pięć gałęzi, które zna silnik doboru. Ikony z lucide-react (jest w repo).
+const TRANSPORT_ICONS = { road: Truck, sea: Ship, rail: Train, air: Plane, multimodal: Route }
+
+function TransportChip({ id, active, onSelect }) {
+  const { t } = useTranslation('wizard')
+  const Icon = TRANSPORT_ICONS[id]
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(id)}
+      aria-pressed={active}
+      className={`flex flex-col items-center gap-2 p-3.5 border-2 rounded-xl text-center transition-all
+        ${active
+          ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'
+          : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'}`}
+    >
+      <Icon
+        className={`w-6 h-6 shrink-0 ${active ? 'text-emerald-500' : 'text-gray-400 dark:text-slate-500'}`}
+        strokeWidth={1.5}
+      />
+      <div className="min-w-0">
+        <p className={`text-sm font-semibold leading-tight ${active ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-800 dark:text-slate-200'}`}>
+          {t(`route.modes.${id}.label`)}
+        </p>
+        <p className={`text-[11px] mt-0.5 leading-tight ${active ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-400 dark:text-slate-500'}`}>
+          {t(`route.modes.${id}.sub`)}
+        </p>
+      </div>
+    </button>
+  )
+}
+
+function Step1({ data, setData, onTransportChange, onNext, canNext }) {
   const { t } = useTranslation('wizard')
 
   return (
     <div>
       <SectionLabel>{t('route.transportType')}</SectionLabel>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-        {[
-          {
-            id: 'road',
-            label: t('route.road.label'),
-            sub: t('route.road.sub'),
-            svg: (active) => (
-              <svg className={`w-7 h-7 ${active ? 'text-emerald-500' : 'text-gray-400 dark:text-slate-500'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3h1.4a2 2 0 0 1 1.7.9l1.7 2.6a2 2 0 0 1 .3 1V17h-2" />
-                <circle cx="7.5" cy="17.5" r="2.5" />
-                <circle cx="17.5" cy="17.5" r="2.5" />
-              </svg>
-            ),
-          },
-          {
-            id: 'sea',
-            label: t('route.sea.label'),
-            sub: t('route.sea.sub'),
-            svg: (active) => (
-              <svg className={`w-7 h-7 ${active ? 'text-emerald-500' : 'text-gray-400 dark:text-slate-500'}`} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M2 21c.6.5 1.2 1 2.5 1C7 22 7 20 9.5 20c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
-                <path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.2.5 4.3 1.62 6" />
-                <path d="M12 10V2" />
-                <path d="M12 2H9" />
-              </svg>
-            ),
-          },
-        ].map(({ id, label, sub, svg }) => {
-          const active = data.transport === id
-          return (
-            <button
-              key={id}
-              onClick={() => setData(d => ({ ...d, transport: id }))}
-              className={`flex items-center gap-3 p-4 border-2 rounded-xl text-left transition-all
-                ${active ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'}`}
-            >
-              {svg(active)}
-              <div>
-                <p className={`text-sm font-semibold ${active ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-800 dark:text-slate-200'}`}>{label}</p>
-                <p className={`text-xs mt-0.5 ${active ? 'text-emerald-400' : 'text-gray-400 dark:text-slate-500'}`}>{sub}</p>
-              </div>
-            </button>
-          )
-        })}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mb-6">
+        {TRANSPORT_MODES.map(id => (
+          <TransportChip key={id} id={id} active={data.transport === id} onSelect={onTransportChange} />
+        ))}
       </div>
 
-      <label className="flex items-start gap-3 p-3.5 mb-5 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
-        <input
-          type="checkbox"
-          className="mt-0.5 w-4 h-4 accent-emerald-600 cursor-pointer flex-shrink-0"
-          checked={!!data.multimodal}
-          onChange={e => setData(d => ({ ...d, multimodal: e.target.checked }))}
-        />
-        <div>
-          <p className="text-sm font-medium text-gray-800 dark:text-slate-200">{t('route.multimodal.label')}</p>
-          <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{t('route.multimodal.hint')}</p>
-        </div>
-      </label>
+      {/* Checkbox znika przy gałęzi „Multimodalny": tam multimodalność wynika już
+          z wyboru środka transportu, więc pytanie o nią byłoby powtórzeniem. */}
+      {data.transport !== 'multimodal' && (
+        <label className="flex items-start gap-3 p-3.5 mb-5 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+          <input
+            type="checkbox"
+            className="mt-0.5 w-4 h-4 accent-emerald-600 cursor-pointer flex-shrink-0"
+            checked={!!data.multimodal}
+            onChange={e => setData(d => ({ ...d, multimodal: e.target.checked }))}
+          />
+          <div>
+            <p className="text-sm font-medium text-gray-800 dark:text-slate-200">{t('route.multimodal.label')}</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{t('route.multimodal.hint')}</p>
+          </div>
+        </label>
+      )}
 
       <div className="mb-5">
         <SectionLabel>{t('route.from')}</SectionLabel>
@@ -227,7 +228,231 @@ function Step1({ data, setData, onNext, canNext }) {
 
 // ── Step 2: Towar ──────────────────────────────────────────────────────────────
 
-function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, transport, fromCountry, toCountry, isAdmin, findMode, onNext, onBack, canNext }) {
+// ── Sekcje warunkowe gałęzi transportu ─────────────────────────────────────────
+// Wydzielone z Step2, bo przy pięciu gałęziach ciało kroku „Towar" przestałoby
+// się dać czytać. Każda operuje wyłącznie na swoim slajsie migawki.
+
+function BranchSection({ title, hint, children }) {
+  return (
+    <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">{title}</p>
+      {hint ? <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">{hint}</p> : <div className="mb-4" />}
+      {children}
+    </div>
+  )
+}
+
+function CheckboxRow({ label, checked, onChange }) {
+  return (
+    <label className="flex items-center gap-3 cursor-pointer">
+      <input
+        type="checkbox"
+        className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 text-emerald-600 focus:ring-emerald-400"
+        checked={!!checked}
+        onChange={e => onChange(e.target.checked)}
+      />
+      <span className="text-sm text-gray-700 dark:text-slate-300">{label}</span>
+    </label>
+  )
+}
+
+function RailSection({ rail, setRail }) {
+  const { t } = useTranslation('wizard')
+  const wagons = rail.wagonNumbers || []
+
+  const setWagon = (i, value) =>
+    setRail(r => ({ ...r, wagonNumbers: (r.wagonNumbers || []).map((w, idx) => (idx === i ? value : w)) }))
+  const addWagon = () => setRail(r => ({ ...r, wagonNumbers: [...(r.wagonNumbers || []), ''] }))
+  const removeWagon = (i) =>
+    setRail(r => ({ ...r, wagonNumbers: (r.wagonNumbers || []).filter((_, idx) => idx !== i) }))
+
+  return (
+    <BranchSection title={t('cargo.rail.title')} hint={t('cargo.rail.hint')}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <Field label={t('cargo.rail.stationFrom')}>
+          <input className={cls.input} value={rail.stationFrom} onChange={e => setRail(r => ({ ...r, stationFrom: e.target.value }))} />
+        </Field>
+        <Field label={t('cargo.rail.stationTo')}>
+          <input className={cls.input} value={rail.stationTo} onChange={e => setRail(r => ({ ...r, stationTo: e.target.value }))} />
+        </Field>
+      </div>
+
+      <div className="mb-4">
+        <CheckboxRow
+          label={t('cargo.rail.groupConsignment')}
+          checked={rail.groupConsignment}
+          onChange={v => setRail(r => ({ ...r, groupConsignment: v }))}
+        />
+      </div>
+
+      <p className="block text-sm text-gray-700 dark:text-slate-300 mb-2">{t('cargo.rail.wagonNumbers')}</p>
+      {wagons.length === 0 && (
+        <p className="text-xs text-gray-400 dark:text-slate-500 mb-2">{t('cargo.rail.noWagons')}</p>
+      )}
+      <div className="space-y-2 mb-3">
+        {wagons.map((wagon, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <input
+              className={cls.input}
+              value={wagon}
+              placeholder={t('cargo.rail.wagonPlaceholder')}
+              onChange={e => setWagon(i, e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => removeWagon(i)}
+              aria-label={t('cargo.rail.removeWagon')}
+              className="shrink-0 p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={addWagon}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-lg px-3 py-2 transition-colors"
+      >
+        <Plus className="w-4 h-4" />
+        {t('cargo.rail.addWagon')}
+      </button>
+    </BranchSection>
+  )
+}
+
+function AirSection({ air, setAir }) {
+  const { t } = useTranslation('wizard')
+  return (
+    <BranchSection title={t('cargo.air.title')} hint={t('cargo.air.hint')}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <Field label={t('cargo.air.airportFrom')}>
+          <input
+            className={cls.input}
+            value={air.airportFrom}
+            maxLength={3}
+            placeholder={t('cargo.air.iataPlaceholder')}
+            onChange={e => setAir(a => ({ ...a, airportFrom: e.target.value.toUpperCase() }))}
+          />
+        </Field>
+        <Field label={t('cargo.air.airportTo')}>
+          <input
+            className={cls.input}
+            value={air.airportTo}
+            maxLength={3}
+            placeholder={t('cargo.air.iataPlaceholder')}
+            onChange={e => setAir(a => ({ ...a, airportTo: e.target.value.toUpperCase() }))}
+          />
+        </Field>
+      </div>
+
+      <div className="mb-4">
+        <Field label={t('cargo.air.chargeableWeight')}>
+          <input
+            type="number"
+            className={cls.input}
+            value={air.chargeableWeightKg}
+            onChange={e => setAir(a => ({ ...a, chargeableWeightKg: e.target.value }))}
+          />
+        </Field>
+      </div>
+
+      <div className="space-y-3">
+        <CheckboxRow
+          label={t('cargo.air.consolidated')}
+          checked={air.consolidated}
+          onChange={v => setAir(a => ({ ...a, consolidated: v }))}
+        />
+        <CheckboxRow
+          label={t('cargo.air.knownConsignor')}
+          checked={air.knownConsignor}
+          onChange={v => setAir(a => ({ ...a, knownConsignor: v }))}
+        />
+      </div>
+    </BranchSection>
+  )
+}
+
+// Etapy trasy multimodalnej. Kolejność w tablicy jest znacząca: zasila
+// data.carrierLegs.{preCarriage,mainCarriage,onCarriage} w szablonie MTD
+// (odwzorowanie opisane w services/documentGeneration.js).
+function MultimodalSection({ multimodal, setMultimodal }) {
+  const { t } = useTranslation('wizard')
+  const legs = multimodal.legs || []
+
+  const updateLeg = (i, patch) =>
+    setMultimodal(m => ({
+      ...m,
+      legs: (m.legs || []).map((leg, idx) => (idx === i ? { ...leg, ...patch } : leg)),
+    }))
+  const addLeg = () =>
+    setMultimodal(m => ({ ...m, legs: [...(m.legs || []), initMultimodalLeg((m.legs || []).length + 1)] }))
+  const removeLeg = (i) =>
+    setMultimodal(m => ({
+      ...m,
+      legs: (m.legs || []).filter((_, idx) => idx !== i).map((leg, idx) => ({ ...leg, order: idx + 1 })),
+    }))
+
+  return (
+    <BranchSection title={t('cargo.multimodal.title')} hint={t('cargo.multimodal.hint')}>
+      <div className="space-y-4 mb-3">
+        {legs.map((leg, i) => (
+          <div key={i} className="border border-gray-200 dark:border-slate-700 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                {t('cargo.multimodal.leg', { order: leg.order ?? i + 1 })}
+              </p>
+              {legs.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeLeg(i)}
+                  aria-label={t('cargo.multimodal.removeLeg')}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <Field label={t('cargo.multimodal.mode')}>
+                <select className={cls.input} value={leg.mode} onChange={e => updateLeg(i, { mode: e.target.value })}>
+                  <option value="">{t('cargo.multimodal.chooseMode')}</option>
+                  {['road', 'sea', 'rail', 'air'].map(m => (
+                    <option key={m} value={m}>{t(`route.modes.${m}.label`)}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label={t('cargo.multimodal.carrier')}>
+                <input className={cls.input} value={leg.carrier} onChange={e => updateLeg(i, { carrier: e.target.value })} />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label={t('cargo.multimodal.from')}>
+                <input className={cls.input} value={leg.from} onChange={e => updateLeg(i, { from: e.target.value })} />
+              </Field>
+              <Field label={t('cargo.multimodal.to')}>
+                <input className={cls.input} value={leg.to} onChange={e => updateLeg(i, { to: e.target.value })} />
+              </Field>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={addLeg}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-lg px-3 py-2 transition-colors"
+      >
+        <Plus className="w-4 h-4" />
+        {t('cargo.multimodal.addLeg')}
+      </button>
+    </BranchSection>
+  )
+}
+
+function Step2({ data, setData, road, setRoad, sea, setSea, rail, setRail, air, setAir, multimodal, setMultimodal, terms, setTerms, transport, fromCountry, toCountry, isAdmin, findMode, onNext, onBack, canNext }) {
   const { t } = useTranslation('wizard')
   const { t: ti } = useTranslation('incoterms')
   const needsTemp = road.vehicleType === 'Chłodnia' || road.vehicleType === 'Mroźnia'
@@ -475,6 +700,21 @@ function Step2({ data, setData, road, setRoad, sea, setSea, terms, setTerms, tra
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Sekcja: Transport Kolejowy ───────────────────────────── */}
+      {transport === 'rail' && (
+        <RailSection rail={rail} setRail={setRail} />
+      )}
+
+      {/* ── Sekcja: Transport Lotniczy ───────────────────────────── */}
+      {transport === 'air' && (
+        <AirSection air={air} setAir={setAir} />
+      )}
+
+      {/* ── Sekcja: Etapy przewozu multimodalnego ────────────────── */}
+      {transport === 'multimodal' && (
+        <MultimodalSection multimodal={multimodal} setMultimodal={setMultimodal} />
       )}
 
       {/* ── Incoterms — na końcu, wymaga już pełnego obrazu przesyłki ───── */}
@@ -760,6 +1000,35 @@ function formatSummaryValue(v, notProvidedLabel) {
   return v
 }
 
+// Ostrzeżenia silnika doboru — do tej pory widoczne wyłącznie w „Pustych
+// szablonach". Po unifikacji kreator liczy ten sam wynik, więc pokazuje je też
+// tutaj. Kolejność: najpierw krytyczne (sankcje, licencje przed wysyłką).
+const SEVERITY_ORDER = { critical: 0, warning: 1, info: 2 }
+const SEVERITY_BOX = { critical: 'error', warning: 'warning', info: 'info' }
+
+function EngineWarnings({ warnings }) {
+  const { t } = useTranslation('wizard')
+  const { i18n } = useTranslation()
+  if (!warnings || warnings.length === 0) return null
+
+  const sorted = [...warnings].sort(
+    (a, b) => (SEVERITY_ORDER[a.severity] ?? 1) - (SEVERITY_ORDER[b.severity] ?? 1)
+  )
+  const worst = sorted[0]?.severity || 'warning'
+
+  return (
+    <div className="mb-6">
+      <AlertBox type={SEVERITY_BOX[worst] || 'warning'} title={t('docs.warningsTitle')}>
+        <ul className="list-disc pl-4 space-y-1 mt-1">
+          {sorted.map((w, i) => (
+            <li key={w.code || i}>{translateEngineWarning(w, i18n.language)}</li>
+          ))}
+        </ul>
+      </AlertBox>
+    </div>
+  )
+}
+
 function Step4({ onBack }) {
   const { t } = useTranslation('wizard')
   const { t: tc } = useTranslation('common')
@@ -769,6 +1038,7 @@ function Step4({ onBack }) {
   const { user } = useAuth()
 
   const docsList = useMemo(() => getDocsForSnapshot(snapshot), [snapshot])
+  const engineWarnings = useMemo(() => getEngineResultForSnapshot(snapshot).warnings, [snapshot])
   const bothEU = computeBothEU(snapshot.route)
   const fromCountry = COUNTRIES.find(c => c.code === snapshot.route.fromCountry)
   const toCountry = COUNTRIES.find(c => c.code === snapshot.route.toCountry)
@@ -811,9 +1081,15 @@ function Step4({ onBack }) {
 
   // ETAP 5 — w trybie edit sygnalizujemy, że dobór dokumentów zmienił się względem
   // oryginału (engine liczony NA NOWO z aktualnego formData, nie z zapisanego).
+  //
+  // ALIAS ID: `originalEngineResult` pochodzi z bazy i przy zestawach sprzed
+  // unifikacji ma stare klucze rejestru kreatora ('cmr'), a `docsList` liczy się
+  // na nowo i ma identyfikatory katalogu ('01_CMR'). Bez przemapowania KAŻDA
+  // edycja starego zestawu pokazywałaby fałszywy alarm „dobór się zmienił".
   const docsChanged = useMemo(() => {
     if (mode !== 'edit' || !originalEngineResult?.docs) return false
-    const sig = (arr) => arr.map(d => `${d.key}:${d.required ? 1 : 0}`).sort().join(',')
+    const sig = (arr) =>
+      arr.map(d => `${toCatalogId(d.key)}:${d.required ? 1 : 0}`).sort().join(',')
     return sig(docsList) !== sig(originalEngineResult.docs)
   }, [mode, originalEngineResult, docsList])
 
@@ -822,14 +1098,14 @@ function Step4({ onBack }) {
   const isComplete = flow.steps.filter(s => s.key !== 'docs').every(s => s.validate(snapshot))
 
   const routeReady = !!(fromCountry && toCountry)
-  const TransportIcon = snapshot.route.transport === 'road' ? Truck : Ship
+  const TransportIcon = TRANSPORT_ICONS[snapshot.route.transport] || Truck
   const weightVal = snapshot.cargo.weight ? `${snapshot.cargo.weight} kg` : ''
   const valueVal = snapshot.cargo.value ? `${snapshot.cargo.value} ${snapshot.cargo.currency}` : ''
 
   const summary = [
     {
       label: t('docs.fields.transportType'),
-      value: snapshot.route.transport === 'road' ? t('docs.values.road') : t('docs.values.sea'),
+      value: t(`docs.values.${snapshot.route.transport}`, { defaultValue: snapshot.route.transport }),
       icon: <TransportIcon className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" strokeWidth={1.75} />,
     },
     {
@@ -901,6 +1177,9 @@ function Step4({ onBack }) {
     namePl: d.name,
     description: d.desc,
     required: d.required,
+    section: d.section,
+    outputMode: d.outputMode,
+    authority: d.authority,
   }))
   const selectionError = selectedDocs.length === 0
     ? t('docs.selectAtLeastOne')
@@ -980,6 +1259,8 @@ function Step4({ onBack }) {
         <ArrowRight className="w-4 h-4 text-emerald-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
       </Link>
 
+      <EngineWarnings warnings={engineWarnings} />
+
       <div className="flex items-center justify-between mb-3">
         <SectionLabel>{t('docs.documents')}</SectionLabel>
         {doneCount > 0 && (
@@ -1015,12 +1296,46 @@ export default function DocumentWizard() {
   const { user } = useAuth()
   const { snapshot, currentStep, maxStepReached, flow, mode, next, prev, goToStep } = wiz
 
-  const setRoute   = (u) => wiz.setStepData('route', u)
-  const setCargo   = (u) => wiz.setStepData('cargo', u)
-  const setParties = (u) => wiz.setStepData('parties', u)
-  const setRoad    = (u) => wiz.setStepData('road', u)
-  const setSea     = (u) => wiz.setStepData('sea', u)
-  const setTerms   = (u) => wiz.setStepData('terms', u)
+  const setRoute      = (u) => wiz.setStepData('route', u)
+  const setCargo      = (u) => wiz.setStepData('cargo', u)
+  const setParties    = (u) => wiz.setStepData('parties', u)
+  const setRoad       = (u) => wiz.setStepData('road', u)
+  const setSea        = (u) => wiz.setStepData('sea', u)
+  const setRail       = (u) => wiz.setStepData('rail', u)
+  const setAir        = (u) => wiz.setStepData('air', u)
+  const setMultimodal = (u) => wiz.setStepData('multimodal', u)
+  const setTerms      = (u) => wiz.setStepData('terms', u)
+
+  // ── Przełączenie gałęzi transportu ──────────────────────────────────────────
+  // Slajs poprzedniej gałęzi jest czyszczony, żeby w migawce audytowej nie został
+  // np. numer kontenera przy przesyłce, która ostatecznie jedzie koleją. Gdy user
+  // zdążył coś w nim wpisać, najpierw pytamy — ciche skasowanie danych byłoby
+  // najgorszym możliwym zachowaniem.
+  const [pendingTransport, setPendingTransport] = useState(null)
+
+  function applyTransportChange(nextMode) {
+    const current = snapshot.route.transport
+    const resetSlice = SLICE_INITIALIZERS[current]
+    if (resetSlice && current !== nextMode) wiz.setStepData(current, resetSlice())
+    setRoute(r => ({
+      ...r,
+      transport: nextMode,
+      // Gałąź „Multimodalny" z definicji jest multimodalna — checkbox znika,
+      // więc flagę ustawiamy tutaj, żeby dobór dokumentów ją widział.
+      multimodal: nextMode === 'multimodal' ? true : r.multimodal,
+    }))
+    setPendingTransport(null)
+  }
+
+  function requestTransportChange(nextMode) {
+    const current = snapshot.route.transport
+    if (nextMode === current) return
+    if (hasBranchData(current, snapshot[current])) {
+      setPendingTransport(nextMode)
+      return
+    }
+    applyTransportChange(nextMode)
+  }
 
   const canNext = wiz.validateStep(currentStep)
   const stepLabels = flow.steps.map(s => t(s.labelKey))
@@ -1048,13 +1363,22 @@ export default function DocumentWizard() {
       <StepBar steps={stepLabels} current={currentStep} maxReached={maxStepReached} onStepClick={goToStep} />
       <StepTransition stepKey={currentStep}>
         {stepKey === 'route' && (
-          <Step1 data={snapshot.route} setData={setRoute} onNext={next} canNext={canNext} />
+          <Step1
+            data={snapshot.route}
+            setData={setRoute}
+            onTransportChange={requestTransportChange}
+            onNext={next}
+            canNext={canNext}
+          />
         )}
         {stepKey === 'cargo' && (
           <Step2
             data={snapshot.cargo} setData={setCargo}
             road={snapshot.road} setRoad={setRoad}
             sea={snapshot.sea} setSea={setSea}
+            rail={snapshot.rail} setRail={setRail}
+            air={snapshot.air} setAir={setAir}
+            multimodal={snapshot.multimodal} setMultimodal={setMultimodal}
             terms={snapshot.terms} setTerms={setTerms}
             transport={snapshot.route.transport}
             fromCountry={snapshot.route.fromCountry}
@@ -1071,6 +1395,23 @@ export default function DocumentWizard() {
         {stepKey === 'quote' && <QuoteStep route={snapshot.route} onNext={next} onBack={prev} />}
         {stepKey === 'docs' && <Step4 onBack={prev} />}
       </StepTransition>
+
+      <ConfirmDialog
+        open={!!pendingTransport}
+        title={t('route.switchTitle')}
+        description={
+          pendingTransport
+            ? t('route.switchBody', {
+                from: t(`route.modes.${snapshot.route.transport}.label`),
+                to: t(`route.modes.${pendingTransport}.label`),
+              })
+            : ''
+        }
+        confirmLabel={t('route.switchConfirm')}
+        destructive
+        onConfirm={() => applyTransportChange(pendingTransport)}
+        onCancel={() => setPendingTransport(null)}
+      />
     </div>
   )
 }

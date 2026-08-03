@@ -19,14 +19,6 @@
   },
   "route": {
     "transportType": "Typ transportu",
-    "road": {
-      "label": "Drogowy",
-      "sub": "TIR, ciężarówka"
-    },
-    "sea": {
-      "label": "Morski",
-      "sub": "Kontener FCL/LCL"
-    },
     "multimodal": {
       "label": "Transport multimodalny",
       "hint": "Towar jedzie kilkoma środkami transportu (np. ciężarówka + statek). Generuje dodatkowy dokument MTD."
@@ -35,7 +27,32 @@
     "to": "Dokąd",
     "country": "Kraj",
     "cityPort": "Miasto / port",
-    "loadDate": "Data załadunku"
+    "loadDate": "Data załadunku",
+    "modes": {
+      "road": {
+        "label": "Drogowy",
+        "sub": "TIR, ciężarówka"
+      },
+      "sea": {
+        "label": "Morski",
+        "sub": "Kontener FCL/LCL"
+      },
+      "rail": {
+        "label": "Kolejowy",
+        "sub": "Wagon, pociąg całodrogowy"
+      },
+      "air": {
+        "label": "Lotniczy",
+        "sub": "Fracht lotniczy"
+      },
+      "multimodal": {
+        "label": "Multimodalny",
+        "sub": "Kilka środków transportu"
+      }
+    },
+    "switchTitle": "Zmienić środek transportu?",
+    "switchBody": "Masz już wypełnione szczegóły dla gałęzi {{from}}. Przejście na {{to}} je wyczyści, bo nie mają zastosowania w nowej gałęzi.",
+    "switchConfirm": "Zmień i wyczyść"
   },
   "cargo": {
     "sectionTitle": "Opis towaru",
@@ -85,6 +102,40 @@
     "incoterms": {
       "title": "Incoterms",
       "hint": "Reguła handlowa określająca podział kosztów i ryzyka między nadawcą a odbiorcą"
+    },
+    "rail": {
+      "title": "Szczegóły kolejowe",
+      "hint": "Stacje i wagony trafiają na kolejowy list przewozowy CIM.",
+      "stationFrom": "Stacja nadania",
+      "stationTo": "Stacja przeznaczenia",
+      "groupConsignment": "Przesyłka grupowa (kilka wagonów na jednym liście)",
+      "wagonNumbers": "Numery wagonów",
+      "noWagons": "Nie dodano jeszcze żadnego wagonu.",
+      "wagonPlaceholder": "np. 31 51 4675 123-4",
+      "addWagon": "Dodaj wagon",
+      "removeWagon": "Usuń wagon"
+    },
+    "air": {
+      "title": "Szczegóły lotnicze",
+      "hint": "Lotniska i waga trafiają na lotniczy list przewozowy (AWB).",
+      "airportFrom": "Lotnisko nadania (IATA)",
+      "airportTo": "Lotnisko przeznaczenia (IATA)",
+      "iataPlaceholder": "np. WAW",
+      "consolidated": "Przesyłka konsolidowana (house AWB)",
+      "knownConsignor": "Znany nadawca (status ochrony lotnictwa)",
+      "chargeableWeight": "Waga taryfowa (kg)"
+    },
+    "multimodal": {
+      "title": "Etapy przewozu",
+      "hint": "Kolejność ma znaczenie: pierwszy etap to dowóz, drugi to przewóz główny, a ostatni to odwóz na dokumencie transportu multimodalnego.",
+      "leg": "Etap {{order}}",
+      "mode": "Środek transportu",
+      "chooseMode": "Wybierz",
+      "carrier": "Przewoźnik",
+      "from": "Skąd",
+      "to": "Dokąd",
+      "addLeg": "Dodaj etap",
+      "removeLeg": "Usuń etap"
     }
   },
   "parties": {
@@ -154,8 +205,12 @@
       "road": "Drogowy (TIR)",
       "sea": "Morski (Kontener)",
       "customsNo": "Nie (ruch wewnątrz UE)",
-      "customsYes": "Tak"
-    }
+      "customsYes": "Tak",
+      "rail": "Kolejowy",
+      "air": "Lotniczy",
+      "multimodal": "Multimodalny"
+    },
+    "warningsTitle": "Sprawdź przed wysyłką"
   },
   "guard": {
     "title": "Niedokończony formularz",

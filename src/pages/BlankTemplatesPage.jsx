@@ -5,6 +5,7 @@ import AlertBox from '../components/ui/AlertBox'
 import DocumentSelectList from '../components/documents/DocumentSelectList'
 import CargoCategoryPicker from '../components/cargo/CargoCategoryPicker'
 import { cargoLabel, engineCategoryFor } from '../data/cargoCategories'
+import { documentCatalog } from '../data/documentCatalog'
 import { getDocuments, getRouteLabel } from '../utils/documentEngine'
 import { downloadBlankZip, hasBlankSource } from '../utils/blankDocuments'
 import { completeSet } from '../services/documentSetsRepo'
@@ -13,12 +14,16 @@ import { translateEngineWarning } from '../utils/translateEngineWarning'
 // ── Opcje formularza ────────────────────────────────────────────────────────────
 
 // Identyfikatory (nie etykiety) — etykiety idą z tłumaczeń.
-const TRANSPORT_MODE_IDS = ['road', 'sea']
+// Pięć gałęzi, które zna documentEngine.js. Do 2026-08-03 strona oferowała tylko
+// road i sea, przez co reguły kolejowe i lotnicze silnika były nieosiągalne
+// z interfejsu w ogóle — mimo że istniały i były pokryte katalogiem.
+const TRANSPORT_MODE_IDS = ['road', 'sea', 'air', 'rail', 'multimodal']
 const FLAG_KEYS = ['woodenPackaging', 'temporaryExport', 'transhipment', 'reExport']
 
 // ── Ikony ───────────────────────────────────────────────────────────────────────
 
-// Ikona środka transportu (kolor dziedziczy z przycisku przez currentColor)
+// Ikona środka transportu. Ta strona konsekwentnie trzyma się inline SVG
+// (jak FreightRates/TradeRoutesPage), więc nie sięgamy tu po lucide-react.
 function ModeIcon({ id }) {
   const paths = {
     road: (
@@ -34,6 +39,28 @@ function ModeIcon({ id }) {
         <path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.2.5 4.3 1.62 6" />
         <path d="M12 10V2" />
         <path d="M12 2H9" />
+      </>
+    ),
+    air: (
+      <>
+        <path d="M17.8 19.2 16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2a.5.5 0 0 0-.5.8l3.9 4.2-2.2 2.2-1.9-.4a.5.5 0 0 0-.5.8L5 16l1.2 1.4a.5.5 0 0 0 .8-.1l-.4-1.9 2.2-2.2 4.2 3.9a.5.5 0 0 0 .8-.5Z" />
+      </>
+    ),
+    rail: (
+      <>
+        <rect x="5" y="3" width="14" height="13" rx="2" />
+        <path d="M9 16 7 21" />
+        <path d="M15 16l2 5" />
+        <path d="M5 10h14" />
+        <path d="M8 6.5h.01" />
+        <path d="M16 6.5h.01" />
+      </>
+    ),
+    multimodal: (
+      <>
+        <circle cx="6" cy="19" r="3" />
+        <path d="M9 19h5a3 3 0 0 0 3-3V8a3 3 0 0 1 3-3" />
+        <circle cx="18" cy="5" r="3" />
       </>
     ),
   }
@@ -79,17 +106,33 @@ export default function BlankTemplatesPage() {
   // zaznaczaniu zbiorczym, więc niedostępne dokumenty tu nie trafiają.
   const selectListDocs = useMemo(() => {
     if (!result) return []
-    const toDoc = (d, required) => ({ id: d.id, namePl: d.name_pl, nameEn: d.name_en, required })
-    const req = result.required.filter(d => d.available && hasBlankSource(d.id)).map(d => toDoc(d, true))
-    const cond = result.conditional.filter(d => d.available && hasBlankSource(d.id)).map(d => toDoc(d, false))
-    return [...req, ...cond]
+    const toDoc = (d, section) => ({
+      id: d.id,
+      namePl: d.name_pl,
+      nameEn: d.name_en,
+      required: section === 'required',
+      section,
+      outputMode: d.outputMode,
+      authority: documentCatalog[d.id]?.authority || null,
+    })
+    const pick = (list, section) =>
+      list.filter(d => d.available && hasBlankSource(d.id)).map(d => toDoc(d, section))
+    // Ta strona z definicji serwuje puste formularze, więc `blanks` z silnika
+    // trafiają do sekcji „Do wypełnienia ręcznie" razem z resztą — istotne jest
+    // to, KTO je wystawia, a nie że są puste.
+    return [
+      ...pick(result.required, 'required'),
+      ...pick(result.conditional, 'optional'),
+      ...pick(result.blanks, 'manual'),
+    ]
   }, [result])
 
   // Zapis do historii dokumentów — jeden wpis (kind:'blank') na każde kliknięcie
   // „Generuj dokumenty", ten sam mechanizm co completeSet w kroku 4 kreatora.
   // Best-effort: błąd zapisu (np. brak miejsca) nie może zablokować pokazania wyników.
   async function saveToHistory(res) {
-    const downloadable = [...res.required, ...res.conditional].filter(d => d.available && hasBlankSource(d.id))
+    const downloadable = [...res.required, ...res.conditional, ...res.blanks]
+      .filter(d => d.available && hasBlankSource(d.id))
     if (downloadable.length === 0) return
     try {
       await completeSet({
@@ -122,9 +165,14 @@ export default function BlankTemplatesPage() {
   }
 
   function handleGenerate() {
-    const res = getDocuments(origin, destination, mode, engineCategory, flags)
+    // includeMetadata: ta strona potrzebuje `blanks` i `outputMode`, żeby pokazać
+    // KTO wystawia dokument. Ostrzeżenia są wtedy obiektami z kodem — tłumaczy je
+    // ta sama funkcja co dotąd (przyjmuje oba kształty).
+    const res = getDocuments(origin, destination, mode, engineCategory, flags, { includeMetadata: true })
     setResult(res)
     // ETAP 3 — domyślnie zaznaczone: wszystkie dokumenty z required=true.
+    // Domyślnie zaznaczone tylko wymagane — sekcja „Do wypełnienia ręcznie" bywa
+    // na trasach poza UE dłuższa niż dwie pozostałe razem wzięte.
     const req = res.required.filter(d => d.available && hasBlankSource(d.id))
     setSelectedIds(new Set(req.map(d => d.id)))
     saveToHistory(res)

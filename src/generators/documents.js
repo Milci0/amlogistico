@@ -82,7 +82,17 @@ export const DOCUMENTS = [
   },
 ]
 
-// Lista dokumentów dla danej trasy i statusu UE (1:1 z poprzednią logiką wizardu).
+/**
+ * @deprecated Od 2026-08-03 dobór dokumentów robi WYŁĄCZNIE
+ * `src/utils/documentEngine.js` (7 warstw, 120 dokumentów, 5 gałęzi transportu),
+ * wołany przez `getDocsForSnapshot` w `src/services/documentGeneration.js`.
+ * Ta funkcja nie ma już żadnego wywołania w aplikacji — zostaje wyłącznie jako
+ * punkt odniesienia do raportu rozbieżności (docs/silnik_diff.md) i do usunięcia
+ * po jego akceptacji. NIE dodawaj tu nowych reguł.
+ *
+ * Sam rejestr DOCUMENTS zostaje na stałe: niesie ręcznie napisane opisy i nazwy
+ * plików dziewięciu dokumentów kreatora, z których korzysta nowa ścieżka.
+ */
 export function getDocsList(transport, bothEU, multimodal = false) {
   const ctx = { bothEU, multimodal }
   return DOCUMENTS

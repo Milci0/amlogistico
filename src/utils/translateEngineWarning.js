@@ -1,18 +1,23 @@
 // Tłumaczenie ostrzeżeń zwracanych przez utils/documentEngine.js.
 //
-// Silnik doboru dokumentów jest CELOWO nietknięty: zwraca gotowe polskie zdania
-// (a nie klucze i18n), bo jego wynik trafia też do `engineResult.warnings`
-// zapisywanego w bazie razem z zestawem z „Pustych szablonów”. Zmiana kształtu
-// tej struktury zmieniłaby dane historyczne, więc tłumaczymy dopiero na wyjściu,
-// przy renderze.
-//
-// Dwie ścieżki dopasowania:
+// TRZY ścieżki, w tej kolejności:
+//  0. KOD — od ETAPU 2.1 silnik w trybie `includeMetadata` zwraca ostrzeżenia jako
+//     obiekty { code, severity, message, params }. Kod jest stabilny, więc tłumaczenie
+//     idzie prosto z i18n (`errors:engineWarnings.<code>`) razem z interpolacją
+//     zmiennych. To jedyna ścieżka, która działa też dla polskiego.
 //  1. EXACT — zdania stałe, dopasowanie 1:1 po treści.
 //  2. PATTERNS — zdania sklejane w silniku z kodem kraju lub listą krajów;
 //     wyrażenie regularne wyciąga zmienną część i wstawia ją do wersji angielskiej.
 //
+// Ścieżki 1 i 2 ZOSTAJĄ i nie wolno ich usunąć: `engineResult.warnings` zapisane
+// w bazie przed ETAPEM 2.1 to zwykłe STRINGI po polsku i muszą się dalej otwierać.
+// Wywołanie z takim stringiem nie może rzucić — patrz test w
+// src/utils/__tests__/translateEngineWarning.test.js.
+//
 // Brak dopasowania = zwracamy oryginał. Jeśli tekst w silniku się zmieni,
 // użytkownik anglojęzyczny zobaczy zdanie po polsku (degradacja, nie awaria).
+
+import i18n from '../i18n'
 
 const EXACT = {
   'ISF 10+2 musi być złożony minimum 24h przed załadunkiem na statek w porcie wyjścia.':
@@ -101,7 +106,8 @@ const PATTERNS = [
   },
 ]
 
-export function translateEngineWarning(text, language) {
+// Stara ścieżka: gotowe polskie zdanie ze starego rekordu albo z silnika bez metadanych.
+function translateLegacyText(text, language) {
   if (!text || !language || !language.startsWith('en')) return text
 
   const exact = EXACT[text]
@@ -113,4 +119,35 @@ export function translateEngineWarning(text, language) {
   }
 
   return text
+}
+
+/**
+ * @param {string|{code?:string,message?:string,params?:object}} warning
+ *        String = stary kształt (rekordy sprzed ETAPU 2.1, silnik bez includeMetadata).
+ *        Obiekt = nowy kształt z kodem.
+ * @param {string} language - i18n.language ('en', 'pl', 'en-GB'...)
+ */
+export function translateEngineWarning(warning, language) {
+  // Stary kształt — bez zmian, żeby zapisane rekordy renderowały się jak dotąd.
+  if (typeof warning === 'string') return translateLegacyText(warning, language)
+
+  // Cokolwiek innego niż obiekt (null, undefined, liczba) → pusty tekst zamiast rzutu.
+  if (!warning || typeof warning !== 'object') return ''
+
+  const { code, message, params } = warning
+
+  if (code) {
+    const lng = String(language || '').startsWith('pl') ? 'pl' : 'en'
+    const translated = i18n.t(`engineWarnings.${code}`, {
+      ns: 'errors',
+      lng,
+      defaultValue: '',
+      ...(params || {}),
+    })
+    if (translated) return translated
+  }
+
+  // Nieznany kod (np. rekord z nowszej wersji silnika) → zdanie źródłowe,
+  // przepuszczone jeszcze przez stare dopasowania.
+  return translateLegacyText(typeof message === 'string' ? message : '', language)
 }

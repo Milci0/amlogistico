@@ -657,7 +657,90 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   - Skrypt kontrolny wychwycił dwa realne błędy: `TradeRoutesPage` i `TrackingPage` używały `t()`
     bez wywołania hooka (strony wywaliłyby się w czasie działania) — poprawione.
 
+- **Unifikacja silnika doboru dokumentów — GOTOWE (2026-08-03):** kreator przestał mieć własny,
+  9-dokumentowy rejestr; liczy ten sam wynik co „Puste szablony". Zero zmian w `documentSetsRepo.js`
+  i `api/_routes/documentSets.js` (migawka audytowa nietknięta).
+  - **Metadane w `documentCatalog.js`** (120 wpisów × 9 nowych pól): `transportModes`, `issuerType`
+    (11 wartości), `outputMode` (`final`/`draft`/`blank_only`), `legalBasis`, `authority`,
+    `validFrom`/`validTo`, `blockingIfMissing`, `category`. Rozkład: 90 `blank_only`, 16 `draft`,
+    14 `final`. `category` wyprowadzona z `TEMPLATE_CATALOG` przez `blankTemplateMap` (120/120,
+    zero sierot); jedno nadpisanie: `22_China_Import` → `celne_import`. **49 podstaw prawnych
+    ustalonych, 71 `null`** — rozpisane w `docs/legalbasis_do_uzupelnienia.md` z podziałem na
+    „podstawa nie istnieje" (20, zostaje `null`) i „istnieje, niezweryfikowana" (51).
+  - **`getDocuments(..., options)`** — szósty argument `{ referenceDate, includeMetadata }`.
+    BEZ niego wynik jest identyczny jak przed zmianą (potwierdzone porównaniem starej i nowej
+    wersji silnika na **1 188 000 kombinacji**: 45 krajów × 45 × 5 gałęzi × 12 kategorii × 10
+    zestawów flag, zero niewyjaśnionych różnic). Z nim: `{ required, conditional, blanks, warnings }`,
+    wpisy z `layer`/`reason`/`condition`/`outputMode`/`issuerType`/`blocking`, ostrzeżenia jako
+    obiekty `{code, severity, message, params}`. `blank_only` **przenosi się** do `blanks`.
+  - **26 kodów ostrzeżeń** + klucze i18n w `errors:engineWarnings.*`. `translateEngineWarning`
+    ma trzy ścieżki: kod → EXACT → PATTERNS → oryginał; regexy ZOSTAJĄ (stare rekordy to stringi).
+    Zysk: ostrzeżenia mają wreszcie tłumaczenie **polskie** (stara ścieżka tłumaczyła tylko na EN).
+  - **`PREFERENTIAL_ORIGIN_MAP`** (PEM / CUSTOMS_UNION / REX_SELF_CERT) jako jedyne źródło prawdy —
+    `GROUPS.EUR1_APPLICABLE`/`REX_FTA`/`EUR_MED` są jego aliasami. **MX i CL celowo NIE dodane**
+    do REX (do potwierdzenia u źródła). Turcja: kategorie rolne → EUR.1, przemysłowe → ostrzeżenie
+    o A.TR (brak szablonu). Tranzyt rozszerzony na kolej: T1/T2 tak, karnet TIR nie (jest drogowy).
+    Bramka czasowa `validFrom`/`validTo` sterowana katalogiem (dziś wszystkie `null`).
+  - **`src/data/documentIdAliases.js`** — most `cmr` ↔ `01_CMR` (9 pozycji). Wołany w TRZECH
+    miejscach: `generateDocuments` (filtr po `selectedDocs` — tędy idą OBIE ścieżki pobierania
+    z Historii), `Step4.docsChanged` (porównanie z `originalEngineResult` w trybie edit),
+    oraz `findUnresolvedDocIds` (nowa funkcja: puste pobranie przestało być ciche —
+    `generateDocuments` zwracało `{failed: []}`, więc UI pokazywał sukces po pobraniu zera plików).
+  - **`src/generators/draftBanner.jsx`** — nagłówek jako funkcja **(outputMode, issuerType)**:
+    `customs_authority`/`chamber_of_commerce`/`government_agency` → „WERSJA ROBOCZA — do złożenia
+    w: {authority}", `carrier` → „PROJEKT — do zatwierdzenia przez przewoźnika". Słownik
+    `outputMode` zostaje trzywartościowy. B/L, Sea Waybill, AWB, CIM i MTD są `draft` — „draft B/L"
+    to realny artefakt spedycyjny, nie niedokończony produkt.
+  - **`DocumentSelectList`** — trzecia sekcja „Do wypełnienia ręcznie" z nagłówkiem wyjaśniającym
+    powód (90/120 pozycji to formularze obcych urzędów), badge `Projekt`/`Pusty formularz`
+    i linijka „Wystawia: …". Sekcja opcjonalna (pole `section`), wywołujący bez niej działa jak dotąd.
+  - **Pięć gałęzi transportu w kreatorze** (`Truck`/`Ship`/`Train`/`Plane`/`Route`): nowe slajsy
+    `initRail`/`initAir`/`initMultimodal` w `wizardState.js`, sekcje warunkowe w kroku „Towar",
+    przełączenie gałęzi czyści slajs poprzedniej przez `ConfirmDialog` (tylko gdy są dane).
+    Etapy multimodalne zasilają ISTNIEJĄCĄ strukturę `data.carrierLegs.{pre,main,on}Carriage`
+    (1 etap → main, 2 → pre+main, 3+ → pierwszy/drugi/ostatni). `BlankTemplatesPage` też ma teraz
+    pięć gałęzi — kolej i lot były dotąd nieosiągalne z UI **nigdzie w aplikacji**.
+  - **`normalizeSnapshot()`** w `wizardState.js` — scala zapisaną migawkę na pusty szkielet.
+    Bez niej otwarcie starego zestawu i „Pobierz" w Historii rzucałyby na `snapshot.rail`.
+    Wpięta w `WizardProvider` i `buildGeneratorData`.
+  - **`FO` (Wyspy Owcze)** dodane do `COUNTRIES` — jedyny kod używany przez silnik, którego nie
+    dało się wybrać. Ostrzeżenie z tego pliku o „33 krajach niewybieralnych" było NIEAKTUALNE
+    (lista ma 199 pozycji od czasu prac nad i18n).
+  - **Vitest** (`npm test` / `npm run test:watch`, blok `test` w `vite.config.js`, środowisko node).
+    **208 testów w 8 plikach**: macierz 64 tras, testy strukturalne katalogu, audyt flag
+    formularza, alias id, normalizacja migawek, bramka czasowa, wsteczna zgodność.
+  - **Dwa realne błędy wyłapane, nie wymyślone:**
+    1. **E2E na produkcyjnej bazie (40 zestawów)** — 7 zestawów przestałoby się pobierać.
+       Checkbox „Transport multimodalny" istniał wyłącznie w rejestrze kreatora i nigdy nie był
+       wpięty w silnik. Teraz MTD dochodzi OBOK listu przewozowego gałęzi. Po poprawce
+       **0 nierozwiązanych dokumentów na wszystkich 40 zestawach** (21 ma stare id).
+    2. **Test strukturalny** — ISF 10+2 był dokładany przy każdym imporcie do USA, także
+       lotniczym. ISF (19 CFR 149) obejmuje wyłącznie fracht morski. Teraz: `sea` wymagany,
+       `multimodal` warunkowy, reszta brak.
+  - **Audyt flag** (na życzenie): sprawdzone `adr`, `containerized`, `consolidated`,
+    `groupConsignment`, `transitNonEU`. Znaleziono JEDEN przypadek tej samej pułapki — **ADR**
+    sterował doborem z warstwy adaptera migawki (`documentGeneration.js`), więc „Puste szablony"
+    liczyły inaczej niż kreator. Przeniesione do silnika jako `flags.adr`. `consolidated`
+    i `groupConsignment` nie wpływają na dobór (test to utrwala), `containerized` nie istnieje.
+    **Uwaga:** `woodenPackaging`/`temporaryExport`/`transhipment`/`reExport`/`transitNonEU`
+    czytane są z pól, których NIE MA w migawce kreatora — działają tylko z „Pustych szablonów".
+  - **`docs/silnik_diff.md`** — raport rozbieżności na 30 trasach (+103 dokumenty, −29),
+    generowany z kodu, z opisem zmian świadomych. `getDocsList` oznaczone `@deprecated`,
+    zero wywołań; rejestr `DOCUMENTS` zostaje (opisy i nazwy plików 9 dokumentów kreatora).
+  - **`docs/pl_hardcoded_w_pdf.md`** — inwentarz polskiego tekstu w PDF. Kluczowe: **43 ze 118
+    szablonów ignoruje `data.language`, w tym WSZYSTKIE 9 używanych przez kreator**, więc
+    preferencja „język dokumentów = EN" nie wpłynęłaby dziś na nic, co kreator generuje.
+  - **NIE zweryfikowane interaktywnie w przeglądarce** — build, 208 testów i E2E na bazie
+    (warstwa danych) są zielone, ale kliknięcia w UI nie były sprawdzane.
+
 **Do zrobienia:**
+- Interaktywny test kreatora w przeglądarce po unifikacji (5 gałęzi × obie ścieżki, sekcja
+  „Do wypełnienia ręcznie", nagłówek PROJEKT na B/L, pobieranie starego zestawu z Historii)
+- Uzupełnić 51 podstaw prawnych z `docs/legalbasis_do_uzupelnienia.md` (kodeksy celne państw trzecich)
+- Szablon A.TR (świadectwo unii celnej UE-TR) — dziś tylko ostrzeżenie, brak PDF i JSX
+- Pola `woodenPackaging`/`temporaryExport`/`transhipment`/`reExport`/`transitNonEU` w kreatorze —
+  silnik je obsługuje, ale migawka nie ma tych pól (działają tylko z „Pustych szablonów")
+- Usunąć `getDocsList` po akceptacji `docs/silnik_diff.md`
 - Ubezpieczenia: integracja z ubezpieczycielem po podpisaniu umowy (endpointy, tabele
   `insurance_policies`/`insurance_claims`, realny zakup i certyfikat PDF)
 - Panel abonamentu (integracja ze Stripe)
