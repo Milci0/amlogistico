@@ -41,7 +41,7 @@ export function CeDeclarationOfConformityTemplate({ data }) {
 
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>CE — DECLARATION OF CONFORMITY</div>
-        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>{isEn ? 'EU DoC — required for products placed on the EU market' : 'Deklaracja Zgodności CE · EU DoC · wymagana dla produktów na rynek UE'}</div>
+        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>{isEn ? 'EU DoC — required for products placed on the EU market' : 'Deklaracja Zgodności CE · EU DoC · wymagana dla produktów na rynek UE / EU DoC — required for products placed on the EU market'}</div>
         <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>
           {isEn
             ? 'Applies to: electronics, machinery, medical devices, toys, PPE and others'
@@ -55,7 +55,7 @@ export function CeDeclarationOfConformityTemplate({ data }) {
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Address:' : 'Adres:'}</div>
+          <div style={lbl}>{isEn ? 'Address:' : 'Adres / Address:'}</div>
           <div style={val}>{data.sender?.address || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
@@ -66,11 +66,11 @@ export function CeDeclarationOfConformityTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'EU Authorised Representative:' : 'Przedstawiciel w UE / EU Authorised Rep.:'}</div>
+          <div style={lbl}>{isEn ? 'EU Authorised Representative:' : 'Przedstawiciel w UE / EU Authorised Rep. / EU Authorised Representative:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Address:' : 'Adres:'}</div>
+          <div style={lbl}>{isEn ? 'Address:' : 'Adres / Address:'}</div>
           <div style={val} />
         </div>
       </div>
@@ -85,11 +85,11 @@ export function CeDeclarationOfConformityTemplate({ data }) {
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Serial No.:' : 'Nr seryjny:'}</div>
+          <div style={lbl}>{isEn ? 'Serial No.:' : 'Nr seryjny / Serial No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Year of manufacture:' : 'Rok produkcji:'}</div>
+          <div style={lbl}>{isEn ? 'Year of manufacture:' : 'Rok produkcji / Year of manufacture:'}</div>
           <div style={val} />
         </div>
       </div>
@@ -101,7 +101,7 @@ export function CeDeclarationOfConformityTemplate({ data }) {
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
         <div style={{ ...thStyle, width: '90px' }}>{isEn ? 'Regulation No.' : 'Dyrektywa / Regulation No.'}</div>
         <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Title' : 'Tytuł / Title'}</div>
-        <div style={{ ...thStyle, width: '60px', borderRight: b }}>{isEn ? 'Applicable' : 'Zastosowana'}</div>
+        <div style={{ ...thStyle, width: '60px', borderRight: b }}>{isEn ? 'Applicable' : 'Zastosowana / Applicable'}</div>
       </div>
       {directives.map(([reg, title], i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '20px' }}>
@@ -117,35 +117,35 @@ export function CeDeclarationOfConformityTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Standard No.:' : 'Nr normy:'}</div>
+          <div style={lbl}>{isEn ? 'Standard No.:' : 'Nr normy / Standard No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Title:' : 'Tytuł:'}</div>
+          <div style={lbl}>{isEn ? 'Title:' : 'Tytuł / Title:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Standard date:' : 'Data normy:'}</div>
+          <div style={lbl}>{isEn ? 'Standard date:' : 'Data normy / Standard date:'}</div>
           <div style={val} />
         </div>
       </div>
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Standard No.:' : 'Nr normy:'}</div>
+          <div style={lbl}>{isEn ? 'Standard No.:' : 'Nr normy / Standard No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Title:' : 'Tytuł:'}</div>
+          <div style={lbl}>{isEn ? 'Title:' : 'Tytuł / Title:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Standard date:' : 'Data normy:'}</div>
+          <div style={lbl}>{isEn ? 'Standard date:' : 'Data normy / Standard date:'}</div>
           <div style={val} />
         </div>
       </div>
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Notified Body (if applicable):' : 'Jednostka notyfikowana / Notified Body (jeśli):'}</div>
+          <div style={lbl}>{isEn ? 'Notified Body (if applicable):' : 'Jednostka notyfikowana / Notified Body (jeśli) / Notified Body (if applicable):'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
@@ -153,7 +153,7 @@ export function CeDeclarationOfConformityTemplate({ data }) {
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'NB Certificate No.:' : 'Nr certyfikatu NB:'}</div>
+          <div style={lbl}>{isEn ? 'NB Certificate No.:' : 'Nr certyfikatu NB / NB Certificate No.:'}</div>
           <div style={val} />
         </div>
       </div>
@@ -162,7 +162,7 @@ export function CeDeclarationOfConformityTemplate({ data }) {
         <span style={{ fontSize: '6.5px', color: '#555' }}>
           {isEn
             ? "I hereby declare under my sole responsibility that the product described above is in conformity with the provisions of the directives and standards listed above."
-            : 'Niniejszym oświadczam na własną odpowiedzialność, że opisany wyżej produkt jest zgodny z postanowieniami wymienionych dyrektyw i norm.'}
+            : "Niniejszym oświadczam na własną odpowiedzialność, że opisany wyżej produkt jest zgodny z postanowieniami wymienionych dyrektyw i norm. I hereby declare under my sole responsibility that the product described above is in conformity with the provisions of the directives and standards listed above."}
         </span>
       </div>
 
@@ -170,18 +170,18 @@ export function CeDeclarationOfConformityTemplate({ data }) {
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Manufacturer</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>{isEn ? 'Title' : 'Funkcja / Title'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>{isEn ? 'Place & date' : 'Miejsce i data / Place & date'}</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
       </div>
 

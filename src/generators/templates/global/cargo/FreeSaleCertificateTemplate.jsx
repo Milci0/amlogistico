@@ -34,53 +34,53 @@ export function FreeSaleCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Certificate No.:' : 'Nr zaświadczenia:'}</div>
+          <div style={lbl}>{isEn ? 'Certificate No.:' : 'Nr zaświadczenia / Certificate No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Date:' : 'Data:'}</div>
+          <div style={lbl}>{isEn ? 'Date:' : 'Data / Date:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Issuing authority:' : 'Organ wystawiający:'}</div>
+          <div style={lbl}>{isEn ? 'Issuing authority:' : 'Organ wystawiający / Issuing authority:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Manufacturer (name, address):' : 'Producent (nazwa, adres):'}</div>
+          <div style={lbl}>{isEn ? 'Manufacturer (name, address):' : 'Producent (nazwa, adres) / Manufacturer (name, address):'}</div>
           <div style={val}>{data.sender?.name}, {data.sender?.address}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Establishment No.:' : 'Nr zakładu:'}</div>
+          <div style={lbl}>{isEn ? 'Establishment No.:' : 'Nr zakładu / Establishment No.:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Country of export:' : 'Kraj eksportu:'}</div>
+          <div style={lbl}>{isEn ? 'Country of export:' : 'Kraj eksportu / Country of export:'}</div>
           <div style={val}>{data.fromCountry || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Country of destination:' : 'Kraj przeznaczenia:'}</div>
+          <div style={lbl}>{isEn ? 'Country of destination:' : 'Kraj przeznaczenia / Country of destination:'}</div>
           <div style={val}>{data.toCountry || ''}</div>
         </div>
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'PRODUCT DESCRIPTION' : 'OPIS PRODUKTU'}</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'PRODUCT DESCRIPTION' : 'OPIS PRODUKTU / PRODUCT DESCRIPTION'}</span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '25px' }}>{isEn ? 'No.' : 'Lp.'}</div>
-        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Product name' : 'Nazwa produktu'}</div>
-        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Brand name' : 'Nazwa handlowa'}</div>
+        <div style={{ ...thStyle, width: '25px' }}>{isEn ? 'No.' : 'Lp / No.'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Product name' : 'Nazwa produktu / Product name'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Brand name' : 'Nazwa handlowa / Brand name'}</div>
         <div style={{ ...thStyle, width: '70px' }}>{isEn ? 'Form' : 'Forma'}</div>
-        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Registration No.' : 'Nr rejestracji'}</div>
-        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Marketing Auth. No.' : 'Nr pozwolenia'}</div>
-        <div style={{ ...thStyle, width: '90px', borderRight: b }}>{isEn ? 'MA expiry date' : 'Data ważności pozw.'}</div>
+        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Registration No.' : 'Nr rejestracji / Registration No.'}</div>
+        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Marketing Auth. No.' : 'Nr pozwolenia / Marketing Auth. No.'}</div>
+        <div style={{ ...thStyle, width: '90px', borderRight: b }}>{isEn ? 'MA expiry date' : 'Data ważności pozw. / MA expiry date'}</div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, minHeight: '20px' }}>
@@ -103,27 +103,27 @@ export function FreeSaleCertificateTemplate({ data }) {
           {isEn ? (
             <><strong>ISSUING AUTHORITY DECLARATION:</strong> This is to certify that the above products are legally manufactured and marketed in the country of export in accordance with applicable laws and regulations, are not subject to any sales restrictions, and may be exported to other countries.</>
           ) : (
-            <><strong>OŚWIADCZENIE ORGANU WYSTAWIAJĄCEGO:</strong> Niniejszym zaświadcza się, że wyżej wymienione produkty są legalnie wytwarzane i wprowadzane do obrotu w kraju eksportu zgodnie z obowiązującymi przepisami prawa, nie są objęte żadnymi ograniczeniami sprzedaży, i mogą być eksportowane do innych krajów.</>
+            <><strong>OŚWIADCZENIE ORGANU WYSTAWIAJĄCEGO:</strong> Niniejszym zaświadcza się, że wyżej wymienione produkty są legalnie wytwarzane i wprowadzane do obrotu w kraju eksportu zgodnie z obowiązującymi przepisami prawa, nie są objęte żadnymi ograniczeniami sprzedaży, i mogą być eksportowane do innych krajów. <strong>ISSUING AUTHORITY DECLARATION:</strong> This is to certify that the above products are legally manufactured and marketed in the country of export in accordance with applicable laws and regulations, are not subject to any sales restrictions, and may be exported to other countries.</>
           )}
         </span>
       </div>
 
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>{isEn ? 'Issuing authority (GIF/URPL/MZ — Poland)' : 'Organ wystawiający (GIF/URPL/MZ — Polska)'}</div>
+          <div style={lbl}>{isEn ? 'Issuing authority (GIF/URPL/MZ — Poland)' : 'Organ wystawiający (GIF/URPL/MZ — Polska) / Issuing authority (GIF/URPL/MZ — Poland)'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>{isEn ? 'Authorized officer' : 'Upoważniony pracownik'}</div>
+          <div style={lbl}>{isEn ? 'Authorized officer' : 'Upoważniony pracownik / Authorized officer'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date + Official Stamp</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
       </div>
 

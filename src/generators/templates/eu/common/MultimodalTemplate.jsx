@@ -25,22 +25,22 @@ export function MultimodalTemplate({ data }) {
       {/* NAGŁÓWEK */}
       <div style={{ border: b, backgroundColor: PURPLE, padding: '8px 12px' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>MULTIMODAL TRANSPORT DOCUMENT</div>
-        <div style={{ fontSize: '8px', color: '#d0b8f0', marginTop: '2px' }}>Dokument Transportu Multimodalnego · Combined Transport B/L</div>
+        <div style={{ fontSize: '8px', color: '#d0b8f0', marginTop: '2px' }}>Combined Transport B/L</div>
         <div style={{ fontSize: '7px', color: '#ffe080', marginTop: '2px' }}>
-          Stosowany gdy towar jedzie kilkoma środkami transportu (np. ciężarówka + statek + pociąg). Jeden dokument obejmuje całą trasę.
+          Used when cargo moves by more than one mode of transport (e.g. truck + vessel + rail). One document covers the entire route.
         </div>
       </div>
 
       {/* SHIPPER | CONSIGNEE */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '45px' }}>
-          <div style={lbl}>Shipper / Nadawca:</div>
+          <div style={lbl}>Shipper:</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
           <div style={val}>{data.sender?.address}</div>
           <div style={val}>{data.sender?.country}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '45px' }}>
-          <div style={lbl}>Consignee / Odbiorca:</div>
+          <div style={lbl}>Consignee:</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
           <div style={val}>{data.receiver?.address}</div>
           <div style={val}>{data.receiver?.country}</div>
@@ -61,19 +61,19 @@ export function MultimodalTemplate({ data }) {
 
       {/* SEKCJA: TRASA */}
       <div style={{ backgroundColor: '#2c5fa8', borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>TRASA TRANSPORTU / TRANSPORT ROUTE</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>TRANSPORT ROUTE</span>
       </div>
 
       {/* TABELA TRASY - NAGŁÓWEK */}
       <div style={{ display: 'flex', borderLeft: b }}>
-        <div style={{ ...thBlue, width: '140px' }}>Etap / Leg</div>
-        <div style={{ ...thBlue, flex: 1 }}>Środek transportu / Mode</div>
-        <div style={{ ...thBlue, flex: 1 }}>Miejsce przejęcia / Place of receipt</div>
-        <div style={{ ...thBlue, flex: 1 }}>Port/stacja załadunku / POL</div>
-        <div style={{ ...thBlue, flex: 1 }}>Port/stacja rozładunku / POD</div>
-        <div style={{ ...thBlue, flex: 1 }}>Miejsce dostawy / Place of delivery</div>
-        <div style={{ ...thBlue, flex: 1 }}>Przewoźnik / Carrier</div>
-        <div style={{ ...thBlue, width: '80px', borderRight: b }}>Szacowany czas</div>
+        <div style={{ ...thBlue, width: '140px' }}>Leg</div>
+        <div style={{ ...thBlue, flex: 1 }}>Mode</div>
+        <div style={{ ...thBlue, flex: 1 }}>Place of Receipt</div>
+        <div style={{ ...thBlue, flex: 1 }}>POL</div>
+        <div style={{ ...thBlue, flex: 1 }}>POD</div>
+        <div style={{ ...thBlue, flex: 1 }}>Place of Delivery</div>
+        <div style={{ ...thBlue, flex: 1 }}>Carrier</div>
+        <div style={{ ...thBlue, width: '80px', borderRight: b }}>Estimated Time</div>
       </div>
 
       {/* WIERSZ 1: PRE-CARRIAGE */}
@@ -114,13 +114,13 @@ export function MultimodalTemplate({ data }) {
 
       {/* TABELA ŁADUNKU NAGŁÓWEK */}
       <div style={{ display: 'flex', borderLeft: b, marginTop: '0' }}>
-        <div style={{ ...thBlue, width: '30px' }}>Lp.<br />No.</div>
-        <div style={{ ...thBlue, flex: 1 }}>Opis towaru / Description</div>
-        <div style={{ ...thBlue, width: '65px' }}>Kod HS<br />HS Code</div>
-        <div style={{ ...thBlue, width: '50px' }}>Ilość<br />Qty</div>
-        <div style={{ ...thBlue, width: '45px' }}>Jedn.<br />Unit</div>
-        <div style={{ ...thBlue, width: '70px' }}>Waga (kg)<br />Weight</div>
-        <div style={{ ...thBlue, width: '80px', borderRight: b }}>Wartość<br />Value</div>
+        <div style={{ ...thBlue, width: '30px' }}>No.</div>
+        <div style={{ ...thBlue, flex: 1 }}>Description</div>
+        <div style={{ ...thBlue, width: '65px' }}>HS Code</div>
+        <div style={{ ...thBlue, width: '50px' }}>Qty</div>
+        <div style={{ ...thBlue, width: '45px' }}>Unit</div>
+        <div style={{ ...thBlue, width: '70px' }}>Weight (kg)</div>
+        <div style={{ ...thBlue, width: '80px', borderRight: b }}>Value</div>
       </div>
 
       {/* Wiersz z danymi */}
@@ -129,7 +129,7 @@ export function MultimodalTemplate({ data }) {
         <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.name}</div>
         <div style={{ width: '65px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.hsCode}</div>
         <div style={{ width: '50px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packages}</div>
-        <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packageTypeUnCode || 'szt.'}</div>
+        <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packageTypeUnCode || 'pcs'}</div>
         <div style={{ width: '70px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.weight}</div>
         <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'right' }}>{data.cargo?.value} {data.cargo?.currency}</div>
       </div>
@@ -163,19 +163,19 @@ export function MultimodalTemplate({ data }) {
           <div style={lbl}>MTO / Operator</div>
           <div style={{ fontSize: '9px', marginTop: '2px' }}>{data.carrier?.name}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Shipper / Nadawca</div>
+          <div style={lbl}>Shipper</div>
           <div style={{ fontSize: '9px', marginTop: '2px' }}>{data.sender?.name}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date</div>
           <div style={{ fontSize: '9px', marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
       </div>
 

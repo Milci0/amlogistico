@@ -17,22 +17,22 @@ export function SeaWaybillTemplate({ data }) {
       {/* NAGŁÓWEK */}
       <div style={{ border: b, backgroundColor: TEAL, padding: '8px 12px' }}>
         <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', letterSpacing: '2px' }}>SEA WAYBILL</div>
-        <div style={{ fontSize: '8px', color: '#a0d8d8', marginTop: '2px' }}>Morski List Przewozowy (bez oryginału) · Non-Negotiable</div>
+        <div style={{ fontSize: '8px', color: '#a0d8d8', marginTop: '2px' }}>Non-Negotiable</div>
         <div style={{ fontSize: '7px', color: '#ffe080', marginTop: '2px' }}>
-          Odbiorca NIE potrzebuje oryginału — towar odbiera wskazana firma. Szybszy odbiór niż przy B/L.
+          The named Consignee does not need to present an original to take delivery — faster release than a Bill of Lading.
         </div>
       </div>
 
       {/* SHIPPER | CONSIGNEE */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '55px' }}>
-          <div style={lbl}>Shipper / Załadowca:</div>
+          <div style={lbl}>Shipper:</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
           <div style={val}>{data.sender?.address}</div>
           <div style={val}>{data.sender?.country}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '55px' }}>
-          <div style={lbl}>Consignee (named) / Odbiorca (wskazany z nazwy):</div>
+          <div style={lbl}>Consignee (named):</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
           <div style={val}>{data.receiver?.address}</div>
           <div style={val}>{data.receiver?.country}</div>
@@ -46,7 +46,7 @@ export function SeaWaybillTemplate({ data }) {
           <div style={val}>{data.receiver?.name}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '30px' }}>
-          <div style={lbl}>Issuing Carrier / Armator:</div>
+          <div style={lbl}>Issuing Carrier:</div>
           <div style={val}>{data.carrier?.name}</div>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function SeaWaybillTemplate({ data }) {
       {/* VESSEL | VOYAGE | PORT OF LOADING | PORT OF DISCHARGE | ETD | ETA */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
-          <div style={lbl}>Vessel / Statek:</div>
+          <div style={lbl}>Vessel:</div>
           <div style={val}>{data.cargo?.vessel}</div>
         </div>
         <div style={{ width: '80px', padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
@@ -118,20 +118,20 @@ export function SeaWaybillTemplate({ data }) {
       {/* PODPISY */}
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Carrier / Armator</div>
+          <div style={lbl}>Carrier</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date of Issue</div>
           <div style={{ fontSize: '9px', marginTop: '2px' }}>{formatDocumentDate(new Date())}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Consignee acknowledgment</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
       </div>
 

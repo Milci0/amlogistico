@@ -28,7 +28,7 @@ export function OrganicCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Cert. No.:' : 'Nr certyfikatu:'}</div>
+          <div style={lbl}>{isEn ? 'Cert. No.:' : 'Nr certyfikatu / Cert. No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
@@ -36,33 +36,33 @@ export function OrganicCertificateTemplate({ data }) {
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Issue date:' : 'Data wydania:'}</div>
+          <div style={lbl}>{isEn ? 'Issue date:' : 'Data wydania / Issue date:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Valid until:' : 'Ważny do:'}</div>
+          <div style={lbl}>{isEn ? 'Valid until:' : 'Ważny do / Valid until:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Certifying body:' : 'Jednostka certyfikująca:'}</div>
+          <div style={lbl}>{isEn ? 'Certifying body:' : 'Jednostka certyfikująca / Certifying body:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Accreditation No.:' : 'Nr akredytacji:'}</div>
+          <div style={lbl}>{isEn ? 'Accreditation No.:' : 'Nr akredytacji / Accreditation No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Country:' : 'Kraj:'}</div>
+          <div style={lbl}>{isEn ? 'Country:' : 'Kraj / Country:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Certified operator:' : 'Operator:'}</div>
+          <div style={lbl}>{isEn ? 'Certified operator:' : 'Operator / Certified operator:'}</div>
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
@@ -70,33 +70,33 @@ export function OrganicCertificateTemplate({ data }) {
           <div style={val}>{data.customs?.eori || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Activity:' : 'Działalność:'}</div>
+          <div style={lbl}>{isEn ? 'Activity:' : 'Działalność / Activity:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'CERTIFIED PRODUCTS' : 'CERTYFIKOWANE PRODUKTY'}</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'CERTIFIED PRODUCTS' : 'CERTYFIKOWANE PRODUKTY / CERTIFIED PRODUCTS'}</span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '130px' }}>{isEn ? 'Product name' : 'Nazwa produktu'}</div>
-        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Category' : 'Kategoria'}</div>
-        <div style={{ ...thStyle, width: '110px' }}>{isEn ? 'Certification status' : 'Status certyfikacji'}</div>
-        <div style={{ ...thStyle, width: '70px' }}>{isEn ? 'Product No.' : 'Nr produktu'}</div>
-        <div style={{ ...thStyle, width: '100px' }}>{isEn ? 'Production method' : 'Metoda produkcji'}</div>
-        <div style={{ ...thStyle, flex: 1, borderRight: b }}>{isEn ? 'Certificate validity' : 'Ważność certyfikatu'}</div>
+        <div style={{ ...thStyle, width: '130px' }}>{isEn ? 'Product name' : 'Nazwa produktu / Product name'}</div>
+        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Category' : 'Kategoria / Category'}</div>
+        <div style={{ ...thStyle, width: '110px' }}>{isEn ? 'Certification status' : 'Status certyfikacji / Certification status'}</div>
+        <div style={{ ...thStyle, width: '70px' }}>{isEn ? 'Product No.' : 'Nr produktu / Product No.'}</div>
+        <div style={{ ...thStyle, width: '100px' }}>{isEn ? 'Production method' : 'Metoda produkcji / Production method'}</div>
+        <div style={{ ...thStyle, flex: 1, borderRight: b }}>{isEn ? 'Certificate validity' : 'Ważność certyfikatu / Certificate validity'}</div>
       </div>
       {rows.map((name, i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '46px' }}>
           <div style={{ width: '130px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{name}</div>
           <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
           <div style={{ width: '110px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '7.5px', lineHeight: '1.5' }}>
-            ☐ 100% Organic<br />☐ Organic (95%+)<br />☐ {isEn ? 'In conversion' : 'W konwersji'}
+            ☐ 100% Organic<br />☐ Organic (95%+)<br />☐ {isEn ? 'In conversion' : 'W konwersji / In conversion'}
           </div>
           <div style={{ width: '70px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
           <div style={{ width: '100px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '7.5px', lineHeight: '1.5' }}>
-            ☐ {isEn ? 'Crops' : 'Uprawy'}<br />☐ {isEn ? 'Livestock' : 'Zwierzęta'}<br />☐ {isEn ? 'Processing' : 'Przetwórstwo'}
+            ☐ {isEn ? 'Crops' : 'Uprawy / Crops'}<br />☐ {isEn ? 'Livestock' : 'Zwierzęta / Livestock'}<br />☐ {isEn ? 'Processing' : 'Przetwórstwo / Processing'}
           </div>
           <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         </div>
@@ -104,20 +104,20 @@ export function OrganicCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>{isEn ? 'Certifying body' : 'Jednostka certyfikująca'}</div>
+          <div style={lbl}>{isEn ? 'Certifying body' : 'Jednostka certyfikująca / Certifying body'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>{isEn ? 'Inspector' : 'Inspektor'}</div>
+          <div style={lbl}>{isEn ? 'Inspector' : 'Inspektor / Inspector'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date + Accreditation Stamp</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
       </div>
 

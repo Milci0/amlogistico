@@ -30,41 +30,41 @@ export function KosherCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Cert. No.:' : 'Nr certyfikatu:'}</div>
+          <div style={lbl}>{isEn ? 'Cert. No.:' : 'Nr certyfikatu / Cert. No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Date:' : 'Data:'}</div>
+          <div style={lbl}>{isEn ? 'Date:' : 'Data / Date:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Valid until:' : 'Ważny do:'}</div>
+          <div style={lbl}>{isEn ? 'Valid until:' : 'Ważny do / Valid until:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Rabbinical authority:' : 'Organ certyfikujący (rabinat):'}</div>
+          <div style={lbl}>{isEn ? 'Rabbinical authority:' : 'Organ certyfikujący (rabinat) / Rabbinical authority:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Country:' : 'Kraj:'}</div>
+          <div style={lbl}>{isEn ? 'Country:' : 'Kraj / Country:'}</div>
           <div style={val}>{data.sender?.country || ''}</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Manufacturer:' : 'Producent:'}</div>
+          <div style={lbl}>{isEn ? 'Manufacturer:' : 'Producent / Manufacturer:'}</div>
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Address:' : 'Adres:'}</div>
+          <div style={lbl}>{isEn ? 'Address:' : 'Adres / Address:'}</div>
           <div style={val}>{data.sender?.address || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Establishment No.:' : 'Nr zakładu:'}</div>
+          <div style={lbl}>{isEn ? 'Establishment No.:' : 'Nr zakładu / Establishment No.:'}</div>
           <div style={val} />
         </div>
       </div>
@@ -76,42 +76,42 @@ export function KosherCertificateTemplate({ data }) {
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'PRODUCTS' : 'PRODUKTY'}</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'PRODUCTS' : 'PRODUKTY / PRODUCTS'}</span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '150px' }}>{isEn ? 'Product name' : 'Nazwa'}</div>
-        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Code' : 'Kod'}</div>
-        <div style={{ ...thStyle, width: '150px' }}>{isEn ? 'Ingredients verified' : 'Składniki sprawdzone'}</div>
-        <div style={{ ...thStyle, width: '130px' }}>{isEn ? 'Status / Scope' : 'Status / Zakres'}</div>
-        <div style={{ ...thStyle, flex: 1, borderRight: b }}>{isEn ? 'Validity' : 'Ważność'}</div>
+        <div style={{ ...thStyle, width: '150px' }}>{isEn ? 'Product name' : 'Nazwa / Product name'}</div>
+        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Code' : 'Kod / Code'}</div>
+        <div style={{ ...thStyle, width: '150px' }}>{isEn ? 'Ingredients verified' : 'Składniki sprawdzone / Ingredients verified'}</div>
+        <div style={{ ...thStyle, width: '130px' }}>{isEn ? 'Status / Scope' : 'Status / Zakres / Scope'}</div>
+        <div style={{ ...thStyle, flex: 1, borderRight: b }}>{isEn ? 'Validity' : 'Ważność / Validity'}</div>
       </div>
       {rows.map((name, i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '26px' }}>
           <div style={{ width: '150px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{name}</div>
           <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-          <div style={{ width: '150px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px' }}>☐ {isEn ? 'All ingredients OK' : 'Wszystkie składniki OK'}</div>
-          <div style={{ width: '130px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px' }}>☐ {isEn ? 'Production' : 'Produkcja'} ☐ {isEn ? 'Import' : 'Import'}</div>
+          <div style={{ width: '150px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px' }}>☐ {isEn ? 'All ingredients OK' : 'Wszystkie składniki OK / All ingredients OK'}</div>
+          <div style={{ width: '130px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px' }}>☐ {isEn ? 'Production' : 'Produkcja / Production'} ☐ {isEn ? 'Import' : 'Import'}</div>
           <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         </div>
       ))}
 
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>{isEn ? 'Certifying Rabbi' : 'Rabin certyfikujący'}</div>
+          <div style={lbl}>{isEn ? 'Certifying Rabbi' : 'Rabin certyfikujący / Certifying Rabbi'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>{isEn ? 'Rabbinical body' : 'Organ rabiniczny'}</div>
+          <div style={lbl}>{isEn ? 'Rabbinical body' : 'Organ rabiniczny / Rabbinical body'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date + Seal</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
       </div>
 

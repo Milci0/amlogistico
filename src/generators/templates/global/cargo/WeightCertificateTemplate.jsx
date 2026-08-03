@@ -12,7 +12,7 @@ export function WeightCertificateTemplate({ data }) {
     backgroundColor: '#2c5fa8', verticalAlign: 'top',
   }
 
-  const methodCheckbox = isEn ? '☐ Static ☐ Dynamic ☐ Draft Survey' : '☐ Statyczna ☐ Dynamiczna ☐ Draft Survey'
+  const methodCheckbox = isEn ? '☐ Static ☐ Dynamic ☐ Draft Survey' : '☐ Statyczna ☐ Dynamiczna ☐ Draft Survey / ☐ Static ☐ Dynamic ☐ Draft Survey'
   const rows = [
     { gross: data.cargo?.weight || '', net: data.cargo?.weightNet || '' },
     {}, {}, {}, {}, {},
@@ -33,75 +33,77 @@ export function WeightCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Certificate No.:' : 'Nr świadectwa:'}</div>
+          <div style={lbl}>{isEn ? 'Certificate No.:' : 'Nr świadectwa / Certificate No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Weighing date:' : 'Data ważenia:'}</div>
+          <div style={lbl}>{isEn ? 'Weighing date:' : 'Data ważenia / Weighing date:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Place:' : 'Miejsce:'}</div>
+          <div style={lbl}>{isEn ? 'Place:' : 'Miejsce / Place:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Principal:' : 'Zleceniodawca:'}</div>
+          <div style={lbl}>{isEn ? 'Principal:' : 'Zleceniodawca / Principal:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Inspector (SGS/BV/Intertek):' : 'Inspektor (SGS/BV/Intertek):'}</div>
+          <div style={lbl}>{isEn ? 'Inspector (SGS/BV/Intertek):' : 'Inspektor (SGS/BV/Intertek) / Inspector (SGS/BV/Intertek):'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Shipper:' : 'Eksporter:'}</div>
+          <div style={lbl}>{isEn ? 'Shipper:' : 'Eksporter / Shipper:'}</div>
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Consignee:' : 'Odbiorca:'}</div>
+          <div style={lbl}>{isEn ? 'Consignee:' : 'Odbiorca / Consignee:'}</div>
           <div style={val}>{data.receiver?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Contract No.:' : 'Nr kontraktu:'}</div>
+          <div style={lbl}>{isEn ? 'Contract No.:' : 'Nr kontraktu / Contract No.:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Description of goods:' : 'Opis towaru:'}</div>
+          <div style={lbl}>{isEn ? 'Description of goods:' : 'Opis towaru / Description of goods:'}</div>
           <div style={val}>{data.cargo?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Packaging:' : 'Opakowanie:'}</div>
+          <div style={lbl}>{isEn ? 'Packaging:' : 'Opakowanie / Packaging:'}</div>
           <div style={val}>
             {data.cargo?.packageTypeName && data.cargo?.packages
-              ? `${data.cargo.packages} × ${isEn ? (data.cargo.packageTypeNameEn || data.cargo.packageTypeName) : data.cargo.packageTypeName}`
+              ? `${data.cargo.packages} × ${isEn
+                  ? (data.cargo.packageTypeNameEn || data.cargo.packageTypeName)
+                  : data.cargo.packageTypeName + (data.cargo.packageTypeNameEn ? ` / ${data.cargo.packageTypeNameEn}` : '')}`
               : ''}
           </div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Container or wagon No.:' : 'Nr kontenera lub wagonu:'}</div>
+          <div style={lbl}>{isEn ? 'Container or wagon No.:' : 'Nr kontenera lub wagonu / Container or wagon No.:'}</div>
           <div style={val}>{data.cargo?.containerNo || ''}</div>
         </div>
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'WEIGHING RESULTS' : 'WYNIKI WAŻENIA'}</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'WEIGHING RESULTS' : 'WYNIKI WAŻENIA / WEIGHING RESULTS'}</span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '45px' }}>{isEn ? 'Item' : 'Pozycja'}</div>
-        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Package No.' : 'Nr opakowania'}</div>
-        <div style={{ ...thStyle, width: '70px' }}>{isEn ? 'Tare (kg)' : 'Waga tary (kg)'}</div>
-        <div style={{ ...thStyle, width: '75px' }}>{isEn ? 'Gross (kg)' : 'Waga brutto (kg)'}</div>
-        <div style={{ ...thStyle, width: '75px' }}>{isEn ? 'Net (kg)' : 'Waga netto (kg)'}</div>
-        <div style={{ ...thStyle, flex: 1, borderRight: b }}>{isEn ? 'Weighing method' : 'Metoda ważenia'}</div>
+        <div style={{ ...thStyle, width: '45px' }}>{isEn ? 'Item' : 'Pozycja / Item'}</div>
+        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Package No.' : 'Nr opakowania / Package No.'}</div>
+        <div style={{ ...thStyle, width: '70px' }}>{isEn ? 'Tare (kg)' : 'Waga tary (kg) / Tare (kg)'}</div>
+        <div style={{ ...thStyle, width: '75px' }}>{isEn ? 'Gross (kg)' : 'Waga brutto (kg) / Gross (kg)'}</div>
+        <div style={{ ...thStyle, width: '75px' }}>{isEn ? 'Net (kg)' : 'Waga netto (kg) / Net (kg)'}</div>
+        <div style={{ ...thStyle, flex: 1, borderRight: b }}>{isEn ? 'Weighing method' : 'Metoda ważenia / Weighing method'}</div>
       </div>
       {rows.map((r, i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '20px' }}>
@@ -115,7 +117,7 @@ export function WeightCertificateTemplate({ data }) {
       ))}
       <div style={{ display: 'flex', borderLeft: b, minHeight: '20px' }}>
         <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px', fontWeight: 'bold' }} />
-        <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px', fontWeight: 'bold' }}>{isEn ? 'TOTAL' : 'SUMA'}</div>
+        <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px', fontWeight: 'bold' }}>{isEn ? 'TOTAL' : 'SUMA / TOTAL'}</div>
         <div style={{ width: '70px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '75px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '75px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
@@ -124,39 +126,39 @@ export function WeightCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Invoice weight (kg):' : 'Waga fakturowa (kg):'}</div>
+          <div style={lbl}>{isEn ? 'Invoice weight (kg):' : 'Waga fakturowa (kg) / Invoice weight (kg):'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Difference ± (kg):' : 'Różnica ± (kg):'}</div>
+          <div style={lbl}>{isEn ? 'Difference ± (kg):' : 'Różnica ± (kg) / Difference ± (kg):'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Tolerance (%):' : 'Tolerancja (%):'}</div>
+          <div style={lbl}>{isEn ? 'Tolerance (%):' : 'Tolerancja (%) / Tolerance (%):'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Result:' : 'Wynik:'}</div>
+          <div style={lbl}>{isEn ? 'Result:' : 'Wynik / Result:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>{isEn ? 'Inspector' : 'Inspektor'}</div>
+          <div style={lbl}>{isEn ? 'Inspector' : 'Inspektor / Inspector'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>{isEn ? 'Licence No.:' : 'Nr licencji:'}</div>
+          <div style={lbl}>{isEn ? 'Licence No.:' : 'Nr licencji / Licence No.:'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
       </div>
 

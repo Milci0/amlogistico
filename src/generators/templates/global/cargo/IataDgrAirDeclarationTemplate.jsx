@@ -31,27 +31,27 @@ export function IataDgrAirDeclarationTemplate({ data }) {
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>IATA DGR — DANGEROUS GOODS DECLARATION (AIR)</div>
         <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Shipper's Declaration for Dangerous Goods · Air Transport · IATA DGR</div>
-        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>IATA Dangerous Goods Regulations — bardziej restrykcyjny niż IMDG. Baterie litowe, substancje zapalne, toksyczne.</div>
+        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>IATA Dangerous Goods Regulations — more restrictive than IMDG. Covers lithium batteries, flammable and toxic substances.</div>
       </div>
 
       {/* NOTKA OSTRZEGAWCZA */}
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px', backgroundColor: '#fffbe6' }}>
         <span style={{ fontSize: '6.5px', color: '#666' }}>
-          <strong>OSTRZEŻENIE KARNE:</strong> Fałszywe oświadczenie dotyczące towarów niebezpiecznych podlega karze
-          pozbawienia wolności. Nadawca jest odpowiedzialny za poprawność deklaracji.
+          <strong>WARNING:</strong> Making a false declaration for dangerous goods is a criminal offence. The
+          shipper is responsible for the accuracy of this declaration.
         </span>
       </div>
 
       {/* SHIPPER | CONSIGNEE */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '36px' }}>
-          <div style={lbl}>Shipper / Nadawca (nazwa, adres, tel.):</div>
+          <div style={lbl}>Shipper (name, address, tel.):</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
           <div style={val}>{data.sender?.address}</div>
           <div style={val}>{data.sender?.phone || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '36px' }}>
-          <div style={lbl}>Consignee / Odbiorca (nazwa, adres):</div>
+          <div style={lbl}>Consignee (name, address):</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
           <div style={val}>{data.receiver?.address}</div>
         </div>
@@ -60,11 +60,11 @@ export function IataDgrAirDeclarationTemplate({ data }) {
       {/* AIRPORT OF DEPARTURE | AIRPORT OF DESTINATION */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '26px' }}>
-          <div style={lbl}>Airport of Departure / Port lotniczy nadania:</div>
+          <div style={lbl}>Airport of Departure:</div>
           <div style={val}>{data.fromCity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '26px' }}>
-          <div style={lbl}>Airport of Destination / Port lotniczy docelowy:</div>
+          <div style={lbl}>Airport of Destination:</div>
           <div style={val}>{data.toCity || ''}</div>
         </div>
       </div>
@@ -111,7 +111,7 @@ export function IataDgrAirDeclarationTemplate({ data }) {
 
       {/* ADDITIONAL HANDLING INFORMATION */}
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, borderBottom: b, padding: '3px 5px', minHeight: '24px' }}>
-        <div style={lbl}>Additional Handling Information / Dodatkowe instrukcje:</div>
+        <div style={lbl}>Additional Handling Information:</div>
         <div style={val}>{data.cargo?.notes || ''}</div>
       </div>
 
@@ -129,21 +129,21 @@ export function IataDgrAirDeclarationTemplate({ data }) {
       {/* PODPISY */}
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Nadawca / Shipper</div>
+          <div style={lbl}>Shipper</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Linia lotnicza / Airline</div>
+          <div style={lbl}>Airline</div>
           <div style={{ fontSize: '8px', marginTop: '2px' }}>{data.carrier?.name || ''}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
       </div>
 

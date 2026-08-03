@@ -1,6 +1,7 @@
 import { formatDocumentDate } from '../../../../utils/formatDate'
 
 export function PODTemplate({ data }) {
+  const isEn = data.language === 'EN'
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
   const val = { fontSize: '9px', minHeight: '12px' }
@@ -24,11 +25,11 @@ export function PODTemplate({ data }) {
       {/* NAGŁÓWEK */}
       <div style={{ display: 'flex', border: b }}>
         <div style={{ flex: 1, backgroundColor: TEAL, padding: '8px 12px', borderRight: b }}>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>PROTOKÓŁ ODBIORU TOWARU</div>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>{isEn ? 'PROOF OF DELIVERY' : 'PROTOKÓŁ ODBIORU TOWARU'}</div>
           <div style={{ fontSize: '8px', color: '#a0d0c0', marginTop: '2px' }}>Proof of Delivery (POD) · Lieferschein</div>
         </div>
         <div style={{ width: '150px', padding: '6px 8px', backgroundColor: TEAL }}>
-          <div style={{ ...lbl, color: '#a0d0c0' }}>Nr dokumentu:</div>
+          <div style={{ ...lbl, color: '#a0d0c0' }}>{isEn ? 'Document No.:' : 'Nr dokumentu:'}</div>
           <div style={{ color: '#fff', fontSize: '9px', minHeight: '14px' }} />
         </div>
       </div>
@@ -36,15 +37,15 @@ export function PODTemplate({ data }) {
       {/* NR PROTOKOŁU | DATA I GODZINA | NR CMR */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
-          <div style={lbl}>Nr protokołu / POD No.:</div>
+          <div style={lbl}>{isEn ? 'POD No.:' : 'Nr protokołu / POD No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
-          <div style={lbl}>Data i godzina dostawy / Delivery date &amp; time:</div>
+          <div style={lbl}>{isEn ? 'Delivery Date & Time:' : 'Data i godzina dostawy / Delivery date &amp; time:'}</div>
           <div style={val}>{formatDocumentDate(data.loadDate)}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
-          <div style={lbl}>Nr CMR / Transport order No.:</div>
+          <div style={lbl}>{isEn ? 'Transport Order No.:' : 'Nr CMR / Transport order No.:'}</div>
           <div style={val} />
         </div>
       </div>
@@ -52,13 +53,13 @@ export function PODTemplate({ data }) {
       {/* ADRES DOSTAWY | PRZEWOŹNIK */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '45px' }}>
-          <div style={lbl}>Adres dostawy / Delivery address:</div>
+          <div style={lbl}>{isEn ? 'Delivery Address:' : 'Adres dostawy / Delivery address:'}</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
           <div style={val}>{data.receiver?.address}</div>
           <div style={val}>{data.toCity}, {data.toCountry}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '45px' }}>
-          <div style={lbl}>Przewoźnik / Carrier:</div>
+          <div style={lbl}>{isEn ? 'Carrier:' : 'Przewoźnik / Carrier:'}</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.carrier?.name}</div>
           <div style={val}>{data.carrier?.address}</div>
         </div>
@@ -67,28 +68,28 @@ export function PODTemplate({ data }) {
       {/* KIEROWCA | NR REJESTRACYJNY */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
-          <div style={lbl}>Kierowca / Driver:</div>
+          <div style={lbl}>{isEn ? 'Driver:' : 'Kierowca / Driver:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
-          <div style={lbl}>Nr rejestracyjny / Vehicle plate:</div>
+          <div style={lbl}>{isEn ? 'Vehicle Plate:' : 'Nr rejestracyjny / Vehicle plate:'}</div>
           <div style={val} />
         </div>
       </div>
 
       {/* SEKCJA: OPIS TOWARU */}
       <div style={{ backgroundColor: TEAL, borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>OPIS DOSTARCZONEGO TOWARU / DELIVERED GOODS</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'DELIVERED GOODS' : 'OPIS DOSTARCZONEGO TOWARU / DELIVERED GOODS'}</span>
       </div>
 
       {/* TABELA NAGŁÓWEK */}
       <div style={{ display: 'flex', borderLeft: b }}>
-        <div style={{ ...thStyle, width: '30px' }}>Lp.</div>
-        <div style={{ ...thStyle, flex: 1 }}>Opis towaru / Description</div>
-        <div style={{ ...thStyle, width: '90px' }}>Ilość zamówiona<br />Ordered qty</div>
-        <div style={{ ...thStyle, width: '90px' }}>Ilość dostarczona<br />Delivered qty</div>
-        <div style={{ ...thStyle, width: '50px' }}>Jedn.</div>
-        <div style={{ ...thStyle, width: '90px', borderRight: b }}>Uwagi / Remarks</div>
+        <div style={{ ...thStyle, width: '30px' }}>{isEn ? 'No.' : 'Lp.'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Description' : 'Opis towaru / Description'}</div>
+        <div style={{ ...thStyle, width: '90px' }}>{isEn ? 'Ordered Qty' : <>Ilość zamówiona<br />Ordered qty</>}</div>
+        <div style={{ ...thStyle, width: '90px' }}>{isEn ? 'Delivered Qty' : <>Ilość dostarczona<br />Delivered qty</>}</div>
+        <div style={{ ...thStyle, width: '50px' }}>{isEn ? 'Unit' : 'Jedn.'}</div>
+        <div style={{ ...thStyle, width: '90px', borderRight: b }}>{isEn ? 'Remarks' : 'Uwagi / Remarks'}</div>
       </div>
 
       {/* Wiersz z danymi */}
@@ -97,7 +98,7 @@ export function PODTemplate({ data }) {
         <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.name}</div>
         <div style={{ width: '90px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packages}</div>
         <div style={{ width: '90px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packages}</div>
-        <div style={{ width: '50px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packageTypeUnCode || 'szt.'}</div>
+        <div style={{ width: '50px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packageTypeUnCode || (isEn ? 'pcs' : 'szt.')}</div>
         <div style={{ width: '90px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
       </div>
 
@@ -106,27 +107,33 @@ export function PODTemplate({ data }) {
 
       {/* STAN TOWARU */}
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '3px 5px' }}>
-        <div style={lbl}>Stan towaru przy odbiorze / Condition of goods upon receipt:</div>
+        <div style={lbl}>{isEn ? 'Condition of Goods Upon Receipt:' : 'Stan towaru przy odbiorze / Condition of goods upon receipt:'}</div>
       </div>
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px', fontSize: '8px' }}>
-        &#9634; Bez zastrzeżeń / No exceptions &nbsp;&nbsp;&nbsp;&nbsp;
+        {isEn ? (
+          <>&#9634; No exceptions &nbsp;&nbsp;&nbsp;&nbsp;
+        &#9634; With exceptions (description below) &nbsp;&nbsp;&nbsp;&nbsp;
+        &#9634; Refused (reason below)</>
+        ) : (
+          <>&#9634; Bez zastrzeżeń / No exceptions &nbsp;&nbsp;&nbsp;&nbsp;
         &#9634; Z zastrzeżeniami / With exceptions (opis poniżej) &nbsp;&nbsp;&nbsp;&nbsp;
-        &#9634; Odmowa odbioru / Refused (powód poniżej)
+        &#9634; Odmowa odbioru / Refused (powód poniżej)</>
+        )}
       </div>
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '3px 5px', minHeight: '32px' }}>
-        <div style={lbl}>Opis zastrzeżeń / Exceptions description:</div>
+        <div style={lbl}>{isEn ? 'Exceptions Description:' : 'Opis zastrzeżeń / Exceptions description:'}</div>
         <div style={val} />
       </div>
 
       {/* PODPIS ODBIORCY */}
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '50px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Odbiorca / Recipient:</div>
+          <div style={lbl}>{isEn ? 'Recipient:' : 'Odbiorca / Recipient:'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć odbiorcy / Recipient's signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? "Recipient's signature &amp; stamp" : "Podpis i pieczęć odbiorcy / Recipient's signature &amp; stamp"}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '50px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Data / Date:</div>
+          <div style={lbl}>{isEn ? 'Date:' : 'Data / Date:'}</div>
           <div style={{ flex: 1 }} />
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '50px', display: 'flex', flexDirection: 'column' }}>
@@ -137,15 +144,15 @@ export function PODTemplate({ data }) {
       {/* PODPIS KIEROWCY */}
       <div style={{ display: 'flex', border: b, marginTop: '4px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '45px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Kierowca potwierdzający dostawę / Driver confirming delivery:</div>
+          <div style={lbl}>{isEn ? 'Driver Confirming Delivery:' : 'Kierowca potwierdzający dostawę / Driver confirming delivery:'}</div>
           <div style={{ flex: 1 }} />
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '45px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Data / Date:</div>
+          <div style={lbl}>{isEn ? 'Date:' : 'Data / Date:'}</div>
           <div style={{ flex: 1 }} />
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '45px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Podpis kierowcy / Driver's signature:</div>
+          <div style={lbl}>{isEn ? "Driver's Signature:" : "Podpis kierowcy / Driver's signature:"}</div>
           <div style={{ flex: 1 }} />
         </div>
       </div>

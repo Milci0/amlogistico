@@ -22,9 +22,9 @@ export function CimRailWaybillTemplate({ data }) {
     <div style={{ width: '794px', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '8px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box', padding: '8px 10px' }}>
 
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
-        <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>CIM — KOLEJOWY LIST PRZEWOZOWY</div>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>CIM — RAIL WAYBILL</div>
         <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Rail Waybill · Lettre de Voiture Ferroviaire CIM</div>
-        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Konwencja COTIF/CIM — transport kolejowy między krajami OTIF (Europa, Bliski Wschód, Azja Centralna, Afryka Płn.)</div>
+        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>COTIF/CIM Convention — rail transport between OTIF member states (Europe, Middle East, Central Asia, North Africa).</div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
@@ -33,23 +33,23 @@ export function CimRailWaybillTemplate({ data }) {
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Data / Date:</div>
+          <div style={lbl}>Date:</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Kolej nadawcza / Railway of departure:</div>
+          <div style={lbl}>Railway of Departure:</div>
           <div style={val}>{data.carrier?.name || ''}</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '30px' }}>
-          <div style={lbl}>Nadawca / Sender (nazwa, adres):</div>
+          <div style={lbl}>Sender (name, address):</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
           <div style={val}>{data.sender?.address}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '30px' }}>
-          <div style={lbl}>Odbiorca / Consignee (nazwa, adres):</div>
+          <div style={lbl}>Consignee (name, address):</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
           <div style={val}>{data.receiver?.address}</div>
         </div>
@@ -61,56 +61,56 @@ export function CimRailWaybillTemplate({ data }) {
           <div style={val}>{data.fromCity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Kraj:</div>
+          <div style={lbl}>Country:</div>
           <div style={val}>{data.fromCountry || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Stacja przeznaczenia / Destination station:</div>
+          <div style={lbl}>Destination Station:</div>
           <div style={val}>{data.toCity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Kraj:</div>
+          <div style={lbl}>Country:</div>
           <div style={val}>{data.toCountry || ''}</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Nr wagonu / Wagon No.:</div>
+          <div style={lbl}>Wagon No.:</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Typ wagonu / Wagon type:</div>
+          <div style={lbl}>Wagon Type:</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Ładowność / Load capacity (t):</div>
+          <div style={lbl}>Load Capacity (t):</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Nr kontenera / Container No.:</div>
+          <div style={lbl}>Container No.:</div>
           <div style={val}>{data.cargo?.containerNo || ''}</div>
         </div>
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>OPIS ŁADUNKU / CARGO DESCRIPTION</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>CARGO DESCRIPTION</span>
       </div>
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '35px' }}>Lp.<br />No.</div>
-        <div style={{ ...thStyle, flex: 1 }}>Opis towaru / Description</div>
-        <div style={{ ...thStyle, width: '55px' }}>Kod HS<br />HS Code</div>
-        <div style={{ ...thStyle, width: '40px' }}>Ilość<br />Qty</div>
-        <div style={{ ...thStyle, width: '40px' }}>Jedn.<br />Unit</div>
-        <div style={{ ...thStyle, width: '55px' }}>Waga (kg)<br />Weight</div>
-        <div style={{ ...thStyle, width: '60px', borderRight: b }}>Wartość<br />Value</div>
+        <div style={{ ...thStyle, width: '35px' }}>No.</div>
+        <div style={{ ...thStyle, flex: 1 }}>Description</div>
+        <div style={{ ...thStyle, width: '55px' }}>HS Code</div>
+        <div style={{ ...thStyle, width: '40px' }}>Qty</div>
+        <div style={{ ...thStyle, width: '40px' }}>Unit</div>
+        <div style={{ ...thStyle, width: '55px' }}>Weight (kg)</div>
+        <div style={{ ...thStyle, width: '60px', borderRight: b }}>Value</div>
       </div>
       <div style={{ display: 'flex', borderLeft: b, minHeight: '20px' }}>
         <div style={{ width: '35px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>1</div>
         <div style={{ flex: 1, padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.name || ''}</div>
         <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.hsCode || ''}</div>
         <div style={{ width: '40px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.quantity || ''}</div>
-        <div style={{ width: '40px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>szt.</div>
+        <div style={{ width: '40px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>pcs</div>
         <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.weight || ''}</div>
         <div style={{ width: '60px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'right' }}>{data.cargo?.value || ''}</div>
       </div>
@@ -120,41 +120,41 @@ export function CimRailWaybillTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Masa netto / Net weight (kg):</div>
+          <div style={lbl}>Net Weight (kg):</div>
           <div style={val}>{data.cargo?.weightNet || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Masa brutto / Gross weight (kg):</div>
+          <div style={lbl}>Gross Weight (kg):</div>
           <div style={val}>{data.cargo?.weight || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Liczba opakowań / Packages:</div>
+          <div style={lbl}>Packages:</div>
           <div style={val}>
             {data.cargo?.packages || ''}
-            {data.cargo?.packageTypeName ? ` × ${data.cargo.packageTypeName} / ${data.cargo.packageTypeNameEn}` : ''}
+            {data.cargo?.packageTypeName ? ` × ${data.cargo.packageTypeNameEn}` : ''}
           </div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Dokumenty dołączone / Attached docs:</div>
+          <div style={lbl}>Attached Documents:</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Nadawca / Sender</div>
+          <div style={lbl}>Sender</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Kolej nadawcza / Railway</div>
+          <div style={lbl}>Railway</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Odbiorca / Consignee</div>
+          <div style={lbl}>Consignee</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
       </div>
 

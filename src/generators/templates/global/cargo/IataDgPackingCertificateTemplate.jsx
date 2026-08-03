@@ -11,8 +11,8 @@ export function IataDgPackingCertificateTemplate({ data }) {
 
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>IATA DGR — PACKING CERTIFICATE</div>
-        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Certyfikat Opakowania Towarów Niebezpiecznych (Lotniczy) · IATA DGR Sec. 7</div>
-        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Wymagany gdy DG są pakowane przez podmiot inny niż producent — potwierdza zgodność z IATA DGR</div>
+        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>IATA DGR Sec. 7</div>
+        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Required when dangerous goods are packed by a party other than the manufacturer — confirms compliance with IATA DGR.</div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
@@ -21,11 +21,11 @@ export function IataDgPackingCertificateTemplate({ data }) {
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Data pakowania / Date:</div>
+          <div style={lbl}>Packing Date:</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Miejsce / Location:</div>
+          <div style={lbl}>Location:</div>
           <div style={val} />
         </div>
       </div>
@@ -71,28 +71,26 @@ export function IataDgPackingCertificateTemplate({ data }) {
           <strong>PACKING CERTIFICATE</strong> — I hereby declare that the contents of this consignment are fully and
           accurately described by the Proper Shipping Name and are classified, packed, marked and labelled according
           to the applicable IATA Dangerous Goods Regulations. The packaging used complies with the packing
-          instruction and any special packing provisions of IATA DGR for this substance or article. Niniejszym
-          oświadczam, że opakowanie użyte do zapakowania towaru niebezpiecznego opisanego powyżej spełnia wymagania
-          IATA DGR i jest zgodne z instrukcją pakowania dla danej klasy.
+          instruction and any special packing provisions of IATA DGR for this substance or article.
         </span>
       </div>
 
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Pakujący / Packer</div>
+          <div style={lbl}>Packer</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Kontrola / QC Manager</div>
+          <div style={lbl}>QC Manager</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
       </div>
 

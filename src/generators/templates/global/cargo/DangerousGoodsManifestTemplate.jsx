@@ -30,26 +30,26 @@ export function DangerousGoodsManifestTemplate({ data }) {
       {/* NAGŁÓWEK */}
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>DANGEROUS GOODS MANIFEST</div>
-        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Manifest Towarów Niebezpiecznych na Statku · IMDG Manifest</div>
-        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Wymagany przez kapitana statku i władze portowe. Zawiera wszystkie towary niebezpieczne załadowane na statek w danym rejsie.</div>
+        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>IMDG Manifest</div>
+        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Required by the vessel's master and port authorities. Lists all dangerous goods loaded on board for the voyage.</div>
       </div>
 
       {/* STATEK | REJS | BANDERA | DATA */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '26px' }}>
-          <div style={lbl}>Nazwa statku / Vessel name:</div>
+          <div style={lbl}>Vessel Name:</div>
           <div style={val}>{data.cargo?.vessel || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '26px' }}>
-          <div style={lbl}>Nr rejsu / Voyage No.:</div>
+          <div style={lbl}>Voyage No.:</div>
           <div style={val}>{data.cargo?.voyageNo || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '26px' }}>
-          <div style={lbl}>Bandera / Flag:</div>
+          <div style={lbl}>Flag:</div>
           <div style={val}>{data.sea?.flag || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '26px' }}>
-          <div style={lbl}>Data / Date:</div>
+          <div style={lbl}>Date:</div>
           <div style={val}>{today}</div>
         </div>
       </div>
@@ -57,15 +57,15 @@ export function DangerousGoodsManifestTemplate({ data }) {
       {/* PORT ZAŁADUNKU | PORT ROZŁADUNKU | KAPITAN */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '26px' }}>
-          <div style={lbl}>Port załadunku / Port of loading:</div>
+          <div style={lbl}>Port of Loading:</div>
           <div style={val}>{data.fromCity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '26px' }}>
-          <div style={lbl}>Port rozładunku / Port of discharge:</div>
+          <div style={lbl}>Port of Discharge:</div>
           <div style={val}>{data.toCity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '26px' }}>
-          <div style={lbl}>Kapitan / Master:</div>
+          <div style={lbl}>Master:</div>
           {/* Brak odpowiednika w słowniku — dane kapitana statku nie są zbierane w wizardzie. */}
           <div style={val} />
         </div>
@@ -73,7 +73,7 @@ export function DangerousGoodsManifestTemplate({ data }) {
 
       {/* SEKCJA: WYKAZ TOWARÓW NIEBEZPIECZNYCH */}
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>WYKAZ TOWARÓW NIEBEZPIECZNYCH / DG CARGO LIST</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>DG CARGO LIST</span>
       </div>
 
       {/* TABELA NAGŁÓWEK */}
@@ -101,7 +101,7 @@ export function DangerousGoodsManifestTemplate({ data }) {
         <div style={{ width: '35px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '30px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-        <div style={{ width: '50px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px' }}>&#9634; Tak &#9634; Nie</div>
+        <div style={{ width: '50px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px' }}>&#9634; Yes &#9634; No</div>
         <div style={{ width: '40px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.weight || ''}</div>
         <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.sender?.name || ''}</div>
@@ -117,20 +117,20 @@ export function DangerousGoodsManifestTemplate({ data }) {
       {/* PODPISY */}
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Chief Officer / I oficer</div>
+          <div style={lbl}>Chief Officer</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Port Authorities / Władze portu</div>
+          <div style={lbl}>Port Authorities</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
       </div>
 

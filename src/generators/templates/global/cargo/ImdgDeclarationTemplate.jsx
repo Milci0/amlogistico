@@ -31,26 +31,26 @@ export function ImdgDeclarationTemplate({ data }) {
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>IMDG — DANGEROUS GOODS DECLARATION</div>
         <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Shipper's Declaration for Dangerous Goods (Sea) · IMO IMDG Code</div>
-        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Obowiązkowa dla towarów niebezpiecznych transportem morskim — wymagana przez armatora przed załadunkiem kontenera</div>
+        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Mandatory for dangerous goods carried by sea — required by the carrier before container loading.</div>
       </div>
 
       {/* NOTKA OSTRZEGAWCZA */}
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px', backgroundColor: '#fffbe6' }}>
         <span style={{ fontSize: '6.5px', color: '#666' }}>
-          Armator może odmówić załadunku kontenera bez prawidłowej deklaracji IMDG. Fałszywa deklaracja =
-          odpowiedzialność karna.
+          The carrier may refuse to load a container without a valid IMDG declaration. A false declaration
+          carries criminal liability.
         </span>
       </div>
 
       {/* NADAWCA | ODBIORCA */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '36px' }}>
-          <div style={lbl}>Shipper / Nadawca (nazwa, adres, kraj):</div>
+          <div style={lbl}>Shipper (name, address, country):</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
           <div style={val}>{data.sender?.address}, {data.sender?.country}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '36px' }}>
-          <div style={lbl}>Consignee / Odbiorca (nazwa, adres, kraj):</div>
+          <div style={lbl}>Consignee (name, address, country):</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
           <div style={val}>{data.receiver?.address}, {data.receiver?.country}</div>
         </div>
@@ -75,11 +75,11 @@ export function ImdgDeclarationTemplate({ data }) {
       {/* SEAL | CONTAINER TYPE | TARE WEIGHT */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
-          <div style={lbl}>Seal No. / Nr plomby:</div>
+          <div style={lbl}>Seal No.:</div>
           <div style={val}>{data.cargo?.sealNo || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
-          <div style={lbl}>Container Type / Typ:</div>
+          <div style={lbl}>Container Type:</div>
           <div style={val}>{data.cargo?.containerType || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
@@ -90,19 +90,19 @@ export function ImdgDeclarationTemplate({ data }) {
 
       {/* SEKCJA: OPIS TOWARU NIEBEZPIECZNEGO */}
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>OPIS TOWARU NIEBEZPIECZNEGO / DANGEROUS GOODS DESCRIPTION</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>DANGEROUS GOODS DESCRIPTION</span>
       </div>
 
       {/* TABELA NAGŁÓWEK */}
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
         <div style={{ ...thStyle, width: '40px' }}>UN No.</div>
-        <div style={{ ...thStyle, flex: 1 }}>Proper Shipping Name<br />(Oficjalna nazwa wg IMDG)</div>
+        <div style={{ ...thStyle, flex: 1 }}>Proper Shipping Name</div>
         <div style={{ ...thStyle, width: '45px' }}>Class /<br />Division</div>
         <div style={{ ...thStyle, width: '45px' }}>Packing<br />Group</div>
         <div style={{ ...thStyle, width: '45px' }}>Flash Point<br />(°C)</div>
         <div style={{ ...thStyle, width: '55px' }}>Marine<br />Pollutant</div>
         <div style={{ ...thStyle, width: '40px' }}>EmS<br />No.</div>
-        <div style={{ ...thStyle, width: '45px' }}>Qty (kg)<br />Ilość</div>
+        <div style={{ ...thStyle, width: '45px' }}>Qty (kg)</div>
         <div style={{ ...thStyle, width: '45px', borderRight: b }}>No. of<br />Packages</div>
       </div>
 
@@ -114,7 +114,7 @@ export function ImdgDeclarationTemplate({ data }) {
         <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-        <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px' }}>&#9634; Tak &#9634; Nie</div>
+        <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '8px' }}>&#9634; Yes &#9634; No</div>
         <div style={{ width: '40px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
         <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.weight || ''}</div>
         <div style={{ width: '45px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packages || ''}</div>
@@ -126,57 +126,56 @@ export function ImdgDeclarationTemplate({ data }) {
       {/* TYP OPAKOWANIA | CERTYFIKAT | SEGREGACJA */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Typ opakowania / Package type:</div>
+          <div style={lbl}>Package Type:</div>
           <div style={val}>
             {data.cargo?.packageTypeName
-              ? `${data.cargo.packageTypeName} / ${data.cargo.packageTypeNameEn} (${data.cargo.packageTypeUnCode})`
+              ? `${data.cargo.packageTypeNameEn} (${data.cargo.packageTypeUnCode})`
               : ''}
           </div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Certyfikat opakowania / Package cert.:</div>
+          <div style={lbl}>Package Certificate:</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Klasa segregacji / Segregation:</div>
+          <div style={lbl}>Segregation:</div>
           <div style={val} />
         </div>
       </div>
 
       {/* PACKING CERTIFICATE */}
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, borderBottom: b, padding: '3px 5px', minHeight: '20px' }}>
-        <div style={lbl}>Container/Vehicle Packing Certificate — oświadczam że towar załadowano zgodnie z IMDG Code:</div>
+        <div style={lbl}>Container/Vehicle Packing Certificate — I declare that the goods have been loaded in accordance with the IMDG Code:</div>
       </div>
 
       {/* OŚWIADCZENIE */}
       <div style={{ border: b, borderTop: 'none', padding: '5px 7px', backgroundColor: '#f7f7f7' }}>
         <span style={{ fontSize: '6.5px', color: '#555' }}>
-          <strong>SHIPPER'S DECLARATION / OŚWIADCZENIE NADAWCY:</strong> I hereby declare that the contents of this
+          <strong>SHIPPER'S DECLARATION:</strong> I hereby declare that the contents of this
           consignment are fully and accurately described above by the Proper Shipping Name, and are classified,
           packed, marked and labeled/placarded and are in all respects in proper condition for transport by sea
-          according to applicable international and national governmental regulations. Oświadczam że zawartość
-          przesyłki jest dokładnie opisana i spełnia wymagania IMDG Code.
+          according to applicable international and national governmental regulations.
         </span>
       </div>
 
       {/* PODPISY */}
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Nadawca / Shipper</div>
+          <div style={lbl}>Shipper</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Przewoźnik / Carrier / Agent</div>
+          <div style={lbl}>Carrier / Agent</div>
           <div style={{ fontSize: '8px', marginTop: '2px' }}>{data.carrier?.name || ''}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Data / Date</div>
+          <div style={lbl}>Date</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
       </div>
 
