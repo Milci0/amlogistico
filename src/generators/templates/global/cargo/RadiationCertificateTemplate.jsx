@@ -36,22 +36,22 @@ export function RadiationCertificateTemplate({ data }) {
           {isEn ? (
             <><strong>IMPORTANT:</strong> Limits vary by country: Japan 10 Bq/kg (Cs-134+137), EU 1250 Bq/kg. Laboratory accredited by the country of import is required.</>
           ) : (
-            <><strong>WAŻNE:</strong> Poziomy graniczne różnią się w zależności od kraju: Japonia 10 Bq/kg (Cs-134+137), UE 1250 Bq/kg. Wymagane laboratorium akredytowane przez kraj importu.</>
+            <><strong>WAŻNE:</strong> Poziomy graniczne różnią się w zależności od kraju: Japonia 10 Bq/kg (Cs-134+137), UE 1250 Bq/kg. Wymagane laboratorium akredytowane przez kraj importu. <strong>IMPORTANT:</strong> Limits vary by country: Japan 10 Bq/kg (Cs-134+137), EU 1250 Bq/kg. Laboratory accredited by the country of import is required.</>
           )}
         </span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Certificate No.:' : 'Nr certyfikatu:'}</div>
+          <div style={lbl}>{isEn ? 'Certificate No.:' : 'Nr certyfikatu / Certificate No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Issue date:' : 'Data wystawienia:'}</div>
+          <div style={lbl}>{isEn ? 'Issue date:' : 'Data wystawienia / Issue date:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Issuing authority:' : 'Organ wystawiający:'}</div>
+          <div style={lbl}>{isEn ? 'Issuing authority:' : 'Organ wystawiający / Issuing authority:'}</div>
           <div style={val} />
         </div>
       </div>
@@ -62,29 +62,29 @@ export function RadiationCertificateTemplate({ data }) {
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Country:' : 'Kraj:'}</div>
+          <div style={lbl}>{isEn ? 'Country:' : 'Kraj / Country:'}</div>
           <div style={val}>{data.sender?.country || ''}</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Goods description:' : 'Opis towaru:'}</div>
+          <div style={lbl}>{isEn ? 'Goods description:' : 'Opis towaru / Goods description:'}</div>
           <div style={val}>{data.cargo?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Qty (kg):' : 'Ilość (kg):'}</div>
+          <div style={lbl}>{isEn ? 'Qty (kg):' : 'Ilość (kg) / Qty (kg):'}</div>
           <div style={val}>{data.cargo?.weight || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Batch No.:' : 'Nr partii:'}</div>
+          <div style={lbl}>{isEn ? 'Batch No.:' : 'Nr partii / Batch No.:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Destination:' : 'Kraj przeznaczenia:'}</div>
+          <div style={lbl}>{isEn ? 'Destination:' : 'Kraj przeznaczenia / Destination:'}</div>
           <div style={val}>{data.toCountry || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
@@ -92,21 +92,21 @@ export function RadiationCertificateTemplate({ data }) {
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Shipping date:' : 'Data wysyłki:'}</div>
+          <div style={lbl}>{isEn ? 'Shipping date:' : 'Data wysyłki / Shipping date:'}</div>
           <div style={val}>{data.loadDate ? formatDocumentDate(data.loadDate) : ''}</div>
         </div>
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'MEASUREMENT RESULTS' : 'WYNIKI POMIARÓW'}</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'MEASUREMENT RESULTS' : 'WYNIKI POMIARÓW / MEASUREMENT RESULTS'}</span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
         <div style={{ ...thStyle, flex: 1 }}>Radioisotope</div>
-        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Limit (Japan)' : 'Limit (Japonia)'}</div>
-        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Limit (EU)' : 'Limit (UE)'}</div>
-        <div style={{ ...thStyle, width: '110px' }}>{isEn ? 'Result (Bq/kg)' : 'Wynik (Bq/kg)'}</div>
-        <div style={{ ...thStyle, width: '90px', borderRight: b }}>{isEn ? 'Compliant' : 'Zgodność'}</div>
+        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Limit (Japan)' : 'Limit (Japonia) / Limit (Japan)'}</div>
+        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Limit (EU)' : 'Limit (UE) / Limit (EU)'}</div>
+        <div style={{ ...thStyle, width: '110px' }}>{isEn ? 'Result (Bq/kg)' : 'Wynik (Bq/kg) / Result (Bq/kg)'}</div>
+        <div style={{ ...thStyle, width: '90px', borderRight: b }}>{isEn ? 'Compliant' : 'Zgodność / Compliant'}</div>
       </div>
       {isotopes.map(([name, jp, eu], i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '20px' }}>
@@ -120,7 +120,7 @@ export function RadiationCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Measurement method:' : 'Metoda pomiaru:'}</div>
+          <div style={lbl}>{isEn ? 'Measurement method:' : 'Metoda pomiaru / Measurement method:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
@@ -128,11 +128,11 @@ export function RadiationCertificateTemplate({ data }) {
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Measurement date:' : 'Data pomiaru:'}</div>
+          <div style={lbl}>{isEn ? 'Measurement date:' : 'Data pomiaru / Measurement date:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Accreditation No.:' : 'Nr akredytacji:'}</div>
+          <div style={lbl}>{isEn ? 'Accreditation No.:' : 'Nr akredytacji / Accreditation No.:'}</div>
           <div style={val} />
         </div>
       </div>
@@ -141,18 +141,18 @@ export function RadiationCertificateTemplate({ data }) {
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Laboratory</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>{isEn ? 'Accreditation No.' : 'Nr akredytacji'}</div>
+          <div style={lbl}>{isEn ? 'Accreditation No.' : 'Nr akredytacji / Accreditation No.'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date + Stamp</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
       </div>
 

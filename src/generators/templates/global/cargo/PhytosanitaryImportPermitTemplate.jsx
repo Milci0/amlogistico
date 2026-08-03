@@ -47,22 +47,22 @@ export function PhytosanitaryImportPermitTemplate({ data }) {
           <div style={val}>{data.customs?.permitNo || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Issue date:' : 'Data wydania:'}</div>
+          <div style={lbl}>{isEn ? 'Issue date:' : 'Data wydania / Issue date:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Valid until:' : 'Ważne do:'}</div>
+          <div style={lbl}>{isEn ? 'Valid until:' : 'Ważne do / Valid until:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Issuing authority:' : 'Organ wystawiający:'}</div>
+          <div style={lbl}>{isEn ? 'Issuing authority:' : 'Organ wystawiający / Issuing authority:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Country:' : 'Kraj:'}</div>
+          <div style={lbl}>{isEn ? 'Country:' : 'Kraj / Country:'}</div>
           <div style={val}>{data.toCountry || ''}</div>
         </div>
       </div>
@@ -84,7 +84,7 @@ export function PhytosanitaryImportPermitTemplate({ data }) {
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Country of export:' : 'Kraj eksportu:'}</div>
+          <div style={lbl}>{isEn ? 'Country of export:' : 'Kraj eksportu / Country of export:'}</div>
           <div style={val}>{data.fromCountry || ''}</div>
         </div>
       </div>
@@ -95,7 +95,7 @@ export function PhytosanitaryImportPermitTemplate({ data }) {
           <div style={val}>{data.cargo?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Botanical name:' : 'Botaniczna nazwa:'}</div>
+          <div style={lbl}>{isEn ? 'Botanical name:' : 'Botaniczna nazwa / Botanical name:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
@@ -103,18 +103,18 @@ export function PhytosanitaryImportPermitTemplate({ data }) {
           <div style={val}>{data.cargo?.quantity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Unit:' : 'Jednostka:'}</div>
+          <div style={lbl}>{isEn ? 'Unit:' : 'Jednostka / Unit:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'PHYTOSANITARY REQUIREMENTS' : 'WYMAGANIA FITOSANITARNE'}</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'PHYTOSANITARY REQUIREMENTS' : 'WYMAGANIA FITOSANITARNE / PHYTOSANITARY REQUIREMENTS'}</span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '190px' }}>{isEn ? 'Requirement' : 'Wymóg'}</div>
-        <div style={{ ...thStyle, flex: 1, borderRight: b }}>{isEn ? 'Details' : 'Szczegóły'}</div>
+        <div style={{ ...thStyle, width: '190px' }}>{isEn ? 'Requirement' : 'Wymóg / Requirement'}</div>
+        <div style={{ ...thStyle, flex: 1, borderRight: b }}>{isEn ? 'Details' : 'Szczegóły / Details'}</div>
       </div>
       {requirements.map(([req, det], i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '24px' }}>
@@ -127,18 +127,18 @@ export function PhytosanitaryImportPermitTemplate({ data }) {
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Plant Protection Authority</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Importer</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date + Official Stamp</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp / Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Signature &amp; stamp / Podpis i pieczęć'}</div>
         </div>
       </div>
 

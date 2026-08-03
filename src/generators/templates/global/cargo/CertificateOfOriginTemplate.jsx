@@ -40,10 +40,10 @@ export function CertificateOfOriginTemplate({ data }) {
       <div style={{ display: 'flex', border: b, marginBottom: '0' }}>
         <div style={{ flex: 1, textAlign: 'center', padding: '8px 10px', borderRight: b }}>
           <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1a3a6b', marginBottom: '3px' }}>
-            {isEn ? 'CERTIFICATE OF ORIGIN' : 'ŚWIADECTWO POCHODZENIA'}
+            {isEn ? 'CERTIFICATE OF ORIGIN' : 'ŚWIADECTWO POCHODZENIA / CERTIFICATE OF ORIGIN'}
           </div>
           <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#1a3a6b', marginBottom: '2px' }}>
-            {isEn ? 'ŚWIADECTWO POCHODZENIA' : 'CERTIFICATE OF ORIGIN'}
+            {isEn ? 'ŚWIADECTWO POCHODZENIA' : 'CERTIFICATE OF ORIGIN / ŚWIADECTWO POCHODZENIA'}
           </div>
           <div style={{ fontSize: '7px', color: '#666' }}>Certificat d'Origine · Ursprungszeugnis</div>
         </div>

@@ -1,6 +1,7 @@
 import { formatDocumentDate } from '../../../../utils/formatDate'
 
 export function FakturaHandlowaTemplate({ data }) {
+  const isEn = data.language === 'EN'
   const unitPrice = (data.cargo?.value && data.cargo?.packages)
     ? (parseFloat(data.cargo.value) / parseFloat(data.cargo.packages)).toFixed(2)
     : data.cargo?.value
@@ -26,11 +27,11 @@ export function FakturaHandlowaTemplate({ data }) {
       {/* NAGŁÓWEK */}
       <div style={{ display: 'flex', border: b }}>
         <div style={{ flex: 1, backgroundColor: '#1a3a6b', padding: '8px 12px', borderRight: b }}>
-          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', letterSpacing: '2px' }}>FAKTURA HANDLOWA</div>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', letterSpacing: '2px' }}>{isEn ? 'COMMERCIAL INVOICE' : 'FAKTURA HANDLOWA'}</div>
           <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Commercial Invoice · Factura Comercial</div>
         </div>
         <div style={{ width: '150px', padding: '6px 8px', backgroundColor: '#1a3a6b' }}>
-          <div style={{ ...lbl, color: '#a0b8d8' }}>Nr dokumentu:</div>
+          <div style={{ ...lbl, color: '#a0b8d8' }}>{isEn ? 'Document No.:' : 'Nr dokumentu:'}</div>
           <div style={{ color: '#fff', fontSize: '9px', minHeight: '14px' }} />
         </div>
       </div>
@@ -38,19 +39,19 @@ export function FakturaHandlowaTemplate({ data }) {
       {/* SPRZEDAJĄCY | KUPUJĄCY | NR FAKTURY */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '65px' }}>
-          <div style={lbl}>Sprzedający / Seller:</div>
+          <div style={lbl}>{isEn ? 'Seller:' : 'Sprzedający / Seller:'}</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
           <div style={val}>{data.sender?.address}</div>
           <div style={val}>{data.sender?.country}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '65px' }}>
-          <div style={lbl}>Kupujący / Buyer:</div>
+          <div style={lbl}>{isEn ? 'Buyer:' : 'Kupujący / Buyer:'}</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
           <div style={val}>{data.receiver?.address}</div>
           <div style={val}>{data.receiver?.country}</div>
         </div>
         <div style={{ width: '160px', padding: '3px 5px', minHeight: '65px' }}>
-          <div style={lbl}>Nr faktury / Invoice No.:</div>
+          <div style={lbl}>{isEn ? 'Invoice No.:' : 'Nr faktury / Invoice No.:'}</div>
           <div style={val} />
         </div>
       </div>
@@ -58,15 +59,15 @@ export function FakturaHandlowaTemplate({ data }) {
       {/* NIP/VAT | NIP/VAT | DATA WYSTAWIENIA */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
-          <div style={lbl}>NIP/VAT:</div>
+          <div style={lbl}>{isEn ? 'VAT No.:' : 'NIP/VAT:'}</div>
           <div style={val}>{data.sender?.vat}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
-          <div style={lbl}>NIP/VAT:</div>
+          <div style={lbl}>{isEn ? 'VAT No.:' : 'NIP/VAT:'}</div>
           <div style={val}>{data.receiver?.vat}</div>
         </div>
         <div style={{ width: '160px', padding: '3px 5px', minHeight: '24px' }}>
-          <div style={lbl}>Data wystawienia / Issue date:</div>
+          <div style={lbl}>{isEn ? 'Issue Date:' : 'Data wystawienia / Issue date:'}</div>
           <div style={val}>{formatDocumentDate(new Date())}</div>
         </div>
       </div>
@@ -78,38 +79,38 @@ export function FakturaHandlowaTemplate({ data }) {
           <div style={val}>{data.cargo?.incoterms}</div>
         </div>
         <div style={{ width: '100px', padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
-          <div style={lbl}>Miejsce Incoterms:</div>
+          <div style={lbl}>{isEn ? 'Incoterms Place:' : 'Miejsce Incoterms:'}</div>
           <div style={val}>{data.toCity}</div>
         </div>
         <div style={{ width: '80px', padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
-          <div style={lbl}>Waluta / Currency:</div>
+          <div style={lbl}>{isEn ? 'Currency:' : 'Waluta / Currency:'}</div>
           <div style={val}>{data.cargo?.currency}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
-          <div style={lbl}>Warunki płatności / Payment terms:</div>
-          <div style={val}>{data.terms?.paymentDays ? `${data.terms.paymentDays} dni` : ''}</div>
+          <div style={lbl}>{isEn ? 'Payment Terms:' : 'Warunki płatności / Payment terms:'}</div>
+          <div style={val}>{data.terms?.paymentDays ? `${data.terms.paymentDays} ${isEn ? 'days' : 'dni'}` : ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
-          <div style={lbl}>Kraj pochodzenia / Country of origin:</div>
+          <div style={lbl}>{isEn ? 'Country of Origin:' : 'Kraj pochodzenia / Country of origin:'}</div>
           <div style={val}>{data.fromCountry}</div>
         </div>
       </div>
 
       {/* SEKCJA: POZYCJE */}
       <div style={{ backgroundColor: '#2c5fa8', borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>POZYCJE FAKTURY / LINE ITEMS</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'LINE ITEMS' : 'POZYCJE FAKTURY / LINE ITEMS'}</span>
       </div>
 
       {/* TABELA NAGŁÓWEK */}
       <div style={{ display: 'flex', borderLeft: b }}>
-        <div style={{ ...thStyle, width: '30px' }}>Lp.</div>
-        <div style={{ ...thStyle, flex: 1 }}>Opis towaru / Description</div>
-        <div style={{ ...thStyle, width: '65px' }}>Kod HS</div>
-        <div style={{ ...thStyle, width: '55px' }}>Kraj poch.<br />Origin</div>
-        <div style={{ ...thStyle, width: '50px' }}>Ilość<br />Qty</div>
-        <div style={{ ...thStyle, width: '40px' }}>Jedn.</div>
-        <div style={{ ...thStyle, width: '80px' }}>Cena jedn.<br />Unit price</div>
-        <div style={{ ...thStyle, width: '80px', borderRight: b }}>Wartość<br />Amount</div>
+        <div style={{ ...thStyle, width: '30px' }}>{isEn ? 'No.' : 'Lp.'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Description' : 'Opis towaru / Description'}</div>
+        <div style={{ ...thStyle, width: '65px' }}>{isEn ? 'HS Code' : 'Kod HS'}</div>
+        <div style={{ ...thStyle, width: '55px' }}>{isEn ? 'Origin' : <>Kraj poch.<br />Origin</>}</div>
+        <div style={{ ...thStyle, width: '50px' }}>{isEn ? 'Qty' : <>Ilość<br />Qty</>}</div>
+        <div style={{ ...thStyle, width: '40px' }}>{isEn ? 'Unit' : 'Jedn.'}</div>
+        <div style={{ ...thStyle, width: '80px' }}>{isEn ? 'Unit price' : <>Cena jedn.<br />Unit price</>}</div>
+        <div style={{ ...thStyle, width: '80px', borderRight: b }}>{isEn ? 'Amount' : <>Wartość<br />Amount</>}</div>
       </div>
 
       {/* Wiersz z danymi */}
@@ -119,7 +120,7 @@ export function FakturaHandlowaTemplate({ data }) {
         <div style={{ width: '65px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.hsCode}</div>
         <div style={{ width: '55px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.fromCountry}</div>
         <div style={{ width: '50px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packages}</div>
-        <div style={{ width: '40px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packageTypeUnCode || 'szt.'}</div>
+        <div style={{ width: '40px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'center' }}>{data.cargo?.packageTypeUnCode || (isEn ? 'pcs' : 'szt.')}</div>
         <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'right' }}>{unitPrice}</div>
         <div style={{ width: '80px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px', textAlign: 'right' }}>{data.cargo?.value}</div>
       </div>
@@ -131,19 +132,19 @@ export function FakturaHandlowaTemplate({ data }) {
       {/* PODSUMOWANIE WARTOŚCI */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '30px' }}>
-          <div style={lbl}>Wartość netto / Net value:</div>
+          <div style={lbl}>{isEn ? 'Net Value:' : 'Wartość netto / Net value:'}</div>
           <div style={val}>{data.cargo?.value} {data.cargo?.currency}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '30px' }}>
-          <div style={lbl}>Koszt transportu / Freight:</div>
+          <div style={lbl}>{isEn ? 'Freight:' : 'Koszt transportu / Freight:'}</div>
           <div style={val}>{data.terms?.freightPrice ? `${data.terms.freightPrice} ${data.terms.freightCurrency || data.cargo?.currency}` : ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '30px' }}>
-          <div style={lbl}>Ubezpieczenie / Insurance:</div>
+          <div style={lbl}>{isEn ? 'Insurance:' : 'Ubezpieczenie / Insurance:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '30px', backgroundColor: '#fffbe6' }}>
-          <div style={{ ...lbl, fontWeight: 'bold' }}>WARTOŚĆ CELNA / CUSTOMS VALUE:</div>
+          <div style={{ ...lbl, fontWeight: 'bold' }}>{isEn ? 'CUSTOMS VALUE:' : 'WARTOŚĆ CELNA / CUSTOMS VALUE:'}</div>
           <div style={{ ...val, fontWeight: 'bold' }}>{data.cargo?.value} {data.cargo?.currency}</div>
         </div>
       </div>
@@ -151,13 +152,13 @@ export function FakturaHandlowaTemplate({ data }) {
       {/* DANE BANKOWE */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '45px' }}>
-          <div style={lbl}>Dane bankowe / Bank details:</div>
+          <div style={lbl}>{isEn ? 'Bank Details:' : 'Dane bankowe / Bank details:'}</div>
           <div style={{ ...val, marginTop: '2px' }}>IBAN: {data.sender?.iban}</div>
           <div style={val}>BIC/SWIFT: {data.sender?.swift}</div>
           <div style={val}>Bank: {data.sender?.bank}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '45px' }}>
-          <div style={lbl}>Deklaracja eksportera / Exporter declaration (REX):</div>
+          <div style={lbl}>{isEn ? 'Exporter Declaration (REX):' : 'Deklaracja eksportera / Exporter declaration (REX):'}</div>
           <div style={{ minHeight: '30px' }} />
         </div>
       </div>
@@ -165,19 +166,19 @@ export function FakturaHandlowaTemplate({ data }) {
       {/* PODPISY */}
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Wystawił / Prepared by</div>
+          <div style={lbl}>{isEn ? 'Prepared by' : 'Wystawił / Prepared by'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Data / Date</div>
+          <div style={lbl}>{isEn ? 'Date' : 'Data / Date'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '60px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={lbl}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć'}</div>
         </div>
       </div>
 

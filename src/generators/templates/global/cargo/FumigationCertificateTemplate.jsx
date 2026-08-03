@@ -27,55 +27,55 @@ export function FumigationCertificateTemplate({ data }) {
           {isEn ? (
             <><strong>IMPORTANT:</strong> Required for fumigated goods (de-infested/disinfected) — grain, wood, used machinery. Issued by an accredited fumigator.</>
           ) : (
-            <><strong>WAŻNE:</strong> Wymagane dla towarów fumigowanych (odrobaczonych/odkażonych) — zboże, drewno, używane maszyny. Wystawiane przez akredytowanego fumiganta.</>
+            <><strong>WAŻNE:</strong> Wymagane dla towarów fumigowanych (odrobaczonych/odkażonych) — zboże, drewno, używane maszyny. Wystawiane przez akredytowanego fumiganta. <strong>IMPORTANT:</strong> Required for fumigated goods (de-infested/disinfected) — grain, wood, used machinery. Issued by an accredited fumigator.</>
           )}
         </span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Certificate No.:' : 'Nr świadectwa:'}</div>
+          <div style={lbl}>{isEn ? 'Certificate No.:' : 'Nr świadectwa / Certificate No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Date of fumigation:' : 'Data fumigacji:'}</div>
+          <div style={lbl}>{isEn ? 'Date of fumigation:' : 'Data fumigacji / Date of fumigation:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Issuing authority:' : 'Organ wystawiający:'}</div>
+          <div style={lbl}>{isEn ? 'Issuing authority:' : 'Organ wystawiający / Issuing authority:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Shipper:' : 'Eksporter:'}</div>
+          <div style={lbl}>{isEn ? 'Shipper:' : 'Eksporter / Shipper:'}</div>
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Country:' : 'Kraj:'}</div>
+          <div style={lbl}>{isEn ? 'Country:' : 'Kraj / Country:'}</div>
           <div style={val}>{data.sender?.country || ''}</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Consignee:' : 'Odbiorca:'}</div>
+          <div style={lbl}>{isEn ? 'Consignee:' : 'Odbiorca / Consignee:'}</div>
           <div style={val}>{data.receiver?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Country of destination:' : 'Kraj przeznaczenia:'}</div>
+          <div style={lbl}>{isEn ? 'Country of destination:' : 'Kraj przeznaczenia / Country of destination:'}</div>
           <div style={val}>{data.toCountry || ''}</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Description of goods:' : 'Opis towaru:'}</div>
+          <div style={lbl}>{isEn ? 'Description of goods:' : 'Opis towaru / Description of goods:'}</div>
           <div style={val}>{data.cargo?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Quantity (kg):' : 'Ilość (kg):'}</div>
+          <div style={lbl}>{isEn ? 'Quantity (kg):' : 'Ilość (kg) / Quantity (kg):'}</div>
           <div style={val}>{data.cargo?.weight || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
@@ -86,7 +86,7 @@ export function FumigationCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Port of loading:' : 'Port załadunku:'}</div>
+          <div style={lbl}>{isEn ? 'Port of loading:' : 'Port załadunku / Port of loading:'}</div>
           <div style={val}>{data.fromCity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
@@ -100,17 +100,17 @@ export function FumigationCertificateTemplate({ data }) {
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'FUMIGATION DETAILS' : 'SZCZEGÓŁY FUMIGACJI'}</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'FUMIGATION DETAILS' : 'SZCZEGÓŁY FUMIGACJI / FUMIGATION DETAILS'}</span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '110px' }}>{isEn ? 'Fumigant used' : 'Środek fumigujący'}</div>
-        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Concentration (g/m³)' : 'Stężenie (g/m³)'}</div>
-        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Temperature (°C)' : 'Temperatura (°C)'}</div>
-        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Exposure time (h)' : 'Czas ekspozycji (h)'}</div>
-        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Start date/time' : 'Data rozpoczęcia'}</div>
-        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'End date/time' : 'Data zakończenia'}</div>
-        <div style={{ ...thStyle, width: '70px', borderRight: b }}>{isEn ? 'Result' : 'Wynik'}</div>
+        <div style={{ ...thStyle, width: '110px' }}>{isEn ? 'Fumigant used' : 'Środek fumigujący / Fumigant used'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Concentration (g/m³)' : 'Stężenie (g/m³) / Concentration (g/m³)'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Temperature (°C)' : 'Temperatura (°C) / Temperature (°C)'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Exposure time (h)' : 'Czas ekspozycji (h) / Exposure time (h)'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Start date/time' : 'Data rozpoczęcia / Start date/time'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'End date/time' : 'Data zakończenia / End date/time'}</div>
+        <div style={{ ...thStyle, width: '70px', borderRight: b }}>{isEn ? 'Result' : 'Wynik / Result'}</div>
       </div>
       {fumigants.map((name, i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '20px' }}>
@@ -129,27 +129,27 @@ export function FumigationCertificateTemplate({ data }) {
           {isEn ? (
             <><strong>DECLARATION:</strong> This is to certify that the above described goods/container have been fumigated according to applicable regulations and are free from living harmful organisms.</>
           ) : (
-            <><strong>OŚWIADCZENIE:</strong> Niniejszym zaświadcza się, że wyżej opisany towar/pojemnik został poddany fumigacji zgodnie z obowiązującymi przepisami i jest wolny od żywych organizmów szkodliwych.</>
+            <><strong>OŚWIADCZENIE:</strong> Niniejszym zaświadcza się, że wyżej opisany towar/pojemnik został poddany fumigacji zgodnie z obowiązującymi przepisami i jest wolny od żywych organizmów szkodliwych. <strong>DECLARATION:</strong> This is to certify that the above described goods/container have been fumigated according to applicable regulations and are free from living harmful organisms.</>
           )}
         </span>
       </div>
 
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>{isEn ? 'Accredited fumigator' : 'Akredytowany fumigant'}</div>
+          <div style={lbl}>{isEn ? 'Accredited fumigator' : 'Akredytowany fumigant / Accredited fumigator'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>{isEn ? 'Licence No.:' : 'Licencja Nr:'}</div>
+          <div style={lbl}>{isEn ? 'Licence No.:' : 'Licencja Nr / Licence No.:'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
       </div>
 

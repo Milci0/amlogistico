@@ -25,10 +25,10 @@ export function BillOfLadingTemplate({ data }) {
       <div style={{ display: 'flex', border: b }}>
         <div style={{ flex: 1, backgroundColor: '#1a3a6b', padding: '8px 12px', borderRight: b }}>
           <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', letterSpacing: '2px' }}>BILL OF LADING</div>
-          <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>KONOSAMENT MORSKI · ORIGINAL</div>
+          <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>ORIGINAL</div>
         </div>
         <div style={{ width: '220px', padding: '6px 8px', backgroundColor: '#1a3a6b' }}>
-          <div style={{ ...lbl, color: '#a0b8d8' }}>B/L No. / Nr konosamentu:</div>
+          <div style={{ ...lbl, color: '#a0b8d8' }}>B/L No.:</div>
           <div style={{ color: '#fff', fontSize: '9px', minHeight: '12px', marginBottom: '4px' }} />
           <div style={{ ...lbl, color: '#a0b8d8' }}>B/L Type:</div>
           <div style={{ fontSize: '8px', color: '#d0e4f8', marginTop: '2px' }}>&#9634; Original (3 oryg.) &nbsp; &#9634; Sea Waybill &nbsp; &#9634; Telex Release</div>
@@ -38,13 +38,13 @@ export function BillOfLadingTemplate({ data }) {
       {/* SHIPPER | CONSIGNEE */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '60px' }}>
-          <div style={lbl}>Shipper / Załadowca:</div>
+          <div style={lbl}>Shipper:</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
           <div style={val}>{data.sender?.address}</div>
           <div style={val}>{data.sender?.country}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '60px' }}>
-          <div style={lbl}>Consignee / Odbiorca:</div>
+          <div style={lbl}>Consignee:</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
           <div style={val}>{data.receiver?.address}</div>
           <div style={val}>{data.receiver?.country}</div>
@@ -54,7 +54,7 @@ export function BillOfLadingTemplate({ data }) {
       {/* NOTIFY PARTY | ALSO NOTIFY */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '32px' }}>
-          <div style={lbl}>Notify Party / Strona powiadamiana:</div>
+          <div style={lbl}>Notify Party:</div>
           <div style={val}>{data.receiver?.name}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '32px' }}>
@@ -66,7 +66,7 @@ export function BillOfLadingTemplate({ data }) {
       {/* VESSEL | VOYAGE | FLAG | FREIGHT TERMS */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 2, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
-          <div style={lbl}>Vessel / Statek:</div>
+          <div style={lbl}>Vessel:</div>
           <div style={val}>{data.cargo?.vessel}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
@@ -74,7 +74,7 @@ export function BillOfLadingTemplate({ data }) {
           <div style={val}>{data.cargo?.voyageNo}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
-          <div style={lbl}>Flag / Bandera:</div>
+          <div style={lbl}>Flag:</div>
           <div style={val}>{data.sea?.flag}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
@@ -88,11 +88,11 @@ export function BillOfLadingTemplate({ data }) {
       {/* PORT OF LOADING | PORT OF DISCHARGE | PLACE OF DELIVERY */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
-          <div style={lbl}>Port of Loading / Port załadunku:</div>
+          <div style={lbl}>Port of Loading:</div>
           <div style={val}>{data.fromCity}, {data.fromCountry}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '28px' }}>
-          <div style={lbl}>Port of Discharge / Port rozładunku:</div>
+          <div style={lbl}>Port of Discharge:</div>
           <div style={val}>{data.toCity}, {data.toCountry}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '28px' }}>
@@ -119,19 +119,19 @@ export function BillOfLadingTemplate({ data }) {
 
       {/* SEKCJA: CARGO */}
       <div style={{ backgroundColor: '#2c5fa8', borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>SZCZEGÓŁY ŁADUNKU / CARGO DETAILS</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>CARGO DETAILS</span>
       </div>
 
       {/* TABELA NAGŁÓWEK */}
       <div style={{ display: 'flex', borderLeft: b }}>
-        <div style={{ ...thStyle, width: '110px' }}>Container No.<br />Nr kontenera</div>
-        <div style={{ ...thStyle, width: '75px' }}>Seal No.<br />Nr plomby</div>
-        <div style={{ ...thStyle, width: '60px' }}>Type<br />Typ</div>
-        <div style={{ ...thStyle, width: '70px' }}>Marks &amp; Nos<br />Znaki</div>
-        <div style={{ ...thStyle, flex: 1 }}>Description of goods<br />Opis towaru</div>
-        <div style={{ ...thStyle, width: '55px' }}>Packages<br />Szt.</div>
-        <div style={{ ...thStyle, width: '75px' }}>Gross Weight<br />Waga brutto (kg)</div>
-        <div style={{ ...thStyle, width: '75px', borderRight: b }}>Measurement<br />Objętość (m³)</div>
+        <div style={{ ...thStyle, width: '110px' }}>Container No.</div>
+        <div style={{ ...thStyle, width: '75px' }}>Seal No.</div>
+        <div style={{ ...thStyle, width: '60px' }}>Type</div>
+        <div style={{ ...thStyle, width: '70px' }}>Marks &amp; Nos</div>
+        <div style={{ ...thStyle, flex: 1 }}>Description of Goods</div>
+        <div style={{ ...thStyle, width: '55px' }}>Packages</div>
+        <div style={{ ...thStyle, width: '75px' }}>Gross Weight (kg)</div>
+        <div style={{ ...thStyle, width: '75px', borderRight: b }}>Measurement (m³)</div>
       </div>
 
       {/* Wiersz z danymi */}
@@ -163,7 +163,7 @@ export function BillOfLadingTemplate({ data }) {
           <div style={lbl}>Collect (USD):</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px' }}>
-          <div style={lbl}>Place of issue / Miejsce wystawienia:</div>
+          <div style={lbl}>Place of Issue:</div>
           <div style={val}>{data.fromCity}</div>
         </div>
       </div>
@@ -177,7 +177,7 @@ export function BillOfLadingTemplate({ data }) {
             <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px', fontSize: '8px', fontWeight: i === 2 ? 'bold' : 'normal' }}>{label}</div>
             <div style={{ width: '110px', padding: '3px 5px', borderRight: b, minHeight: '22px', fontSize: '9px' }}>
               {i === 0 && isPrepaid && fv}
-              {i === 1 && <div style={lbl}>Date of issue / Data wystawienia:</div>}
+              {i === 1 && <div style={lbl}>Date of Issue:</div>}
               {i === 1 && <div style={val}>{today}</div>}
             </div>
             <div style={{ width: '110px', padding: '3px 5px', borderRight: b, minHeight: '22px', fontSize: '9px' }}>
@@ -194,10 +194,10 @@ export function BillOfLadingTemplate({ data }) {
         <div style={{ flex: 1, minHeight: '30px' }} />
       </div>
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '3px 5px', textAlign: 'center', fontSize: '7px', color: '#555' }}>
-        As agent(s) for the Carrier · Podpis armatora lub agenta
+        As agent(s) for the Carrier
       </div>
       <div style={{ marginTop: '6px', fontSize: '7px', color: '#777', textAlign: 'center' }}>
-        Wydano w oryginale (3 egzemplarze). Po zrealizowaniu jednego oryginału pozostałe tracą ważność. | ONE of the Bills of Lading being accomplished, the others to stand void.
+        ONE of the Bills of Lading being accomplished, the others to stand void.
       </div>
 
     </div>

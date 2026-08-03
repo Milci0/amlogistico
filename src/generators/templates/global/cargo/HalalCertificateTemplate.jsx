@@ -13,7 +13,7 @@ export function HalalCertificateTemplate({ data }) {
   }
   // "Halal" — nazwa własna, bez tłumaczenia.
   const Checks = () => (
-    <>&#9634; Halal &nbsp; &#9634; {isEn ? 'No pork' : 'Bez wieprzowiny'} &nbsp; &#9634; {isEn ? 'No alcohol' : 'Bez alkoholu'}</>
+    <>&#9634; Halal &nbsp; &#9634; {isEn ? 'No pork' : 'Bez wieprzowiny / No pork'} &nbsp; &#9634; {isEn ? 'No alcohol' : 'Bez alkoholu / No alcohol'}</>
   )
   const emptyRow = (
     <div style={{ display: 'flex', minHeight: '26px' }}>
@@ -48,7 +48,7 @@ export function HalalCertificateTemplate({ data }) {
 
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>
-          {isEn ? 'HALAL CERTIFICATE' : 'CERTYFIKAT HALAL'}
+          {isEn ? 'HALAL CERTIFICATE' : 'CERTYFIKAT HALAL / HALAL CERTIFICATE'}
         </div>
         <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>
           {isEn
@@ -67,64 +67,64 @@ export function HalalCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Certificate No.:' : 'Nr certyfikatu:'}</div>
+          <div style={lbl}>{isEn ? 'Certificate No.:' : 'Nr certyfikatu / Certificate No.:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Issue date:' : 'Data wystawienia:'}</div>
+          <div style={lbl}>{isEn ? 'Issue date:' : 'Data wystawienia / Issue date:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Valid until:' : 'Ważny do:'}</div>
+          <div style={lbl}>{isEn ? 'Valid until:' : 'Ważny do / Valid until:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '24px' }}>
-          <div style={lbl}>{isEn ? 'Certifying body (accredited):' : 'Jednostka certyfikująca (akredytowana):'}</div>
+          <div style={lbl}>{isEn ? 'Certifying body (accredited):' : 'Jednostka certyfikująca (akredytowana) / Certifying body (accredited):'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '24px' }}>
-          <div style={lbl}>{isEn ? 'Accreditation No.:' : 'Nr akredytacji:'}</div>
+          <div style={lbl}>{isEn ? 'Accreditation No.:' : 'Nr akredytacji / Accreditation No.:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '36px' }}>
-          <div style={lbl}>{isEn ? 'Manufacturer (name, address, country):' : 'Producent (nazwa, adres, kraj):'}</div>
+          <div style={lbl}>{isEn ? 'Manufacturer (name, address, country):' : 'Producent (nazwa, adres, kraj) / Manufacturer (name, address, country):'}</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
           <div style={val}>{data.sender?.address}, {data.sender?.country}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '36px' }}>
-          <div style={lbl}>{isEn ? 'Establishment No.:' : 'Nr zakładu:'}</div>
+          <div style={lbl}>{isEn ? 'Establishment No.:' : 'Nr zakładu / Establishment No.:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b, borderBottom: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Country of destination:' : 'Kraj przeznaczenia:'}</div>
+          <div style={lbl}>{isEn ? 'Country of destination:' : 'Kraj przeznaczenia / Country of destination:'}</div>
           <div style={val}>{data.toCountry || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Competent authority in country of import:' : 'Właściwy organ w kraju importu:'}</div>
+          <div style={lbl}>{isEn ? 'Competent authority in country of import:' : 'Właściwy organ w kraju importu / Competent authority in country of import:'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'PRODUCT DESCRIPTION' : 'OPIS PRODUKTU'}</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{isEn ? 'PRODUCT DESCRIPTION' : 'OPIS PRODUKTU / PRODUCT DESCRIPTION'}</span>
       </div>
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '65px' }}>{isEn ? 'Product name' : 'Nazwa produktu'}</div>
-        <div style={{ ...thStyle, width: '60px' }}>{isEn ? 'Arabic name' : 'Nazwa arabska'}</div>
-        <div style={{ ...thStyle, width: '55px' }}>{isEn ? 'Product code' : 'Kod produktu'}</div>
-        <div style={{ ...thStyle, width: '55px' }}>{isEn ? 'Category' : 'Kategoria'}</div>
-        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Ingredients verified' : 'Składniki (sprawdzone)'}</div>
-        <div style={{ ...thStyle, width: '55px' }}>{isEn ? 'Batch No.' : 'Nr partii'}</div>
-        <div style={{ ...thStyle, width: '40px', borderRight: b }}>{isEn ? 'Qty' : 'Ilość'}</div>
+        <div style={{ ...thStyle, width: '65px' }}>{isEn ? 'Product name' : 'Nazwa produktu / Product name'}</div>
+        <div style={{ ...thStyle, width: '60px' }}>{isEn ? 'Arabic name' : 'Nazwa arabska / Arabic name'}</div>
+        <div style={{ ...thStyle, width: '55px' }}>{isEn ? 'Product code' : 'Kod produktu / Product code'}</div>
+        <div style={{ ...thStyle, width: '55px' }}>{isEn ? 'Category' : 'Kategoria / Category'}</div>
+        <div style={{ ...thStyle, flex: 1 }}>{isEn ? 'Ingredients verified' : 'Składniki (sprawdzone) / Ingredients verified'}</div>
+        <div style={{ ...thStyle, width: '55px' }}>{isEn ? 'Batch No.' : 'Nr partii / Batch No.'}</div>
+        <div style={{ ...thStyle, width: '40px', borderRight: b }}>{isEn ? 'Qty' : 'Ilość / Qty'}</div>
       </div>
       <div style={{ display: 'flex', borderLeft: b, minHeight: '26px' }}>
         <div style={{ width: '65px', padding: '2px 4px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.cargo?.name || ''}</div>
@@ -149,19 +149,19 @@ export function HalalCertificateTemplate({ data }) {
 
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '4px 6px', borderRight: b, minHeight: '30px' }}>
-          <div style={lbl}>{isEn ? 'Inspector:' : 'Inspektor:'}</div>
+          <div style={lbl}>{isEn ? 'Inspector:' : 'Inspektor / Inspector:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '4px 6px', borderRight: b, minHeight: '30px' }}>
-          <div style={lbl}>{isEn ? 'Director:' : 'Dyrektor jednostki:'}</div>
+          <div style={lbl}>{isEn ? 'Director:' : 'Dyrektor jednostki / Director:'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '4px 6px', borderRight: b, minHeight: '30px' }}>
-          <div style={lbl}>{isEn ? 'Date:' : 'Data:'}</div>
+          <div style={lbl}>{isEn ? 'Date:' : 'Data / Date:'}</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '4px 6px', minHeight: '30px' }}>
-          <div style={lbl}>{isEn ? 'Stamp & halal logo:' : 'Pieczęć i logo halal:'}</div>
+          <div style={lbl}>{isEn ? 'Stamp & halal logo:' : 'Pieczęć i logo halal / Stamp & halal logo:'}</div>
           <div style={val} />
         </div>
       </div>

@@ -31,23 +31,23 @@ export function AwbTemplate({ data }) {
       <div style={{ display: 'flex', border: b }}>
         <div style={{ flex: 1, backgroundColor: '#1a3a6b', padding: '8px 12px' }}>
           <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>AIR WAYBILL (AWB)</div>
-          <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Lotniczy List Przewozowy · Konwencja Montrealska 1999</div>
+          <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Montreal Convention 1999</div>
         </div>
       </div>
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '3px 6px' }}>
-        <span style={{ fontSize: '6.5px', color: '#666' }}>Nie jest dokumentem własności towaru — odbiorca wskazany jako Consignee odbiera bez oryginału.</span>
+        <span style={{ fontSize: '6.5px', color: '#666' }}>Not a document of title — the named Consignee may take delivery without presenting the original.</span>
       </div>
 
       {/* SHIPPER | CONSIGNEE */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '55px' }}>
-          <div style={lbl}>Shipper / Nadawca (nazwa, adres, kraj, tel.):</div>
+          <div style={lbl}>Shipper (name, address, country, tel.):</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.sender?.name}</div>
           <div style={val}>{data.sender?.address}, {data.sender?.country}</div>
           <div style={val}>{data.sender?.phone || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '55px' }}>
-          <div style={lbl}>Consignee / Odbiorca (nazwa, adres, kraj, tel.):</div>
+          <div style={lbl}>Consignee (name, address, country, tel.):</div>
           <div style={{ ...val, marginTop: '2px' }}>{data.receiver?.name}</div>
           <div style={val}>{data.receiver?.address}, {data.receiver?.country}</div>
           {/* Brak data.receiver.phone w słowniku (asymetria względem data.sender.phone) — propozycja, patrz manifest poz. 11. */}
@@ -58,7 +58,7 @@ export function AwbTemplate({ data }) {
       {/* ISSUING CARRIER | AGENT IATA NO. */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '26px' }}>
-          <div style={lbl}>Issuing Carrier / Linia lotnicza wystawiająca:</div>
+          <div style={lbl}>Issuing Carrier:</div>
           <div style={val}>{data.carrier?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '26px' }}>
@@ -71,15 +71,15 @@ export function AwbTemplate({ data }) {
       {/* PORT NADANIA | PORT DOCELOWY | ROUTING */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '30px' }}>
-          <div style={lbl}>Port lotniczy nadania (kod IATA):</div>
+          <div style={lbl}>Airport of Departure (IATA code):</div>
           <div style={val}>{data.fromCity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '30px' }}>
-          <div style={lbl}>Airport of Destination / Port lotniczy docelowy (kod IATA):</div>
+          <div style={lbl}>Airport of Destination (IATA code):</div>
           <div style={val}>{data.toCity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '30px' }}>
-          <div style={lbl}>Routing / Trasa (via):</div>
+          <div style={lbl}>Routing (via):</div>
           {/* Brak odpowiednika w słowniku — pole opcjonalne/rzadkie, zostawione puste bez propozycji nowej zmiennej. */}
           <div style={val} />
         </div>
@@ -103,7 +103,7 @@ export function AwbTemplate({ data }) {
 
       {/* SEKCJA: SZCZEGÓŁY ŁADUNKU */}
       <div style={{ backgroundColor: '#2c5fa8', borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>SZCZEGÓŁY ŁADUNKU / CARGO DETAILS</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>CARGO DETAILS</span>
       </div>
 
       {/* TABELA NAGŁÓWEK */}
@@ -140,15 +140,15 @@ export function AwbTemplate({ data }) {
       {/* WARTOŚCI DEKLAROWANE */}
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '26px' }}>
-          <div style={lbl}>Declared Value for Carriage / Wartość do ubezpieczenia:</div>
+          <div style={lbl}>Declared Value for Carriage:</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '26px' }}>
-          <div style={lbl}>Declared Value for Customs / Wartość celna:</div>
+          <div style={lbl}>Declared Value for Customs:</div>
           <div style={val}>{data.cargo?.value || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '26px' }}>
-          <div style={lbl}>Amount of Insurance / Ubezpieczenie:</div>
+          <div style={lbl}>Amount of Insurance:</div>
           <div style={val} />
         </div>
       </div>
@@ -178,32 +178,32 @@ export function AwbTemplate({ data }) {
 
       {/* SPECIAL HANDLING */}
       <div style={{ borderLeft: b, borderRight: b, padding: '3px 5px', minHeight: '24px' }}>
-        <div style={lbl}>Special Handling / Specjalne instrukcje (np. DGR, AVI, PER):</div>
+        <div style={lbl}>Special Handling (e.g. DGR, AVI, PER):</div>
         <div style={val}>{data.cargo?.notes || ''}</div>
       </div>
 
       {/* SHIPPER'S CERTIFICATION */}
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, borderBottom: b, padding: '4px 6px', backgroundColor: '#f7f7f7' }}>
-        <span style={{ fontSize: '6.5px', color: '#555' }}>Shipper's Certification / Oświadczenie nadawcy.</span>
+        <span style={{ fontSize: '6.5px', color: '#555' }}>Shipper's Certification.</span>
       </div>
 
       {/* PODPISY */}
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Nadawca / Shipper</div>
+          <div style={lbl}>Shipper</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Linia lotnicza / Issuing Carrier</div>
+          <div style={lbl}>Issuing Carrier</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Data / Date</div>
+          <div style={lbl}>Date</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
       </div>
 

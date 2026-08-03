@@ -24,7 +24,7 @@ export function FdaPriorNoticeTemplate({ data }) {
 
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>
-          {isEn ? 'FDA PRIOR NOTICE — USA (Food)' : 'FDA PRIOR NOTICE — USA (Żywność)'}
+          {isEn ? 'FDA PRIOR NOTICE — USA (Food)' : 'FDA PRIOR NOTICE — USA (Żywność) / FDA PRIOR NOTICE — USA (Food)'}
         </div>
         <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>FDA Prior Notice of Imported Food Shipments · 21 CFR Part 1, Subpart I</div>
         <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>
@@ -39,7 +39,7 @@ export function FdaPriorNoticeTemplate({ data }) {
           {isEn ? (
             <><strong>IMPORTANT:</strong> Prior Notice must be filed via FDA's Prior Notice System Interface (PNSI) minimum: 2 h before arrival by air, 4 h before arrival by road, 8 h before arrival by ship. Failure to file = refusal of entry or holding of the shipment.</>
           ) : (
-            <><strong>WAŻNE:</strong> Prior Notice musi być złożony przez FDA's Prior Notice System Interface (PNSI) minimum: 2 h przed przybyciem samolotu, 4 h przed przybyciem pojazdu drogowego, 8 h przed przybyciem statku. Brak = odmowa wjazdu lub przetrzymanie towaru.</>
+            <><strong>WAŻNE:</strong> Prior Notice musi być złożony przez FDA's Prior Notice System Interface (PNSI) minimum: 2 h przed przybyciem samolotu, 4 h przed przybyciem pojazdu drogowego, 8 h przed przybyciem statku. Brak = odmowa wjazdu lub przetrzymanie towaru. <strong>IMPORTANT:</strong> Prior Notice must be filed via FDA's Prior Notice System Interface (PNSI) minimum: 2 h before arrival by air, 4 h before arrival by road, 8 h before arrival by ship. Failure to file = refusal of entry or holding of the shipment.</>
           )}
         </span>
       </div>
@@ -54,33 +54,33 @@ export function FdaPriorNoticeTemplate({ data }) {
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'FDA Entry No. (if known):' : 'FDA Entry No. (jeśli znany):'}</div>
+          <div style={lbl}>{isEn ? 'FDA Entry No. (if known):' : 'FDA Entry No. (jeśli znany) / FDA Entry No. (if known):'}</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Submitter (person filing Prior Notice):' : 'Submitter (osoba składająca Prior Notice):'}</div>
+          <div style={lbl}>{isEn ? 'Submitter (person filing Prior Notice):' : 'Submitter (osoba składająca Prior Notice) / Submitter (person filing Prior Notice):'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Company:' : 'Firma:'}</div>
+          <div style={lbl}>{isEn ? 'Company:' : 'Firma / Company:'}</div>
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Phone:' : 'Tel.:'}</div>
+          <div style={lbl}>{isEn ? 'Phone:' : 'Tel. / Phone:'}</div>
           <div style={val}>{data.sender?.phone || ''}</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Manufacturer (food producer):' : 'Manufacturer (producent żywności):'}</div>
+          <div style={lbl}>{isEn ? 'Manufacturer (food producer):' : 'Manufacturer (producent żywności) / Manufacturer (food producer):'}</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? 'Country of production:' : 'Kraj produkcji:'}</div>
+          <div style={lbl}>{isEn ? 'Country of production:' : 'Kraj produkcji / Country of production:'}</div>
           <div style={val}>{data.fromCountry || ''}</div>
         </div>
       </div>
@@ -95,7 +95,7 @@ export function FdaPriorNoticeTemplate({ data }) {
           <div style={val}>{data.receiver?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>{isEn ? "Manufacturer's FDA Registration No.:" : 'FDA Registration No. producenta:'}</div>
+          <div style={lbl}>{isEn ? "Manufacturer's FDA Registration No.:" : "FDA Registration No. producenta / Manufacturer's FDA Registration No.:"}</div>
           <div style={val} />
         </div>
       </div>
@@ -153,18 +153,18 @@ export function FdaPriorNoticeTemplate({ data }) {
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>{isEn ? 'Submitter' : 'Submitter / Składający'}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>FDA Prior Notice Confirmation No.</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>{isEn ? 'Signature &amp; stamp' : 'Podpis i pieczęć / Signature &amp; stamp'}</div>
         </div>
       </div>
 

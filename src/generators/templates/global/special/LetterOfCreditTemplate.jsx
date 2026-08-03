@@ -12,11 +12,11 @@ export function LetterOfCreditTemplate({ data }) {
   }
 
   const requiredDocs = [
-    ['1', 'Faktura handlowa / Commercial Invoice', '3', 'Beneficjent', 'Na papierze firmowym, podpisana'],
-    ['2', 'Konosament / Bill of Lading (Full set 3/3)', '3 oryg.', 'Armator', 'On Board, Notify Applicant, Freight Prepaid'],
-    ['3', 'Packing List', '2', 'Beneficjent', 'Szczegółowy, zgodny z fakturą'],
-    ['4', 'Świadectwo pochodzenia / Certificate of Origin', '1', 'Izba handlowa', 'Legalizowane (jeśli wymagane)'],
-    ['5', 'Polisa ubezpieczeniowa / Insurance Policy', '1', 'Ubezpieczyciel', 'Min. 110% wartości CIF'],
+    ['1', 'Commercial Invoice', '3', 'Beneficiary', 'On company letterhead, signed'],
+    ['2', 'Bill of Lading (Full set 3/3)', '3 orig.', 'Carrier', 'On Board, Notify Applicant, Freight Prepaid'],
+    ['3', 'Packing List', '2', 'Beneficiary', 'Detailed, consistent with invoice'],
+    ['4', 'Certificate of Origin', '1', 'Chamber of Commerce', 'Legalized (if required)'],
+    ['5', 'Insurance Policy', '1', 'Insurer', 'Min. 110% of CIF value'],
     ['6', '', '', '', ''],
     ['7', '', '', '', ''],
   ]
@@ -26,43 +26,43 @@ export function LetterOfCreditTemplate({ data }) {
 
       <div style={{ border: b, padding: '8px 12px', backgroundColor: '#1a3a6b' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>LETTER OF CREDIT (L/C)</div>
-        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Akredytywa Dokumentowa · Documentary Letter of Credit</div>
-        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Regulowane przez UCP 600 (ICC — International Chamber of Commerce). Najpewniejsza forma płatności w handlu zagranicznym.</div>
+        <div style={{ fontSize: '8px', color: '#a0b8d8', marginTop: '2px' }}>Documentary Letter of Credit</div>
+        <div style={{ fontSize: '6.5px', color: '#a0b8d8', marginTop: '1px' }}>Governed by UCP 600 (ICC — International Chamber of Commerce). The most secure payment method in international trade.</div>
       </div>
 
       <div style={{ borderLeft: b, borderRight: b, borderTop: b, padding: '4px 6px', backgroundColor: '#fffbe6' }}>
         <span style={{ fontSize: '6.5px', color: '#666' }}>
-          <strong>WAŻNE:</strong> L/C to zobowiązanie banku do zapłaty — nie dokumentem transportowym. Eksporter
-          musi przedstawić WSZYSTKIE dokumenty zgodnie z L/C w terminie, inaczej bank może odmówić zapłaty.
+          <strong>IMPORTANT:</strong> An L/C is a bank's undertaking to pay — not a transport document. The
+          exporter must present ALL documents complying with the L/C within the deadline, or the bank may refuse payment.
         </span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Nr L/C / Credit No.:</div>
+          <div style={lbl}>Credit No.:</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Data wydania / Issue date:</div>
+          <div style={lbl}>Issue Date:</div>
           <div style={val}>{today}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Data ważności / Expiry date:</div>
+          <div style={lbl}>Expiry Date:</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Miejsce wygaśnięcia / Place of expiry:</div>
+          <div style={lbl}>Place of Expiry:</div>
           <div style={val} />
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Bank otwierający / Issuing Bank:</div>
+          <div style={lbl}>Issuing Bank:</div>
           <div style={val}>{data.sender?.bank || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Kraj / Country:</div>
+          <div style={lbl}>Country:</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
@@ -73,7 +73,7 @@ export function LetterOfCreditTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Bank potwierdzający / Confirming Bank (jeśli):</div>
+          <div style={lbl}>Confirming Bank (if any):</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
@@ -84,45 +84,45 @@ export function LetterOfCreditTemplate({ data }) {
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Beneficjent / Beneficiary (eksporter):</div>
+          <div style={lbl}>Beneficiary (exporter):</div>
           <div style={val}>{data.sender?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>NIP/VAT / Tax No.:</div>
+          <div style={lbl}>Tax No.:</div>
           <div style={val}>{data.sender?.vat || ''}</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Wnioskodawca / Applicant (importer):</div>
+          <div style={lbl}>Applicant (importer):</div>
           <div style={val}>{data.receiver?.name || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>NIP/VAT / Tax No.:</div>
+          <div style={lbl}>Tax No.:</div>
           <div style={val}>{data.receiver?.vat || ''}</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderRight: b, borderTop: b }}>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Kwota L/C / Credit Amount:</div>
+          <div style={lbl}>Credit Amount:</div>
           <div style={val}>{data.cargo?.value || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Waluta / Currency:</div>
+          <div style={lbl}>Currency:</div>
           <div style={val}>{data.cargo?.currency || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Tolerancja / Tolerance (±%):</div>
+          <div style={lbl}>Tolerance (±%):</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Częściowe wysyłki / Partial shipments:</div>
+          <div style={lbl}>Partial Shipments:</div>
           <div style={val} />
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Przeładunek / Transhipment:</div>
+          <div style={lbl}>Transhipment:</div>
           <div style={val} />
         </div>
       </div>
@@ -133,29 +133,29 @@ export function LetterOfCreditTemplate({ data }) {
           <div style={val}>{data.cargo?.incoterms || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Port załadunku / Port of loading:</div>
+          <div style={lbl}>Port of Loading:</div>
           <div style={val}>{data.fromCity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', borderRight: b, minHeight: '22px' }}>
-          <div style={lbl}>Port przeznaczenia / Port of destination:</div>
+          <div style={lbl}>Port of Destination:</div>
           <div style={val}>{data.toCity || ''}</div>
         </div>
         <div style={{ flex: 1, padding: '3px 5px', minHeight: '22px' }}>
-          <div style={lbl}>Ostateczna data wysyłki / Latest shipment date:</div>
+          <div style={lbl}>Latest Shipment Date:</div>
           <div style={val}>{data.loadDate ? formatDocumentDate(data.loadDate) : ''}</div>
         </div>
       </div>
 
       <div style={{ backgroundColor: '#2c5fa8', border: b, padding: '4px 6px', marginTop: '8px' }}>
-        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>WYMAGANE DOKUMENTY / REQUIRED DOCUMENTS</span>
+        <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>REQUIRED DOCUMENTS</span>
       </div>
 
       <div style={{ display: 'flex', borderLeft: b, borderTop: b }}>
-        <div style={{ ...thStyle, width: '30px' }}>Nr</div>
-        <div style={{ ...thStyle, flex: 1 }}>Dokument / Document</div>
-        <div style={{ ...thStyle, width: '70px' }}>Ilość kopii<br />No. of copies</div>
-        <div style={{ ...thStyle, width: '90px' }}>Wystawiony przez<br />Issued by</div>
-        <div style={{ ...thStyle, flex: 1, borderRight: b }}>Wymagania<br />Requirements</div>
+        <div style={{ ...thStyle, width: '30px' }}>No.</div>
+        <div style={{ ...thStyle, flex: 1 }}>Document</div>
+        <div style={{ ...thStyle, width: '70px' }}>No. of Copies</div>
+        <div style={{ ...thStyle, width: '90px' }}>Issued by</div>
+        <div style={{ ...thStyle, flex: 1, borderRight: b }}>Requirements</div>
       </div>
       {requiredDocs.map(([nr, doc, copies, issuer, req], i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '20px' }}>
@@ -169,20 +169,20 @@ export function LetterOfCreditTemplate({ data }) {
 
       <div style={{ display: 'flex', border: b, marginTop: '8px' }}>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
-          <div style={lbl}>Issuing Bank / Bank otwierający</div>
+          <div style={lbl}>Issuing Bank</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', borderRight: b, minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Date</div>
           <div style={{ ...val, marginTop: '2px' }}>{today}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
         <div style={{ flex: 1, padding: '5px 7px', minHeight: '55px', display: 'flex', flexDirection: 'column' }}>
           <div style={lbl}>Reference No.</div>
           <div style={{ flex: 1 }} />
-          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Podpis i pieczęć / Signature &amp; stamp</div>
+          <div style={{ borderTop: b, paddingTop: '2px', textAlign: 'center', fontSize: '7px', color: '#555' }}>Signature &amp; stamp</div>
         </div>
       </div>
 
