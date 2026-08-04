@@ -1,19 +1,27 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
-import { Navigation } from 'lucide-react'
+import { Navigation, Loader2 } from 'lucide-react'
 import AlertBox from '../components/ui/AlertBox'
 import { getShipment } from '../data/trackingMock'
+import { useDocumentSetList } from '../hooks/useDocumentSets'
+import { buildShipments } from '../utils/shipmentFromSet'
 import TrackingList from '../components/tracking/TrackingList'
 import TrackingDetail from '../components/tracking/TrackingDetail'
+import RealShipmentDetail from '../components/tracking/RealShipmentDetail'
 import ContainerLookup from '../components/tracking/ContainerLookup'
 
 // Zakładka „Śledzenie ładunku" (wysuwana spod „Trasy handlowe" w menu).
-// Lista/szczegóły przesyłek — WYŁĄCZNIE makieta (data/trackingMock.js, zero API).
-// Zakładka „Numer kontenera" — REALNA funkcja: rozpoznanie linii po prefiksie
-// BIC + linki wychodzące do trackerów przewoźników/agregatorów. Zero integracji
-// z API przewoźników, zero przechowywania wpisanych numerów (patrz ContainerLookup.jsx).
+// Lista/szczegóły przesyłek — od 2026-08-06 zasilane REALNYMI danymi z zestawów
+// dokumentów kreatora (patrz utils/shipmentFromSet.js): przesyłka to projekcja
+// DocumentSet, nie osobny rekord — edycja/usunięcie zestawu automatycznie
+// aktualizuje/usuwa wpis. Przykładowe dane (data/trackingMock.js) pokazują się
+// WYŁĄCZNIE gdy user nie ma jeszcze żadnej realnej przesyłki, wyraźnie
+// oznaczone jako przykład (patrz TrackingList).
+// Zakładka „Numer kontenera" — rozpoznanie linii po prefiksie BIC + linki
+// wychodzące do trackerów przewoźników/agregatorów. Zero integracji z API
+// przewoźników, zero przechowywania wpisanych numerów.
 
 const TABS = [
   { id: 'list', labelKey: 'tracking.tabs.list' },
@@ -25,7 +33,18 @@ export default function TrackingPage() {
   const [searchParams] = useSearchParams()
   const [tab, setTab] = useState('list')
   const shipmentId = searchParams.get('shipmentId')
-  const shipment = shipmentId ? getShipment(shipmentId) : null
+
+  const { sets, loading } = useDocumentSetList({ status: 'completed' })
+  const shipments = useMemo(() => buildShipments(sets), [sets])
+
+  const realShipment = shipmentId ? shipments.find((s) => s.id === shipmentId) : null
+  // Przykłady (mock) trafiają do lookupu TYLKO dopóki user nie ma żadnej
+  // realnej przesyłki — jak tylko pojawi się pierwsza, TrackingList przestaje
+  // je pokazywać, więc link do przykładu też przestaje mieć sens.
+  const mockShipment = !realShipment && shipmentId && !loading && shipments.length === 0
+    ? getShipment(shipmentId)
+    : null
+  const shipment = realShipment || mockShipment
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -69,7 +88,7 @@ export default function TrackingPage() {
         </div>
       )}
 
-      {shipmentId && !shipment && tab === 'list' && (
+      {shipmentId && !shipment && !loading && tab === 'list' && (
         <div className="mb-6">
           <AlertBox type="warning" title={t('tracking.notFoundTitle')}>
             {t('tracking.notFoundBody', { id: shipmentId })}
@@ -77,12 +96,18 @@ export default function TrackingPage() {
         </div>
       )}
 
-      {shipment ? (
-        <TrackingDetail shipment={shipment} />
+      {realShipment ? (
+        <RealShipmentDetail shipment={realShipment} />
+      ) : mockShipment ? (
+        <TrackingDetail shipment={mockShipment} />
       ) : tab === 'container' ? (
         <ContainerLookup />
+      ) : loading ? (
+        <div className="flex items-center justify-center py-16 text-gray-400 dark:text-slate-500">
+          <Loader2 className="w-5 h-5 animate-spin" strokeWidth={1.75} />
+        </div>
       ) : (
-        <TrackingList />
+        <TrackingList shipments={shipments} />
       )}
     </div>
   )

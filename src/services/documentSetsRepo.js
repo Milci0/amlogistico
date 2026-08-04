@@ -169,6 +169,24 @@ export async function deleteSet(id) {
   notifyChange()
 }
 
+// markDelivered(id, delivered=true) -> Promise<DocumentSet>
+//   Jedyny sposób oznaczenia przesyłki jako dostarczonej (i cofnięcia tego) —
+//   kreator nie zbiera żadnej daty dostawy (sprawdzone: pola „Data dostawy"/
+//   "Planowana data dostawy" na CMR/Zleceniu to puste, ręcznie wypełniane
+//   boxy na wydruku). Dostępne przy KAŻDYM statusie, nie tylko „ETA minęła" —
+//   user zawsze może wiedzieć więcej niż wyliczony z dat status.
+//   PATCH nadpisuje `meta` W CAŁOŚCI (nie merge'uje po stronie backendu), więc
+//   dociągamy pełny set i scalamy ręcznie, żeby nie zgubić reszty meta.
+export async function markDelivered(id, delivered = true) {
+  const set = await getSet(id)
+  if (!set) throw new Error('Nie znaleziono zestawu')
+  const { set: updated } = await api.patch(`/document-sets/${id}`, {
+    meta: { ...set.meta, shipment: { ...set.meta?.shipment, delivered } },
+  })
+  notifyChange()
+  return updated
+}
+
 // countByStatus() -> Promise<{ draft, completed }>
 export async function countByStatus() {
   const { sets } = await api.get('/document-sets')

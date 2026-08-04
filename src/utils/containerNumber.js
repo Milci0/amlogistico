@@ -2,6 +2,8 @@
 // wyłącznie po stronie klienta. Numer NIGDY nie jest zapisywany ani logowany
 // (dane handlowe klienta) — ten moduł tylko liczy, nic nie persystuje.
 //
+import { lookupCarrierByPrefix } from '../data/containerPrefixes'
+
 // Algorytm zweryfikowany 2026-08-04 na https://en.wikipedia.org/wiki/ISO_6346
 // (rozpisany przykład CSQU3054383 → suma 6185, 6185 mod 11 = 3 = cyfra kontrolna):
 //   1. Litery → liczby wg tabeli (A=10, pomijamy wielokrotności 11 czyli 11/22/33,
@@ -58,4 +60,15 @@ export function analyzeContainerNumber(raw) {
   const checkDigit = computeCheckDigit(body)
 
   return { normalized, prefix, valid: checkDigit === providedCheckDigit, checkDigit }
+}
+
+// Łączy analyzeContainerNumber + lookupCarrierByPrefix w jedno wywołanie —
+// WSPÓLNA ścieżka dla ContainerLookup (wyszukiwarka w Śledzeniu ładunku) i
+// widoku szczegółów przesyłki (link do trackera z zapisanego numeru
+// kontenera), żeby rozpoznawanie linii nie było zduplikowane w dwóch miejscach.
+// Zwraca analyzeContainerNumber(raw) + { carrier } (null gdy prefiks nierozpoznany).
+export function identifyContainer(raw) {
+  const analysis = analyzeContainerNumber(raw)
+  const carrier = analysis.prefix ? lookupCarrierByPrefix(analysis.prefix) : null
+  return { ...analysis, carrier }
 }

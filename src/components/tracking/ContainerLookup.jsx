@@ -1,15 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, ExternalLink, CheckCircle2 } from 'lucide-react'
-import { analyzeContainerNumber } from '../../utils/containerNumber'
-import {
-  lookupCarrierByPrefix,
-  findCarrierByName,
-  resolveTrackerUrl,
-  resolveHomeUrl,
-  AGGREGATORS,
-} from '../../data/containerPrefixes'
+import { Search, ExternalLink } from 'lucide-react'
+import { findCarrierByName, resolveHomeUrl } from '../../data/containerPrefixes'
 import AlertBox from '../ui/AlertBox'
+import ContainerTrackerBlock from './ContainerTrackerBlock'
 
 // Numer wpisany przez użytkownika żyje WYŁĄCZNIE w tym stanie komponentu — nic
 // tu nie trafia do localStorage, bazy ani console.log (dane handlowe klienta).
@@ -26,11 +20,11 @@ export default function ContainerLookup() {
       return
     }
 
-    const analysis = analyzeContainerNumber(trimmed)
     // Brak cyfr w znormalizowanym wejściu → to nie próba numeru kontenera
     // (każdy poprawny numer ma 7 cyfr), tylko prawdopodobnie nazwa przewoźnika
     // ("CMA CGM", "cmacgm", "maersk"...).
-    const looksLikeContainerNumber = /\d/.test(analysis.normalized)
+    const normalizedForDigitCheck = trimmed.toUpperCase().replace(/[\s-]/g, '')
+    const looksLikeContainerNumber = /\d/.test(normalizedForDigitCheck)
 
     if (!looksLikeContainerNumber) {
       const carrier = findCarrierByName(trimmed)
@@ -40,8 +34,7 @@ export default function ContainerLookup() {
       }
     }
 
-    const carrier = analysis.prefix ? lookupCarrierByPrefix(analysis.prefix) : null
-    setResult({ mode: 'containerNumber', ...analysis, carrier })
+    setResult({ mode: 'containerNumber', containerNo: trimmed })
   }
 
   return (
@@ -67,79 +60,27 @@ export default function ContainerLookup() {
         </button>
       </form>
 
-      {result && (
+      {result?.mode === 'containerNumber' && <ContainerTrackerBlock containerNo={result.containerNo} />}
+
+      {result?.mode === 'nameSearch' && (
         <div className="space-y-4">
-          {result.mode === 'containerNumber' && result.valid === false && (
-            <AlertBox type="warning">{t('tracking.container.checkDigitWarning')}</AlertBox>
-          )}
-
-          {result.mode === 'nameSearch' && (
-            <AlertBox type="info">{t('tracking.container.nameSearchNote')}</AlertBox>
-          )}
-
-          {result.carrier?.type === 'carrier' && (
-            <>
-              {result.mode === 'containerNumber' && (
-                <div className="flex items-center gap-2 px-4 py-3 rounded-lg border-l-4 bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 dark:border-emerald-500">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" strokeWidth={1.75} />
-                  <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
-                    {t('tracking.container.recognized', { carrier: result.carrier.name, prefix: result.prefix })}
-                  </p>
-                </div>
-              )}
-
-              <a
-                href={
-                  result.mode === 'containerNumber'
-                    ? resolveTrackerUrl(result.carrier, result.normalized)
-                    : resolveHomeUrl(result.carrier)
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between gap-3 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-800 hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors group"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {t('tracking.container.directLinkLabel', { carrier: result.carrier.name })}
-                  </p>
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
-                    {t('tracking.container.directLinkBadge')}
-                  </p>
-                </div>
-                <ExternalLink className="w-4 h-4 text-gray-400 dark:text-slate-500 group-hover:text-emerald-500 shrink-0" strokeWidth={1.75} />
-              </a>
-            </>
-          )}
-
-          {result.carrier?.type === 'lessor' && (
-            <AlertBox type="warning">
-              {t('tracking.container.leased', { lessor: result.carrier.name })}
-            </AlertBox>
-          )}
-
-          {result.mode === 'containerNumber' && !result.carrier && (
-            <AlertBox type="info">{t('tracking.container.unrecognized')}</AlertBox>
-          )}
-
-          <div>
-            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">
-              {t('tracking.container.aggregatorsTitle')}
-            </p>
-            <div className="flex flex-col gap-2">
-              {AGGREGATORS.map((agg) => (
-                <a
-                  key={agg.id}
-                  href={agg.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600 transition-colors group"
-                >
-                  <span className="text-sm font-medium text-gray-700 dark:text-slate-200">{agg.name}</span>
-                  <ExternalLink className="w-4 h-4 text-gray-400 dark:text-slate-500 group-hover:text-gray-600 dark:group-hover:text-slate-300 shrink-0" strokeWidth={1.75} />
-                </a>
-              ))}
+          <AlertBox type="info">{t('tracking.container.nameSearchNote')}</AlertBox>
+          <a
+            href={resolveHomeUrl(result.carrier)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-3 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-800 hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors group"
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                {t('tracking.container.directLinkLabel', { carrier: result.carrier.name })}
+              </p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+                {t('tracking.container.directLinkBadge')}
+              </p>
             </div>
-          </div>
+            <ExternalLink className="w-4 h-4 text-gray-400 dark:text-slate-500 group-hover:text-emerald-500 shrink-0" strokeWidth={1.75} />
+          </a>
         </div>
       )}
 
