@@ -637,7 +637,22 @@
     "awbNo": "AWB No.",
     "layoverAirports": "Layover airports",
     "eta": "ETA",
-    "leg": "Leg {{number}}"
+    "leg": "Leg {{number}}",
+    "tabs": {
+      "list": "Shipment list",
+      "container": "Container number"
+    },
+    "container": {
+      "inputPlaceholder": "Container number (e.g. MSCU1234567)",
+      "checkButton": "Check",
+      "checkDigitWarning": "This number looks incorrect — check for a typo",
+      "recognized": "Line recognized: {{carrier}} · prefix {{prefix}}",
+      "directLinkLabel": "Check on {{carrier}}'s site",
+      "directLinkBadge": "Data directly from the carrier",
+      "unrecognized": "We couldn't recognize the line — try an aggregator",
+      "aggregatorsTitle": "Tracking aggregators",
+      "footerNote": "Data comes from the carriers. AMLogistico does not store shipment statuses."
+    }
   },
   "admin": {
     "metaTitle": "Send a notification | AMLogistico",

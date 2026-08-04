@@ -639,7 +639,22 @@
     "awbNo": "Nr AWB",
     "layoverAirports": "Lotniska przesiadkowe",
     "eta": "ETA",
-    "leg": "Odcinek {{number}}"
+    "leg": "Odcinek {{number}}",
+    "tabs": {
+      "list": "Lista przesyłek",
+      "container": "Numer kontenera"
+    },
+    "container": {
+      "inputPlaceholder": "Numer kontenera (np. MSCU1234567)",
+      "checkButton": "Sprawdź",
+      "checkDigitWarning": "Numer wygląda na niepoprawny — sprawdź literówkę",
+      "recognized": "Rozpoznano linię: {{carrier}} · prefiks {{prefix}}",
+      "directLinkLabel": "Sprawdź na stronie {{carrier}}",
+      "directLinkBadge": "Dane bezpośrednio od przewoźnika",
+      "unrecognized": "Nie rozpoznaliśmy linii — spróbuj w agregatorze",
+      "aggregatorsTitle": "Agregatory śledzenia",
+      "footerNote": "Dane pochodzą od przewoźników. AMLogistico nie przechowuje statusów przesyłek."
+    }
   },
   "admin": {
     "metaTitle": "Wyślij powiadomienie | AMLogistico",
