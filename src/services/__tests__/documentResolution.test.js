@@ -174,6 +174,24 @@ describe('naglowek dokumentu wg (outputMode, issuerType)', () => {
     expect(text).not.toContain('Armator')
   })
 
+  // ETAP 1: CBAM, EUDR i SENT to formularze, ktore zobowiazany sklada SAM
+  // w systemie urzedowym: ani "projekt dla przewoznika", ani dokument obrotu.
+  it('nadawca skladajacy w systemie urzedowym dostaje „dane do zlozenia w"', () => {
+    const text = draftBannerText({ outputMode: 'draft', issuerType: 'shipper', authority: 'KAS' }, 'PL')
+    expect(text).toContain('WERSJA ROBOCZA')
+    expect(text).toContain('dane do złożenia w: KAS')
+    expect(draftBannerText({ outputMode: 'draft', issuerType: 'shipper', authority: 'KAS' }, 'EN'))
+      .toContain('data to be filed with: KAS')
+  })
+
+  // Puste odeslanie ("do zlozenia w: wlasciwym organie") wyglada jak wypelnione
+  // pole, a nie niesie zadnej informacji; lepiej sam naglowek.
+  it('brak organu nie produkuje pustego odeslania', () => {
+    expect(draftBannerText({ outputMode: 'draft', issuerType: 'customs_authority', authority: null }, 'PL')).toBe('WERSJA ROBOCZA')
+    expect(draftBannerText({ outputMode: 'draft', issuerType: 'shipper' }, 'PL')).toBe('WERSJA ROBOCZA')
+    expect(draftBannerText({ outputMode: 'draft', issuerType: 'government_agency', authority: '' }, 'EN')).toBe('DRAFT')
+  })
+
   it('dokument finalny i pusty formularz nie dostaja naglowka', () => {
     expect(draftBannerText({ outputMode: 'final', issuerType: 'shipper' }, 'PL')).toBeNull()
     expect(draftBannerText({ outputMode: 'blank_only', issuerType: 'foreign_broker' }, 'PL')).toBeNull()
@@ -196,5 +214,62 @@ describe('naglowek dokumentu wg (outputMode, issuerType)', () => {
     const cmr = getDocsForSnapshot(SNAP).find((d) => d.key === '01_CMR')
     expect(cmr.outputMode).toBe('final')
     expect(draftBannerText(cmr, 'PL')).toBeNull()
+  })
+})
+
+// ─── ETAP 2: FLAGI DOCIERAJA Z MIGAWKI DO SILNIKA ────────────────────────────
+//
+// Reguly ETAPU 2 czytaja flagi, ktorych kreator wczesniej nie przekazywal
+// (`containerized`, `consolidated`, `cargoCategoryId`). Jesli buildEngineFlags
+// ich nie poda, dokumenty po prostu NIGDY sie nie pojawia - po cichu, bez bledu.
+// Te testy ida cala droga: migawka -> buildEngineFlags -> silnik -> lista.
+describe('ETAP 2 — nowe flagi na sciezce migawka -> silnik', () => {
+  const seaSnap = (sea) => ({
+    ...SNAP,
+    route: { ...SNAP.route, transport: 'sea', toCountry: 'US', toCity: 'Newark' },
+    sea: { ...SNAP.sea, ...sea },
+  })
+
+  it('numer kontenera w migawce wlacza VGM', () => {
+    // Drobnica: brak pol kontenerowych - VGM sie NIE pojawia.
+    expect(getDocsForSnapshot(seaSnap({})).map((d) => d.key)).not.toContain('119_VGM_SOLAS')
+
+    // Sam numer kontenera wystarczy.
+    const zNumerem = getDocsForSnapshot(seaSnap({ containerNo: 'MSCU1234567' }))
+    expect(zNumerem.map((d) => d.key)).toContain('119_VGM_SOLAS')
+    expect(zNumerem.find((d) => d.key === '119_VGM_SOLAS').required).toBe(true)
+
+    // Sam typ kontenera tez.
+    expect(getDocsForSnapshot(seaSnap({ containerType: '40HC' })).map((d) => d.key))
+      .toContain('119_VGM_SOLAS')
+  })
+
+  it('checkbox konsolidacji w galezi lotniczej wlacza HAWB', () => {
+    const air = (consolidated) => ({
+      ...SNAP,
+      route: { ...SNAP.route, transport: 'air', toCountry: 'US' },
+      air: { airportFrom: 'WAW', airportTo: 'JFK', consolidated, knownConsignor: false, chargeableWeightKg: '' },
+    })
+    expect(getDocsForSnapshot(air(false)).map((d) => d.key)).not.toContain('137_HAWB')
+    expect(getDocsForSnapshot(air(true)).map((d) => d.key)).toContain('137_HAWB')
+  })
+
+  it('kategoria towaru z kroku Towar dociera do regul akcyzowych', () => {
+    const napoje = { ...SNAP, cargo: { ...SNAP.cargo, cargoCategory: 'beverages' } }
+    expect(getDocsForSnapshot(napoje).map((d) => d.key)).toContain('132_EMCS_eAD')
+
+    const tekstylia = { ...SNAP, cargo: { ...SNAP.cargo, cargoCategory: 'textiles' } }
+    expect(getDocsForSnapshot(tekstylia).map((d) => d.key)).not.toContain('132_EMCS_eAD')
+  })
+
+  // Rekordy sprzed kategorii towaru maja `cargoType`, nie `cargoCategory`.
+  // Nie moga zaczac dostawac dokumentow akcyzowych po tej zmianie.
+  it('stary zestaw bez kategorii nie dostaje nowych dokumentow kategorialnych', () => {
+    const stary = { ...SNAP, cargo: { cargoName: 'Palety', cargoType: 'Drobnica', weight: '1200' } }
+    const keys = getDocsForSnapshot(stary).map((d) => d.key)
+    for (const id of ['132_EMCS_eAD', '133_SENT', '126_CBAM_Data_Sheet', '127_EUDR_DDS']) {
+      expect(keys, id).not.toContain(id)
+    }
+    expect(findUnresolvedDocIds(stary, ['cmr', 'packing', 'faktura'])).toEqual([])
   })
 })

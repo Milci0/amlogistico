@@ -625,3 +625,275 @@ USUNIETE:
 - 28_MTD (Multimodal Transport Document)
 
 Ostrzezenia (2): warn_blacklist_cert [warning], warn_legalisation_kig [info]
+
+
+---
+
+# Etap 2 Promptu 2: wpiecie 22 nowych dokumentow w silnik
+
+> Wygenerowany 2026-08-04. Porownuje silnik **sprzed Etapu 2** (wersja z `HEAD`,
+> wyciagnieta przez `git show` i uruchomiona obok nowej) z wersja **po wpieciu**,
+> na 44 trasach obejmujacych wszystkie nowe reguly.
+>
+> Sekcja „Porownanie trasa po trasie" jest **wygenerowana z kodu**, nie napisana recznie.
+> Katalog dokumentow byl w obu przebiegach ten sam (142 wpisy), wiec roznice pochodza
+> wylacznie ze zmian w `documentEngine.js`.
+
+Tras porównanych: **44**, zmienionych: **29**.
+Dokumentów dodanych: **+60**, usuniętych: **−4**.
+
+| dokument | na ilu trasach doszedł |
+|---|---|
+| 124_ENS_ICS2 — ENS — Deklaracja skrócona przywozowa | 9 |
+| 125_EU_Import_Declaration — Zgłoszenie celne przywozowe UE | 9 |
+| 130_Supplier_Declaration — Deklaracja dostawcy | 8 |
+| 122_Delivery_Order — Zlecenie wydania towaru (Delivery Order) | 7 |
+| 131_REX_Statement_Origin — Oświadczenie o pochodzeniu (REX) | 4 |
+| 134_CIM_SMGS — CIM/SMGS — Wspólny list przewozowy | 4 |
+| 132_EMCS_eAD — e-AD / e-SAD — Elektroniczny dokument administracyjny (EMCS) | 4 |
+| 133_SENT — Zgłoszenie SENT | 3 |
+| 129_ATR_Certificate — Świadectwo A.TR | 2 |
+| 119_VGM_SOLAS — VGM — Deklaracja zweryfikowanej masy brutto | 2 |
+| 135_RID_Rail_DG — RID — Dokument przewozowy towarów niebezpiecznych (kolej) | 2 |
+| 128_CHED_TRACES — CHED — Wspólny zdrowotny dokument wejścia | 2 |
+| 137_HAWB — HAWB — Lotniczy list przewozowy spedytora | 1 |
+| 123_Container_Packing_Cert — Świadectwo pakowania kontenera | 1 |
+| 136_Wagon_List — Wykaz wagonów | 1 |
+| 126_CBAM_Data_Sheet — CBAM — Karta danych emisyjnych | 1 |
+
+| dokument | na ilu trasach zniknął |
+|---|---|
+| 27_CIM — CIM — Kolejowy List Przewozowy | 4 |
+
+---
+
+## Zmiany SWIADOME
+
+### 1. CIM/SMGS to ZAMIANA, nie dodanie
+
+Jedyny dokument, ktory na czterech trasach **znika** (`27_CIM`), znika dlatego,
+ze zastepuje go `134_CIM_SMGS`. Przesylka nie dostaje dwoch listow przewozowych.
+
+Regula opiera sie o `GROUPS.SMGS_ONLY` — liste krajow **poza COTIF**, a nie liste
+czlonkow SMGS. To rozroznienie jest istotne: Polska, Litwa, Lotwa i Estonia sa
+stronami OBU umow, wiec lista czlonkostwa kazalaby wystawiac CIM/SMGS na trasie
+PL → DE. Utrwala to trasa #89 w macierzy (`PL → DE rail` musi dac `27_CIM`
+i NIE moze dac `134_CIM_SMGS`).
+
+**Lista wymaga weryfikacji u zrodla (OSJD)** — komentarz stoi przy stalej w kodzie.
+
+### 2. Cztery ostrzezenia zastapione dokumentami
+
+| ostrzezenie (wycofane) | zastapione przez |
+|---|---|
+| `warn_eu_import_sad` | `125_EU_Import_Declaration` |
+| `warn_ched_p_traces` | `128_CHED_TRACES` |
+| `warn_rid_rail` | `135_RID_Rail_DG` |
+| `warn_atr_turkey` | `129_ATR_Certificate` |
+
+Kazde z nich mowilo „potrzebujesz dokumentu, ktorego nie mamy". Skoro dokument
+juz jest, ostrzezenie bylo tylko szumem.
+
+**`warn_atr_turkey_agri` ZOSTAJE.** Nie duplikuje zadnego dokumentu — niesie
+rozroznienie A.TR vs EUR.1 dla produktow rolnych oraz wyrobow wegla i stali,
+czyli informacje, ktorej sam dokument nie przekazuje.
+
+Kody wycofanych ostrzezen **zostaja** w `WARNING_SEVERITY` i w tlumaczeniach
+(`errors:engineWarnings.*`). Rekordy zapisane w bazie przed ta zmiana nadal je
+niosa i musza sie otwierac.
+
+### 3. EUDR NIE pojawia sie jako dokument i tak ma byc
+
+Na trasie `CN → PL sea food_plant` (kakao) `127_EUDR_DDS` **nie wchodzi na liste**.
+Zamiast niego jest ostrzezenie `warn_document_not_yet_valid` o severity `info`.
+
+To nie jest luka w regule, tylko dzialanie bramki czasowej: obowiazek wchodzi
+w zycie 30.12.2026 dla duzych i srednich operatorow. Bramka jest sterowana polem
+`validFrom` w katalogu, wiec 30.12.2026 dokument wskoczy do `required` bez zmiany
+kodu. Test `ETAP 2 — kryteria akceptacyjne` sprawdza OBA stany (przed i po dacie).
+
+### 4. Cztery rezimy sterowane id kategorii, nie kategoria silnika
+
+CBAM, EUDR, akcyza (EMCS) i SENT czytaja **`flags.cargoCategoryId`** — surowe id
+z `cargoCategories.js` — a nie kategorie silnika. Powod jest twardy: **12 z 19
+kategorii mapuje sie na `general`** (napoje, paliwa, metale, drewno, budowlanka),
+wiec z kategorii silnika tych rezimow nie da sie odroznic.
+
+Konsekwencja, ktora warto znac: **zakres jest przyblizony kategoria, nie kodem CN.**
+Rozporzadzenia definiuja zakres kodami CN; regula trafia w kategorie towaru.
+Dlatego CBAM jest `conditional`, a nie `required` — uzytkownik decyduje. Precyzyjne
+dopasowanie wymagaloby przekazania `cargo.hsCode` do silnika i list kodow.
+
+Bez flagi reguly milcza, wiec rekordy sprzed kategorii towaru (majace `cargoType`,
+nie `cargoCategory`) nie zaczynaja dostawac dokumentow akcyzowych. Jest na to test.
+
+### 5. Odstepstwo od numeracji warstw z promptu
+
+Prompt umieszczal `129`/`130`/`131` w „warstwie 6". Trafily do warstw **3 (eksport)**
+i **4 (import)** — tam, gdzie od zawsze mieszka cala logika pochodzenia
+preferencyjnego (EUR.1, EUR-MED, REX, A.TR). Rozbicie jej na dwa miejsca byloby
+gorsze niz odstepstwo od numeracji. Warstwa 6 („reguly specjalne") zostala nietknieta.
+
+`130_Supplier_Declaration` zostala dodatkowo **zawezona** do kierunkow objetych
+`PREFERENTIAL_ORIGIN_MAP`. Bez preferencji celnej deklaracja dostawcy niczego nie
+zmienia, a dokladala pozycje do kazdego eksportu z UE.
+
+---
+
+## Siedem dokumentow poza specyfikacja Etapu 2: decyzja
+
+Przy pisaniu Etapu 2 siedem nowych dokumentow nie mialo reguly w specyfikacji.
+Wpiecie ich wszystkich zostalo najpierw zrobione, a potem **cofniete** — kazdy
+dokladal pozycje do KAZDEJ trasy swojej galezi. Decyzja zapadla 2026-08-04.
+
+| dokument | decyzja | regula / uzasadnienie |
+|---|---|---|
+| `136_Wagon_List` | **wpiety** | `rail`/`multimodal` + `flags.groupConsignment`. Warunkowany flaga, wiec nie doklada sie do kazdej trasy kolejowej. |
+| `122_Delivery_Order` | **wpiety** | wylacznie **przywoz morski do UE**. Przy wywozie port docelowy lezy poza Unia i dokument wystawia tamtejszy agent — dla naszego uzytkownika nie ma zastosowania. |
+| `120_Booking_Confirmation` | niewpiety | dokument operacyjny przewoznika |
+| `121_Cargo_Manifest_Sea` | niewpiety | dokument operacyjny armatora i agenta statku |
+| `138_SLI_Air` | niewpiety | instrukcja nadawcy dla spedytora, obieg wewnetrzny |
+| `139_Consignor_Security_Decl` | niewpiety | patrz warunek powrotu nizej |
+| `140_Air_Cargo_Manifest` | niewpiety | dokument operacyjny przewoznika lotniczego |
+
+**Dlaczego piec zostaje poza silnikiem.** To dokumenty operacyjne przewoznika
+i agenta, a nie zestaw kompletowany przez spedytora. Przy **91 pozycjach
+`blank_only`** w katalogu problemem jest nadmiar, nie niedobor: kazda pozycja
+dolozona do kazdej trasy obniza wartosc calej listy. Pozostaja osiagalne przez
+wyszukiwarke szablonow w Topbarze i przez „Puste szablony".
+
+**Warunek powrotu.** `139_Consignor_Security_Decl` warto wpiac **przy pierwszym
+realnym uzytkowniku lotniczym**. Deklaracja bezpieczenstwa nadawcy jest wymogiem
+rozporzadzenia wykonawczego (UE) 2015/1998, a nie wygoda — inaczej niz pozostala
+czworka. Proponowana regula: `mode === 'air'`, warunkowy, plus ostrzezenie
+o koniecznosci potwierdzenia statusu bezpieczenstwa (`SPX`/`SCO`/`SHR`).
+
+**To nie jest przeoczenie i nie da sie tego cofnac po cichu.** Pilnuja tego dwa
+miejsca: komentarz `NIEWPIETE CELOWO` w warstwie transportowej silnika oraz test
+`120, 121, 138, 139 i 140 nie pojawiaja sie na zadnej trasie` w macierzy. Kto je
+wepnie, musi skasowac ten test i wrocic do tej sekcji.
+
+---
+
+## Porownanie trasa po trasie (wygenerowane z kodu)
+
+### PL → CH · road · general
+- **+** 130_Supplier_Declaration (Deklaracja dostawcy)
+
+### PL → NO · road · general
+- **+** 130_Supplier_Declaration (Deklaracja dostawcy)
+
+### PL → GB · road · general
+- **+** 131_REX_Statement_Origin (Oświadczenie o pochodzeniu (REX)); 130_Supplier_Declaration (Deklaracja dostawcy)
+
+### PL → TR · road · general
+- **+** 129_ATR_Certificate (Świadectwo A.TR); 130_Supplier_Declaration (Deklaracja dostawcy)
+- ostrzeżenia **−** `warn_atr_turkey`
+
+### PL → TR · road · food_plant
+- **+** 130_Supplier_Declaration (Deklaracja dostawcy)
+
+### PL → TR · rail · general · {"transitCountries":["BY"]}
+- **+** 134_CIM_SMGS (CIM/SMGS — Wspólny list przewozowy); 129_ATR_Certificate (Świadectwo A.TR); 130_Supplier_Declaration (Deklaracja dostawcy)
+- **−** 27_CIM (CIM — Kolejowy List Przewozowy)
+- ostrzeżenia **+** `warn_cim_smgs_route`
+- ostrzeżenia **−** `warn_atr_turkey`
+
+### PL → CA · sea · general
+- **+** 131_REX_Statement_Origin (Oświadczenie o pochodzeniu (REX)); 130_Supplier_Declaration (Deklaracja dostawcy)
+
+### PL → JP · sea · general
+- **+** 131_REX_Statement_Origin (Oświadczenie o pochodzeniu (REX)); 130_Supplier_Declaration (Deklaracja dostawcy)
+
+### PL → US · sea · general · {"containerized":true}
+- **+** 119_VGM_SOLAS (VGM — Deklaracja zweryfikowanej masy brutto)
+
+### PL → US · air · general · {"consolidated":true}
+- **+** 137_HAWB (HAWB — Lotniczy list przewozowy spedytora)
+
+### PL → US · multimodal · general · {"containerized":true}
+- **+** 119_VGM_SOLAS (VGM — Deklaracja zweryfikowanej masy brutto)
+
+### PL → CN · sea · dangerous_goods
+- **+** 123_Container_Packing_Cert (Świadectwo pakowania kontenera)
+- ostrzeżenia **+** `warn_container_packing_duplicate`
+
+### PL → CN · rail · dangerous_goods
+- **+** 134_CIM_SMGS (CIM/SMGS — Wspólny list przewozowy); 135_RID_Rail_DG (RID — Dokument przewozowy towarów niebezpiecznych (kolej))
+- **−** 27_CIM (CIM — Kolejowy List Przewozowy)
+- ostrzeżenia **+** `warn_cim_smgs_route`
+- ostrzeżenia **−** `warn_rid_rail`
+
+### PL → DE · rail · dangerous_goods
+- **+** 135_RID_Rail_DG (RID — Dokument przewozowy towarów niebezpiecznych (kolej))
+- ostrzeżenia **−** `warn_rid_rail`
+
+### PL → DE · rail · general · {"groupConsignment":true}
+- **+** 136_Wagon_List (Wykaz wagonów)
+
+### PL → KZ · rail · general
+- **+** 134_CIM_SMGS (CIM/SMGS — Wspólny list przewozowy)
+- **−** 27_CIM (CIM — Kolejowy List Przewozowy)
+- ostrzeżenia **+** `warn_cim_smgs_route`
+
+### CN → PL · rail · general
+- **+** 134_CIM_SMGS (CIM/SMGS — Wspólny list przewozowy); 124_ENS_ICS2 (ENS — Deklaracja skrócona przywozowa); 125_EU_Import_Declaration (Zgłoszenie celne przywozowe UE)
+- **−** 27_CIM (CIM — Kolejowy List Przewozowy)
+- ostrzeżenia **+** `warn_cim_smgs_route`, `warn_ens_lodgement`
+- ostrzeżenia **−** `warn_eu_import_sad`
+
+### CN → PL · sea · general
+- **+** 124_ENS_ICS2 (ENS — Deklaracja skrócona przywozowa); 125_EU_Import_Declaration (Zgłoszenie celne przywozowe UE); 122_Delivery_Order (Zlecenie wydania towaru (Delivery Order))
+- ostrzeżenia **+** `warn_ens_lodgement`
+- ostrzeżenia **−** `warn_eu_import_sad`
+
+### CN → PL · sea · food_plant · {"cargoCategoryId":"food_plant"}
+- **+** 124_ENS_ICS2 (ENS — Deklaracja skrócona przywozowa); 125_EU_Import_Declaration (Zgłoszenie celne przywozowe UE); 122_Delivery_Order (Zlecenie wydania towaru (Delivery Order)); 128_CHED_TRACES (CHED — Wspólny zdrowotny dokument wejścia)
+- ostrzeżenia **+** `warn_ens_lodgement`, `warn_document_not_yet_valid`
+- ostrzeżenia **−** `warn_ched_p_traces`, `warn_eu_import_sad`
+
+### CN → PL · sea · general · {"cargoCategoryId":"metals"}
+- **+** 124_ENS_ICS2 (ENS — Deklaracja skrócona przywozowa); 125_EU_Import_Declaration (Zgłoszenie celne przywozowe UE); 126_CBAM_Data_Sheet (CBAM — Karta danych emisyjnych); 122_Delivery_Order (Zlecenie wydania towaru (Delivery Order))
+- ostrzeżenia **+** `warn_ens_lodgement`, `warn_cbam_annual`
+- ostrzeżenia **−** `warn_eu_import_sad`
+
+### CN → PL · sea · general · {"cargoCategoryId":"textiles"}
+- **+** 124_ENS_ICS2 (ENS — Deklaracja skrócona przywozowa); 125_EU_Import_Declaration (Zgłoszenie celne przywozowe UE); 122_Delivery_Order (Zlecenie wydania towaru (Delivery Order))
+- ostrzeżenia **+** `warn_ens_lodgement`
+- ostrzeżenia **−** `warn_eu_import_sad`
+
+### US → PL · air · general
+- **+** 124_ENS_ICS2 (ENS — Deklaracja skrócona przywozowa); 125_EU_Import_Declaration (Zgłoszenie celne przywozowe UE)
+- ostrzeżenia **+** `warn_ens_lodgement`
+- ostrzeżenia **−** `warn_eu_import_sad`
+
+### BR → PL · sea · food_animal
+- **+** 124_ENS_ICS2 (ENS — Deklaracja skrócona przywozowa); 125_EU_Import_Declaration (Zgłoszenie celne przywozowe UE); 122_Delivery_Order (Zlecenie wydania towaru (Delivery Order)); 128_CHED_TRACES (CHED — Wspólny zdrowotny dokument wejścia)
+- ostrzeżenia **+** `warn_ens_lodgement`
+- ostrzeżenia **−** `warn_ched_p_traces`, `warn_eu_import_sad`
+
+### JP → PL · sea · general
+- **+** 124_ENS_ICS2 (ENS — Deklaracja skrócona przywozowa); 125_EU_Import_Declaration (Zgłoszenie celne przywozowe UE); 122_Delivery_Order (Zlecenie wydania towaru (Delivery Order)); 131_REX_Statement_Origin (Oświadczenie o pochodzeniu (REX))
+- ostrzeżenia **+** `warn_ens_lodgement`
+- ostrzeżenia **−** `warn_eu_import_sad`
+
+### IN → PL · sea · general
+- **+** 124_ENS_ICS2 (ENS — Deklaracja skrócona przywozowa); 125_EU_Import_Declaration (Zgłoszenie celne przywozowe UE); 122_Delivery_Order (Zlecenie wydania towaru (Delivery Order))
+- ostrzeżenia **+** `warn_ens_lodgement`
+- ostrzeżenia **−** `warn_eu_import_sad`
+
+### PL → DE · road · general · {"cargoCategoryId":"beverages"}
+- **+** 133_SENT (Zgłoszenie SENT); 132_EMCS_eAD (e-AD / e-SAD — Elektroniczny dokument administracyjny (EMCS))
+- ostrzeżenia **+** `warn_emcs_arc`, `warn_sent_registration`
+
+### PL → PL · road · general · {"cargoCategoryId":"energy"}
+- **+** 133_SENT (Zgłoszenie SENT); 132_EMCS_eAD (e-AD / e-SAD — Elektroniczny dokument administracyjny (EMCS))
+- ostrzeżenia **+** `warn_emcs_arc`, `warn_sent_registration`
+
+### DE → FR · road · general · {"cargoCategoryId":"energy"}
+- **+** 132_EMCS_eAD (e-AD / e-SAD — Elektroniczny dokument administracyjny (EMCS))
+- ostrzeżenia **+** `warn_emcs_arc`
+
+### DE → LT · road · general · {"cargoCategoryId":"energy","transitCountries":["PL"]}
+- **+** 133_SENT (Zgłoszenie SENT); 132_EMCS_eAD (e-AD / e-SAD — Elektroniczny dokument administracyjny (EMCS))
+- ostrzeżenia **+** `warn_emcs_arc`, `warn_sent_registration`

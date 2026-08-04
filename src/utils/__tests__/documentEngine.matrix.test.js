@@ -57,16 +57,25 @@ const MATRIX = [
     must: ['07_EAD', '12_EUR1'], noWarn: ['warn_rex_export', 'warn_atr_turkey'] },
   { n: 14, o: 'PL', d: 'NO', m: 'road', c: 'general', must: ['12_EUR1'], warn: ['warn_eea_customs'] },
   { n: 15, o: 'PL', d: 'MA', m: 'sea', c: 'general', must: ['12_EUR1', '102_EUR_MED'] },
+  // ETAP 2: warn_atr_turkey zastapil dokument 129_ATR_Certificate.
   { n: 16, o: 'PL', d: 'TR', m: 'road', c: 'general',
-    mustNot: ['12_EUR1'], warn: ['warn_atr_turkey'], noWarn: ['warn_atr_turkey_agri'] },
+    mustNot: ['12_EUR1'], must: ['129_ATR_Certificate'],
+    noWarn: ['warn_atr_turkey', 'warn_atr_turkey_agri'] },
+  // Produkty rolne zostaja przy EUR.1 - A.TR sie NIE pojawia, a ostrzezenie
+  // warn_atr_turkey_agri zostaje, bo niesie rozroznienie, ktorego zaden
+  // dokument nie zastepuje.
   { n: 17, o: 'PL', d: 'TR', m: 'road', c: 'food_plant',
-    must: ['12_EUR1'], warn: ['warn_atr_turkey_agri'], noWarn: ['warn_atr_turkey'] },
+    must: ['12_EUR1'], mustNot: ['129_ATR_Certificate'],
+    warn: ['warn_atr_turkey_agri'], noWarn: ['warn_atr_turkey'] },
   { n: 18, o: 'PL', d: 'CA', m: 'sea', c: 'general', mustNot: ['12_EUR1'], warn: ['warn_rex_export'] },
   { n: 19, o: 'PL', d: 'JP', m: 'sea', c: 'general', mustNot: ['12_EUR1'], warn: ['warn_rex_export'] },
   { n: 20, o: 'PL', d: 'GB', m: 'road', c: 'general',
     mustNot: ['12_EUR1'], must: ['21_UK_Import'], warn: ['warn_rex_export'] },
   { n: 21, o: 'IN', d: 'PL', m: 'sea', c: 'general', must: ['103_Form_A'], warn: ['warn_gsp_form_a_rex'] },
-  { n: 22, o: 'CA', d: 'PL', m: 'sea', c: 'general', warn: ['warn_rex_import', 'warn_eu_import_sad'] },
+  // ETAP 2: warn_eu_import_sad zastapily dokumenty 124 i 125.
+  { n: 22, o: 'CA', d: 'PL', m: 'sea', c: 'general',
+    must: ['124_ENS_ICS2', '125_EU_Import_Declaration'],
+    warn: ['warn_rex_import', 'warn_ens_lodgement'], noWarn: ['warn_eu_import_sad'] },
 
   // ── Import poza UE ─────────────────────────────────────────────────────────
   { n: 23, o: 'PL', d: 'US', m: 'sea', c: 'electronics',
@@ -77,9 +86,14 @@ const MATRIX = [
   { n: 26, o: 'PL', d: 'IN', m: 'air', c: 'general', manual: ['44_India_Import'], must: ['11_AWB'] },
   { n: 27, o: 'PL', d: 'BR', m: 'sea', c: 'general',
     manual: ['47_Brazil_Import'], warn: ['warn_brazil_import_licence', 'warn_mercosur_ita'] },
-  { n: 28, o: 'PL', d: 'CN', m: 'rail', c: 'general', must: ['27_CIM'], manual: ['22_China_Import'] },
+  // ETAP 2: CN jest w SMGS_ONLY, wiec zamiast CIM idzie wspolny list CIM/SMGS.
+  { n: 28, o: 'PL', d: 'CN', m: 'rail', c: 'general',
+    must: ['134_CIM_SMGS'], mustNot: ['27_CIM'], manual: ['22_China_Import'],
+    warn: ['warn_cim_smgs_route'] },
   { n: 29, o: 'CN', d: 'PL', m: 'rail', c: 'general',
-    must: ['27_CIM', '23_China_Export', '06_COO'], warn: ['warn_eu_import_sad'] },
+    must: ['134_CIM_SMGS', '23_China_Export', '06_COO', '124_ENS_ICS2', '125_EU_Import_Declaration'],
+    mustNot: ['27_CIM'], warn: ['warn_cim_smgs_route', 'warn_ens_lodgement'],
+    noWarn: ['warn_eu_import_sad'] },
   { n: 30, o: 'PL', d: 'SA', m: 'sea', c: 'general',
     must: ['70_Blacklist'], warn: ['warn_blacklist_cert', 'warn_legalisation_kig'] },
   { n: 31, o: 'BR', d: 'AR', m: 'sea', c: 'general',
@@ -91,18 +105,25 @@ const MATRIX = [
   { n: 34, o: 'PL', d: 'NO', m: 'road', c: 'dangerous_goods',
     must: ['118_ADR', '29_DG_Manifest', '69_MSDS'], mustNot: ['15_IMDG', '64_IATA_DGR'] },
   { n: 35, o: 'PL', d: 'CN', m: 'sea', c: 'dangerous_goods',
-    must: ['15_IMDG', '29_DG_Manifest'], mustNot: ['118_ADR', '64_IATA_DGR'] },
+    must: ['15_IMDG', '29_DG_Manifest', '123_Container_Packing_Cert'],
+    mustNot: ['118_ADR', '64_IATA_DGR'], warn: ['warn_container_packing_duplicate'] },
   { n: 36, o: 'PL', d: 'CN', m: 'air', c: 'dangerous_goods',
     must: ['64_IATA_DGR', '109_IATA_Packing'], mustNot: ['118_ADR', '15_IMDG'] },
+  // ETAP 2: warn_rid_rail zastapil dokument 135_RID_Rail_DG - kolej domknela
+  // komplet czterech galezi dla towarow niebezpiecznych.
   { n: 37, o: 'PL', d: 'CN', m: 'rail', c: 'dangerous_goods',
-    must: ['29_DG_Manifest', '69_MSDS'], mustNot: ['118_ADR', '15_IMDG'], warn: ['warn_rid_rail'] },
+    must: ['29_DG_Manifest', '69_MSDS', '135_RID_Rail_DG'],
+    mustNot: ['118_ADR', '15_IMDG'], noWarn: ['warn_rid_rail'] },
 
   // ── Kategorie towaru ───────────────────────────────────────────────────────
   { n: 38, o: 'PL', d: 'US', m: 'sea', c: 'food_animal',
     must: ['17_Weterynaryjne', '105_FDA'], warn: ['warn_atp_cold_chain'] },
   { n: 39, o: 'PL', d: 'AE', m: 'sea', c: 'food_animal', must: ['17_Weterynaryjne', '18_Halal'] },
   { n: 40, o: 'PL', d: 'CN', m: 'sea', c: 'food_plant', must: ['16_Fitosanitarne'] },
-  { n: 41, o: 'CN', d: 'PL', m: 'sea', c: 'food_plant', warn: ['warn_ched_p_traces'] },
+  // ETAP 2: warn_ched_p_traces zastapil dokument 128_CHED_TRACES. CHED jest
+  // blank_only, wiec laduje w sekcji "do wypelnienia recznie".
+  { n: 41, o: 'CN', d: 'PL', m: 'sea', c: 'food_plant',
+    manual: ['128_CHED_TRACES'], noWarn: ['warn_ched_p_traces'] },
   { n: 42, o: 'PL', d: 'US', m: 'air', c: 'medicines', must: ['71_FreeSale', '69_MSDS'] },
   { n: 43, o: 'CN', d: 'PL', m: 'sea', c: 'electronics', required: ['106_CE'] },
   { n: 44, o: 'PL', d: 'CN', m: 'air', c: 'live_animals', must: ['101_CITES', '17_Weterynaryjne'] },
@@ -137,6 +158,102 @@ const MATRIX = [
   { n: 63, o: 'PL', d: 'DE', m: 'road', c: 'general', mustNot: ['118_ADR'] },
   { n: 64, o: 'PL', d: 'DE', m: 'road', c: 'food_plant', f: { adr: true },
     must: ['16_Fitosanitarne'], mustNot: ['118_ADR'] },
+
+  // ── ETAP 2: 22 nowe dokumenty (119-140) ────────────────────────────────────
+  // Kazda regula ma tu przypadek POZYTYWNY i NEGATYWNY. Sam pozytywny
+  // przechodzilby takze wtedy, gdyby dokument dokladal sie zawsze - a wlasnie
+  // tego przy 91 pozycjach blank_only trzeba pilnowac najbardziej.
+
+  // VGM: kontener, nie sam tryb morski (drobnica nie podlega SOLAS).
+  { n: 65, o: 'PL', d: 'US', m: 'sea', c: 'general', f: { containerized: true },
+    required: ['119_VGM_SOLAS'] },
+  { n: 66, o: 'PL', d: 'US', m: 'sea', c: 'general', mustNot: ['119_VGM_SOLAS'] },
+  { n: 67, o: 'PL', d: 'US', m: 'multimodal', c: 'general', f: { containerized: true },
+    must: ['119_VGM_SOLAS'], mustNot: [] },
+  { n: 68, o: 'PL', d: 'US', m: 'road', c: 'general', f: { containerized: true },
+    mustNot: ['119_VGM_SOLAS'] },
+
+  // ENS + zgloszenie przywozowe: kazde wprowadzenie do UE, niezaleznie od galezi.
+  { n: 69, o: 'US', d: 'PL', m: 'air', c: 'general',
+    required: ['124_ENS_ICS2', '125_EU_Import_Declaration'], warn: ['warn_ens_lodgement'] },
+  { n: 70, o: 'PL', d: 'US', m: 'sea', c: 'general',
+    mustNot: ['124_ENS_ICS2', '125_EU_Import_Declaration'] },
+  { n: 71, o: 'PL', d: 'DE', m: 'road', c: 'general',
+    mustNot: ['124_ENS_ICS2', '125_EU_Import_Declaration'] },
+
+  // CBAM: zakres towarowy przez cargoCategoryId, tylko przy przywozie do UE.
+  { n: 72, o: 'CN', d: 'PL', m: 'sea', c: 'general', f: { cargoCategoryId: 'metals' },
+    must: ['126_CBAM_Data_Sheet'], warn: ['warn_cbam_annual'] },
+  { n: 73, o: 'CN', d: 'PL', m: 'sea', c: 'general', f: { cargoCategoryId: 'textiles' },
+    mustNot: ['126_CBAM_Data_Sheet'] },
+  { n: 74, o: 'PL', d: 'CN', m: 'sea', c: 'general', f: { cargoCategoryId: 'metals' },
+    mustNot: ['126_CBAM_Data_Sheet'] },
+
+  // EUDR: bramka czasowa trzyma dokument poza lista do 30.12.2026.
+  { n: 75, o: 'CN', d: 'PL', m: 'sea', c: 'food_plant', f: { cargoCategoryId: 'food_plant' },
+    mustNot: ['127_EUDR_DDS'], warn: ['warn_document_not_yet_valid'] },
+
+  // CHED: kontrola graniczna przy zywnosci i zwierzetach, sekcja reczna.
+  { n: 76, o: 'BR', d: 'PL', m: 'sea', c: 'food_animal', manual: ['128_CHED_TRACES'] },
+  { n: 77, o: 'BR', d: 'PL', m: 'sea', c: 'electronics', mustNot: ['128_CHED_TRACES'] },
+
+  // Deklaracja dostawcy: tylko kierunki objete preferencja celna.
+  { n: 78, o: 'PL', d: 'CH', m: 'road', c: 'general', must: ['130_Supplier_Declaration'] },
+  { n: 79, o: 'PL', d: 'US', m: 'sea', c: 'general', mustNot: ['130_Supplier_Declaration'] },
+
+  // Oswiadczenie REX: przy wywozie i przy przywozie z kraju REX_FTA.
+  { n: 80, o: 'PL', d: 'JP', m: 'sea', c: 'general', must: ['131_REX_Statement_Origin'] },
+  { n: 81, o: 'JP', d: 'PL', m: 'sea', c: 'general', must: ['131_REX_Statement_Origin'] },
+  { n: 82, o: 'PL', d: 'BR', m: 'sea', c: 'general', mustNot: ['131_REX_Statement_Origin'] },
+
+  // EMCS: wyroby akcyzowe wysylane z UE.
+  { n: 83, o: 'PL', d: 'DE', m: 'road', c: 'general', f: { cargoCategoryId: 'beverages' },
+    must: ['132_EMCS_eAD'], warn: ['warn_emcs_arc'] },
+  { n: 84, o: 'CN', d: 'PL', m: 'sea', c: 'general', f: { cargoCategoryId: 'beverages' },
+    mustNot: ['132_EMCS_eAD'] },
+
+  // SENT: wyzwala RODZAJ TOWARU, nie przekroczenie granicy.
+  { n: 85, o: 'PL', d: 'PL', m: 'road', c: 'general', f: { cargoCategoryId: 'energy' },
+    required: ['133_SENT'], warn: ['warn_sent_registration'] },
+  { n: 86, o: 'DE', d: 'FR', m: 'road', c: 'general', f: { cargoCategoryId: 'energy' },
+    mustNot: ['133_SENT'] },
+  { n: 87, o: 'DE', d: 'LT', m: 'road', c: 'general', f: { cargoCategoryId: 'energy', transitCountries: ['PL'] },
+    must: ['133_SENT'] },
+  { n: 88, o: 'PL', d: 'CN', m: 'sea', c: 'general', f: { cargoCategoryId: 'energy' },
+    mustNot: ['133_SENT'] },
+
+  // CIM/SMGS: decyduje strefa, nie czlonkostwo (PL jest strona obu umow).
+  { n: 89, o: 'PL', d: 'DE', m: 'rail', c: 'general',
+    must: ['27_CIM'], mustNot: ['134_CIM_SMGS'], noWarn: ['warn_cim_smgs_route'] },
+  { n: 90, o: 'PL', d: 'KZ', m: 'rail', c: 'general',
+    must: ['134_CIM_SMGS'], mustNot: ['27_CIM'] },
+  { n: 91, o: 'PL', d: 'TR', m: 'rail', c: 'general', f: { transitCountries: ['BY'] },
+    must: ['134_CIM_SMGS'], mustNot: ['27_CIM'] },
+
+  // RID: domyka komplet czterech galezi dla towarow niebezpiecznych.
+  { n: 92, o: 'PL', d: 'DE', m: 'rail', c: 'dangerous_goods',
+    required: ['135_RID_Rail_DG'], mustNot: ['118_ADR', '15_IMDG', '64_IATA_DGR'] },
+  { n: 93, o: 'PL', d: 'DE', m: 'rail', c: 'general', mustNot: ['135_RID_Rail_DG'] },
+
+  // Wykaz wagonow: tylko przesylka grupowa.
+  { n: 94, o: 'PL', d: 'DE', m: 'rail', c: 'general', f: { groupConsignment: true },
+    must: ['136_Wagon_List'] },
+  { n: 95, o: 'PL', d: 'DE', m: 'rail', c: 'general', mustNot: ['136_Wagon_List'] },
+  { n: 96, o: 'PL', d: 'DE', m: 'road', c: 'general', f: { groupConsignment: true },
+    mustNot: ['136_Wagon_List'] },
+
+  // HAWB: tylko konsolidacja, zawsze OBOK MAWB.
+  { n: 97, o: 'PL', d: 'US', m: 'air', c: 'general', f: { consolidated: true },
+    required: ['11_AWB', '137_HAWB'] },
+  { n: 98, o: 'PL', d: 'US', m: 'air', c: 'general', must: ['11_AWB'], mustNot: ['137_HAWB'] },
+  { n: 99, o: 'PL', d: 'US', m: 'sea', c: 'general', f: { consolidated: true },
+    mustNot: ['137_HAWB'] },
+
+  // Delivery Order: wylacznie przywoz MORSKI do UE.
+  { n: 100, o: 'CN', d: 'PL', m: 'sea', c: 'general', must: ['122_Delivery_Order'] },
+  { n: 101, o: 'PL', d: 'CN', m: 'sea', c: 'general', mustNot: ['122_Delivery_Order'] },
+  { n: 102, o: 'CN', d: 'PL', m: 'rail', c: 'general', mustNot: ['122_Delivery_Order'] },
+  { n: 103, o: 'DE', d: 'PL', m: 'sea', c: 'general', mustNot: ['122_Delivery_Order'] },
 ]
 
 describe('macierz tras', () => {
@@ -176,10 +293,23 @@ const DEFAULT_OUTPUT = {
   government_agency: 'blank_only', bank: 'blank_only', insurer: 'blank_only',
   lab_or_inspector: 'blank_only', notified_body: 'blank_only', foreign_broker: 'blank_only',
 }
-// Trzy udokumentowane odstepstwa (komentarz przy polu w documentCatalog.js):
-// dokumenty przewoznika, ktore sa formularzem do wypelnienia w obrocie, a nie
-// wnioskiem skladanym w urzedzie.
-const OUTPUT_EXCEPTIONS = { '10_POD': 'final', '29_DG_Manifest': 'final', '118_ADR': 'final' }
+// Udokumentowane odstepstwa (komentarz przy polu w documentCatalog.js).
+//
+// Grupa 1 - dokumenty przewoznika, ktore sa formularzem do wypelnienia
+// w obrocie, a nie wnioskiem skladanym w urzedzie:
+//   10_POD, 29_DG_Manifest, 118_ADR
+//
+// Grupa 2 (ETAP 1 / partia B) - formularze, ktore ZOBOWIAZANY sklada sam
+// w systemie urzedowym. Wystawca jest nadawca (shipper), ale dokument nie
+// wchodzi do obrotu handlowego, wiec 'final' bylby falszem: platforma
+// przygotowuje dane, zlozenie odbywa sie w rejestrze CBAM albo w TRACES.
+// Dlatego 'draft' + galaz `shipper` w generators/draftBanner.jsx:
+//   126_CBAM_Data_Sheet (rejestr CBAM), 127_EUDR_DDS (TRACES),
+//   133_SENT (rejestr SENT na PUESC)
+const OUTPUT_EXCEPTIONS = {
+  '10_POD': 'final', '29_DG_Manifest': 'final', '118_ADR': 'final',
+  '126_CBAM_Data_Sheet': 'draft', '127_EUDR_DDS': 'draft', '133_SENT': 'draft',
+}
 
 const CATEGORIES = ['ue', 'transport', 'swiadectwo', 'celne_export', 'celne_import', 'towary_niebezp', 'inne', 'finansowe']
 const MODES = ['road', 'sea', 'air', 'rail', 'multimodal']
@@ -289,24 +419,80 @@ describe('audyt flag formularza', () => {
     })
   }
 
-  // Pola formularza dodane w ETAPIE 2.4. Nie modeluja zadnej reguly celnej i NIE
-  // MOGA po cichu wplywac na dobor — gdyby kiedys mialy, regula ma trafic do
-  // silnika, a ten test ma sie zmienic swiadomie.
-  it("pola 'consolidated' i 'groupConsignment' nie wplywaja dzis na dobor", () => {
+  // ZMIANA SWIADOMA (ETAP 2 Promptu 2), nie regresja.
+  //
+  // Do 2026-08-04 ten test asercjonowal, ze `consolidated` NIE wplywa na dobor -
+  // bo wtedy faktycznie nie wplywal, a chodzilo o wychwycenie reguly ukrytej
+  // poza silnikiem. HAWB (137) wystawia spedytor WYLACZNIE przy konsolidacji,
+  // wiec flaga dostala znaczenie i test zostal odwrocony razem z ta zmiana.
+  it("flaga 'consolidated' doklada HAWB obok MAWB", () => {
     const air = allIds(meta('PL', 'US', 'air', 'general'))
-    expect(allIds(meta('PL', 'US', 'air', 'general', { consolidated: true }))).toEqual(air)
-    const rail = allIds(meta('CN', 'PL', 'rail', 'general'))
-    expect(allIds(meta('CN', 'PL', 'rail', 'general', { groupConsignment: true }))).toEqual(rail)
+    expect(air).toContain('11_AWB')
+    expect(air).not.toContain('137_HAWB')
+
+    const consolidated = allIds(meta('PL', 'US', 'air', 'general', { consolidated: true }))
+    expect(consolidated).toContain('11_AWB')
+    expect(consolidated).toContain('137_HAWB')
   })
 
-  it("nieistniejaca flaga 'containerized' nie ma zadnego wplywu", () => {
+  // ZMIANA SWIADOMA (decyzja z 2026-08-04): wykaz wagonow (136) towarzyszy
+  // listowi przewozowemu przy przesylce grupowej, wiec flaga dostala znaczenie.
+  // Warunkowanie flaga jest tu istotne - inaczej dokument dokladalby sie do
+  // KAZDEJ trasy kolejowej.
+  it("flaga 'groupConsignment' doklada wykaz wagonow", () => {
+    const rail = allIds(meta('CN', 'PL', 'rail', 'general'))
+    expect(rail).not.toContain('136_Wagon_List')
+
+    const grupowa = allIds(meta('CN', 'PL', 'rail', 'general', { groupConsignment: true }))
+    expect(grupowa).toContain('136_Wagon_List')
+  })
+
+  // Flaga wyliczana z pol kontenerowych migawki (buildEngineFlags), nie osobny
+  // checkbox. SOLAS obejmuje kazdy ZAPAKOWANY KONTENER, ale nie drobnice -
+  // dlatego VGM nie moze isc po samym trybie morskim.
+  it("flaga 'containerized' doklada VGM jako dokument blokujacy", () => {
     const base = allIds(meta('PL', 'US', 'sea', 'general'))
-    expect(allIds(meta('PL', 'US', 'sea', 'general', { containerized: true }))).toEqual(base)
+    expect(base).not.toContain('119_VGM_SOLAS')
+
+    const r = meta('PL', 'US', 'sea', 'general', { containerized: true })
+    expect(allIds(r)).toContain('119_VGM_SOLAS')
+    expect(r.required.find((d) => d.id === '119_VGM_SOLAS').blocking).toBe(true)
   })
 
   it('nieznana flaga nie wywraca doboru', () => {
     const base = allIds(meta('PL', 'DE', 'road', 'general'))
     expect(allIds(meta('PL', 'DE', 'road', 'general', { flagaZPrzyszlosci: true }))).toEqual(base)
+  })
+
+  // ── PIEC DOKUMENTOW SWIADOMIE NIEWPIETYCH ────────────────────────────────
+  //
+  // Decyzja z 2026-08-04: 120, 121, 138, 139 i 140 to dokumenty OPERACYJNE
+  // przewoznika i agenta, nie zestaw kompletowany przez spedytora. Kazdy
+  // dokladalby sie do KAZDEJ trasy swojej galezi.
+  //
+  // Ten test NIE broni tezy „nigdy ich nie wpinac". Broni tego, zeby wpiecie
+  // bylo SWIADOME: kto je doda, musi tu przyjsc i skasowac wpis, a przy okazji
+  // zaktualizowac docs/silnik_diff.md. Bez tego wrocilyby po cichu.
+  it('120, 121, 138, 139 i 140 nie pojawiaja sie na zadnej trasie', () => {
+    const NIEWPIETE = [
+      '120_Booking_Confirmation', '121_Cargo_Manifest_Sea',
+      '138_SLI_Air', '139_Consignor_Security_Decl', '140_Air_Cargo_Manifest',
+    ]
+    const SWEEP = [
+      ['PL', 'US', 'sea', 'general', { containerized: true }],
+      ['CN', 'PL', 'sea', 'general', {}],
+      ['PL', 'US', 'air', 'general', { consolidated: true }],
+      ['US', 'PL', 'air', 'general', {}],
+      ['PL', 'CN', 'sea', 'dangerous_goods', {}],
+      ['PL', 'US', 'multimodal', 'general', { containerized: true, consolidated: true }],
+      ['PL', 'DE', 'rail', 'general', { groupConsignment: true }],
+    ]
+    for (const [o, d, m, c, f] of SWEEP) {
+      const all = allIds(meta(o, d, m, c, f))
+      for (const id of NIEWPIETE) {
+        expect(all, `${id} pojawil sie na trasie ${o}->${d} ${m}`).not.toContain(id)
+      }
+    }
   })
 
   // Rejestr kreatora nie moze wrocic do roli zrodla doboru.

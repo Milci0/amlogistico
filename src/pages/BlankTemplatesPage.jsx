@@ -168,7 +168,12 @@ export default function BlankTemplatesPage() {
     // includeMetadata: ta strona potrzebuje `blanks` i `outputMode`, żeby pokazać
     // KTO wystawia dokument. Ostrzeżenia są wtedy obiektami z kodem — tłumaczy je
     // ta sama funkcja co dotąd (przyjmuje oba kształty).
-    const res = getDocuments(origin, destination, mode, engineCategory, flags, { includeMetadata: true })
+    // `cargoCategoryId` obok kategorii silnika: dwanaście z dziewiętnastu kategorii
+    // mapuje się na `general`, więc reguł akcyzowych, CBAM i EUDR nie da się z niej
+    // odróżnić. Kreator przekazuje to samo w buildEngineFlags — obie ścieżki muszą
+    // liczyć identycznie (pilnuje tego „audyt flag" w documentEngine.matrix.test.js).
+    const engineFlags = { ...flags, cargoCategoryId: cargoCategory }
+    const res = getDocuments(origin, destination, mode, engineCategory, engineFlags, { includeMetadata: true })
     setResult(res)
     // ETAP 3 — domyślnie zaznaczone: wszystkie dokumenty z required=true.
     // Domyślnie zaznaczone tylko wymagane — sekcja „Do wypełnienia ręcznie" bywa

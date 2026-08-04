@@ -733,11 +733,132 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   - **NIE zweryfikowane interaktywnie w przeglądarce** — build, 208 testów i E2E na bazie
     (warstwa danych) są zielone, ale kliknięcia w UI nie były sprawdzane.
 
+- **22 nowe dokumenty (kody 119-140) — ETAPY 1-4 GOTOWE (2026-08-04).**
+  Katalogi, szablony, **wpięcie w silnik doboru**, macierz testowa i raport rozbieżności.
+  **17 z 22 dokumentów zwraca silnik; 5 świadomie poza nim** (decyzja opisana
+  w `docs/silnik_diff.md`, sekcja „Siedem dokumentów poza specyfikacją Etapu 2").
+  - **Liczby po zmianie:** `TEMPLATE_CATALOG` 118 → **140** (= 140 plików `.jsx`, zero sierot),
+    `documentCatalog` 120 → **142**, `blankTemplateMap` 120 → **142**. Numeracja 119-140 ciągła.
+    `outputMode` w katalogu: final 22, draft 29, blank_only 91.
+  - **Cztery partie:** A morskie (119 VGM SOLAS, 120 Booking, 121 Manifest ładunkowy,
+    122 Delivery Order, 123 Świadectwo pakowania kontenera) · B celne i regulacyjne UE
+    (124 ENS/ICS2, 125 Zgłoszenie przywozowe UE, 126 CBAM, 127 EUDR DDS, 128 CHED,
+    129 A.TR, 130 Deklaracja dostawcy, 131 REX) · C krajowe PL i kolej (132 EMCS e-AD,
+    133 SENT, 134 CIM/SMGS, 135 RID, 136 Wykaz wagonów) · D lotnicze (137 HAWB, 138 SLI,
+    139 Deklaracja bezpieczeństwa nadawcy, 140 Manifest lotniczy).
+  - **`path: null` przy wszystkich 22** — źródłem jest WYŁĄCZNIE szablon JSX, nie plik
+    w `public/templates/`. Komentarz pola `available` w `documentCatalog.js` opisuje teraz
+    realne znaczenie („da się pobrać", nie „plik istnieje na dysku").
+  - **`draftBanner.jsx` rozszerzony:** nowa gałąź `shipper` → „WERSJA ROBOCZA — dane do złożenia
+    w: {authority}" (dla formularzy, które zobowiązany składa SAM w systemie urzędowym:
+    126 CBAM, 127 EUDR, 133 SENT). Puste `authority` renderuje samo „WERSJA ROBOCZA" zamiast
+    dawnego „do złożenia w: właściwym organie" (puste odesłanie wyglądało na wypełnione pole).
+    Obie zmiany były bezczynne w chwili wprowadzenia — 0 dokumentów w katalogu ich wtedy używało.
+  - **`128_CHED_TRACES` to jedyny szablon w repo bez propsa `data`** — CHED wystawia organ na
+    granicznym punkcie kontroli, więc platforma nie ma prawa podstawiać tam danych użytkownika.
+    Ścieżka generowania i tak wymusza `{}` (`generateOne` → `downloadBlankDocument`), ale
+    sygnatura bez propsa czyni gwarancję niezależną od tamtej warstwy.
+  - **`legalBasis: null` przy czterech dokumentach** (120 booking, 122 delivery order,
+    136 wykaz wagonów, 138 SLI) — prompt podawał tam „umowa przewozu"/„praktyka portowa"/
+    „praktyka kolejowa"/„standard IATA", czyli rzeczy, które nie są aktem prawnym. Kto wystawia
+    dokument, niesie pole `authority`.
+  - **Poprawka merytoryczna wobec promptu:** dla 140 prompt wskazywał „konwencję FAL ICAO" —
+    taka nie istnieje (FAL to konwencja IMO, użyta przy morskim 121). Manifest lotniczy dostał
+    załącznik 9 do Konwencji chicagowskiej. Test to utrwala.
+  - **Nowe pliki testowe:** `src/data/__tests__/catalogIntegrity.test.js` (spójność trzech
+    katalogów, sprawdza CAŁY katalog) i `src/generators/__tests__/templates.render.test.jsx`
+    (render wszystkich 140 szablonów przez `renderToStaticMarkup` w trybie pustym i wypełnionym —
+    ten sam krok, który robi `generatePdf`, więc łapie wyjątki szablonu przed przeglądarką).
+    **558 testów** (przed sesją 208), build zielony, `lint:locales` czysty.
+  - **Uwaga na przyszłość:** wszystkie 90 istniejących dokumentów `blank_only` interpoluje
+    `data.*` w szablonach. To NIE jest wyciek (ścieżka generowania nigdy nie podaje im danych),
+    ale kod jest martwy i mylący. Nowe szablony `blank_only` mają na to osobny test.
+  - **NIE zweryfikowane w przeglądarce:** żaden z 22 PDF-ów nie był oglądany. Największe ryzyko
+    to łamanie stron A4 przy `EudrDdsTemplate`, `ChedTracesTemplate`, `CbamDataSheetTemplate`,
+    `EmcsEadTemplate`, `WagonListTemplate` i `AirCargoManifestTemplate`.
+
+  - **ETAP 2 — wpięcie w `documentEngine.js`:**
+    - **`GROUPS.SMGS_ONLY`** (CN, KZ, UZ, RU, BY, MN, KG, TJ, TM, AZ, VN, KP, IR; `// lista wymaga
+      weryfikacji u zrodla (OSJD)`). **To NIE jest lista członków SMGS** — PL, LT, LV i EE są
+      stronami OBU umów, więc lista członkostwa kazałaby wystawiać CIM/SMGS na trasie PL→DE.
+      Warstwa 1: kraj nadania, docelowy **lub tranzytowy** w tej grupie → `134_CIM_SMGS` **zamiast**
+      `27_CIM` + `warn_cim_smgs_route`.
+    - **`flags.cargoCategoryId`** — nowa flaga niosąca SUROWE id kategorii z `cargoCategories.js`
+      obok kategorii silnika. Powód: **12 z 19 kategorii mapuje się na `general`** (napoje, paliwa,
+      metale, drewno, budowlanka), więc akcyza, CBAM i EUDR są z kategorii silnika NIEODRÓŻNIALNE.
+      Bez flagi reguły milczą (wsteczna zgodność ze starymi rekordami). Przekazują ją OBIE ścieżki:
+      `buildEngineFlags` (kreator) i `BlankTemplatesPage`. Zbiory: `CBAM_CATEGORY_IDS`,
+      `EUDR_CATEGORY_IDS`, `EXCISE_CATEGORY_IDS`, `SENT_CATEGORY_IDS`.
+    - **`flags.containerized`** — wyliczana w `buildEngineFlags` z `sea.containerNo || sea.containerType`,
+      BEZ nowego pola w kreatorze. SOLAS obejmuje każdy zapakowany kontener, ale nie drobnicę, więc
+      VGM nie mogło iść po samym trybie morskim.
+    - **`flags.consolidated`** → `137_HAWB` obok `11_AWB` (MAWB). Test `documentEngine.matrix.test.js`,
+      który wcześniej asercjonował BRAK wpływu tej flagi, został odwrócony z komentarzem.
+    - **Warstwa 4** (przywóz do UE): `124_ENS_ICS2` + `125_EU_Import_Declaration` wymagane;
+      `126_CBAM` warunkowy wg `cargoCategoryId`; `127_EUDR` wymagany wg `cargoCategoryId`
+      (bramka `validFrom` demotuje go do ostrzeżenia `info` do 30.12.2026); `128_CHED` → `blanks`.
+    - **Warstwa 5**: `135_RID` dla kolei + DG, `123_Container_Packing_Cert` dla morza + DG,
+      `132_EMCS_eAD` (akcyza, wysyłka z UE), `133_SENT` (Polska w dowolnym miejscu trasy, droga/kolej).
+    - **Warstwa 3/4 zamiast 6**: `129_ATR`, `130_Supplier_Declaration`, `131_REX` wpięte tam, gdzie
+      od zawsze mieszka logika pochodzenia preferencyjnego, nie w warstwie „reguły specjalne".
+      `130` zawężona do kierunków objętych `PREFERENTIAL_ORIGIN_MAP` — bez preferencji celnej ten
+      dokument niczego nie zmienia.
+    - **4 ostrzeżenia wycofane** (zastąpione dokumentami): `warn_eu_import_sad`, `warn_ched_p_traces`,
+      `warn_rid_rail`, `warn_atr_turkey`. **`warn_atr_turkey_agri` ZOSTAJE** — niesie rozróżnienie
+      A.TR vs EUR.1 dla produktów rolnych. Kody zostają w `WARNING_SEVERITY` i w tłumaczeniach,
+      bo stare rekordy w bazie nadal je niosą; silnik przestał je tylko EMITOWAĆ.
+    - **6 nowych kodów ostrzeżeń** + klucze EN/PL: `warn_ens_lodgement`, `warn_cim_smgs_route`,
+      `warn_container_packing_duplicate`, `warn_cbam_annual`, `warn_emcs_arc`, `warn_sent_registration`
+      (`engineWarnings` 26 → 32, `lint:locales` 1686 kluczy).
+    - **`BASELINE` w `documentEngine.test.js` zaktualizowany** — Etap 2 świadomie zmienił dobór na
+      5 z 11 tras, każda rozbieżność ma komentarz przy wpisie. Gwarancja KSZTAŁTU (5 pól, warnings
+      jako stringi, brak `blanks` bez szóstego argumentu) obowiązuje bez zmian.
+    - **Warstwa 1 (dopięte 2026-08-04):** `136_Wagon_List` przy `flags.groupConsignment`;
+      `122_Delivery_Order` **wyłącznie przy przywozie morskim do UE** (przy wywozie port
+      docelowy leży poza Unią i dokument wystawia tamtejszy agent).
+    - **5 dokumentów świadomie POZA silnikiem:** `120`, `121`, `138`, `139`, `140` — dokumenty
+      operacyjne przewoźnika i agenta, nie zestaw kompletowany przez spedytora. Przy 91 pozycjach
+      `blank_only` problemem jest nadmiar. Pilnują tego dwa miejsca: komentarz `NIEWPIETE CELOWO`
+      w silniku i test „120, 121, 138, 139 i 140 nie pojawiają się na żadnej trasie". **Warunek
+      powrotu: `139` przy pierwszym realnym użytkowniku lotniczym** (to wymóg rozporządzenia
+      2015/1998, nie wygoda).
+    - **ETAP 3 — macierz:** 64 → **103 trasy** w `documentEngine.matrix.test.js`, sekcja
+      „ETAP 2: 22 nowe dokumenty". Każda reguła ma przypadek pozytywny **i negatywny**.
+    - **ETAP 4 — `docs/silnik_diff.md`:** nowa sekcja porównująca silnik sprzed i po Etapie 2
+      na 44 trasach (**+60 dokumentów, −4**; jedyne znikające to `27_CIM` zastąpiony przez
+      `134_CIM_SMGS`). Porównanie wygenerowane z kodu przez uruchomienie obu wersji silnika obok
+      siebie (`git show HEAD:...`), plus opis pięciu zmian świadomych i decyzji o siedmiu dokumentach.
+    - **558 → 612 testów**, w tym osobny blok „ETAP 2 — kryteria akceptacyjne" z czterema
+      przypadkami z promptu, każdy z warunkiem negatywnym.
+    - **Pokrycie wyszukiwarki szablonów (2026-08-04):** dodatkowe testy w `catalogIntegrity.test.js`
+      potwierdzające, że wszystkich 22 nowych dokumentów jest osiągalnych z `TemplateSearch.jsx`
+      (widoczna na zakładce „Dokumentacja"/`/history`) — komponent nie ma własnej listy, woła
+      wyłącznie `searchTemplates()` z `TEMPLATE_CATALOG`. Wyłapały realną lukę: fraza „ead" (bez
+      dywizu) nie trafiała w `132_EMCS_eAD`, bo nazwa dokumentu to „e-AD / e-SAD" — dopisane tagi
+      `ead`/`esad` do wpisu `emcs_ead` w `templateCatalog.js`. **612 → 616 testów.**
+
 **Do zrobienia:**
+- **Twoja weryfikacja w przeglądarce sześciu szablonów pod kątem łamania stron A4** — obiecana,
+  wynik nieznany: `EudrDdsTemplate`, `ChedTracesTemplate`, `CbamDataSheetTemplate`,
+  `EmcsEadTemplate`, `WagonListTemplate`, `AirCargoManifestTemplate`.
+- **`139_Consignor_Security_Decl` przy pierwszym realnym użytkowniku lotniczym** — jedyny
+  z pięciu niewpiętych dokumentów, który jest wymogiem prawnym (rozp. wyk. UE 2015/1998),
+  a nie dokumentem operacyjnym. Reguła gotowa w `docs/silnik_diff.md`.
+- **Zakres CBAM/EUDR/EMCS/SENT jest przybliżony kategorią, nie kodem CN.** Reguły trafiają
+  w kategorię towaru (np. `metals` → CBAM), a rozporządzenia definiują zakres kodami CN.
+  Precyzyjne dopasowanie wymagałoby przekazania `cargo.hsCode` do silnika i list kodów.
+  Dlatego CBAM jest `conditional`, a nie `required`.
+- **Zweryfikować `GROUPS.SMGS_ONLY` u źródła (OSJD)** — lista krajów poza COTIF, od której
+  zależy wybór między `27_CIM` a `134_CIM_SMGS`.
+- Języki per pole w `134_CIM_SMGS` (GLV-CIM/SMGS: pola wspólne rosyjski + jeden z EN/FR/DE,
+  pola tylko CIM EN/FR/DE, pola tylko SMGS rosyjski, do Chin dodatkowo chiński). Przypisanie
+  pól do stref jest w komentarzu nagłówka szablonu; rosyjskich etykiet celowo nie zmyślano.
 - Interaktywny test kreatora w przeglądarce po unifikacji (5 gałęzi × obie ścieżki, sekcja
   „Do wypełnienia ręcznie", nagłówek PROJEKT na B/L, pobieranie starego zestawu z Historii)
 - Uzupełnić 51 podstaw prawnych z `docs/legalbasis_do_uzupelnienia.md` (kodeksy celne państw trzecich)
-- Szablon A.TR (świadectwo unii celnej UE-TR) — dziś tylko ostrzeżenie, brak PDF i JSX
+  oraz zdecydować, czy dokumenty z ETAPU 1 z `legalBasis: null` (120, 122, 136, 138 — umowa
+  przewozu/praktyka portowa/praktyka kolejowa/standard IATA, żadne z tego nie jest aktem prawnym)
+  mają tak zostać
 - Pola `woodenPackaging`/`temporaryExport`/`transhipment`/`reExport`/`transitNonEU` w kreatorze —
   silnik je obsługuje, ale migawka nie ma tych pól (działają tylko z „Pustych szablonów")
 - Usunąć `getDocsList` po akceptacji `docs/silnik_diff.md`

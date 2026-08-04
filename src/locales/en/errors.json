@@ -35,6 +35,12 @@
     "warn_ctc_transit": "Transit through a Common Transit Convention country ({{countries}}). A T1/T2 transit declaration in NCTS with a customs guarantee is enough, a TIR carnet is not needed.",
     "warn_rail_transit_non_eu": "The rail route passes through a country outside the Common Transit Convention ({{countries}}). A TIR carnet does not apply to rail transport; the third country's own transit procedure is required and must be arranged with the rail carrier.",
     "warn_document_not_yet_valid": "The document \"{{document}}\" only takes effect on {{date}}. It is not required before that date.",
-    "warn_document_expired": "The document \"{{document}}\" ceased to apply on {{date}}. Check whether another document has replaced it."
+    "warn_document_expired": "The document \"{{document}}\" ceased to apply on {{date}}. Check whether another document has replaced it.",
+    "warn_ens_lodgement": "The entry summary declaration (ENS) is filed by the CARRIER in ICS2 BEFORE the goods arrive. The deadline depends on the mode of transport, and a missing ENS stops the shipment at the border.",
+    "warn_cim_smgs_route": "The route reaches the SMGS area, so a CIM/SMGS common consignment note is issued instead of a CIM note. A single document covers both the COTIF leg and the SMGS leg, with no re-issuing where the two regimes meet.",
+    "warn_container_packing_duplicate": "If you use the combined IMO/FIATA DGD form, the Container Packing Certificate section is already part of it, and a separate document is then not required.",
+    "warn_cbam_annual": "CBAM is not filed per shipment: the importer reports ANNUALLY. Scope: cement, iron and steel, aluminium, fertilisers, electricity and hydrogen. The exemption threshold is 50 tonnes of goods per importer per year.",
+    "warn_emcs_arc": "Excise goods moving under duty suspension travel with an e-AD in the EMCS system. The ARC number is assigned by the system once the draft document is accepted, so carriage cannot start before it is issued.",
+    "warn_sent_registration": "These goods are subject to SENT monitoring. The notification is filed in the PUESC register BEFORE carriage starts and applies to purely domestic carriage as well."
   }
 }

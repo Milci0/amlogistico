@@ -66,6 +66,21 @@ function buildEngineFlags(s) {
     reExport: !!s.cargo.reExport, // (*)
     transitNonEU: !!s.route.transitNonEU, // (*)
     transitCountries: Array.isArray(s.route.transitCountries) ? s.route.transitCountries : [], // (*)
+
+    // ETAP 2 Promptu 2 — flagi gałęzi, które wpływają na dobór.
+    //
+    // `containerized` NIE jest osobnym polem formularza. SOLAS obejmuje każdy
+    // ZAPAKOWANY KONTENER, ale nie ładunek drobnicowy, a użytkownik i tak
+    // deklaruje kontener numerem lub typem w kroku „Towar" (gałąź morska).
+    // Wyprowadzamy więc flagę z tego, co już wpisał, zamiast dokładać checkbox.
+    containerized: !!(s.sea?.containerNo || s.sea?.containerType),
+    consolidated: !!s.air?.consolidated,
+    groupConsignment: !!s.rail?.groupConsignment,
+
+    // SUROWE id kategorii z cargoCategories.js, obok kategorii silnika.
+    // Dwanaście z dziewiętnastu kategorii mapuje się na `general`, więc akcyzy,
+    // CBAM i EUDR nie da się z niej odróżnić (patrz komentarz w silniku).
+    cargoCategoryId: s.cargo.cargoCategory || '',
   }
 }
 

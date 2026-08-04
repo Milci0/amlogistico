@@ -96,6 +96,36 @@ import { TransitDeclarationT1T2Template } from '../generators/templates/global/s
 import { TirCarnetTemplate } from '../generators/templates/global/special/TirCarnetTemplate'
 import { DgRoadManifestAdrTemplate } from '../generators/templates/global/cargo/DgRoadManifestAdrTemplate'
 
+// ETAP 1 / partia A: morskie (119-123)
+import { VgmDeclarationTemplate } from '../generators/templates/global/special/VgmDeclarationTemplate'
+import { BookingConfirmationTemplate } from '../generators/templates/global/special/BookingConfirmationTemplate'
+import { CargoManifestSeaTemplate } from '../generators/templates/global/special/CargoManifestSeaTemplate'
+import { DeliveryOrderTemplate } from '../generators/templates/global/special/DeliveryOrderTemplate'
+import { ContainerPackingCertificateTemplate } from '../generators/templates/global/cargo/ContainerPackingCertificateTemplate'
+
+// ETAP 1 / partia B: celne i regulacyjne UE (124-131)
+import { EnsIcs2DeclarationTemplate } from '../generators/templates/global/import/EnsIcs2DeclarationTemplate'
+import { EuImportDeclarationTemplate } from '../generators/templates/global/import/EuImportDeclarationTemplate'
+import { CbamDataSheetTemplate } from '../generators/templates/global/import/CbamDataSheetTemplate'
+import { EudrDdsTemplate } from '../generators/templates/global/import/EudrDdsTemplate'
+import { ChedTracesTemplate } from '../generators/templates/global/import/ChedTracesTemplate'
+import { AtrCertificateTemplate } from '../generators/templates/global/special/AtrCertificateTemplate'
+import { SupplierDeclarationTemplate } from '../generators/templates/global/special/SupplierDeclarationTemplate'
+import { RexStatementOfOriginTemplate } from '../generators/templates/global/special/RexStatementOfOriginTemplate'
+
+// ETAP 1 / partia C: krajowe PL i kolejowe (132-136)
+import { EmcsEadTemplate } from '../generators/templates/global/special/EmcsEadTemplate'
+import { SentNotificationTemplate } from '../generators/templates/global/special/SentNotificationTemplate'
+import { CimSmgsConsignmentNoteTemplate } from '../generators/templates/global/special/CimSmgsConsignmentNoteTemplate'
+import { RidRailDgTemplate } from '../generators/templates/global/cargo/RidRailDgTemplate'
+import { WagonListTemplate } from '../generators/templates/global/special/WagonListTemplate'
+
+// ETAP 1 / partia D: lotnicze (137-140)
+import { HawbTemplate } from '../generators/templates/global/special/HawbTemplate'
+import { SliAirTemplate } from '../generators/templates/global/special/SliAirTemplate'
+import { ConsignorSecurityDeclarationTemplate } from '../generators/templates/global/special/ConsignorSecurityDeclarationTemplate'
+import { AirCargoManifestTemplate } from '../generators/templates/global/special/AirCargoManifestTemplate'
+
 import { DangerousGoodsManifestTemplate } from '../generators/templates/global/cargo/DangerousGoodsManifestTemplate'
 import { UsaAesExportTemplate } from '../generators/templates/global/export/UsaAesExportTemplate'
 import { UkExportDeclarationTemplate } from '../generators/templates/global/export/UkExportDeclarationTemplate'
@@ -274,6 +304,38 @@ export const TEMPLATE_CATALOG = [
   { key: 'singapore_import', name: 'Deklaracja Importowa Singapur', grupa: 'celne_import', filename: 'Singapore_Import_pusty.pdf', template: SingaporeImportTradeNetTemplate, tags: ['singapur', 'singapore'] },
   { key: 'malaysia_import', name: 'K1 — Deklaracja Importowa Malezja', grupa: 'celne_import', filename: 'Malaysia_Import_K1_pusty.pdf', template: MalaysiaK1ImportTemplate, tags: ['malezja', 'malaysia'] },
   { key: 'indonesia_import', name: 'PIB — Deklaracja Importowa Indonezja', grupa: 'celne_import', filename: 'Indonesia_Import_PIB_pusty.pdf', template: IndonesiaPibImportTemplate, tags: ['indonezja', 'indonesia'] },
+
+  // ETAP 1 / partia A: morskie (119-123)
+  { key: 'vgm', name: 'VGM — Deklaracja Zweryfikowanej Masy Brutto', grupa: 'transport', filename: 'VGM_Declaration_pusty.pdf', template: VgmDeclarationTemplate, tags: ['morski', 'sea', 'solas', 'kontener', 'masa', 'waga'] },
+  { key: 'booking_confirmation', name: 'Potwierdzenie Bookingu', grupa: 'transport', filename: 'Booking_Confirmation_pusty.pdf', template: BookingConfirmationTemplate, tags: ['morski', 'sea', 'booking', 'rezerwacja'] },
+  { key: 'cargo_manifest_sea', name: 'Manifest Ładunkowy (Morski)', grupa: 'transport', filename: 'Cargo_Manifest_Sea_pusty.pdf', template: CargoManifestSeaTemplate, tags: ['morski', 'sea', 'manifest', 'fal', 'imo'] },
+  { key: 'delivery_order', name: 'Zlecenie Wydania Towaru (Delivery Order)', grupa: 'transport', filename: 'Delivery_Order_pusty.pdf', template: DeliveryOrderTemplate, tags: ['morski', 'sea', 'wydanie', 'port'] },
+  { key: 'container_packing_cert', name: 'Świadectwo Pakowania Kontenera', grupa: 'towary_niebezp', filename: 'Container_Packing_Certificate_pusty.pdf', template: ContainerPackingCertificateTemplate, tags: ['morski', 'sea', 'imdg', 'ctu', 'kontener'] },
+
+  // ETAP 1 / partia B: celne i regulacyjne UE (124-131)
+  { key: 'ens_ics2', name: 'ENS — Deklaracja Skrócona Przywozowa', grupa: 'celne_import', filename: 'ENS_ICS2_pusty.pdf', template: EnsIcs2DeclarationTemplate, tags: ['ics2', 'ens', 'przywoz', 'wprowadzenie'] },
+  { key: 'eu_import_declaration', name: 'Zgłoszenie Celne Przywozowe UE', grupa: 'celne_import', filename: 'EU_Import_Declaration_pusty.pdf', template: EuImportDeclarationTemplate, tags: ['sad', 'h1', 'dopuszczenie do obrotu'] },
+  { key: 'cbam_data_sheet', name: 'CBAM — Karta Danych Emisyjnych', grupa: 'celne_import', filename: 'CBAM_Data_Sheet_pusty.pdf', template: CbamDataSheetTemplate, tags: ['cbam', 'emisje', 'co2', 'stal', 'cement', 'aluminium', 'nawozy', 'wodor'] },
+  { key: 'eudr_dds', name: 'EUDR — Oświadczenie Due Diligence', grupa: 'celne_import', filename: 'EUDR_DDS_pusty.pdf', template: EudrDdsTemplate, tags: ['eudr', 'wylesianie', 'dds', 'kakao', 'kawa', 'soja', 'drewno', 'kauczuk'] },
+  { key: 'ched_traces', name: 'CHED — Wspólny Zdrowotny Dokument Wejścia', grupa: 'celne_import', filename: 'CHED_TRACES_pusty.pdf', template: ChedTracesTemplate, tags: ['ched', 'traces', 'bcp', 'graniczna kontrola'] },
+  { key: 'atr', name: 'A.TR — Świadectwo Przewozowe (UE-Turcja)', grupa: 'swiadectwo', filename: 'ATR_Certificate_pusty.pdf', template: AtrCertificateTemplate, tags: ['atr', 'turcja', 'turkey', 'unia celna'] },
+  { key: 'supplier_declaration', name: 'Deklaracja Dostawcy', grupa: 'swiadectwo', filename: 'Supplier_Declaration_pusty.pdf', template: SupplierDeclarationTemplate, tags: ['pochodzenie', 'origin', 'dostawca'] },
+  { key: 'rex_statement', name: 'Oświadczenie o Pochodzeniu (REX)', grupa: 'swiadectwo', filename: 'REX_Statement_Origin_pusty.pdf', template: RexStatementOfOriginTemplate, tags: ['rex', 'pochodzenie', 'origin', 'fta'] },
+
+  // ETAP 1 / partia C: krajowe PL i kolejowe (132-136)
+  // tags 'ead'/'esad': nazwa pisze sie z dywizem („e-AD"), wiec bez tych tagow
+  // wpisanie „ead" trafialoby wylacznie w deklaracje eksportowa UE.
+  { key: 'emcs_ead', name: 'e-AD / e-SAD — Dokument Administracyjny (EMCS)', grupa: 'inne', filename: 'EMCS_eAD_pusty.pdf', template: EmcsEadTemplate, tags: ['emcs', 'akcyza', 'arc', 'alkohol', 'paliwa', 'tyton', 'ead', 'esad'] },
+  { key: 'sent', name: 'Zgłoszenie SENT', grupa: 'inne', filename: 'SENT_pusty.pdf', template: SentNotificationTemplate, tags: ['sent', 'puesc', 'monitorowanie', 'paliwa', 'alkohol', 'susz tytoniowy', 'oleje roslinne'] },
+  { key: 'cim_smgs', name: 'CIM/SMGS — Wspólny List Przewozowy', grupa: 'transport', filename: 'CIM_SMGS_pusty.pdf', template: CimSmgsConsignmentNoteTemplate, tags: ['kolejowy', 'rail', 'smgs', 'chiny', 'kazachstan'] },
+  { key: 'rid_rail_dg', name: 'RID — Towary Niebezpieczne (Kolejowa)', grupa: 'towary_niebezp', filename: 'RID_Rail_DG_pusty.pdf', template: RidRailDgTemplate, tags: ['kolejowy', 'rail', 'rid', 'cotif'] },
+  { key: 'wagon_list', name: 'Wykaz Wagonów', grupa: 'transport', filename: 'Wagon_List_pusty.pdf', template: WagonListTemplate, tags: ['kolejowy', 'rail', 'wagon', 'przesylka grupowa'] },
+
+  // ETAP 1 / partia D: lotnicze (137-140)
+  { key: 'hawb', name: 'HAWB — Lotniczy List Przewozowy Spedytora', grupa: 'transport', filename: 'HAWB_pusty.pdf', template: HawbTemplate, tags: ['lotniczy', 'air', 'hawb', 'konsolidacja', 'spedytor'] },
+  { key: 'sli_air', name: 'SLI — Instrukcja Nadawcy (Lotnicza)', grupa: 'transport', filename: 'SLI_Air_pusty.pdf', template: SliAirTemplate, tags: ['lotniczy', 'air', 'sli', 'iata', 'instrukcja'] },
+  { key: 'consignor_security_decl', name: 'Deklaracja Bezpieczeństwa Nadawcy', grupa: 'transport', filename: 'Consignor_Security_Declaration_pusty.pdf', template: ConsignorSecurityDeclarationTemplate, tags: ['lotniczy', 'air', 'bezpieczenstwo', 'security', 'znany nadawca'] },
+  { key: 'air_cargo_manifest', name: 'Manifest Lotniczy', grupa: 'transport', filename: 'Air_Cargo_Manifest_pusty.pdf', template: AirCargoManifestTemplate, tags: ['lotniczy', 'air', 'manifest', 'icao'] },
 ]
 
 // Usuwa znaki diakrytyczne (np. ą→a, ę→e) rozkładając na NFD i odfiltrowując

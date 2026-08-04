@@ -105,7 +105,29 @@ const GROUPS = {
   EUR_MED: PREFERENTIAL_ORIGIN_MAP.EUR_MED,
   REX_FTA: PREFERENTIAL_ORIGIN_MAP.REX_SELF_CERT,
   CUSTOMS_UNION: PREFERENTIAL_ORIGIN_MAP.CUSTOMS_UNION,
+
+  // Kraje, dla ktorych SAM list przewozowy CIM nie wystarcza - relacja siega
+  // strefy SMGS i wlasciwy jest wspolny list CIM/SMGS (134).
+  //
+  // CELOWO nie jest to lista czlonkow SMGS. PL, LT, LV i EE sa stronami OBU
+  // umow, wiec lista czlonkostwa kazalaby wystawiac CIM/SMGS na trasie PL->DE.
+  // Tutaj sa wylacznie kraje, ktorych NIE obejmuje COTIF - jesli zaden z nich
+  // nie wystepuje w trasie, zostaje zwykly CIM (27).
+  // lista wymaga weryfikacji u zrodla (OSJD)
+  SMGS_ONLY: ["CN", "KZ", "UZ", "RU", "BY", "MN", "KG", "TJ", "TM", "AZ", "VN", "KP", "IR"],
 };
+
+// ─── KATEGORIE TOWARU STEROWANE ID Z KATALOGU, NIE KATEGORIA SILNIKA ────────
+//
+// Dwanascie z dziewietnastu kategorii w cargoCategories.js mapuje sie na
+// engine 'general' (napoje, paliwa, metale, drewno, budowlanka...), wiec rezimy
+// akcyzowe, CBAM i EUDR sa z niej NIEODROZNIALNE. Dlatego te reguly czytaja
+// `flags.cargoCategoryId` - surowe id kategorii z katalogu, przekazywane obok
+// kategorii silnika. Brak flagi = regula nie odpala (wsteczna zgodnosc).
+const CBAM_CATEGORY_IDS = ["metals", "construction", "chemicals", "energy"];
+const EUDR_CATEGORY_IDS = ["food_plant", "food_animal", "wood"];
+const EXCISE_CATEGORY_IDS = ["beverages", "energy"];
+const SENT_CATEGORY_IDS = ["energy", "beverages", "medicines"];
 
 const inGroup = (country, groupName) => GROUPS[groupName]?.includes(country) ?? false;
 const isEU = (country) => inGroup(country, "EU");
@@ -142,6 +164,9 @@ const WARNING_SEVERITY = {
   warn_rail_transit_non_eu: "warning",
   warn_mercosur_ita: "warning",
 
+  warn_sent_registration: "warning",
+  warn_ens_lodgement: "warning",
+
   warn_legalisation_kig: "info",
   warn_ctc_transit: "info",
   warn_atp_cold_chain: "info",
@@ -149,7 +174,21 @@ const WARNING_SEVERITY = {
   warn_eea_customs: "info",
   warn_document_not_yet_valid: "info",
   warn_document_expired: "info",
+  warn_container_packing_duplicate: "info",
+  warn_cbam_annual: "info",
+  warn_emcs_arc: "info",
+  warn_cim_smgs_route: "info",
 };
+
+// Kody WYCOFANE w ETAPIE 2 - zastapil je realny dokument w wyniku doboru.
+// Wpisy zostaja w WARNING_SEVERITY i w tlumaczeniach, bo stare rekordy
+// w bazie nadal je niosa; silnik przestal je tylko EMITOWAC.
+//   warn_eu_import_sad   -> 125_EU_Import_Declaration
+//   warn_ched_p_traces   -> 128_CHED_TRACES
+//   warn_rid_rail        -> 135_RID_Rail_DG
+//   warn_atr_turkey      -> 129_ATR_Certificate
+// warn_atr_turkey_agri ZOSTAJE: niesie rozroznienie A.TR vs EUR.1 dla produktow
+// rolnych, czego zaden dokument nie zastepuje.
 
 // ─── GŁÓWNA FUNKCJA ───────────────────────────────────────────────────────────
 
@@ -216,6 +255,14 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
   // w przeciwnym razie honorujemy stary, reczny flag (wstecznosc).
   const transitNonEU = transitCountries.length > 0 ? tc.transitNonEU : !!flags.transitNonEU;
 
+  // Trasa siega strefy SMGS, jesli kraj docelowy ALBO ktorykolwiek tranzytowy
+  // jest poza COTIF. Kraj nadania celowo pominiety: przesylka z Chin do Polski
+  // i z Polski do Chin potrzebuje tego samego listu przewozowego.
+  const touchesSmgsOnly =
+    inGroup(destination, "SMGS_ONLY") ||
+    transitCountries.some((c) => inGroup(c, "SMGS_ONLY")) ||
+    inGroup(origin, "SMGS_ONLY");
+
   // ── WARSTWA 1: TRANSPORT ──────────────────────────────────────────
   switch (mode) {
     case "road":
@@ -232,12 +279,67 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
       addRequired("11_AWB", LAYERS.TRANSPORT, "transport_air");
       break;
     case "rail":
-      addRequired("27_CIM", LAYERS.TRANSPORT, "transport_rail");
+      // 27_CIM obejmuje strefe COTIF; gdy trasa siega SMGS, wlasciwy jest
+      // wspolny list przewozowy CIM/SMGS zamiast niego (nie obok).
+      if (touchesSmgsOnly) {
+        addRequired("134_CIM_SMGS", LAYERS.TRANSPORT, "transport_rail_smgs");
+        warn(
+          "warn_cim_smgs_route",
+          "Trasa siega strefy SMGS, wiec zamiast listu CIM wystawia sie wspolny list przewozowy " +
+          "CIM/SMGS. Jeden dokument obejmuje odcinek COTIF i odcinek SMGS, bez przepisywania na granicy rezimow."
+        );
+      } else {
+        addRequired("27_CIM", LAYERS.TRANSPORT, "transport_rail");
+      }
       break;
     case "multimodal":
       addRequired("28_MTD", LAYERS.TRANSPORT, "transport_multimodal");
       break;
   }
+
+  // VGM - deklaracja zweryfikowanej masy brutto. SOLAS obejmuje KAZDY zapakowany
+  // kontener, ale nie ladunek drobnicowy (break-bulk), stad flaga zamiast samego
+  // trybu morskiego. Flage wylicza buildEngineFlags z pol kontenerowych migawki.
+  if (flags.containerized) {
+    if (mode === "sea") {
+      addRequired("119_VGM_SOLAS", LAYERS.TRANSPORT, "transport_sea_containerized");
+    } else if (mode === "multimodal") {
+      // Silnik nie zna etapow trasy multimodalnej, wiec nie wie, czy w ogole
+      // jest etap morski - ten sam kompromis co przy ISF.
+      addConditional("119_VGM_SOLAS", LAYERS.TRANSPORT, "transport_multimodal_sea_leg");
+    }
+  }
+
+  // MAWB (11_AWB) wystawia przewoznik lotniczy na cala przesylke; przy
+  // konsolidacji spedytor wystawia DODATKOWO HAWB dla kazdego nadawcy.
+  // Dokumenty lotnicze trzymamy przy mode === 'air': trasa multimodalna
+  // nie musi miec etapu lotniczego (bywa morze + droga).
+  if (flags.consolidated) {
+    if (mode === "air") {
+      addRequired("137_HAWB", LAYERS.TRANSPORT, "transport_air_consolidated");
+    } else if (mode === "multimodal") {
+      addConditional("137_HAWB", LAYERS.TRANSPORT, "transport_multimodal_air_leg");
+    }
+  }
+
+  // Wykaz wagonow - zalacznik do listu przewozowego przy przesylce grupowej.
+  // Warunkowany flaga, wiec NIE doklada sie do kazdej trasy kolejowej.
+  if ((mode === "rail" || mode === "multimodal") && flags.groupConsignment) {
+    addConditional("136_Wagon_List", LAYERS.TRANSPORT, "transport_rail_group_consignment");
+  }
+
+  // NIEWPIETE CELOWO - decyzja z 2026-08-04, nie przeoczenie:
+  //   120_Booking_Confirmation, 121_Cargo_Manifest_Sea (morskie)
+  //   138_SLI_Air, 139_Consignor_Security_Decl, 140_Air_Cargo_Manifest (lotnicze)
+  //
+  // To dokumenty OPERACYJNE przewoznika i agenta, a nie zestaw kompletowany
+  // przez spedytora. Kazdy dokladalby sie do KAZDEJ trasy swojej galezi, a przy
+  // 91 pozycjach blank_only w katalogu problemem jest nadmiar, nie niedobor.
+  // Pozostaja osiagalne przez wyszukiwarke szablonow i „Puste szablony".
+  //
+  // Warunek powrotu: 139_Consignor_Security_Decl warto wpiac przy pierwszym
+  // realnym uzytkowniku lotniczym - deklaracja bezpieczenstwa jest wymogiem
+  // rozporzadzenia, nie wygoda. Pelne uzasadnienie: docs/silnik_diff.md.
 
   // Przesyłka jedzie JEDNĄ gałęzią, ale jest częścią łańcucha multimodalnego
   // (checkbox „Transport multimodalny" w kroku „Trasa"). Dokument MTD dochodzi
@@ -276,8 +378,10 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     }
 
     // REX / deklaracja pochodzenia na fakturze - nowoczesne FTA (CETA, Japonia, Wietnam, UK, Korea...)
-    // Tu NIE wystawia sie EUR.1. Informujemy uzytkownika zamiast podsuwac zly dokument.
+    // Tu NIE wystawia sie EUR.1. Od ETAPU 2 obok ostrzezenia idzie realny
+    // dokument z trescia oswiadczenia do przeniesienia na fakture.
     if (inGroup(destination, "REX_FTA")) {
+      addConditional("131_REX_Statement_Origin", LAYERS.EXPORT, "preferential_origin_rex");
       warn(
         "warn_rex_export",
         "Eksport do " + destination + ": preferencyjne pochodzenie deklaruje sie na fakturze " +
@@ -285,6 +389,18 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
         "kazdy eksporter; powyzej - tylko zarejestrowany/upowazniony eksporter (REX).",
         { country: destination }
       );
+    }
+
+    // Deklaracja dostawcy - dowod statusu pochodzenia w lancuchu dostaw,
+    // podstawa do pozniejszego wystawienia EUR.1, A.TR albo oswiadczenia REX.
+    // Zawezona do kierunkow objetych PREFERENTIAL_ORIGIN_MAP: bez preferencji
+    // celnej ten dokument niczego nie zmienia, a doklada pozycje do listy.
+    const hasPreferentialRegime =
+      inGroup(destination, "EUR1_APPLICABLE") ||
+      inGroup(destination, "REX_FTA") ||
+      inGroup(destination, "CUSTOMS_UNION");
+    if (hasPreferentialRegime) {
+      addConditional("130_Supplier_Declaration", LAYERS.EXPORT, "supplier_origin_evidence");
     }
 
     // Unia celna UE-TR. Dla towarow przemyslowych w wolnym obrocie wlasciwe jest
@@ -300,13 +416,9 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
           {}
         );
       } else {
-        warn(
-          "warn_atr_turkey",
-          "Eksport do Turcji (unia celna UE-TR): dla towarow przemyslowych w wolnym obrocie wymagane " +
-          "swiadectwo A.TR (status wolnego obrotu, stawka 0%). EUR.1/EUR-MED dotyczy tylko produktow " +
-          "rolnych oraz wegla i stali. UWAGA: szablon A.TR nie jest jeszcze dostepny w systemie.",
-          {}
-        );
+        // ETAP 2: szablon A.TR juz istnieje, wiec zamiast ostrzezenia
+        // (warn_atr_turkey) dokladamy realny dokument.
+        addRequired("129_ATR_Certificate", LAYERS.EXPORT, "customs_union_free_circulation");
       }
     }
   }
@@ -365,8 +477,51 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
 
   // ── WARSTWA 4: IMPORT ────────────────────────────────────────────
   // 07_EAD to deklaracja eksportowa z UE — NIE dodajemy jej tutaj.
-  // Import do UE (CN→PL, US→DE itp.) obsługuje importer przez AIS;
-  // gdy pojawi się szablon EU Import Declaration, dodaj nowy klucz.
+
+  // Wprowadzenie towaru na obszar celny UE. ETAP 2 zastapil tu ostrzezenia
+  // (warn_eu_import_sad, warn_ched_p_traces) realnymi dokumentami.
+  if (!isEU(origin) && isEU(destination)) {
+    addRequired("124_ENS_ICS2", LAYERS.IMPORT, "entry_to_eu");
+    addRequired("125_EU_Import_Declaration", LAYERS.IMPORT, "import_to_eu_free_circulation");
+    warn(
+      "warn_ens_lodgement",
+      "Deklaracje skrocona przywozowa (ENS) sklada PRZEWOZNIK w systemie ICS2 PRZED przybyciem towaru. " +
+      "Termin zalezy od galezi transportu, a brak ENS zatrzymuje przesylke na granicy."
+    );
+
+    // CBAM - karta danych emisyjnych od dostawcy. Warunkowa, bo katalog kategorii
+    // nie rozroznia szesciu grup objetych rozporzadzeniem z dokladnoscia do towaru.
+    if (CBAM_CATEGORY_IDS.includes(flags.cargoCategoryId)) {
+      addConditional("126_CBAM_Data_Sheet", LAYERS.IMPORT, "import_cbam_scope");
+      warn(
+        "warn_cbam_annual",
+        "CBAM nie jest zgloszeniem skladanym przy przesylce - importer rozlicza sie ROCZNIE. " +
+        "Zakres: cement, zelazo i stal, aluminium, nawozy, energia elektryczna, wodor. " +
+        "Prog zwolnienia to 50 ton towarow rocznie na importera."
+      );
+    }
+
+    // EUDR - dokument obowiazkowy dla towarow w zakresie rozporzadzenia.
+    // Bramka czasowa (validFrom w katalogu) przeniesie go do ostrzezen,
+    // dopoki obowiazek nie wejdzie w zycie.
+    if (EUDR_CATEGORY_IDS.includes(flags.cargoCategoryId)) {
+      addRequired("127_EUDR_DDS", LAYERS.IMPORT, "import_eudr_scope");
+    }
+
+    // CHED - wspolny zdrowotny dokument wejscia. Wystawia go organ na granicznym
+    // punkcie kontroli, wiec trafia do sekcji "do wypelnienia recznie".
+    if (["food_animal", "food_plant", "live_animals"].includes(effectiveCategory)) {
+      addRequired("128_CHED_TRACES", LAYERS.IMPORT, "import_eu_border_control");
+    }
+
+    // Delivery Order - zlecenie wydania towaru z terminalu w porcie przeznaczenia.
+    // WYLACZNIE przy przywozie morskim: przy wywozie z UE port docelowy lezy poza
+    // Unia i dokument wystawia tamtejszy agent, wiec dla naszego uzytkownika
+    // nie ma zastosowania.
+    if (mode === "sea") {
+      addConditional("122_Delivery_Order", LAYERS.IMPORT, "import_eu_sea_release");
+    }
+  }
 
   if (inGroup(destination, "UK")) {
     addRequired("21_UK_Import", LAYERS.IMPORT, "import_to_uk");
@@ -482,14 +637,24 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
       }
       if (mode === "sea") {
         addRequired("15_IMDG", LAYERS.CARGO, "cargo_dangerous_sea");
+        // Swiadectwo pakowania kontenera (IMDG 5.4.2). Ta sama tresc jest
+        // sekcja laczonego formularza IMO/FIATA DGD, wiec przy obu dokumentach
+        // naraz uzytkownik dostaje ponizej wyjasnienie, ze to wybor formy.
+        addRequired("123_Container_Packing_Cert", LAYERS.CARGO, "cargo_dangerous_sea_packing");
+        warn(
+          "warn_container_packing_duplicate",
+          "Jesli korzystasz z laczonego formularza IMO/FIATA DGD, sekcja Container Packing Certificate " +
+          "jest juz jego czescia - osobny dokument nie jest wtedy wymagany."
+        );
       }
       if (mode === "air") {
         addRequired("64_IATA_DGR", LAYERS.CARGO, "cargo_dangerous_air");
         addRequired("109_IATA_Packing", LAYERS.CARGO, "cargo_dangerous_air");
       }
       if (mode === "rail") {
-        // Brak szablonu RID — TODO: dodać plik RID gdy będzie dostępny
-        warn("warn_rid_rail", "Transport kolejowy towarów niebezpiecznych podlega Regulaminowi RID. Wymagane: DG Manifest + MSDS + dokumenty RID od przewoźnika kolejowego.");
+        // ETAP 2: RID domknal komplet czterech galezi. Wczesniej bylo tu samo
+        // ostrzezenie warn_rid_rail, bo szablon nie istnial.
+        addRequired("135_RID_Rail_DG", LAYERS.CARGO, "cargo_dangerous_rail");
       }
       break;
 
@@ -532,6 +697,40 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     case "chemicals":
       addRequired("69_MSDS", LAYERS.CARGO, "cargo_chemicals");
       break;
+  }
+
+  // ── WARSTWA 5b: AKCYZA I TOWARY WRAZLIWE (sterowane id kategorii) ──
+  // Te rezimy sa nieodrozninalne z poziomu kategorii SILNIKA (napoje i paliwa
+  // mapuja sie na 'general'), wiec czytaja surowe id z katalogu kategorii.
+
+  // EMCS - przemieszczanie wyrobow akcyzowych. Dotyczy obrotu wewnatrzunijnego
+  // oraz wywozu z UE, dopoki towar nie opusci obszaru celnego Unii.
+  if (EXCISE_CATEGORY_IDS.includes(flags.cargoCategoryId) && isEU(origin)) {
+    addConditional("132_EMCS_eAD", LAYERS.CARGO, "excise_movement");
+    warn(
+      "warn_emcs_arc",
+      "Wyroby akcyzowe w procedurze zawieszenia poboru akcyzy przemieszcza sie z dokumentem e-AD " +
+      "w systemie EMCS. Numer ARC nadaje system po przyjeciu projektu dokumentu - przewoz nie moze " +
+      "ruszyc przed jego uzyskaniem."
+    );
+  }
+
+  // SENT - polski system monitorowania. Wyzwala go RODZAJ TOWARU, nie trasa:
+  // obowiazuje takze w przewozie wylacznie krajowym. Warunek dotyczy Polski
+  // w dowolnym miejscu trasy.
+  const touchesPL =
+    origin === "PL" || destination === "PL" || transitCountries.includes("PL");
+  if (
+    SENT_CATEGORY_IDS.includes(flags.cargoCategoryId) &&
+    touchesPL &&
+    (mode === "road" || mode === "rail" || mode === "multimodal")
+  ) {
+    addRequired("133_SENT", LAYERS.CARGO, "sent_monitored_goods");
+    warn(
+      "warn_sent_registration",
+      "Towar podlega monitorowaniu SENT. Zgloszenie sklada sie w rejestrze na PUESC PRZED rozpoczeciem " +
+      "przewozu i dotyczy takze przewozu wylacznie krajowego."
+    );
   }
 
   // ── WARSTWA 6: REGUŁY SPECJALNE ─────────────────────────────────
@@ -628,10 +827,8 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     warn("warn_sanctions_ru_by_origin", "UWAGA SANKCJE: Import z Rosji/Białorusi do UE podlega sankcjom UE. Sprawdź listę zakazanych importów przed zawarciem kontraktu.");
   }
 
-  // CHED-P/TRACES — pre-notyfikacja przy imporcie żywności do UE
-  if (isEU(destination) && !isEU(origin) && (effectiveCategory === "food_animal" || effectiveCategory === "food_plant")) {
-    warn("warn_ched_p_traces", "Import żywności do UE wymaga pre-notyfikacji CHED-P w systemie TRACES NT minimum 24h przed przybyciem do portu. Obowiązek spoczywa na importerze UE. Kontrola weterynaryjna na Border Control Post (BCP) jest obowiązkowa, brak CHED-P = zatrzymanie towaru.");
-  }
+  // CHED-P/TRACES: ostrzezenie warn_ched_p_traces WYCOFANE w ETAPIE 2 -
+  // zastapil je dokument 128_CHED_TRACES dodawany w warstwie 4.
 
   // ATP — łańcuch chłodniczy dla żywności (Konwencja ATP)
   if (effectiveCategory === "food_animal" || effectiveCategory === "food_plant") {
@@ -644,13 +841,12 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     warn("warn_mercosur_ita", "Od 01.05.2026 obowiązuje Umowa EU-Mercosur (iTA). Sprawdź wymagania dotyczące nowych certyfikatów pochodzenia. EC Notice 2026/875. Może być wymagany zaktualizowany format COO.");
   }
 
-  // Import do UE — zgłoszenie celne SAD/H1
-  if (!isEU(origin) && isEU(destination)) {
-    warn("warn_eu_import_sad", "Import do UE wymaga złożenia zgłoszenia celnego (SAD/H1) do wolnego obrotu przez importera lub licencjonowanego agenta celnego w kraju przeznaczenia. Cło i VAT naliczane przy odprawie celnej.");
-  }
+  // Import do UE: ostrzezenie warn_eu_import_sad WYCOFANE w ETAPIE 2 -
+  // zastapil je dokument 125_EU_Import_Declaration w warstwie 4.
 
   // REX / deklaracja pochodzenia przy imporcie do UE z krajow FTA
   if (isEU(destination) && !isEU(origin) && inGroup(origin, "REX_FTA")) {
+    addConditional("131_REX_Statement_Origin", LAYERS.IMPORT, "preferential_origin_rex_import");
     warn(
       "warn_rex_import",
       "Import z " + origin + " do UE: importer moze ubiegac sie o preferencyjna " +

@@ -35,6 +35,12 @@
     "warn_ctc_transit": "Tranzyt przez kraj CTC ({{countries}}). Wystarcza deklaracja tranzytowa T1/T2 w NCTS z zabezpieczeniem celnym; Karnet TIR nie jest konieczny.",
     "warn_rail_transit_non_eu": "Trasa kolejowa przez kraj spoza Konwencji o wspólnej procedurze tranzytowej ({{countries}}). Karnet TIR nie ma zastosowania w transporcie kolejowym; wymagana procedura tranzytowa kraju trzeciego, uzgodniona z przewoźnikiem kolejowym.",
     "warn_document_not_yet_valid": "Dokument „{{document}}” zacznie obowiązywać dopiero od {{date}}. Do tego czasu nie jest wymagany.",
-    "warn_document_expired": "Dokument „{{document}}” przestał obowiązywać {{date}}. Sprawdź, czy zastąpił go inny dokument."
+    "warn_document_expired": "Dokument „{{document}}” przestał obowiązywać {{date}}. Sprawdź, czy zastąpił go inny dokument.",
+    "warn_ens_lodgement": "Deklarację skróconą przywozową (ENS) składa PRZEWOŹNIK w systemie ICS2 PRZED przybyciem towaru. Termin zależy od gałęzi transportu, a brak ENS zatrzymuje przesyłkę na granicy.",
+    "warn_cim_smgs_route": "Trasa sięga strefy SMGS, więc zamiast listu CIM wystawia się wspólny list przewozowy CIM/SMGS. Jeden dokument obejmuje odcinek COTIF i odcinek SMGS, bez przepisywania na granicy reżimów.",
+    "warn_container_packing_duplicate": "Jeśli korzystasz z łączonego formularza IMO/FIATA DGD, sekcja Container Packing Certificate jest już jego częścią, więc osobny dokument nie jest wtedy wymagany.",
+    "warn_cbam_annual": "CBAM nie jest zgłoszeniem składanym przy przesyłce, bo importer rozlicza się ROCZNIE. Zakres: cement, żelazo i stal, aluminium, nawozy, energia elektryczna, wodór. Próg zwolnienia to 50 ton towarów rocznie na importera.",
+    "warn_emcs_arc": "Wyroby akcyzowe w procedurze zawieszenia poboru akcyzy przemieszcza się z dokumentem e-AD w systemie EMCS. Numer ARC nadaje system po przyjęciu projektu dokumentu, więc przewóz nie może ruszyć przed jego uzyskaniem.",
+    "warn_sent_registration": "Towar podlega monitorowaniu SENT. Zgłoszenie składa się w rejestrze na PUESC PRZED rozpoczęciem przewozu i dotyczy także przewozu wyłącznie krajowego."
   }
 }

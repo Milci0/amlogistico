@@ -3,8 +3,11 @@
 // Klucze (np. "44_India_Import") to stabilne identyfikatory używane w logice silnika —
 // NIE są tożsame z numerem pliku PDF. `path` wskazuje fizyczny plik w public/templates/.
 //
-// path:      ścieżka w public/templates/ (null = plik jeszcze nie wgrany)
-// available: czy PDF fizycznie istnieje i można go pobrać
+// path:      sciezka statycznego wzorca w public/templates/ (null = brak pliku;
+//            dokumenty dodane po ETAPIE 1 maja WYLACZNIE szablon JSX i tu null)
+// available: czy dokument da sie pobrac - szablonem JSX (blankTemplateMap.js)
+//            ALBO statycznym plikiem z `path`. NIE oznacza "plik PDF istnieje na
+//            dysku": zrodlem prawdy jest hasBlankSource() w utils/blankDocuments.js
 //
 // UWAGA — rozjazd numeracji: numer w kluczu katalogu bywa inny niż numer pliku PDF
 // (pliki nadano wg innej kolejności). Dlatego `path` mapujemy wg ZNACZENIA (kraju),
@@ -120,8 +123,75 @@ export const documentCatalog = {
     blockingIfMissing: false,
     category: 'ue',
   },
+  "119_VGM_SOLAS": {
+    name_pl: "VGM — Deklaracja zweryfikowanej masy brutto",
+    name_en: "VGM — Verified Gross Mass Declaration",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'multimodal'],
+    issuerType: 'shipper',
+    outputMode: 'final',
+    legalBasis: 'Konwencja SOLAS, rozdział VI prawidło 2; MSC.1/Circ.1475',
+    authority: 'Nadawca wskazany w konosamencie (składa przewoźnikowi i terminalowi)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'transport',
+  },
+  "120_Booking_Confirmation": {
+    name_pl: "Potwierdzenie bookingu",
+    name_en: "Booking Confirmation",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'multimodal'],
+    issuerType: 'carrier',
+    outputMode: 'draft',
+    // legalBasis null: "umowa przewozu" to stosunek umowny miedzy stronami,
+    // nie akt prawny - ta sama zasada co przy 09_Zlecenie (patrz ETAP 1).
+    legalBasis: null,
+    authority: 'Armator, linia żeglugowa lub NVOCC',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: false,
+    category: 'transport',
+  },
+  "121_Cargo_Manifest_Sea": {
+    name_pl: "Manifest ładunkowy (morski)",
+    name_en: "Cargo Manifest (Sea)",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'multimodal'],
+    issuerType: 'carrier',
+    outputMode: 'draft',
+    legalBasis: 'Konwencja FAL IMO (Londyn, 09.04.1965), formularz FAL nr 2',
+    authority: 'Armator lub agent statku (składa władzom portowym i celnym)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: false,
+    category: 'transport',
+  },
+  "122_Delivery_Order": {
+    name_pl: "Zlecenie wydania towaru (Delivery Order)",
+    name_en: "Delivery Order",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'multimodal'],
+    issuerType: 'carrier',
+    outputMode: 'draft',
+    // legalBasis null: praktyka portowa, brak aktu prawnego (patrz ETAP 1).
+    legalBasis: null,
+    authority: 'Armator, agent lub spedytor w porcie przeznaczenia',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: false,
+    category: 'transport',
+  },
 
   // ─── TRANSPORT LOTNICZY ──────────────────────────────────────────
+  // 11_AWB pelni role MAWB (master): list przewozowy wystawiany przez
+  // przewoznika lotniczego na cala przesylke. Przy konsolidacji spedytor
+  // wystawia DODATKOWO 137_HAWB dla kazdego nadawcy w konsolidacji.
+  // Klucz 11_AWB zostaje bez zmian - siedzi w zapisanych zestawach.
   "11_AWB": {
     name_pl: "AWB — Lotniczy List Przewozowy",
     name_en: "Air Waybill",
@@ -135,6 +205,72 @@ export const documentCatalog = {
     validFrom: null,
     validTo: null,
     blockingIfMissing: true,
+    category: 'transport',
+  },
+
+  "137_HAWB": {
+    name_pl: "HAWB — Lotniczy list przewozowy spedytora",
+    name_en: "House Air Waybill (HAWB)",
+    path: null,
+    available: true,
+    transportModes: ['air', 'multimodal'],
+    issuerType: 'forwarder',
+    outputMode: 'final',
+    legalBasis: 'Konwencja montrealska (1999), art. 4-11',
+    authority: 'Spedytor lotniczy lub agent IATA prowadzący konsolidację',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'transport',
+  },
+  "138_SLI_Air": {
+    name_pl: "SLI — Instrukcja nadawcy (lotnicza)",
+    name_en: "Shipper's Letter of Instruction (SLI)",
+    path: null,
+    available: true,
+    transportModes: ['air', 'multimodal'],
+    issuerType: 'shipper',
+    outputMode: 'final',
+    // legalBasis null: standard branzowy IATA, nie akt prawny. Wymog wobec
+    // nadawcy jest umowny (czwarty taki przypadek po 120, 122 i 136).
+    legalBasis: null,
+    authority: 'Nadawca (przekazuje spedytorowi lotniczemu)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: false,
+    category: 'transport',
+  },
+  "139_Consignor_Security_Decl": {
+    name_pl: "Deklaracja bezpieczeństwa nadawcy",
+    name_en: "Consignor Security Declaration",
+    path: null,
+    available: true,
+    transportModes: ['air', 'multimodal'],
+    issuerType: 'shipper',
+    outputMode: 'final',
+    legalBasis: 'Rozporządzenie wykonawcze (UE) 2015/1998 (ochrona lotnictwa cywilnego)',
+    authority: 'Znany nadawca (KC) lub zarejestrowany agent (RA)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'transport',
+  },
+  "140_Air_Cargo_Manifest": {
+    name_pl: "Manifest lotniczy",
+    name_en: "Air Cargo Manifest",
+    path: null,
+    available: true,
+    transportModes: ['air', 'multimodal'],
+    issuerType: 'carrier',
+    outputMode: 'draft',
+    // Prompt mowil o "konwencji FAL ICAO" - taka nie istnieje. FAL to konwencja
+    // IMO (morska, uzyta przy 121). Odpowiednikiem lotniczym jest zalacznik 9
+    // do Konwencji chicagowskiej; manifest ladunkowy jest tam wzorem dokumentu.
+    legalBasis: 'Załącznik 9 (Ułatwienia) do Konwencji chicagowskiej o międzynarodowym lotnictwie cywilnym (1944)',
+    authority: 'Przewoźnik lotniczy lub agent obsługi naziemnej',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: false,
     category: 'transport',
   },
 
@@ -152,6 +288,42 @@ export const documentCatalog = {
     validFrom: null,
     validTo: null,
     blockingIfMissing: true,
+    category: 'transport',
+  },
+
+  // 27_CIM obejmuje strefe COTIF/OTIF. Dla relacji siegajacych strefy SMGS
+  // (np. PL-CN, PL-KZ, PL-UZ) wlasciwy jest wspolny list przewozowy CIM/SMGS -
+  // wybor miedzy nimi robi warstwa transportowa silnika (ETAP 2).
+  "134_CIM_SMGS": {
+    name_pl: "CIM/SMGS — Wspólny list przewozowy",
+    name_en: "CIM/SMGS Common Consignment Note",
+    path: null,
+    available: true,
+    transportModes: ['rail', 'multimodal'],
+    issuerType: 'carrier',
+    outputMode: 'draft',
+    legalBasis: 'Przepisy ujednolicone CIM (załącznik B do COTIF 1999), art. 6 § 8; SMGS art. 13; przewodnik GLV-CIM/SMGS (CIT/OSJD)',
+    authority: 'Przewoźnik kolejowy (wystawia wspólnie dla odcinka CIM i SMGS)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'transport',
+  },
+  "136_Wagon_List": {
+    name_pl: "Wykaz wagonów",
+    name_en: "Wagon List",
+    path: null,
+    available: true,
+    transportModes: ['rail', 'multimodal'],
+    issuerType: 'carrier',
+    outputMode: 'draft',
+    // legalBasis null: praktyka kolejowa przy przesylkach grupowych,
+    // brak aktu prawnego (ta sama zasada co 120 i 122 z partii A).
+    legalBasis: null,
+    authority: 'Przewoźnik kolejowy',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: false,
     category: 'transport',
   },
 
@@ -1249,6 +1421,134 @@ export const documentCatalog = {
     category: 'celne_import',
   },
 
+  // ─── PRZYWOZ DO UE: FORMALNOSCI I REGULACJE (ETAP 1 / partia B) ───
+  // Ta grupa dotyczy WPROWADZENIA towaru na obszar celny UE. 124 i 125 to
+  // formalnosci celne, 126-128 to rezimy regulacyjne, ktore uruchamia rodzaj
+  // towaru, a nie sama trasa.
+  "124_ENS_ICS2": {
+    name_pl: "ENS — Deklaracja skrócona przywozowa",
+    name_en: "Entry Summary Declaration (ENS)",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'air', 'road', 'rail', 'multimodal'],
+    issuerType: 'carrier',
+    outputMode: 'draft',
+    legalBasis: 'Unijny Kodeks Celny, art. 127; ICS2 Release 3',
+    authority: 'Przewoźnik wprowadzający towar na obszar celny UE (system ICS2)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'celne_import',
+  },
+  "125_EU_Import_Declaration": {
+    name_pl: "Zgłoszenie celne przywozowe UE",
+    name_en: "EU Import Customs Declaration",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'air', 'road', 'rail', 'multimodal'],
+    issuerType: 'customs_authority',
+    outputMode: 'draft',
+    legalBasis: 'Unijny Kodeks Celny, art. 158',
+    authority: 'Urząd celny państwa członkowskiego przywozu',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'celne_import',
+  },
+  // CBAM nie jest zgloszeniem per przesylka - importer sklada deklaracje ROCZNA.
+  // Nasz dokument to karta danych od dostawcy do importera, wiec brak jej nie
+  // zatrzymuje przesylki (blockingIfMissing: false), tylko uniemozliwia
+  // rozliczenie roczne.
+  "126_CBAM_Data_Sheet": {
+    name_pl: "CBAM — Karta danych emisyjnych",
+    name_en: "CBAM Embedded Emissions Data Sheet",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'air', 'road', 'rail', 'multimodal'],
+    issuerType: 'shipper',
+    outputMode: 'draft',
+    legalBasis: 'Rozporządzenie (UE) 2023/956',
+    authority: 'rejestrze CBAM prowadzonym przez Komisję Europejską (dane przekazuje dostawca importerowi UE)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: false,
+    category: 'celne_import',
+  },
+  // validFrom w PRZYSZLOSCI: bramka czasowa silnika (applyDateGate) wyrzuci ten
+  // dokument z `required` i zamieni na ostrzezenie warn_document_not_yet_valid
+  // o severity 'info'. Data dotyczy duzych i srednich operatorow; mikro i mali
+  // od 30.06.2027 - katalog nie rozroznia wielkosci firmy, wiec trzymamy
+  // wczesniejsza z dat.
+  "127_EUDR_DDS": {
+    name_pl: "EUDR — Oświadczenie due diligence",
+    name_en: "EUDR Due Diligence Statement",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'air', 'road', 'rail', 'multimodal'],
+    issuerType: 'shipper',
+    outputMode: 'draft',
+    legalBasis: 'Rozporządzenie (UE) 2023/1115',
+    authority: 'systemie TRACES NT (rejestr oświadczeń EUDR)',
+    validFrom: '2026-12-30',
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'celne_import',
+  },
+  "128_CHED_TRACES": {
+    name_pl: "CHED — Wspólny zdrowotny dokument wejścia",
+    name_en: "Common Health Entry Document (CHED)",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'air', 'road', 'rail', 'multimodal'],
+    issuerType: 'government_agency',
+    outputMode: 'blank_only',
+    legalBasis: 'Rozporządzenie (UE) 2017/625',
+    authority: 'Graniczny punkt kontroli (BCP) państwa przywozu; dokument powstaje w systemie TRACES NT',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'celne_import',
+  },
+
+  // ─── AKCYZA I MONITOROWANIE KRAJOWE PL (ETAP 1 / partia C) ───────
+  // Oba dokumenty uruchamia RODZAJ TOWARU, nie trasa - SENT obowiazuje takze
+  // w przewozie wylacznie krajowym, a e-AD towarzyszy wyrobom akcyzowym
+  // w procedurze zawieszenia poboru akcyzy niezaleznie od granicy.
+  "132_EMCS_eAD": {
+    name_pl: "e-AD / e-SAD — Elektroniczny dokument administracyjny (EMCS)",
+    name_en: "e-AD / e-SAD (EMCS)",
+    path: null,
+    available: true,
+    transportModes: ['road', 'sea', 'air', 'rail', 'multimodal'],
+    issuerType: 'customs_authority',
+    outputMode: 'draft',
+    legalBasis: 'Dyrektywa (UE) 2020/262; ustawa z 06.12.2008 o podatku akcyzowym',
+    authority: 'Systemie EMCS (PL: Krajowa Administracja Skarbowa)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'inne',
+  },
+  "133_SENT": {
+    name_pl: "Zgłoszenie SENT",
+    name_en: "SENT Transport Notification",
+    path: null,
+    available: true,
+    // SENT obejmuje przewoz drogowy i kolejowy towarow wrazliwych.
+    transportModes: ['road', 'rail', 'multimodal'],
+    issuerType: 'shipper',
+    // Odstepstwo od domyslnego 'final' dla issuerType 'shipper': zgloszenie
+    // sklada sie w rejestrze SENT, a platforma tylko przygotowuje dane
+    // (ta sama zasada co 126_CBAM_Data_Sheet i 127_EUDR_DDS).
+    outputMode: 'draft',
+    legalBasis: 'Ustawa z 09.03.2017 o systemie monitorowania drogowego i kolejowego przewozu towarów',
+    authority: 'Rejestrze SENT prowadzonym przez Krajową Administrację Skarbową (PUESC)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'inne',
+  },
+
   // ─── ŚWIADECTWA POCHODZENIA ───────────────────────────────────────
   "06_COO": {
     name_pl: "Certificate of Origin — Świadectwo Pochodzenia",
@@ -1305,6 +1605,57 @@ export const documentCatalog = {
     outputMode: 'blank_only',
     legalBasis: 'Rozporządzenie (UE) nr 978/2012 (GSP)',
     authority: 'Organ wyznaczony w kraju korzystającym z GSP',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: false,
+    category: 'swiadectwo',
+  },
+  // A.TR nie jest dowodem POCHODZENIA, tylko swiadectwa SWOBODNEGO OBROTU
+  // w unii celnej UE-Turcja. Dla wyrobow przemyslowych wlasciwy jest A.TR,
+  // NIE EUR.1 - to najczestszy blad na tej relacji. Towary rolne oraz wyroby
+  // wegla i stali zostaja przy EUR.1 (patrz warstwa 3 silnika).
+  "129_ATR_Certificate": {
+    name_pl: "Świadectwo A.TR",
+    name_en: "A.TR Movement Certificate",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'air', 'road', 'rail', 'multimodal'],
+    issuerType: 'customs_authority',
+    outputMode: 'draft',
+    legalBasis: 'Decyzja nr 1/95 Rady Stowarzyszenia UE-Turcja',
+    authority: 'Organ celny kraju wywozu (PL: KAS)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: false,
+    category: 'swiadectwo',
+  },
+  "130_Supplier_Declaration": {
+    name_pl: "Deklaracja dostawcy",
+    name_en: "Supplier's Declaration",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'air', 'road', 'rail', 'multimodal'],
+    issuerType: 'shipper',
+    outputMode: 'final',
+    legalBasis: 'Rozporządzenie wykonawcze (UE) 2015/2447, art. 61-66',
+    authority: 'Dostawca towaru (wystawia odbiorcy)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: false,
+    category: 'swiadectwo',
+  },
+  "131_REX_Statement_Origin": {
+    name_pl: "Oświadczenie o pochodzeniu (REX)",
+    name_en: "Statement on Origin (REX)",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'air', 'road', 'rail', 'multimodal'],
+    issuerType: 'shipper',
+    outputMode: 'final',
+    // Konkretna umowa o wolnym handlu rozni sie zaleznie od kraju partnera;
+    // wspolny jest system REX. Numer REX i tresc oswiadczenia sa w szablonie.
+    legalBasis: 'System zarejestrowanych eksporterów (REX) w umowach o wolnym handlu UE',
+    authority: 'Eksporter zarejestrowany w systemie REX',
     validFrom: null,
     validTo: null,
     blockingIfMissing: false,
@@ -1389,6 +1740,25 @@ export const documentCatalog = {
     blockingIfMissing: true,
     category: 'towary_niebezp',
   },
+  // 123 jest SAMODZIELNYM dokumentem, mimo ze sekcja "Container/Vehicle Packing
+  // Certificate" istnieje tez wewnatrz laczonego formularza IMO/FIATA DGD
+  // (ImdgDeclarationTemplate). To wybor formy, nie duplikat - gdy silnik zwroci
+  // oba, doklada ostrzezenie warn_container_packing_duplicate (ETAP 2).
+  "123_Container_Packing_Cert": {
+    name_pl: "Świadectwo pakowania kontenera",
+    name_en: "Container/Vehicle Packing Certificate",
+    path: null,
+    available: true,
+    transportModes: ['sea', 'multimodal'],
+    issuerType: 'shipper',
+    outputMode: 'final',
+    legalBasis: 'Kodeks IMDG 5.4.2; Kodeks CTU (IMO/ILO/EKG ONZ, 2014)',
+    authority: 'Osoba odpowiedzialna za zapakowanie kontenera',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'towary_niebezp',
+  },
   "29_DG_Manifest": {
     name_pl: "Dangerous Goods Manifest",
     name_en: "Dangerous Goods Manifest",
@@ -1401,6 +1771,23 @@ export const documentCatalog = {
     outputMode: 'final',
     legalBasis: null,
     authority: 'Przewoźnik (kompletuje na podstawie deklaracji nadawcy)',
+    validFrom: null,
+    validTo: null,
+    blockingIfMissing: true,
+    category: 'towary_niebezp',
+  },
+  // RID domykal luke: droga miala 14_ADR, morze 15_IMDG, lot 64_IATA_DGR,
+  // a kolej wylacznie ostrzezenie warn_rid_rail bez zadnego dokumentu.
+  "135_RID_Rail_DG": {
+    name_pl: "RID — Dokument przewozowy towarów niebezpiecznych (kolej)",
+    name_en: "RID Dangerous Goods Transport Document",
+    path: null,
+    available: true,
+    transportModes: ['rail', 'multimodal'],
+    issuerType: 'shipper',
+    outputMode: 'final',
+    legalBasis: 'Regulamin RID (załącznik C do COTIF 1999)',
+    authority: 'Nadawca towaru niebezpiecznego',
     validFrom: null,
     validTo: null,
     blockingIfMissing: true,
