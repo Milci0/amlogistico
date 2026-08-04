@@ -151,6 +151,15 @@ export function buildEngineResult(snapshot) {
 // przy generowaniu), żeby regeneracja/pobranie STAREGO zestawu z historii
 // odtwarzała dokument w JĘZYKU, w którym powstał — a nie w aktualnej preferencji
 // profilu, która mogła się od tamtej pory zmienić (ten sam powód co templateVersion).
+//
+// `shipment` — podsumowanie do karty przesyłki w zakładce „Śledzenie ładunku"
+// (2026-08-06). Zero nowych pól w kreatorze — WYŁĄCZNIE to, co user już wpisał
+// (route/sea/cargo), skopiowane tu, żeby lista `/tracking` nie musiała dociągać
+// pełnego `formData` dla każdego zestawu (lista zwraca `meta` bez `formData`).
+// `delivered` NIE jest tu inicjalizowane — ustawiane wyłącznie przez
+// documentSetsRepo.markDelivered() (ręczne potwierdzenie, bo kreator nie zbiera
+// żadnej daty dostawy — sprawdzone w CmrTemplate/ZlecenieTemplate, te pola są
+// puste na wydruku).
 export function buildMeta(snapshot, language) {
   return {
     routeFrom: snapshot.route.fromCountry,
@@ -159,6 +168,26 @@ export function buildMeta(snapshot, language) {
     cargoDescription: snapshot.cargo.cargoName,
     transportDate: snapshot.route.loadDate,
     documentLanguage: normalizeLanguage(language),
+    shipment: {
+      fromCity: snapshot.route.fromCity,
+      toCity: snapshot.route.toCity,
+      multimodal: !!snapshot.route.multimodal,
+      loadDate: snapshot.route.loadDate,
+      eta: snapshot.sea.eta || '',
+      vessel: snapshot.sea.vessel || '',
+      voyageNo: snapshot.sea.voyageNo || '',
+      containerNo: snapshot.sea.containerNo || '',
+      sealNo: snapshot.sea.sealNo || '',
+      bookingNo: snapshot.sea.bookingNo || '',
+      flag: snapshot.sea.flag || '',
+      containerType: snapshot.sea.containerType || '',
+      freightTerms: snapshot.sea.freightTerms || '',
+      cargoCategory: snapshot.cargo.cargoCategory || '',
+      cargoSubcategory: snapshot.cargo.cargoSubcategory || '',
+      packages: snapshot.cargo.packages || '',
+      packageType: snapshot.cargo.packageType || '',
+      weight: snapshot.cargo.weight || '',
+    },
   }
 }
 
