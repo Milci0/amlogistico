@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
@@ -6,15 +7,23 @@ import AlertBox from '../components/ui/AlertBox'
 import { getShipment } from '../data/trackingMock'
 import TrackingList from '../components/tracking/TrackingList'
 import TrackingDetail from '../components/tracking/TrackingDetail'
+import ContainerLookup from '../components/tracking/ContainerLookup'
 
-// Zakładka „Śledzenie ładunku" (wysuwana spod „Trasy handlowe" w menu) — WYŁĄCZNIE
-// makieta. Zero API, zero WebSocketów, zero integracji z przewoźnikami: dane
-// z data/trackingMock.js, cel to ocena układu (lista → szczegóły), nie działająca
-// funkcja śledzenia.
+// Zakładka „Śledzenie ładunku" (wysuwana spod „Trasy handlowe" w menu).
+// Lista/szczegóły przesyłek — WYŁĄCZNIE makieta (data/trackingMock.js, zero API).
+// Zakładka „Numer kontenera" — REALNA funkcja: rozpoznanie linii po prefiksie
+// BIC + linki wychodzące do trackerów przewoźników/agregatorów. Zero integracji
+// z API przewoźników, zero przechowywania wpisanych numerów (patrz ContainerLookup.jsx).
+
+const TABS = [
+  { id: 'list', labelKey: 'tracking.tabs.list' },
+  { id: 'container', labelKey: 'tracking.tabs.container' },
+]
 
 export default function TrackingPage() {
   const { t } = useTranslation('pages')
   const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState('list')
   const shipmentId = searchParams.get('shipmentId')
   const shipment = shipmentId ? getShipment(shipmentId) : null
 
@@ -39,7 +48,28 @@ export default function TrackingPage() {
         </div>
       )}
 
-      {shipmentId && !shipment && (
+      {!shipment && (
+        <div className="flex gap-2 mb-5">
+          {TABS.map(({ id, labelKey }) => {
+            const active = tab === id
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTab(id)}
+                className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition-colors
+                  ${active
+                    ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                    : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'}`}
+              >
+                {t(labelKey)}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {shipmentId && !shipment && tab === 'list' && (
         <div className="mb-6">
           <AlertBox type="warning" title={t('tracking.notFoundTitle')}>
             {t('tracking.notFoundBody', { id: shipmentId })}
@@ -47,7 +77,13 @@ export default function TrackingPage() {
         </div>
       )}
 
-      {shipment ? <TrackingDetail shipment={shipment} /> : <TrackingList />}
+      {shipment ? (
+        <TrackingDetail shipment={shipment} />
+      ) : tab === 'container' ? (
+        <ContainerLookup />
+      ) : (
+        <TrackingList />
+      )}
     </div>
   )
 }
