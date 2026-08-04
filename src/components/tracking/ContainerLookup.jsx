@@ -2,11 +2,14 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, ExternalLink, CheckCircle2 } from 'lucide-react'
 import { analyzeContainerNumber } from '../../utils/containerNumber'
-import { lookupCarrierByPrefix, resolveTrackerUrl, AGGREGATORS } from '../../data/containerPrefixes'
+import {
+  lookupCarrierByPrefix,
+  findCarrierByName,
+  resolveTrackerUrl,
+  resolveHomeUrl,
+  AGGREGATORS,
+} from '../../data/containerPrefixes'
 import AlertBox from '../ui/AlertBox'
-
-const inputCls =
-  'w-full bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm font-mono tracking-wider text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900 transition-colors'
 
 // Numer wpisany przez użytkownika żyje WYŁĄCZNIE w tym stanie komponentu — nic
 // tu nie trafia do localStorage, bazy ani console.log (dane handlowe klienta).
@@ -17,13 +20,28 @@ export default function ContainerLookup() {
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!input.trim()) {
+    const trimmed = input.trim()
+    if (!trimmed) {
       setResult(null)
       return
     }
-    const analysis = analyzeContainerNumber(input)
+
+    const analysis = analyzeContainerNumber(trimmed)
+    // Brak cyfr w znormalizowanym wejściu → to nie próba numeru kontenera
+    // (każdy poprawny numer ma 7 cyfr), tylko prawdopodobnie nazwa przewoźnika
+    // ("CMA CGM", "cmacgm", "maersk"...).
+    const looksLikeContainerNumber = /\d/.test(analysis.normalized)
+
+    if (!looksLikeContainerNumber) {
+      const carrier = findCarrierByName(trimmed)
+      if (carrier) {
+        setResult({ mode: 'nameSearch', carrier })
+        return
+      }
+    }
+
     const carrier = analysis.prefix ? lookupCarrierByPrefix(analysis.prefix) : null
-    setResult({ ...analysis, carrier })
+    setResult({ mode: 'containerNumber', ...analysis, carrier })
   }
 
   return (
@@ -51,21 +69,31 @@ export default function ContainerLookup() {
 
       {result && (
         <div className="space-y-4">
-          {result.valid === false && (
+          {result.mode === 'containerNumber' && result.valid === false && (
             <AlertBox type="warning">{t('tracking.container.checkDigitWarning')}</AlertBox>
           )}
 
-          {result.carrier ? (
+          {result.mode === 'nameSearch' && (
+            <AlertBox type="info">{t('tracking.container.nameSearchNote')}</AlertBox>
+          )}
+
+          {result.carrier?.type === 'carrier' && (
             <>
-              <div className="flex items-center gap-2 px-4 py-3 rounded-lg border-l-4 bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 dark:border-emerald-500">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" strokeWidth={1.75} />
-                <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
-                  {t('tracking.container.recognized', { carrier: result.carrier.name, prefix: result.prefix })}
-                </p>
-              </div>
+              {result.mode === 'containerNumber' && (
+                <div className="flex items-center gap-2 px-4 py-3 rounded-lg border-l-4 bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 dark:border-emerald-500">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" strokeWidth={1.75} />
+                  <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+                    {t('tracking.container.recognized', { carrier: result.carrier.name, prefix: result.prefix })}
+                  </p>
+                </div>
+              )}
 
               <a
-                href={resolveTrackerUrl(result.carrier, result.normalized)}
+                href={
+                  result.mode === 'containerNumber'
+                    ? resolveTrackerUrl(result.carrier, result.normalized)
+                    : resolveHomeUrl(result.carrier)
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-between gap-3 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-800 hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors group"
@@ -81,7 +109,15 @@ export default function ContainerLookup() {
                 <ExternalLink className="w-4 h-4 text-gray-400 dark:text-slate-500 group-hover:text-emerald-500 shrink-0" strokeWidth={1.75} />
               </a>
             </>
-          ) : (
+          )}
+
+          {result.carrier?.type === 'lessor' && (
+            <AlertBox type="warning">
+              {t('tracking.container.leased', { lessor: result.carrier.name })}
+            </AlertBox>
+          )}
+
+          {result.mode === 'containerNumber' && !result.carrier && (
             <AlertBox type="info">{t('tracking.container.unrecognized')}</AlertBox>
           )}
 
