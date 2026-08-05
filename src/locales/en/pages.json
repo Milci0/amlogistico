@@ -306,7 +306,7 @@
       "documentLanguage": "Document language",
       "polish": "Polish",
       "english": "English",
-      "documentLanguageHint": "Independent of the interface language — applies only to the content of generated PDF documents."
+      "documentLanguageHint": "Independent of the interface language, applies only to the content of generated PDF documents."
     },
     "security": {
       "currentPassword": "Current password",
@@ -726,9 +726,9 @@
     "addContainerNumber": "Add a container number to track this shipment.",
     "editSet": "Edit the set",
     "emptyRealTitle": "You don't have any shipments yet",
-    "emptyRealBody": "Every document set saved in Documentation appears here automatically — nothing to enter twice.",
+    "emptyRealBody": "Every document set saved in Documentation appears here automatically, nothing to enter twice.",
     "emptyRealCta": "Create your first set",
-    "exampleSectionTitle": "This is what the shipment list looks like — example",
+    "exampleSectionTitle": "This is what the shipment list looks like (example)",
     "exampleBadge": "Example",
     "tabs": {
       "list": "Shipment list",
@@ -737,13 +737,13 @@
     "container": {
       "inputPlaceholder": "Container number, e.g. CGMU6913205",
       "checkButton": "Check",
-      "checkDigitWarning": "This number looks incorrect — check for a typo",
+      "checkDigitWarning": "This number looks incorrect, check for a typo",
       "recognized": "Line recognized: {{carrier}} · prefix {{prefix}}",
       "directLinkLabel": "Check on {{carrier}}'s site",
       "directLinkBadge": "Data directly from the carrier",
-      "unrecognized": "We couldn't recognize the line — try an aggregator",
+      "unrecognized": "We couldn't recognize the line, try an aggregator",
       "nameSearchNote": "Searching by carrier name. Enter a container number to jump straight to the status.",
-      "leased": "Leased container ({{lessor}}) — may be operated by any line. Try an aggregator.",
+      "leased": "Leased container ({{lessor}}), may be operated by any line. Try an aggregator.",
       "aggregatorsTitle": "Tracking aggregators",
       "footerNote": "Data comes from the carriers. AMLogistico does not store shipment statuses.",
       "shipsgo": {
@@ -755,7 +755,7 @@
         "etaUnknown": "No data",
         "timelineTitle": "Shipment history",
         "noMovements": "No events recorded yet for this container.",
-        "pending": "Tracking for this container was just created in ShipsGo — try checking again in a moment.",
+        "pending": "Tracking for this container was just created in ShipsGo, try checking again in a moment.",
         "rateLimited": "Too many searches in a short time. Try again in about {{minutes}} min.",
         "genericError": "Could not fetch data from ShipsGo. Please try again later."
       }
