@@ -711,7 +711,20 @@
       "nameSearchNote": "Searching by carrier name. Enter a container number to jump straight to the status.",
       "leased": "Leased container ({{lessor}}) — may be operated by any line. Try an aggregator.",
       "aggregatorsTitle": "Tracking aggregators",
-      "footerNote": "Data comes from the carriers. AMLogistico does not store shipment statuses."
+      "footerNote": "Data comes from the carriers. AMLogistico does not store shipment statuses.",
+      "shipsgo": {
+        "resultTitle": "Live data from ShipsGo",
+        "checkedAt": "Checked: {{date}}",
+        "cachedNote": "cached result",
+        "vessel": "Vessel",
+        "vesselUnknown": "No vessel data",
+        "etaUnknown": "No data",
+        "timelineTitle": "Shipment history",
+        "noMovements": "No events recorded yet for this container.",
+        "pending": "Tracking for this container was just created in ShipsGo — try checking again in a moment.",
+        "rateLimited": "Too many searches in a short time. Try again in about {{minutes}} min.",
+        "genericError": "Could not fetch data from ShipsGo. Please try again later."
+      }
     }
   },
   "admin": {

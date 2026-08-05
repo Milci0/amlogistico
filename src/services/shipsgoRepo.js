@@ -1,9 +1,10 @@
 // ── Klient frontendowy dla /api/shipsgo-tracking ────────────────────────────
 //
 // Token ShipsGo NIGDY nie trafia tutaj — zostaje na backendzie (patrz
-// api/_lib/shipsgo.js). Ten plik tylko woła nasze 3 endpointy.
-// Numer kontenera NIGDY nie jest logowany ani przekazywany w żądaniu —
-// backend bierze go sam z zapisanego zestawu (patrz api/_routes/shipsgoTracking.js).
+// api/_lib/shipsgo.js). Ten plik tylko woła nasze 4 endpointy.
+// Numer kontenera dla enable/refresh NIGDY nie jest logowany ani przekazywany
+// w żądaniu — backend bierze go sam z zapisanego zestawu. Wyjątek: lookupContainer
+// (wolne wyszukiwanie) celowo WYSYŁA numer wpisany przez usera — patrz jego opis niżej.
 
 import { api } from '../lib/api'
 
@@ -32,4 +33,16 @@ export async function enableTracking(documentSetId) {
 //   ShipsGo (ich dane i tak nie zdążyły się zmienić — patrz CHECKED_AT_FRESH_MS).
 export async function refreshTracking(documentSetId) {
   return api.get(`/shipsgo-tracking/${documentSetId}/refresh`)
+}
+
+// lookupContainer(containerNumber) -> Promise<{ success, cached, pending?, shipsgo }>
+//   Wolne wyszukiwanie w zakładce „Numer kontenera" — DOWOLNY numer, nie musi
+//   pochodzić z Twojego zestawu dokumentów. KOSZTUJE KREDYT przy pierwszym
+//   sprawdzeniu danego kontenera (backend cache'uje wynik per numer, kolejne
+//   sprawdzenia tego samego numeru — także przez innych userów — są darmowe
+//   przez godzinę). Wołaj WYŁĄCZNIE na świadomy klik „Sprawdź", nigdy
+//   automatycznie przy wpisywaniu. Rzuca ApiError (429/400/403/502/503) —
+//   wywołujący łapie i pokazuje komunikat z err.message.
+export async function lookupContainer(containerNumber) {
+  return api.post('/shipsgo-tracking/lookup', { containerNumber })
 }

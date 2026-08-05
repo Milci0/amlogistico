@@ -713,7 +713,20 @@
       "nameSearchNote": "Wyszukiwanie po nazwie przewoźnika. Podaj numer kontenera, żeby przejść prosto do statusu.",
       "leased": "Kontener leasingowany ({{lessor}}) — może być obsługiwany przez dowolną linię. Sprawdź w agregatorze.",
       "aggregatorsTitle": "Agregatory śledzenia",
-      "footerNote": "Dane pochodzą od przewoźników. AMLogistico nie przechowuje statusów przesyłek."
+      "footerNote": "Dane pochodzą od przewoźników. AMLogistico nie przechowuje statusów przesyłek.",
+      "shipsgo": {
+        "resultTitle": "Dane na żywo z ShipsGo",
+        "checkedAt": "Sprawdzono: {{date}}",
+        "cachedNote": "wynik z cache",
+        "vessel": "Statek",
+        "vesselUnknown": "Brak danych o statku",
+        "etaUnknown": "Brak danych",
+        "timelineTitle": "Historia przesyłki",
+        "noMovements": "Brak jeszcze zarejestrowanych zdarzeń dla tego kontenera.",
+        "pending": "Śledzenie tego kontenera zostało dopiero co utworzone w ShipsGo — spróbuj sprawdzić ponownie za chwilę.",
+        "rateLimited": "Zbyt wiele wyszukiwań w krótkim czasie. Spróbuj ponownie za ok. {{minutes}} min.",
+        "genericError": "Nie udało się pobrać danych z ShipsGo. Spróbuj ponownie później."
+      }
     }
   },
   "admin": {

@@ -9,20 +9,32 @@
 // zobaczą przycisku. Pusta/nieustawiona SHIPSGO_ALLOWED_EMAILS = brak
 // zawężenia (otwarte dla wszystkich, po wykupieniu pakietu wystarczy ją wyczyścić).
 //
-// Container number NIGDY nie przychodzi w body żądania — bierzemy go
-// WYŁĄCZNIE z zapisanego DocumentSet, żeby nikt nie mógł podesłać dowolnego
-// numeru i zmarnować kredytu na coś spoza naszych danych.
+// Numer kontenera dla /enable i /refresh NIGDY nie przychodzi w body żądania —
+// bierzemy go WYŁĄCZNIE z zapisanego DocumentSet. Wyjątek świadomy: /lookup
+// (zakładka „Numer kontenera") PRZYJMUJE dowolny numer wpisany przez usera —
+// to jego cel (wolne wyszukiwanie). Ochronę kosztową dla /lookup dają: ten sam
+// allowlist co reszta, walidacja kształtu (ISO 6346), cache po numerze i osobny,
+// twardszy rate-limit (patrz api/_lib/shipsgoRateLimit.js) — bo tu KAŻDY
+// dopuszczony user może odpytać o CUDZY kontener, nie tylko swój zapisany.
 
 import { Router } from 'express'
 import { prisma } from '../_lib/prisma.js'
 import { requireAuth } from '../_lib/auth.js'
 import { createOceanShipment, getOceanShipment, trimShipmentData } from '../_lib/shipsgo.js'
+import { lookupSchema } from '../_validation/shipsgoTracking.js'
+import { tryConsumeLookup } from '../_lib/shipsgoRateLimit.js'
 
 const router = Router()
 
 // Nie odpytuj ShipsGo ponownie, jeśli ONI SAMI sprawdzili dane mniej niż
 // godzinę temu (checked_at) — kolejne zapytanie i tak zwróciłoby to samo.
 const CHECKED_AT_FRESH_MS = 60 * 60 * 1000
+
+// Cache wyników /lookup po znormalizowanym numerze kontenera (NIE per-user —
+// jeśli dwóch userów sprawdza ten sam kontener, drugi dostaje ten sam wynik za
+// darmo, bez nowego zapytania do ShipsGo). TTL jak CHECKED_AT_FRESH_MS z tego
+// samego powodu. Best-effort w pamięci procesu (patrz uwaga w shipsgoRateLimit.js).
+const lookupCache = new Map()
 
 function isEnabled() {
   // Zmienne środowiskowe są zawsze stringiem — !!process.env.SHIPSGO_ENABLED
@@ -159,6 +171,53 @@ router.get('/:documentSetId/refresh', async (req, res, next) => {
     const snapshot = trimShipmentData(result.data)
     await saveShipsgoSnapshot(set, snapshot)
     res.json({ success: true, fresh: true, shipsgo: snapshot })
+  } catch (e) {
+    next(e)
+  }
+})
+
+// POST /api/shipsgo-tracking/lookup — wolne wyszukiwanie po numerze kontenera
+// wpisanym w zakładce „Numer kontenera" (nie wymaga zapisanego DocumentSet).
+// KOSZTUJE KREDYT przy pierwszym sprawdzeniu danego kontenera (poza duplikatem
+// po stronie ShipsGo, który jest darmowy) — dlatego kolejność bramek: allowlist
+// → kształt numeru → CACHE → dopiero na końcu rate-limit + realne wywołanie,
+// żeby trafienie w cache nigdy nie zużywało limitu.
+router.post('/lookup', async (req, res, next) => {
+  try {
+    if (!isEnabled()) return res.status(503).json({ error: 'Śledzenie ShipsGo jest wyłączone' })
+    if (!(await isUserAllowed(req.userId))) return res.status(403).json({ error: 'Brak dostępu' })
+
+    const parsed = lookupSchema.safeParse(req.body)
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Nieprawidłowy numer kontenera' })
+    }
+    const containerNo = parsed.data.containerNumber
+
+    const cached = lookupCache.get(containerNo)
+    if (cached && cached.expires > Date.now()) {
+      return res.json({ success: true, cached: true, shipsgo: cached.data })
+    }
+
+    const limit = tryConsumeLookup(req.userId)
+    if (!limit.ok) {
+      return res.status(429).json({ error: 'Zbyt wiele wyszukiwań w krótkim czasie', retryAfter: limit.retryAfter })
+    }
+
+    const result = await createOceanShipment({ reference: `freeform-${containerNo}`, containerNumber: containerNo })
+    if (!result.success) {
+      return res.status(502).json({ error: result.error || 'ShipsGo nie odpowiedziało' })
+    }
+
+    // Duplikat (409) bez pełnych danych w ciele — rzadki brzeg (patrz komentarz
+    // w createOceanShipment). Nie mamy `id`, więc nie ma czego cache'ować ani
+    // zwrócić — front prosi usera o ponowną próbę za chwilę.
+    if (!result.data?.id) {
+      return res.json({ success: true, cached: false, shipsgo: null, pending: true })
+    }
+
+    const snapshot = trimShipmentData(result.data)
+    lookupCache.set(containerNo, { data: snapshot, expires: Date.now() + CHECKED_AT_FRESH_MS })
+    res.json({ success: true, cached: false, shipsgo: snapshot })
   } catch (e) {
     next(e)
   }

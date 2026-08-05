@@ -112,6 +112,14 @@ export function trimShipmentData(raw) {
     dischargeLocation: raw.route?.port_of_discharge?.location
       ? { code: raw.route.port_of_discharge.location.code, name: raw.route.port_of_discharge.location.name }
       : null,
+    // NIEZWERYFIKOWANE bez realnego tokena (2 kredyty testowe, jeszcze nieużyte
+    // na strukturę z ETA) — próbujemy kilku prawdopodobnych ścieżek pola z typowych
+    // API śledzenia morskiego. Brak dopasowania → null, front pokazuje "brak danych"
+    // zamiast fałszywej wartości. DO POTWIERDZENIA na pierwszej realnej odpowiedzi.
+    eta: raw.route?.port_of_discharge?.date
+      || raw.route?.port_of_discharge?.eta
+      || raw.eta
+      || null,
     movements,
     mapToken: raw.tokens?.map || null,
     checkedAt: raw.checked_at || null,

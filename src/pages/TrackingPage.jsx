@@ -28,6 +28,14 @@ const TABS = [
   { id: 'container', labelKey: 'tracking.tabs.container' },
 ]
 
+// „Numer kontenera" dostaje amber — dopasowanie do TradeRoutesPage (/routes),
+// bo cała zakładka wisi pod „Trasy handlowe" w menu. „Lista przesyłek" zostaje
+// emerald (marka aplikacji) — to Twoje własne przesyłki, nie „trasy handlowe".
+const TAB_ACCENT = {
+  list: 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
+  container: 'border-amber-500 dark:border-amber-400 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+}
+
 export default function TrackingPage() {
   const { t } = useTranslation('pages')
   const [searchParams] = useSearchParams()
@@ -78,7 +86,7 @@ export default function TrackingPage() {
                 onClick={() => setTab(id)}
                 className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition-colors
                   ${active
-                    ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                    ? TAB_ACCENT[id]
                     : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'}`}
               >
                 {t(labelKey)}
