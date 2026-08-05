@@ -10,6 +10,7 @@ import ecbRouter from './_routes/ecb.js'
 import cronRouter from './_routes/cron.js'
 import hsCodeRouter from './_routes/hsCode.js'
 import freightRouter from './_routes/freight.js'
+import shipsgoTrackingRouter from './_routes/shipsgoTracking.js'
 
 const app = express()
 
@@ -31,6 +32,7 @@ app.use('/api/ecb-rate', ecbRouter)
 app.use('/api/cron', cronRouter)
 app.use('/api/hs-code', hsCodeRouter)
 app.use('/api/freight', freightRouter)
+app.use('/api/shipsgo-tracking', shipsgoTrackingRouter)
 
 // Globalny handler błędów — łapie wyjątki z async tras (Express 5 forwarduje je tu)
 // eslint-disable-next-line no-unused-vars

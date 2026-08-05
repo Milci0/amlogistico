@@ -9,7 +9,7 @@ import RealShipmentCard from './RealShipmentCard'
 const inputCls =
   'w-full bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900 transition-colors'
 
-const STATUS_FILTERS = ['all', 'planned', 'in_transit', 'eta_passed', 'delivered']
+const STATUS_FILTERS = ['all', 'planned', 'in_transit', 'in_destination_port', 'discharged', 'eta_passed', 'delivered']
 
 // shipments = realne przesyłki (projekcja zestawów dokumentów, patrz
 // utils/shipmentFromSet.js). Puste → pokazujemy MOCK_SHIPMENTS jako WYRAŹNIE

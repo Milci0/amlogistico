@@ -642,8 +642,27 @@
     "realStatuses": {
       "planned": "Planned",
       "in_transit": "In transit",
+      "in_destination_port": "At destination port",
+      "discharged": "Discharged",
       "eta_passed": "ETA passed",
       "delivered": "Delivered"
+    },
+    "dataSourceShipsgo": "Data: ShipsGo",
+    "dataSourceManual": "Manually entered data",
+    "enableTracking": "Enable tracking",
+    "enabling": "Enabling...",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "shipsgoError": "Couldn't connect to ShipsGo. Please try again later.",
+    "shipsgoEvents": {
+      "EMSH": "Empty out",
+      "GTIN": "Gate in (origin)",
+      "LOAD": "Loaded on vessel",
+      "DEPA": "Departed",
+      "ARRV": "Arrived",
+      "DISC": "Discharged",
+      "GTOT": "Gate out (destination)",
+      "EMRT": "Empty returned"
     },
     "statusNote": "Status calculated from the dates you entered. Check the carrier for the current status.",
     "markDelivered": "Mark as delivered",

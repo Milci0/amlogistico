@@ -644,8 +644,27 @@
     "realStatuses": {
       "planned": "Zaplanowana",
       "in_transit": "W drodze",
+      "in_destination_port": "W porcie docelowym",
+      "discharged": "Rozładowany",
       "eta_passed": "ETA minęła",
       "delivered": "Dostarczona"
+    },
+    "dataSourceShipsgo": "Dane: ShipsGo",
+    "dataSourceManual": "Dane wprowadzone ręcznie",
+    "enableTracking": "Włącz śledzenie",
+    "enabling": "Włączanie...",
+    "refresh": "Odśwież",
+    "refreshing": "Odświeżanie...",
+    "shipsgoError": "Nie udało się połączyć ze ShipsGo. Spróbuj ponownie później.",
+    "shipsgoEvents": {
+      "EMSH": "Pusty wydany",
+      "GTIN": "Brama wjazdowa (port nadania)",
+      "LOAD": "Załadunek na statek",
+      "DEPA": "Wypłynięcie",
+      "ARRV": "Przypłynięcie",
+      "DISC": "Rozładunek",
+      "GTOT": "Brama wyjazdowa (port docelowy)",
+      "EMRT": "Zwrot pustego kontenera"
     },
     "statusNote": "Status wyliczony z wprowadzonych dat. Aktualny status sprawdź u przewoźnika.",
     "markDelivered": "Oznacz jako dostarczoną",
