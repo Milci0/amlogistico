@@ -12,4 +12,10 @@ export default defineConfig({
       '/api': 'http://localhost:3001',
     },
   },
+  // Testy jednostkowe silnika doboru (src/utils/__tests__). Środowisko 'node' —
+  // testowana jest czysta logika, nie komponenty; nie potrzeba jsdom.
+  test: {
+    environment: 'node',
+    include: ['src/**/__tests__/**/*.test.{js,jsx}'],
+  },
 })

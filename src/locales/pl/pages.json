@@ -129,7 +129,10 @@
     "fallbackTitle": "Zestaw dokumentów",
     "transport": {
       "road": "Drogowy",
-      "sea": "Morski"
+      "sea": "Morski",
+      "air": "Lotniczy",
+      "rail": "Kolejowy",
+      "multimodal": "Multimodalny"
     },
     "showDocuments": "Pokaż dokumenty",
     "hideDocuments": "Ukryj dokumenty",
@@ -157,7 +160,15 @@
     "optional": "Opcjonalne ({{count}})",
     "requiredBadge": "Wymagany",
     "ready": "Gotowe",
-    "error": "Błąd"
+    "error": "Błąd",
+    "manual_one": "Do wypełnienia ręcznie ({{count}})",
+    "manual_few": "Do wypełnienia ręcznie ({{count}})",
+    "manual_many": "Do wypełnienia ręcznie ({{count}})",
+    "manual_other": "Do wypełnienia ręcznie ({{count}})",
+    "manualHint": "Dokumenty wystawiane przez urzędy, agencje i zagranicznych agentów celnych. Nie wypełnimy ich za Ciebie, więc dostajesz pusty formularz i informację, kto go wystawia.",
+    "draftBadge": "Projekt",
+    "blankBadge": "Pusty formularz",
+    "issuedBy": "Wystawia: {{authority}}"
   },
   "filterBar": {
     "searchPlaceholder": "Szukaj po nazwie, typie lub trasie...",
@@ -187,7 +198,11 @@
       "loadSet": "Nie udało się wczytać zestawu.",
       "downloadOne": "Nie udało się pobrać dokumentu.",
       "generateOne": "Nie udało się wygenerować dokumentu.",
-      "remove": "Nie udało się usunąć zestawu."
+      "remove": "Nie udało się usunąć zestawu.",
+      "unresolvedDocs_one": "Jeden zapisany dokument nie pasuje już do aktualnych reguł doboru i nie został wygenerowany.",
+      "unresolvedDocs_few": "{{count}} zapisane dokumenty nie pasują już do aktualnych reguł doboru i nie zostały wygenerowane.",
+      "unresolvedDocs_many": "{{count}} zapisanych dokumentów nie pasuje już do aktualnych reguł doboru i nie zostało wygenerowanych.",
+      "unresolvedDocs_other": "{{count}} zapisanych dokumentów nie pasuje już do aktualnych reguł doboru i nie zostało wygenerowanych."
     }
   },
   "drafts": {
@@ -329,6 +344,18 @@
       "sea": {
         "label": "Morski",
         "sub": "Kontener FCL/LCL"
+      },
+      "air": {
+        "label": "Lotniczy",
+        "sub": "Fracht lotniczy"
+      },
+      "rail": {
+        "label": "Kolejowy",
+        "sub": "Wagon, pociąg całodrogowy"
+      },
+      "multimodal": {
+        "label": "Multimodalny",
+        "sub": "Kilka środków transportu"
       }
     },
     "extraConditions": "Warunki dodatkowe",

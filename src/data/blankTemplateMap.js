@@ -62,6 +62,24 @@ const DOCUMENT_ID_TO_TEMPLATE_KEY = {
   '25_CITES_Permit': 'cites_permit',
   '61_LC': 'lc', '62_BankGuarantee': 'bank_guarantee',
   '66_WeightCertificate': 'weight_cert', '67_QualityInspection': 'quality_inspection',
+  // ETAP 1 / partia A: morskie (119-123). Te dokumenty nie maja statycznego PDF-a
+  // w public/templates (path: null w documentCatalog), wiec szablon JSX jest
+  // ich JEDYNYM zrodlem - brak wpisu ponizej = pozycja bez pliku do pobrania.
+  '119_VGM_SOLAS': 'vgm', '120_Booking_Confirmation': 'booking_confirmation',
+  '121_Cargo_Manifest_Sea': 'cargo_manifest_sea', '122_Delivery_Order': 'delivery_order',
+  '123_Container_Packing_Cert': 'container_packing_cert',
+  // ETAP 1 / partia B: celne i regulacyjne UE (124-131), tak samo bez path.
+  '124_ENS_ICS2': 'ens_ics2', '125_EU_Import_Declaration': 'eu_import_declaration',
+  '126_CBAM_Data_Sheet': 'cbam_data_sheet', '127_EUDR_DDS': 'eudr_dds',
+  '128_CHED_TRACES': 'ched_traces', '129_ATR_Certificate': 'atr',
+  '130_Supplier_Declaration': 'supplier_declaration', '131_REX_Statement_Origin': 'rex_statement',
+  // ETAP 1 / partia C: krajowe PL i kolejowe (132-136).
+  '132_EMCS_eAD': 'emcs_ead', '133_SENT': 'sent', '134_CIM_SMGS': 'cim_smgs',
+  '135_RID_Rail_DG': 'rid_rail_dg', '136_Wagon_List': 'wagon_list',
+  // ETAP 1 / partia D: lotnicze (137-140). 11_AWB zostaje jako MAWB.
+  '137_HAWB': 'hawb', '138_SLI_Air': 'sli_air',
+  '139_Consignor_Security_Decl': 'consignor_security_decl',
+  '140_Air_Cargo_Manifest': 'air_cargo_manifest',
 }
 
 const BY_KEY = Object.fromEntries(TEMPLATE_CATALOG.map((t) => [t.key, t]))

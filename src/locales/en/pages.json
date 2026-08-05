@@ -129,7 +129,10 @@
     "fallbackTitle": "Document set",
     "transport": {
       "road": "Road",
-      "sea": "Sea"
+      "sea": "Sea",
+      "air": "Air",
+      "rail": "Rail",
+      "multimodal": "Multimodal"
     },
     "showDocuments": "Show documents",
     "hideDocuments": "Hide documents",
@@ -155,7 +158,13 @@
     "optional": "Optional ({{count}})",
     "requiredBadge": "Required",
     "ready": "Ready",
-    "error": "Error"
+    "error": "Error",
+    "manual_one": "To fill in yourself ({{count}})",
+    "manual_other": "To fill in yourself ({{count}})",
+    "manualHint": "Documents issued by customs offices, agencies and foreign customs brokers. We cannot fill these in for you, so you get the blank form plus a note on who issues it.",
+    "draftBadge": "Draft",
+    "blankBadge": "Blank form",
+    "issuedBy": "Issued by: {{authority}}"
   },
   "filterBar": {
     "searchPlaceholder": "Search by name, type or route...",
@@ -185,7 +194,9 @@
       "loadSet": "We could not load the set.",
       "downloadOne": "We could not download the document.",
       "generateOne": "We could not generate the document.",
-      "remove": "We could not delete the set."
+      "remove": "We could not delete the set.",
+      "unresolvedDocs_one": "One saved document no longer matches the current selection rules and was not generated.",
+      "unresolvedDocs_other": "{{count}} saved documents no longer match the current selection rules and were not generated."
     }
   },
   "drafts": {
@@ -327,6 +338,18 @@
       "sea": {
         "label": "Sea",
         "sub": "FCL/LCL container"
+      },
+      "air": {
+        "label": "Air",
+        "sub": "Air freight"
+      },
+      "rail": {
+        "label": "Rail",
+        "sub": "Wagon, block train"
+      },
+      "multimodal": {
+        "label": "Multimodal",
+        "sub": "Several modes"
       }
     },
     "extraConditions": "Additional conditions",

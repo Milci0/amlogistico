@@ -19,14 +19,6 @@
   },
   "route": {
     "transportType": "Transport mode",
-    "road": {
-      "label": "Road",
-      "sub": "TIR, truck"
-    },
-    "sea": {
-      "label": "Sea",
-      "sub": "FCL/LCL container"
-    },
     "multimodal": {
       "label": "Multimodal transport",
       "hint": "The cargo travels by more than one mode, for example truck plus vessel. This adds an MTD document."
@@ -35,7 +27,32 @@
     "to": "To",
     "country": "Country",
     "cityPort": "City or port",
-    "loadDate": "Loading date"
+    "loadDate": "Loading date",
+    "modes": {
+      "road": {
+        "label": "Road",
+        "sub": "TIR, truck"
+      },
+      "sea": {
+        "label": "Sea",
+        "sub": "FCL/LCL container"
+      },
+      "rail": {
+        "label": "Rail",
+        "sub": "Wagon, block train"
+      },
+      "air": {
+        "label": "Air",
+        "sub": "Air freight"
+      },
+      "multimodal": {
+        "label": "Multimodal",
+        "sub": "Several modes"
+      }
+    },
+    "switchTitle": "Change the transport mode?",
+    "switchBody": "You have already filled in details for {{from}}. Switching to {{to}} clears them, because they do not apply to the new mode.",
+    "switchConfirm": "Switch and clear"
   },
   "cargo": {
     "sectionTitle": "Cargo description",
@@ -85,6 +102,40 @@
     "incoterms": {
       "title": "Incoterms",
       "hint": "The trade rule that splits costs and risk between consignor and consignee"
+    },
+    "rail": {
+      "title": "Rail details",
+      "hint": "Stations and wagons go onto the CIM consignment note.",
+      "stationFrom": "Departure station",
+      "stationTo": "Destination station",
+      "groupConsignment": "Group consignment (several wagons under one note)",
+      "wagonNumbers": "Wagon numbers",
+      "noWagons": "No wagons added yet.",
+      "wagonPlaceholder": "e.g. 31 51 4675 123-4",
+      "addWagon": "Add wagon",
+      "removeWagon": "Remove wagon"
+    },
+    "air": {
+      "title": "Air details",
+      "hint": "Airports and weight go onto the air waybill (AWB).",
+      "airportFrom": "Departure airport (IATA)",
+      "airportTo": "Destination airport (IATA)",
+      "iataPlaceholder": "e.g. WAW",
+      "consolidated": "Consolidated shipment (house AWB)",
+      "knownConsignor": "Known consignor (aviation security status)",
+      "chargeableWeight": "Chargeable weight (kg)"
+    },
+    "multimodal": {
+      "title": "Legs of the journey",
+      "hint": "The order matters: the first leg is the pre-carriage, the second is the main carriage and the last is the on-carriage on the multimodal transport document.",
+      "leg": "Leg {{order}}",
+      "mode": "Mode",
+      "chooseMode": "Choose",
+      "carrier": "Carrier",
+      "from": "From",
+      "to": "To",
+      "addLeg": "Add leg",
+      "removeLeg": "Remove leg"
     }
   },
   "parties": {
@@ -154,8 +205,12 @@
       "road": "Road (TIR)",
       "sea": "Sea (container)",
       "customsNo": "No (movement inside the EU)",
-      "customsYes": "Yes"
-    }
+      "customsYes": "Yes",
+      "rail": "Rail",
+      "air": "Air",
+      "multimodal": "Multimodal"
+    },
+    "warningsTitle": "Check before you ship"
   },
   "guard": {
     "title": "Unfinished form",

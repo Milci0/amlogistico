@@ -4,7 +4,7 @@ import { upsertProgress } from '../../services/documentSetsRepo'
 import { buildMeta, buildEngineResult } from '../../services/documentGeneration'
 import { peekPendingIncoterm, clearPendingIncoterm } from '../../services/pendingIncoterm'
 import { getFlow } from './flowSteps'
-import { createEmptySnapshot, cloneSnapshot } from './wizardState'
+import { createEmptySnapshot, cloneSnapshot, normalizeSnapshot } from './wizardState'
 
 // ── Autozapis (ETAP 7c) — osobny slot per flowType, NIE pojawia się na draftach ──
 // Klucz zawiera flowType, bo obie ścieżki (A/B) mogą być otwarte w osobnych
@@ -82,7 +82,11 @@ export function WizardProvider({ children, flowType = 'have_transport', mode = '
   // z profilu użytkownika, jeśli ją ustawił. Edit/resume/restore ładują zapisaną
   // migawkę bez zmian — nie nadpisujemy waluty z historii.
   const initialSnapshot = useMemo(() => {
-    if (initialSet?.formData) return cloneSnapshot(initialSet.formData)
+    // normalizeSnapshot, nie cloneSnapshot: zestawy zapisane przed dodaniem gałęzi
+    // kolejowej/lotniczej/multimodalnej nie mają tych slajsów i kreator wywaliłby
+    // się przy pierwszym odczycie. Scalenie na pusty szkielet uzupełnia braki,
+    // nie ruszając niczego, co user kiedyś wpisał.
+    if (initialSet?.formData) return normalizeSnapshot(initialSet.formData)
     const empty = createEmptySnapshot()
     // Waluty podpowiadamy TYLKO gdy użytkownik ustawił domyślną w profilu.
     // „Bez domyślnej waluty" (defaultCurrency puste) → pola waluty zostają puste.

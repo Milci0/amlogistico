@@ -51,6 +51,28 @@ function StatusBadge({ status }) {
   return null
 }
 
+// Znacznik dokumentu, którego platforma nie wystawia jako gotowego. Odróżnia
+// „projekt do zatwierdzenia" od „formularz obcego urzędu" — bo to zupełnie inna
+// informacja dla użytkownika, mimo że oba nie są finalnym dokumentem.
+function OutputModeBadge({ doc }) {
+  const { t } = useTranslation('pages')
+  if (doc.outputMode === 'draft') {
+    return (
+      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">
+        {t('documentList.draftBadge')}
+      </span>
+    )
+  }
+  if (doc.outputMode === 'blank_only') {
+    return (
+      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+        {t('documentList.blankBadge')}
+      </span>
+    )
+  }
+  return null
+}
+
 function DocRow({ doc, checked, onToggle, status }) {
   const { t } = useTranslation('pages')
   return (
@@ -75,9 +97,17 @@ function DocRow({ doc, checked, onToggle, status }) {
               {t('documentList.requiredBadge')}
             </span>
           )}
+          <OutputModeBadge doc={doc} />
         </div>
         {(doc.description || doc.nameEn) && (
           <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{doc.description || doc.nameEn}</p>
+        )}
+        {/* Kto wystawia — pokazujemy tylko tam, gdzie to zmienia działanie
+            użytkownika, czyli przy dokumentach spoza naszego zakresu. */}
+        {doc.authority && doc.outputMode !== 'final' && (
+          <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1">
+            {t('documentList.issuedBy', { authority: doc.authority })}
+          </p>
         )}
       </div>
       <StatusBadge status={status} />
@@ -85,7 +115,30 @@ function DocRow({ doc, checked, onToggle, status }) {
   )
 }
 
-// documents: [{ id, namePl, nameEn?, description?, required }]
+function Section({ title, hint, docs, selectedIds, onToggle, statusFor }) {
+  if (docs.length === 0) return null
+  return (
+    <>
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">{title}</p>
+      {hint && <p className="text-xs text-gray-400 dark:text-slate-500 mb-2 leading-relaxed">{hint}</p>}
+      {!hint && <div className="mb-2" />}
+      <div className="space-y-2 mb-6">
+        {docs.map((doc) => (
+          <DocRow
+            key={doc.id}
+            doc={doc}
+            checked={selectedIds.has(doc.id)}
+            onToggle={onToggle}
+            status={statusFor?.(doc.id)}
+          />
+        ))}
+      </div>
+    </>
+  )
+}
+
+// documents: [{ id, namePl, nameEn?, description?, required, section?, outputMode?, authority? }]
+//   section: 'required' | 'optional' | 'manual'  (domyślnie z pola `required`)
 // selectedIds: Set<string>
 export default function DocumentSelectList({
   documents,
@@ -100,13 +153,19 @@ export default function DocumentSelectList({
   loadingLabel = null,
 }) {
   const { t } = useTranslation('pages')
-  const required = documents.filter((d) => d.required)
-  const optional = documents.filter((d) => !d.required)
+  // Sekcja jawna wygrywa; bez niej wracamy do dawnego podziału po `required`,
+  // żeby wywołujący, który nie zna jeszcze sekcji, działał bez zmian.
+  const sectionOf = (d) => d.section || (d.required ? 'required' : 'optional')
+  const required = documents.filter((d) => sectionOf(d) === 'required')
+  const optional = documents.filter((d) => sectionOf(d) === 'optional')
+  const manual = documents.filter((d) => sectionOf(d) === 'manual')
   const selectedCount = documents.filter((d) => selectedIds.has(d.id)).length
   const actionDisabled = disabled || selectedCount === 0
 
   return (
     <div>
+      {/* Sekcja „Wymagane" pokazuje się zawsze — także pusta, bo jej brak
+          czytałby się jak awaria doboru, a nie jak trasa bez wymagań. */}
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2">
         {t('documentList.required', { count: required.length })}
       </p>
@@ -122,25 +181,27 @@ export default function DocumentSelectList({
         ))}
       </div>
 
-      {optional.length > 0 && (
-        <>
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2">
-            {t('documentList.optional', { count: optional.length })}
-          </p>
-          <div className="space-y-2 mb-6">
-            {optional.map((doc) => (
-              <DocRow
-                key={doc.id}
-                doc={doc}
-                checked={selectedIds.has(doc.id)}
-                onToggle={onToggle}
-                status={statusFor?.(doc.id)}
-              />
-            ))}
-          </div>
-        </>
-      )}
-      {optional.length === 0 && <div className="mb-6" />}
+      <Section
+        title={t('documentList.optional', { count: optional.length })}
+        docs={optional}
+        selectedIds={selectedIds}
+        onToggle={onToggle}
+        statusFor={statusFor}
+      />
+
+      {/* Trzecia sekcja bywa najdłuższa na trasach poza UE (90 ze 120 pozycji
+          katalogu to formularze obcych urzędów i agentów celnych). Bez nagłówka
+          wyjaśniającego POWÓD czytałaby się jak lista braków produktu. */}
+      <Section
+        title={t('documentList.manual', { count: manual.length })}
+        hint={t('documentList.manualHint')}
+        docs={manual}
+        selectedIds={selectedIds}
+        onToggle={onToggle}
+        statusFor={statusFor}
+      />
+
+      {optional.length === 0 && manual.length === 0 && <div className="mb-6" />}
 
       <button
         onClick={onAction}

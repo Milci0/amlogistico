@@ -8,7 +8,7 @@ import DocumentsEmptyState from '../components/documents/DocumentsEmptyState'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import AlertBox from '../components/ui/AlertBox'
 import useDocumentSets, { useDocumentSetList } from '../hooks/useDocumentSets'
-import { generateDocuments } from '../services/documentGeneration'
+import { generateDocuments, findUnresolvedDocIds } from '../services/documentGeneration'
 import { downloadBlankDocument, downloadBlankZip } from '../utils/blankDocuments'
 import { getSet } from '../services/documentSetsRepo'
 
@@ -74,8 +74,16 @@ export default function HistoryPage() {
           .filter(Boolean)
         await downloadBlankZip(docs, `dokumenty_${full.meta?.routeFrom}_${full.meta?.routeTo}.zip`)
       } else {
+        // Zapisane `selectedDocs` przechodzą przez alias id wewnątrz
+        // generateDocuments (stare klucze 'cmr' → '01_CMR'). Gdyby mimo to nic
+        // się nie dopasowało, generateDocuments zwróci { failed: [] } i pobranie
+        // wyglądałoby na udane — dlatego pytamy WPROST o nierozwiązane id.
+        const unresolved = findUnresolvedDocIds(full.formData, full.selectedDocs || [])
         const { failed } = await generateDocuments(full.formData, full.selectedDocs || [], undefined, full.meta?.documentLanguage)
         if (failed.length > 0) setDownloadError(t('history.errors.partialGenerate'))
+        else if (unresolved.length > 0) {
+          setDownloadError(t('history.errors.unresolvedDocs', { count: unresolved.length }))
+        }
       }
     } catch (err) {
       console.error('Błąd pobierania dokumentów:', err)
@@ -113,6 +121,13 @@ export default function HistoryPage() {
       return
     }
     try {
+      // Ta sama ochrona co przy pobieraniu całego zestawu: wiersz rozwiniętej
+      // karty niesie `doc.key` z zapisanego engineResult, więc też bywa stary.
+      if (findUnresolvedDocIds(full.formData, [key]).length > 0) {
+        onStatus?.(key, 'error')
+        setDownloadError(t('history.errors.unresolvedDocs', { count: 1 }))
+        return
+      }
       const { failed } = await generateDocuments(full.formData, [key], onStatus, full.meta?.documentLanguage)
       if (failed.length > 0) setDownloadError(t('history.errors.generateOne'))
     } catch (err) {

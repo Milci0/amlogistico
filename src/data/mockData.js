@@ -91,6 +91,9 @@ export const COUNTRIES = [
 
   // ── EFTA / EOG ───────────────────────────────────────────────────
   { code: 'IS', name: 'Islandia', flag: '🇮🇸' },
+  // Strefa Pan-Euro-Med — jedyny kod z documentEngine.js, którego do 2026-08-03
+  // nie dało się wybrać w dropdownie (reguła EUR.1 istniała, ale była martwa).
+  { code: 'FO', name: 'Wyspy Owcze', flag: '🇫🇴' },
   { code: 'LI', name: 'Liechtenstein', flag: '🇱🇮' },
 
   // ── EAEU (Euroazjatycka Unia Gospodarcza) ────────────────────────
