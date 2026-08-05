@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { Radar, Ship, MapPinned } from 'lucide-react'
+import { Radar, Ship, MapPinned, ExternalLink, Leaf } from 'lucide-react'
 import { formatDocumentDate } from '../../utils/formatDate'
 import { mapShipsgoStatus } from '../../utils/shipmentFromSet'
 import { SHIPSGO_EVENT_ICONS, SHIPSGO_EVENT_FALLBACK_ICON } from '../../data/shipsgoEvents'
 import ShipmentStatusBadge from './ShipmentStatusBadge'
+import ShipmentMap from './ShipmentMap'
 
 // Wynik wolnego wyszukiwania „Numer kontenera" — realne dane z ShipsGo Ocean API
 // dla DOWOLNEGO kontenera (nie tylko własnych przesyłek, patrz RealShipmentDetail).
@@ -83,6 +84,12 @@ export default function ShipsGoLookupResult({ data, cached }) {
       </div>
 
       <div className="p-5 space-y-5 bg-white dark:bg-slate-800">
+        <ShipmentMap
+          geojson={data.geojson}
+          accent="amber"
+          fallbackPorts={{ from: data.loadingLocation?.name, to: data.dischargeLocation?.name }}
+        />
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Field icon={MapPinned} label={t('tracking.portOfLoading')}>
             {portFrom || t('tracking.container.shipsgo.etaUnknown')}
@@ -99,6 +106,36 @@ export default function ShipsGoLookupResult({ data, cached }) {
               : (data.carrier?.name || t('tracking.container.shipsgo.vesselUnknown'))}
           </Field>
         </div>
+
+        {(typeof data.transitPercentage === 'number' || typeof data.co2Emission === 'number') && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {typeof data.transitPercentage === 'number' && (
+              <div>
+                <p className="text-[11px] text-gray-400 dark:text-slate-500">
+                  {t('tracking.map.transitProgress')}
+                  {typeof data.transitTime === 'number' && ` · ${t('tracking.map.transitDays', { count: data.transitTime })}`}
+                </p>
+                <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 mt-1.5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-amber-500"
+                    style={{ width: `${Math.min(100, Math.max(0, data.transitPercentage))}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {typeof data.co2Emission === 'number' && (
+              <div className="flex items-start gap-1.5">
+                <Leaf className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" strokeWidth={1.75} />
+                <div>
+                  <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.map.co2')}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-slate-100 mt-0.5">
+                    {t('tracking.map.co2Value', { value: data.co2Emission })}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div>
           <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-3">
@@ -137,6 +174,18 @@ export default function ShipsGoLookupResult({ data, cached }) {
             </div>
           )}
         </div>
+
+        {data.mapToken && (
+          <a
+            href={`https://map.shipsgo.com/ocean/shipments/${data.id}?token=${data.mapToken}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+          >
+            {t('tracking.map.openInShipsgo')}
+            <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
+          </a>
+        )}
       </div>
     </div>
   )

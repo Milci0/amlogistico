@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, RefreshCw } from 'lucide-react'
+import { ArrowLeft, RefreshCw, ExternalLink, Leaf } from 'lucide-react'
 import { BRANCHES } from '../../data/trackingMock'
 import { markDelivered } from '../../services/documentSetsRepo'
 import { getShipsgoStatus, enableTracking, refreshTracking } from '../../services/shipsgoRepo'
 import { mapShipsgoStatus } from '../../utils/shipmentFromSet'
+import { formatDocumentDate } from '../../utils/formatDate'
 import ShipmentStatusBadge from './ShipmentStatusBadge'
 import ShipmentDateline from './ShipmentDateline'
+import ShipmentMap from './ShipmentMap'
 import VoyageDetails from './VoyageDetails'
 import CargoSummary from './CargoSummary'
 import ContainerTrackerBlock from './ContainerTrackerBlock'
@@ -112,6 +114,109 @@ export default function RealShipmentDetail({ shipment }) {
           <ShipmentStatusBadge status={status} />
         </div>
       </div>
+
+      {/* Mapa + dane z ShipsGo — WYŁĄCZNIE gdy śledzenie zostało włączone dla
+          tego zestawu (shipsgo.id). Bez tego nie mamy geometrii trasy ani
+          transit_time/co2 — pokazywanie pustej karty nie miałoby sensu. */}
+      {shipsgo?.id && (shipsgo.loadingDateInitial || shipsgo.dischargeDateInitial) && (
+        <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-4">
+            {t('tracking.map.routeDates')}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {shipsgo.loadingDateInitial && (
+              <div>
+                <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.portOfLoading')}</p>
+                <p className="text-sm mt-0.5">
+                  {shipsgo.eta && shipsgo.eta !== shipsgo.loadingDateInitial && (
+                    <span className="line-through text-gray-400 dark:text-slate-500 mr-2">
+                      {formatDocumentDate(shipsgo.loadingDateInitial)}
+                    </span>
+                  )}
+                  <span className="font-medium text-gray-800 dark:text-slate-100">
+                    {formatDocumentDate(shipsgo.loadingDateInitial)}
+                  </span>
+                </p>
+              </div>
+            )}
+            {shipsgo.dischargeDateInitial && (
+              <div>
+                <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.portOfDischarge')}</p>
+                <p className="text-sm mt-0.5">
+                  {shipsgo.eta && shipsgo.eta !== shipsgo.dischargeDateInitial && (
+                    <span className="line-through text-gray-400 dark:text-slate-500 mr-2">
+                      {formatDocumentDate(shipsgo.dischargeDateInitial)}
+                    </span>
+                  )}
+                  <span className="font-medium text-gray-800 dark:text-slate-100">
+                    {formatDocumentDate(shipsgo.eta || shipsgo.dischargeDateInitial)}
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {shipsgo?.id && (
+        <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6">
+          <ShipmentMap
+            geojson={shipsgo.geojson}
+            accent="emerald"
+            fallbackPorts={{ from: shipsgo.loadingLocation?.name, to: shipsgo.dischargeLocation?.name }}
+          />
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-5">
+            {shipsgo.carrier?.name && (
+              <div>
+                <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.carrier')}</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-slate-100 mt-0.5">
+                  {shipsgo.carrier.name}{shipsgo.carrier.scac ? ` (${shipsgo.carrier.scac})` : ''}
+                </p>
+              </div>
+            )}
+
+            {typeof shipsgo.transitPercentage === 'number' && (
+              <div className="col-span-2 sm:col-span-1">
+                <p className="text-[11px] text-gray-400 dark:text-slate-500">
+                  {t('tracking.map.transitProgress')}
+                  {typeof shipsgo.transitTime === 'number' && ` · ${t('tracking.map.transitDays', { count: shipsgo.transitTime })}`}
+                </p>
+                <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 mt-1.5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500"
+                    style={{ width: `${Math.min(100, Math.max(0, shipsgo.transitPercentage))}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {typeof shipsgo.co2Emission === 'number' && (
+              <div className="flex items-start gap-1.5">
+                <Leaf className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.75} />
+                <div>
+                  <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.map.co2')}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-slate-100 mt-0.5">
+                    {t('tracking.map.co2Value', { value: shipsgo.co2Emission })}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {shipsgo.mapToken && (
+            <a
+              href={`https://map.shipsgo.com/ocean/shipments/${shipsgo.id}?token=${shipsgo.mapToken}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mt-5"
+            >
+              {t('tracking.map.openInShipsgo')}
+              <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Status: notka + akcja — dostępna przy KAŻDYM statusie poza „Dostarczona"
           (user zawsze może wiedzieć więcej niż wyliczony/API status), ale

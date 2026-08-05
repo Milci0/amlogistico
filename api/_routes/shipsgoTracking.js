@@ -20,7 +20,15 @@
 import { Router } from 'express'
 import { prisma } from '../_lib/prisma.js'
 import { requireAuth } from '../_lib/auth.js'
-import { createOceanShipment, getOceanShipment, trimShipmentData } from '../_lib/shipsgo.js'
+import {
+  createOceanShipment,
+  getOceanShipment,
+  getShipmentGeojson,
+  trimShipmentData,
+  trimGeojson,
+  describeShipsgoError,
+} from '../_lib/shipsgo.js'
+import { isValidContainerNumber } from '../_lib/containerChecksum.js'
 import { lookupSchema } from '../_validation/shipsgoTracking.js'
 import { tryConsumeLookup } from '../_lib/shipsgoRateLimit.js'
 
@@ -100,6 +108,22 @@ async function saveShipsgoSnapshot(set, snapshot) {
   return prisma.documentSet.update({ where: { id: set.id }, data: { meta } })
 }
 
+// { code } → odpowiedź HTTP z przyjaznym komunikatem PL (nigdy surowy status/treść
+// ShipsGo — patrz describeShipsgoError). Jedno miejsce dla /enable, /refresh, /lookup.
+function sendShipsgoError(res, result) {
+  const { status, message } = describeShipsgoError(result.code)
+  return res.status(status).json({ error: message })
+}
+
+// Dociąga trasę (GeoJSON) dla świeżo utworzonego/odświeżonego śledzenia — NIE
+// kosztuje kredytu, więc brak wyniku (błąd/timeout) nie blokuje odpowiedzi:
+// front dostaje resztę danych, a mapa spada na fallback tekstowy (brak geojson).
+async function fetchGeojsonSafe(id) {
+  const result = await getShipmentGeojson(id)
+  if (!result.success) return null
+  return trimGeojson(result.data)
+}
+
 // POST /api/shipsgo-tracking/:documentSetId/enable — tworzy śledzenie.
 // KOSZTUJE KREDYT — wywoływane WYŁĄCZNIE na świadomy klik „Włącz śledzenie",
 // nigdy automatycznie. Idempotentne: jeśli set już ma zapisane shipsgo.id,
@@ -122,9 +146,16 @@ router.post('/:documentSetId/enable', async (req, res, next) => {
       return res.status(400).json({ error: 'Zestaw nie ma numeru kontenera' })
     }
 
+    // Bramka PRZED wysłaniem czegokolwiek do ShipsGo (kosztuje kredyt) — numer
+    // zapisany w zestawie mógł być literówką z kreatora, której nikt nie poprawił
+    // (ContainerTrackerBlock tylko OSTRZEGA w UI, nie blokuje zapisu formularza).
+    if (!isValidContainerNumber(containerNo)) {
+      return res.status(400).json({ error: 'Numer kontenera w tym zestawie nie przechodzi walidacji ISO 6346 (błędna cyfra kontrolna). Popraw go w edycji zestawu.' })
+    }
+
     const result = await createOceanShipment({ reference: set.id, containerNumber: containerNo })
     if (!result.success) {
-      return res.status(502).json({ error: result.error || 'ShipsGo nie odpowiedziało' })
+      return sendShipsgoError(res, result)
     }
 
     // Duplikat (409) może nie nieść pełnych danych w ciele odpowiedzi —
@@ -135,6 +166,7 @@ router.post('/:documentSetId/enable', async (req, res, next) => {
     }
 
     const snapshot = trimShipmentData(result.data)
+    snapshot.geojson = await fetchGeojsonSafe(result.data.id)
     await saveShipsgoSnapshot(set, snapshot)
     res.json({ success: true, alreadyEnabled: result.alreadyExists, shipsgo: snapshot })
   } catch (e) {
@@ -165,10 +197,11 @@ router.get('/:documentSetId/refresh', async (req, res, next) => {
 
     const result = await getOceanShipment(existing.id)
     if (!result.success) {
-      return res.status(502).json({ error: result.error || 'ShipsGo nie odpowiedziało' })
+      return sendShipsgoError(res, result)
     }
 
     const snapshot = trimShipmentData(result.data)
+    snapshot.geojson = await fetchGeojsonSafe(existing.id)
     await saveShipsgoSnapshot(set, snapshot)
     res.json({ success: true, fresh: true, shipsgo: snapshot })
   } catch (e) {
@@ -193,6 +226,14 @@ router.post('/lookup', async (req, res, next) => {
     }
     const containerNo = parsed.data.containerNumber
 
+    // Kształt (4 litery + 7 cyfr) już sprawdzony przez lookupSchema — tu dokładamy
+    // cyfrę kontrolną. Front i tak nie woła tego endpointu przy błędnej cyfrze
+    // (patrz ContainerLookup.jsx), ale backend nie ufa temu bez własnej bramki —
+    // to jedyne miejsce w całej integracji, gdzie numer pochodzi wprost od usera.
+    if (!isValidContainerNumber(containerNo)) {
+      return res.status(400).json({ error: 'Nieprawidłowa cyfra kontrolna numeru kontenera (norma ISO 6346). Sprawdź, czy numer jest wpisany poprawnie.' })
+    }
+
     const cached = lookupCache.get(containerNo)
     if (cached && cached.expires > Date.now()) {
       return res.json({ success: true, cached: true, shipsgo: cached.data })
@@ -205,7 +246,7 @@ router.post('/lookup', async (req, res, next) => {
 
     const result = await createOceanShipment({ reference: `freeform-${containerNo}`, containerNumber: containerNo })
     if (!result.success) {
-      return res.status(502).json({ error: result.error || 'ShipsGo nie odpowiedziało' })
+      return sendShipsgoError(res, result)
     }
 
     // Duplikat (409) bez pełnych danych w ciele — rzadki brzeg (patrz komentarz
@@ -216,6 +257,7 @@ router.post('/lookup', async (req, res, next) => {
     }
 
     const snapshot = trimShipmentData(result.data)
+    snapshot.geojson = await fetchGeojsonSafe(result.data.id)
     lookupCache.set(containerNo, { data: snapshot, expires: Date.now() + CHECKED_AT_FRESH_MS })
     res.json({ success: true, cached: false, shipsgo: snapshot })
   } catch (e) {

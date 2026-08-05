@@ -717,6 +717,19 @@
       "notYet": "Jeszcze niepotwierdzona",
       "notProvided": "Data nieuzupełniona"
     },
+    "map": {
+      "noDataTitle": "Brak jeszcze danych o trasie",
+      "noDataBody": "Trasa pojawi się tutaj, gdy ShipsGo potwierdzi pozycję kontenera.",
+      "routeDates": "Daty załadunku i wyładunku",
+      "transitProgress": "Postęp rejsu",
+      "transitDays_one": "{{count}} dzień",
+      "transitDays_few": "{{count}} dni",
+      "transitDays_many": "{{count}} dni",
+      "transitDays_other": "{{count}} dni",
+      "co2": "Szacowane CO2",
+      "co2Value": "{{value}} kg",
+      "openInShipsgo": "Otwórz na mapie ShipsGo"
+    },
     "trackerSection": "Śledzenie u przewoźnika",
     "addContainerNumber": "Dodaj numer kontenera, żeby śledzić przesyłkę.",
     "editSet": "Edytuj zestaw",

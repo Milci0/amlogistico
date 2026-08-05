@@ -711,6 +711,17 @@
       "notYet": "Not yet confirmed",
       "notProvided": "Date not provided"
     },
+    "map": {
+      "noDataTitle": "No route data yet",
+      "noDataBody": "The route will appear here once ShipsGo confirms the container's position.",
+      "routeDates": "Loading and discharge dates",
+      "transitProgress": "Transit progress",
+      "transitDays_one": "{{count}} day",
+      "transitDays_other": "{{count}} days",
+      "co2": "Estimated CO2",
+      "co2Value": "{{value}} kg",
+      "openInShipsgo": "Open on the ShipsGo map"
+    },
     "trackerSection": "Track with the carrier",
     "addContainerNumber": "Add a container number to track this shipment.",
     "editSet": "Edit the set",
