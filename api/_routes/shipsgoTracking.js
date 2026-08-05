@@ -3,10 +3,15 @@
 // funkcji Express (limit funkcji serverless na Vercelu), mount w api/index.js.
 //
 // Cała integracja za flagą SHIPSGO_ENABLED (domyślnie wyłączona — mamy tylko
-// 2 kredyty testowe i czekamy na wycenę). Container number NIGDY nie
-// przychodzi w body żądania — bierzemy go WYŁĄCZNIE z zapisanego DocumentSet,
-// żeby nikt nie mógł podesłać dowolnego numeru i zmarnować kredytu na coś
-// spoza naszych danych.
+// 2 kredyty testowe i czekamy na wycenę). DODATKOWO, dopóki nie wykupimy
+// pakietu, dostęp jest zawężony do SHIPSGO_ALLOWED_EMAILS (lista adresów po
+// przecinku) — nawet gdy SHIPSGO_ENABLED=true na produkcji, zwykli userzy nie
+// zobaczą przycisku. Pusta/nieustawiona SHIPSGO_ALLOWED_EMAILS = brak
+// zawężenia (otwarte dla wszystkich, po wykupieniu pakietu wystarczy ją wyczyścić).
+//
+// Container number NIGDY nie przychodzi w body żądania — bierzemy go
+// WYŁĄCZNIE z zapisanego DocumentSet, żeby nikt nie mógł podesłać dowolnego
+// numeru i zmarnować kredytu na coś spoza naszych danych.
 
 import { Router } from 'express'
 import { prisma } from '../_lib/prisma.js'
@@ -20,16 +25,45 @@ const router = Router()
 const CHECKED_AT_FRESH_MS = 60 * 60 * 1000
 
 function isEnabled() {
-  return !!process.env.SHIPSGO_ENABLED && !!process.env.SHIPSGO_API_TOKEN
+  // Zmienne środowiskowe są zawsze stringiem — !!process.env.SHIPSGO_ENABLED
+  // byłoby prawdą też dla stringa "false" (patrz .env.example). Porównanie
+  // z 'true' jest tu celowo dosłowne.
+  return process.env.SHIPSGO_ENABLED === 'true' && !!process.env.SHIPSGO_API_TOKEN
 }
 
-// GET /api/shipsgo-tracking/status — bez auth (nic wrażliwego), frontend pyta
-// raz przy wejściu w szczegóły przesyłki, żeby wiedzieć czy pokazywać przycisk.
-router.get('/status', (_req, res) => {
-  res.json({ enabled: isEnabled() })
-})
+function getAllowedEmails() {
+  return (process.env.SHIPSGO_ALLOWED_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+}
 
+// Brak/pusta lista = brak zawężenia (wszyscy userzy, docelowy stan po wykupieniu
+// pakietu). Niepusta lista = tylko dopasowane adresy e-mail (case-insensitive).
+async function isUserAllowed(userId) {
+  const allowed = getAllowedEmails()
+  if (allowed.length === 0) return true
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
+  return !!user && allowed.includes(user.email.toLowerCase())
+}
+
+// Wszystkie trasy (także /status) wymagają zalogowania — /status musi znać
+// usera, żeby sprawdzić SHIPSGO_ALLOWED_EMAILS, więc nie może być publiczna.
 router.use(requireAuth)
+
+// GET /api/shipsgo-tracking/status — frontend pyta raz przy wejściu w
+// szczegóły przesyłki, żeby wiedzieć czy pokazywać przycisk. `enabled` tu
+// znaczy „włączone I dostępne dla TEGO usera" — dwa różne powody (flaga
+// globalna / allowlist) dają ten sam wynik z frontu, nie ma potrzeby ich rozróżniać.
+router.get('/status', async (req, res, next) => {
+  try {
+    if (!isEnabled()) return res.json({ enabled: false })
+    const allowed = await isUserAllowed(req.userId)
+    res.json({ enabled: allowed })
+  } catch (e) {
+    next(e)
+  }
+})
 
 // Cudzy/nieistniejący set = 404 (nie ujawniamy istnienia) — ten sam wzorzec co documentSets.js.
 async function loadOwnedSet(req, res) {
@@ -61,6 +95,7 @@ async function saveShipsgoSnapshot(set, snapshot) {
 router.post('/:documentSetId/enable', async (req, res, next) => {
   try {
     if (!isEnabled()) return res.status(503).json({ error: 'Śledzenie ShipsGo jest wyłączone' })
+    if (!(await isUserAllowed(req.userId))) return res.status(403).json({ error: 'Brak dostępu' })
 
     const set = await loadOwnedSet(req, res)
     if (!set) return
@@ -101,6 +136,7 @@ router.post('/:documentSetId/enable', async (req, res, next) => {
 router.get('/:documentSetId/refresh', async (req, res, next) => {
   try {
     if (!isEnabled()) return res.status(503).json({ error: 'Śledzenie ShipsGo jest wyłączone' })
+    if (!(await isUserAllowed(req.userId))) return res.status(403).json({ error: 'Brak dostępu' })
 
     const set = await loadOwnedSet(req, res)
     if (!set) return
