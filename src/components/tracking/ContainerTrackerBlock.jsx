@@ -14,32 +14,25 @@ import AlertBox from '../ui/AlertBox'
 // danych, nie ze świeżo wpisywanego pola) — zostaje jako przełącznik, bo
 // literówka w kreatorze też jest możliwa i warto ją sygnalizować.
 //
-// accent — 'emerald' (domyślny, widok szczegółów własnej przesyłki) albo
-// 'amber' (zakładka „Numer kontenera", akcent dopasowany do Trasy handlowe).
-// Tylko klasy Tailwind, zero logiki — reszta bloku (agregatory, ostrzeżenia) zostaje neutralna.
+// Cała zakładka „Śledzenie ładunku" jest teraz w ciemnym pomarańczu (dopasowanie
+// do Trasy handlowe, pod którym wisi w menu — patrz TrackingPage.jsx), więc na
+// dziś jest tylko jeden akcent. Zostaje jako obiekt/prop (nie stałe klasy) —
+// tania furtka, gdyby kiedyś jednak trzeba było odróżnić dwa miejsca użycia.
 const ACCENTS = {
-  emerald: {
-    recognizedWrap: 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 dark:border-emerald-500',
-    recognizedIcon: 'text-emerald-600 dark:text-emerald-400',
-    recognizedText: 'text-emerald-800 dark:text-emerald-300',
-    linkBorder: 'border-emerald-200 dark:border-emerald-800 hover:border-emerald-400 dark:hover:border-emerald-600',
-    linkBadge: 'text-emerald-600 dark:text-emerald-400',
-    linkIconHover: 'group-hover:text-emerald-500',
-  },
-  amber: {
-    recognizedWrap: 'bg-amber-50 dark:bg-amber-900/30 border-amber-500 dark:border-amber-500',
-    recognizedIcon: 'text-amber-600 dark:text-amber-400',
-    recognizedText: 'text-amber-800 dark:text-amber-300',
-    linkBorder: 'border-amber-200 dark:border-amber-800 hover:border-amber-400 dark:hover:border-amber-600',
-    linkBadge: 'text-amber-600 dark:text-amber-400',
-    linkIconHover: 'group-hover:text-amber-500',
+  orange: {
+    recognizedWrap: 'bg-orange-50 dark:bg-orange-900/30 border-orange-600 dark:border-orange-600',
+    recognizedIcon: 'text-orange-700 dark:text-orange-400',
+    recognizedText: 'text-orange-900 dark:text-orange-300',
+    linkBorder: 'border-orange-200 dark:border-orange-900 hover:border-orange-600 dark:hover:border-orange-700',
+    linkBadge: 'text-orange-700 dark:text-orange-400',
+    linkIconHover: 'group-hover:text-orange-600',
   },
 }
 
-export default function ContainerTrackerBlock({ containerNo, showCheckDigitWarning = true, accent = 'emerald' }) {
+export default function ContainerTrackerBlock({ containerNo, showCheckDigitWarning = true, accent = 'orange' }) {
   const { t } = useTranslation('pages')
   const result = identifyContainer(containerNo)
-  const a = ACCENTS[accent] || ACCENTS.emerald
+  const a = ACCENTS[accent] || ACCENTS.orange
 
   return (
     <div className="space-y-4">

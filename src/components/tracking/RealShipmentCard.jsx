@@ -15,10 +15,10 @@ export default function RealShipmentCard({ shipment }) {
   return (
     <Link
       to={`/tracking?shipmentId=${shipment.id}`}
-      className="flex items-center gap-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all"
+      className="flex items-center gap-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 hover:border-orange-300 dark:hover:border-orange-800 hover:shadow-md transition-all"
     >
-      <div className="shrink-0 w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center" title={t(`tracking.branches.${shipment.branch}`)}>
-        <BranchIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
+      <div className="shrink-0 w-11 h-11 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center" title={t(`tracking.branches.${shipment.branch}`)}>
+        <BranchIcon className="w-5 h-5 text-orange-700 dark:text-orange-400" strokeWidth={1.5} />
       </div>
 
       <div className="min-w-0 flex-1">

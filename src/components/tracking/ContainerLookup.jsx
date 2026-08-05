@@ -12,9 +12,10 @@ import ShipsGoLookupResult from './ShipsGoLookupResult'
 // tu nie trafia do localStorage ani console.log (dane handlowe klienta).
 // WYJĄTEK: gdy ShipsGo jest włączone (SHIPSGO_ENABLED + user na allowlist),
 // numer JEST wysyłany do naszego backendu (patrz lookupContainer) — to jego
-// cel, backend woła realne ShipsGo Ocean API. Amber/orange akcent w tej
-// zakładce celowo — „Śledzenie ładunku" wisi pod „Trasy handlowe" w menu,
-// ten sam akcent co TradeRoutesPage (/routes).
+// cel, backend woła realne ShipsGo Ocean API. Ciemny pomarańcz w tej zakładce
+// celowo — „Śledzenie ładunku" wisi pod „Trasy handlowe" w menu, pokrewny
+// akcent co TradeRoutesPage (/routes), ale wyraźnie ciemniejszy (patrz
+// TrackingPage.jsx, komentarz przy TAB_ACCENT).
 export default function ContainerLookup() {
   const { t } = useTranslation('pages')
   const [input, setInput] = useState('')
@@ -98,7 +99,7 @@ export default function ContainerLookup() {
         <button
           type="submit"
           disabled={lookup.status === 'loading'}
-          className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white transition-colors shrink-0 flex items-center justify-center gap-2"
+          className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-orange-700 hover:bg-orange-800 disabled:opacity-60 text-white transition-colors shrink-0 flex items-center justify-center gap-2"
         >
           {lookup.status === 'loading' && <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />}
           {t('tracking.container.checkButton')}
@@ -123,7 +124,7 @@ export default function ContainerLookup() {
             </AlertBox>
           )}
 
-          <ContainerTrackerBlock containerNo={result.containerNo} accent="amber" />
+          <ContainerTrackerBlock containerNo={result.containerNo} accent="orange" />
         </div>
       )}
 
@@ -134,17 +135,17 @@ export default function ContainerLookup() {
             href={resolveHomeUrl(result.carrier)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between gap-3 p-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-800 hover:border-amber-400 dark:hover:border-amber-600 transition-colors group"
+            className="flex items-center justify-between gap-3 p-4 rounded-xl border border-orange-200 dark:border-orange-900 bg-white dark:bg-slate-800 hover:border-orange-600 dark:hover:border-orange-700 transition-colors group"
           >
             <div className="min-w-0">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {t('tracking.container.directLinkLabel', { carrier: result.carrier.name })}
               </p>
-              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+              <p className="text-xs text-orange-700 dark:text-orange-400 font-medium mt-0.5">
                 {t('tracking.container.directLinkBadge')}
               </p>
             </div>
-            <ExternalLink className="w-4 h-4 text-gray-400 dark:text-slate-500 group-hover:text-amber-500 shrink-0" strokeWidth={1.75} />
+            <ExternalLink className="w-4 h-4 text-gray-400 dark:text-slate-500 group-hover:text-orange-600 shrink-0" strokeWidth={1.75} />
           </a>
         </div>
       )}

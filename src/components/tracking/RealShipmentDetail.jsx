@@ -89,7 +89,7 @@ export default function RealShipmentDetail({ shipment }) {
     <div>
       <Link
         to="/tracking"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-600 dark:text-slate-300 font-medium hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-4"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-600 dark:text-slate-300 font-medium hover:text-orange-700 dark:hover:text-orange-400 transition-colors mb-4"
       >
         <ArrowLeft className="w-4 h-4" strokeWidth={1.8} />
         {t('tracking.backToList')}
@@ -97,8 +97,8 @@ export default function RealShipmentDetail({ shipment }) {
 
       {/* Nagłówek */}
       <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6">
-        <div className="shrink-0 w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
-          <BranchIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
+        <div className="shrink-0 w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
+          <BranchIcon className="w-6 h-6 text-orange-700 dark:text-orange-400" strokeWidth={1.5} />
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">
@@ -162,7 +162,7 @@ export default function RealShipmentDetail({ shipment }) {
         <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6">
           <ShipmentMap
             geojson={shipsgo.geojson}
-            accent="emerald"
+            accent="orange"
             fallbackPorts={{ from: shipsgo.loadingLocation?.name, to: shipsgo.dischargeLocation?.name }}
           />
 
@@ -184,7 +184,7 @@ export default function RealShipmentDetail({ shipment }) {
                 </p>
                 <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 mt-1.5 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-emerald-500"
+                    className="h-full rounded-full bg-orange-600"
                     style={{ width: `${Math.min(100, Math.max(0, shipsgo.transitPercentage))}%` }}
                   />
                 </div>
@@ -193,7 +193,7 @@ export default function RealShipmentDetail({ shipment }) {
 
             {typeof shipsgo.co2Emission === 'number' && (
               <div className="flex items-start gap-1.5">
-                <Leaf className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" strokeWidth={1.75} />
+                <Leaf className="w-3.5 h-3.5 text-orange-600 shrink-0 mt-0.5" strokeWidth={1.75} />
                 <div>
                   <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.map.co2')}</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-slate-100 mt-0.5">
@@ -209,7 +209,7 @@ export default function RealShipmentDetail({ shipment }) {
               href={`https://map.shipsgo.com/ocean/shipments/${shipsgo.id}?token=${shipsgo.mapToken}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mt-5"
+              className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-orange-700 dark:hover:text-orange-400 transition-colors mt-5"
             >
               {t('tracking.map.openInShipsgo')}
               <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
@@ -242,7 +242,7 @@ export default function RealShipmentDetail({ shipment }) {
             disabled={marking}
             className={
               status === 'eta_passed' || status === 'discharged'
-                ? 'mt-3 px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white transition-colors'
+                ? 'mt-3 px-4 py-2 rounded-lg text-sm font-semibold bg-orange-700 hover:bg-orange-800 disabled:opacity-60 text-white transition-colors'
                 : 'mt-3 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-60 transition-colors'
             }
           >
@@ -273,7 +273,7 @@ export default function RealShipmentDetail({ shipment }) {
                   type="button"
                   onClick={handleRefreshTracking}
                   disabled={shipsgoBusy}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 disabled:opacity-60 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-slate-300 hover:text-orange-700 dark:hover:text-orange-400 disabled:opacity-60 transition-colors"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${shipsgoBusy ? 'animate-spin' : ''}`} strokeWidth={1.75} />
                   {shipsgoBusy ? t('tracking.refreshing') : t('tracking.refresh')}
@@ -283,7 +283,7 @@ export default function RealShipmentDetail({ shipment }) {
                   type="button"
                   onClick={handleEnableTracking}
                   disabled={shipsgoBusy}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-700 hover:bg-orange-800 disabled:opacity-60 text-white transition-colors"
                 >
                   {shipsgoBusy ? t('tracking.enabling') : t('tracking.enableTracking')}
                 </button>
@@ -312,7 +312,7 @@ export default function RealShipmentDetail({ shipment }) {
               {t('tracking.addContainerNumber')}{' '}
               <Link
                 to={`/new-document?editId=${shipment.id}`}
-                className="text-emerald-600 dark:text-emerald-400 font-medium hover:underline"
+                className="text-orange-700 dark:text-orange-400 font-medium hover:underline"
               >
                 {t('tracking.editSet')}
               </Link>

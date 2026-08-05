@@ -18,10 +18,10 @@ function TimelineRow({ Icon, filled, title, subtitle, isLast }) {
       <div className="relative shrink-0 flex flex-col items-center">
         <div
           className={`w-10 h-10 rounded-xl flex items-center justify-center
-            ${filled ? 'bg-emerald-50 dark:bg-emerald-900/30' : 'bg-gray-100 dark:bg-slate-700'}`}
+            ${filled ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-gray-100 dark:bg-slate-700'}`}
         >
           <Icon
-            className={`w-5 h-5 ${filled ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-slate-500'}`}
+            className={`w-5 h-5 ${filled ? 'text-orange-700 dark:text-orange-400' : 'text-gray-400 dark:text-slate-500'}`}
             strokeWidth={1.5}
           />
         </div>

@@ -8,9 +8,13 @@ import 'leaflet/dist/leaflet.css'
 // Własny komponent mapy trasy — rysuje GeoJSON zwrócony przez backend
 // (GET /ocean/shipments/{id}/geojson, przycięty w api/_lib/shipsgo.js →
 // trimGeojson). Zero domyślnych niebieskich znaczników Leaflet: markery to
-// własne div-iconki w kolorze akcentu (emerald dla własnych przesyłek w
-// RealShipmentDetail, amber dla wolnego wyszukiwania w ShipsGoLookupResult —
-// ten sam podział co reszta zakładki „Śledzenie ładunku").
+// własne div-iconki w kolorze akcentu.
+//
+// Cała zakładka „Śledzenie ładunku" jest w ciemnym pomarańczu (patrz
+// TrackingPage.jsx) — jeden akcent dla obu widoków (własne przesyłki
+// w RealShipmentDetail i wolne wyszukiwanie w ShipsGoLookupResult). `accent`
+// zostaje jako prop (nie stała klasa) — tania furtka na przyszłość, ten sam
+// wzorzec co ACCENTS w ContainerTrackerBlock.jsx.
 //
 // Kształt GeoJSON-a jest NIEZWERYFIKOWANY bez realnego tokena ShipsGo (patrz
 // uwaga przy trimGeojson) — klasyfikacja punktów jest więc obronna: Point z
@@ -18,7 +22,7 @@ import 'leaflet/dist/leaflet.css'
 // każdy inny Point to port/węzeł trasy. Brak dopasowania nie wywala mapy,
 // tylko renderuje punkt jako port.
 
-const ACCENT_HEX = { emerald: '#059669', amber: '#d97706' }
+const ACCENT_HEX = { orange: '#c2410c' }
 
 function portIconHtml(color) {
   return `<div style="width:22px;height:22px;border-radius:9999px;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.35);"></div>`
@@ -54,9 +58,9 @@ function FitBounds({ points }) {
   return null
 }
 
-export default function ShipmentMap({ geojson, accent = 'emerald', fallbackPorts, height = 'h-64 sm:h-80' }) {
+export default function ShipmentMap({ geojson, accent = 'orange', fallbackPorts, height = 'h-64 sm:h-80' }) {
   const { t } = useTranslation('pages')
-  const color = ACCENT_HEX[accent] || ACCENT_HEX.emerald
+  const color = ACCENT_HEX[accent] || ACCENT_HEX.orange
   const portIcon = useMemo(() => buildIcon(portIconHtml(color), 22), [color])
   const vesselIcon = useMemo(() => buildIcon(vesselIconHtml(color), 28), [color])
 

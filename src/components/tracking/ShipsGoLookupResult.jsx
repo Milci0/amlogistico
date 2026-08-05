@@ -8,8 +8,8 @@ import ShipmentMap from './ShipmentMap'
 
 // Wynik wolnego wyszukiwania „Numer kontenera" — realne dane z ShipsGo Ocean API
 // dla DOWOLNEGO kontenera (nie tylko własnych przesyłek, patrz RealShipmentDetail).
-// Akcent amber/orange (nie emerald jak reszta zakładki „Śledzenie ładunku") —
-// ta zakładka wisi pod „Trasy handlowe" w menu, ten sam akcent co TradeRoutesPage.
+// Ciemny pomarańcz — cała zakładka „Śledzenie ładunku" (patrz TrackingPage.jsx),
+// wisi pod „Trasy handlowe" w menu, pokrewny akcent co TradeRoutesPage.
 
 function Field({ icon: Icon, label, children }) {
   return (
@@ -29,16 +29,16 @@ function TimelineRow({ Icon, filled, title, subtitle, isLast }) {
       <div className="relative shrink-0 flex flex-col items-center">
         <div
           className={`w-9 h-9 rounded-xl flex items-center justify-center
-            ${filled ? 'bg-amber-50 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-slate-700'}`}
+            ${filled ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-gray-100 dark:bg-slate-700'}`}
         >
           <Icon
-            className={`w-4 h-4 ${filled ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-slate-500'}`}
+            className={`w-4 h-4 ${filled ? 'text-orange-700 dark:text-orange-400' : 'text-gray-400 dark:text-slate-500'}`}
             strokeWidth={1.5}
           />
         </div>
         {!isLast && (
           <span
-            className={`w-px flex-1 mt-1 mb-1 ${filled ? 'bg-amber-200 dark:bg-amber-900' : 'border-l border-dashed border-slate-300 dark:border-slate-600'}`}
+            className={`w-px flex-1 mt-1 mb-1 ${filled ? 'bg-orange-300 dark:bg-orange-900' : 'border-l border-dashed border-slate-300 dark:border-slate-600'}`}
             aria-hidden="true"
           />
         )}
@@ -66,16 +66,16 @@ export default function ShipsGoLookupResult({ data, cached }) {
     : null
 
   return (
-    <div className="border border-amber-200 dark:border-amber-900 rounded-xl overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/20">
+    <div className="border border-orange-300 dark:border-orange-900 rounded-xl overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/30 dark:to-amber-900/20">
         <div className="flex items-center gap-2 min-w-0">
-          <Radar className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" strokeWidth={1.75} />
-          <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200 truncate">
+          <Radar className="w-4 h-4 text-orange-700 dark:text-orange-400 shrink-0" strokeWidth={1.75} />
+          <h3 className="text-sm font-semibold text-orange-900 dark:text-orange-200 truncate">
             {t('tracking.container.shipsgo.resultTitle')}
           </h3>
           {status && <ShipmentStatusBadge status={status} />}
         </div>
-        <p className="text-xs text-amber-700/80 dark:text-amber-300/70 shrink-0">
+        <p className="text-xs text-orange-800/80 dark:text-orange-300/70 shrink-0">
           {data.checkedAt
             ? t('tracking.container.shipsgo.checkedAt', { date: formatDocumentDate(data.checkedAt, true) })
             : null}
@@ -86,7 +86,7 @@ export default function ShipsGoLookupResult({ data, cached }) {
       <div className="p-5 space-y-5 bg-white dark:bg-slate-800">
         <ShipmentMap
           geojson={data.geojson}
-          accent="amber"
+          accent="orange"
           fallbackPorts={{ from: data.loadingLocation?.name, to: data.dischargeLocation?.name }}
         />
 
@@ -117,7 +117,7 @@ export default function ShipsGoLookupResult({ data, cached }) {
                 </p>
                 <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 mt-1.5 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-amber-500"
+                    className="h-full rounded-full bg-orange-600"
                     style={{ width: `${Math.min(100, Math.max(0, data.transitPercentage))}%` }}
                   />
                 </div>
@@ -125,7 +125,7 @@ export default function ShipsGoLookupResult({ data, cached }) {
             )}
             {typeof data.co2Emission === 'number' && (
               <div className="flex items-start gap-1.5">
-                <Leaf className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" strokeWidth={1.75} />
+                <Leaf className="w-3.5 h-3.5 text-orange-600 shrink-0 mt-0.5" strokeWidth={1.75} />
                 <div>
                   <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.map.co2')}</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-slate-100 mt-0.5">
@@ -180,7 +180,7 @@ export default function ShipsGoLookupResult({ data, cached }) {
             href={`https://map.shipsgo.com/ocean/shipments/${data.id}?token=${data.mapToken}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-orange-700 dark:hover:text-orange-400 transition-colors"
           >
             {t('tracking.map.openInShipsgo')}
             <ExternalLink className="w-3 h-3" strokeWidth={1.75} />

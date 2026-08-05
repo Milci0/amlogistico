@@ -32,7 +32,7 @@ export default function VoyageDetails({ voyage }) {
   return (
     <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5">
       <div className="flex items-center gap-2 mb-4">
-        <Ship className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
+        <Ship className="w-4 h-4 text-orange-700 dark:text-orange-400" strokeWidth={1.5} />
         <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">
           {t('tracking.voyageDetails')}
         </h3>
