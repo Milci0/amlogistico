@@ -15,7 +15,14 @@ export default function AuthShell({ title, subtitle, children, footer }) {
       </div>
 
       <Link to="/" className="flex items-center gap-2 font-bold text-2xl text-gray-900 dark:text-white mb-6">
-        <span className="bg-emerald-500 text-white rounded-lg w-9 h-9 flex items-center justify-center text-base font-black">A</span>
+        <span className="bg-emerald-500 text-white rounded-lg w-9 h-9 flex items-center justify-center shrink-0">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10h10zM13 8h4l3 4v4h-7V8z" />
+          </svg>
+        </span>
         <span>AM<span className="text-emerald-600">{t('brand.suffix')}</span></span>
       </Link>
 
