@@ -7,6 +7,7 @@ import { markDelivered } from '../../services/documentSetsRepo'
 import { getShipsgoStatus, enableTracking, refreshTracking } from '../../services/shipsgoRepo'
 import { mapShipsgoStatus } from '../../utils/shipmentFromSet'
 import { formatDocumentDate } from '../../utils/formatDate'
+import AlertBox from '../ui/AlertBox'
 import ShipmentStatusBadge from './ShipmentStatusBadge'
 import ShipmentDateline from './ShipmentDateline'
 import ShipmentMap from './ShipmentMap'
@@ -33,6 +34,10 @@ export default function RealShipmentDetail({ shipment }) {
   const [shipsgo, setShipsgo] = useState(shipment.shipsgo)
   const [shipsgoBusy, setShipsgoBusy] = useState(false)
   const [shipsgoError, setShipsgoError] = useState(false)
+  // 'pending' = śledzenie istnieje w ShipsGo, ale dane jeszcze nie dotarły;
+  // 'failed' = numer trwale odrzucony. Oba stany są trwałe po stronie backendu,
+  // więc powrót na tę stronę później pokaże aktualny stan bez nowej opłaty.
+  const [shipsgoState, setShipsgoState] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -57,13 +62,18 @@ export default function RealShipmentDetail({ shipment }) {
     }
   }
 
-  // KOSZTUJE KREDYT po stronie ShipsGo (poza duplikatem) — wyłącznie na klik.
+  function applyTrackingResult(res) {
+    setShipsgoState(res.status || null)
+    if (res.shipsgo) setShipsgo(res.shipsgo)
+  }
+
+  // Może kosztować kredyt, ale tylko gdy ten kontener nie jest jeszcze w
+  // rejestrze (np. sprawdzony wcześniej wyszukiwarką) — wyłącznie na klik.
   async function handleEnableTracking() {
     setShipsgoBusy(true)
     setShipsgoError(false)
     try {
-      const res = await enableTracking(shipment.id)
-      if (res.shipsgo) setShipsgo(res.shipsgo)
+      applyTrackingResult(await enableTracking(shipment.id))
     } catch {
       setShipsgoError(true)
     } finally {
@@ -71,13 +81,12 @@ export default function RealShipmentDetail({ shipment }) {
     }
   }
 
-  // NIE kosztuje kredytu — backend i tak respektuje cooldown (checked_at).
+  // NIE kosztuje kredytu i nigdy nie zakłada nowego śledzenia.
   async function handleRefreshTracking() {
     setShipsgoBusy(true)
     setShipsgoError(false)
     try {
-      const res = await refreshTracking(shipment.id)
-      if (res.shipsgo) setShipsgo(res.shipsgo)
+      applyTrackingResult(await refreshTracking(shipment.id))
     } catch {
       setShipsgoError(true)
     } finally {
@@ -268,7 +277,7 @@ export default function RealShipmentDetail({ shipment }) {
             </div>
 
             {shipsgoAvailable && shipment.voyage.containerNo && (
-              shipsgo?.id ? (
+              (shipsgo?.id || shipsgoState === 'pending') ? (
                 <button
                   type="button"
                   onClick={handleRefreshTracking}
@@ -293,6 +302,18 @@ export default function RealShipmentDetail({ shipment }) {
 
           {shipsgoError && (
             <p className="text-xs text-red-600 dark:text-red-400 mb-3">{t('tracking.shipsgoError')}</p>
+          )}
+
+          {shipsgoState === 'pending' && !shipsgo?.movements?.length && (
+            <div className="mb-3">
+              <AlertBox type="info">{t('tracking.container.shipsgo.pending')}</AlertBox>
+            </div>
+          )}
+
+          {shipsgoState === 'failed' && (
+            <div className="mb-3">
+              <AlertBox type="warning">{t('tracking.container.shipsgo.failed')}</AlertBox>
+            </div>
           )}
 
           <ShipmentDateline dates={shipment.dates} delivered={delivered} movements={shipsgo?.movements} />

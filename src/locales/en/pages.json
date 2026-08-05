@@ -755,7 +755,9 @@
         "etaUnknown": "No data",
         "timelineTitle": "Shipment history",
         "noMovements": "No events recorded yet for this container.",
-        "pending": "Tracking for this container was just created in ShipsGo, try checking again in a moment.",
+        "pending": "Tracking was created, but ShipsGo is still fetching data from the carrier. This usually takes a few minutes. You can close this page and come back later, checking this number again is already free.",
+        "checkAgain": "Check again",
+        "failed": "ShipsGo did not recognize this container number. Check that the number is correct, or try an aggregator below.",
         "rateLimited": "Too many searches in a short time. Try again in about {{minutes}} min.",
         "genericError": "Could not fetch data from ShipsGo. Please try again later."
       }

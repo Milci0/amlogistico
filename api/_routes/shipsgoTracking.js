@@ -9,13 +9,20 @@
 // zobaczą przycisku. Pusta/nieustawiona SHIPSGO_ALLOWED_EMAILS = brak
 // zawężenia (otwarte dla wszystkich, po wykupieniu pakietu wystarczy ją wyczyścić).
 //
+// ── OCHRONA KREDYTÓW (najważniejsza rzecz w tym pliku) ──────────────────────
+// Kredyt ShipsGo płaci się za UTWORZENIE śledzenia, a to samo pudło da się
+// sprawdzić dwiema ścieżkami: wyszukiwarką („Numer kontenera") i przyciskiem
+// „Włącz śledzenie" na własnej przesyłce. Dlatego OBIE ścieżki przechodzą przez
+// ten sam, TRWAŁY rejestr per numer kontenera (container_tracking, patrz
+// api/_lib/containerTrackingRepo.js) i wysyłają do ShipsGo tę samą referencję
+// (containerReference). Wcześniej każda ścieżka miała własną referencję i własny
+// cache w pamięci procesu, przez co ten sam kontener bywał tworzony (i płacony)
+// dwa razy — potwierdzone na koncie ShipsGo dla MMAU1313642 (2026-08-05).
+//
 // Numer kontenera dla /enable i /refresh NIGDY nie przychodzi w body żądania —
 // bierzemy go WYŁĄCZNIE z zapisanego DocumentSet. Wyjątek świadomy: /lookup
-// (zakładka „Numer kontenera") PRZYJMUJE dowolny numer wpisany przez usera —
-// to jego cel (wolne wyszukiwanie). Ochronę kosztową dla /lookup dają: ten sam
-// allowlist co reszta, walidacja kształtu (ISO 6346), cache po numerze i osobny,
-// twardszy rate-limit (patrz api/_lib/shipsgoRateLimit.js) — bo tu KAŻDY
-// dopuszczony user może odpytać o CUDZY kontener, nie tylko swój zapisany.
+// PRZYJMUJE numer wpisany przez usera (to jego cel), a chronią go: allowlist,
+// walidacja ISO 6346, wspólny rejestr powyżej i osobny rate-limit.
 
 import { Router } from 'express'
 import { prisma } from '../_lib/prisma.js'
@@ -27,22 +34,22 @@ import {
   trimShipmentData,
   trimGeojson,
   describeShipsgoError,
+  isPermanentError,
+  containerReference,
 } from '../_lib/shipsgo.js'
 import { isValidContainerNumber } from '../_lib/containerChecksum.js'
 import { lookupSchema } from '../_validation/shipsgoTracking.js'
 import { tryConsumeLookup } from '../_lib/shipsgoRateLimit.js'
+import {
+  getTracking,
+  reserveTracking,
+  saveSnapshot,
+  markFailed,
+  releaseReservation,
+  shouldPoll,
+} from '../_lib/containerTrackingRepo.js'
 
 const router = Router()
-
-// Nie odpytuj ShipsGo ponownie, jeśli ONI SAMI sprawdzili dane mniej niż
-// godzinę temu (checked_at) — kolejne zapytanie i tak zwróciłoby to samo.
-const CHECKED_AT_FRESH_MS = 60 * 60 * 1000
-
-// Cache wyników /lookup po znormalizowanym numerze kontenera (NIE per-user —
-// jeśli dwóch userów sprawdza ten sam kontener, drugi dostaje ten sam wynik za
-// darmo, bez nowego zapytania do ShipsGo). TTL jak CHECKED_AT_FRESH_MS z tego
-// samego powodu. Best-effort w pamięci procesu (patrz uwaga w shipsgoRateLimit.js).
-const lookupCache = new Map()
 
 function isEnabled() {
   // Zmienne środowiskowe są zawsze stringiem — !!process.env.SHIPSGO_ENABLED
@@ -71,6 +78,19 @@ async function isUserAllowed(userId) {
 // usera, żeby sprawdzić SHIPSGO_ALLOWED_EMAILS, więc nie może być publiczna.
 router.use(requireAuth)
 
+// Wspólna bramka dla tras, które mogą sięgnąć do ShipsGo.
+async function ensureAccess(req, res) {
+  if (!isEnabled()) {
+    res.status(503).json({ error: 'Śledzenie ShipsGo jest wyłączone' })
+    return false
+  }
+  if (!(await isUserAllowed(req.userId))) {
+    res.status(403).json({ error: 'Brak dostępu' })
+    return false
+  }
+  return true
+}
+
 // GET /api/shipsgo-tracking/status — frontend pyta raz przy wejściu w
 // szczegóły przesyłki, żeby wiedzieć czy pokazywać przycisk. `enabled` tu
 // znaczy „włączone I dostępne dla TEGO usera" — dwa różne powody (flaga
@@ -78,8 +98,7 @@ router.use(requireAuth)
 router.get('/status', async (req, res, next) => {
   try {
     if (!isEnabled()) return res.json({ enabled: false })
-    const allowed = await isUserAllowed(req.userId)
-    res.json({ enabled: allowed })
+    res.json({ enabled: await isUserAllowed(req.userId) })
   } catch (e) {
     next(e)
   }
@@ -109,37 +128,116 @@ async function saveShipsgoSnapshot(set, snapshot) {
 }
 
 // { code } → odpowiedź HTTP z przyjaznym komunikatem PL (nigdy surowy status/treść
-// ShipsGo — patrz describeShipsgoError). Jedno miejsce dla /enable, /refresh, /lookup.
-function sendShipsgoError(res, result) {
-  const { status, message } = describeShipsgoError(result.code)
+// ShipsGo — patrz describeShipsgoError). Jedno miejsce dla wszystkich tras.
+function sendShipsgoError(res, code) {
+  const { status, message } = describeShipsgoError(code)
   return res.status(status).json({ error: message })
 }
 
-// Dociąga trasę (GeoJSON) dla świeżo utworzonego/odświeżonego śledzenia — NIE
-// kosztuje kredytu, więc brak wyniku (błąd/timeout) nie blokuje odpowiedzi:
-// front dostaje resztę danych, a mapa spada na fallback tekstowy (brak geojson).
+// Dociąga trasę (GeoJSON). NIE kosztuje kredytu, więc brak wyniku nie blokuje
+// odpowiedzi: front dostaje resztę danych, a mapa spada na fallback tekstowy.
 async function fetchGeojsonSafe(id) {
   const result = await getShipmentGeojson(id)
   if (!result.success) return null
   return trimGeojson(result.data)
 }
 
-// POST /api/shipsgo-tracking/:documentSetId/enable — tworzy śledzenie.
-// KOSZTUJE KREDYT — wywoływane WYŁĄCZNIE na świadomy klik „Włącz śledzenie",
-// nigdy automatycznie. Idempotentne: jeśli set już ma zapisane shipsgo.id,
-// nic nie wołamy (chroni przed podwójnym kliknięciem/race conditionem).
+// Kształt odpowiedzi WSPÓLNY dla /lookup, /enable i /refresh — front ma jeden
+// zestaw stanów do obsłużenia niezależnie od tego, którą ścieżką przyszedł.
+//   status: 'ready'   → `shipsgo` niesie dane do wyświetlenia
+//           'pending' → utworzone w ShipsGo, dane jeszcze nie gotowe; wróć później
+//           'failed'  → ShipsGo trwale odrzuciło ten numer
+function trackingResponse(row) {
+  return {
+    success: true,
+    status: row.status,
+    shipsgo: row.snapshot ?? null,
+    createdAt: row.createdAt,
+    lastPolledAt: row.lastPolledAt,
+  }
+}
+
+// Odpytuje ShipsGo o istniejące śledzenie i zapisuje wynik (GET, bez kredytu).
+// Zwraca zaktualizowany wiersz albo, przy błędzie przejściowym, ten sprzed próby
+// — user zobaczy wtedy ostatnie znane dane zamiast błędu.
+async function pollAndSave(row) {
+  const result = await getOceanShipment(row.shipsgoId)
+  if (!result.success) {
+    if (isPermanentError(result.code)) return markFailed(row.containerNo, result.code)
+    return row
+  }
+  const snapshot = trimShipmentData(result.data)
+  if (snapshot) snapshot.geojson = await fetchGeojsonSafe(row.shipsgoId)
+  return saveSnapshot(row.containerNo, result.data?.id ?? row.shipsgoId, snapshot)
+}
+
+// Tworzy śledzenie w ShipsGo. KOSZTUJE KREDYT. Wywoływane WYŁĄCZNIE gdy
+// reserveTracking() potwierdziło, że tego kontenera jeszcze u nas nie ma.
+// Zwraca wiersz albo { error } z kodem do pokazania userowi.
+async function createAndSave(containerNo) {
+  const result = await createOceanShipment({
+    reference: containerReference(containerNo),
+    containerNumber: containerNo,
+  })
+
+  if (!result.success) {
+    // Trwały błąd zostaje w bazie jako `failed` (nie próbuj w kółko), przejściowy
+    // kasuje rezerwację, żeby pusty wiersz nie zablokował kontenera na zawsze.
+    if (isPermanentError(result.code)) {
+      await markFailed(containerNo, result.code)
+    } else {
+      await releaseReservation(containerNo)
+    }
+    return { error: result.code }
+  }
+
+  const shipsgoId = result.data?.id ?? null
+  const snapshot = shipsgoId ? trimShipmentData(result.data) : null
+  if (snapshot) snapshot.geojson = await fetchGeojsonSafe(shipsgoId)
+  return { row: await saveSnapshot(containerNo, shipsgoId, snapshot) }
+}
+
+// Wspólny rdzeń dla /lookup i /enable: zwraca istniejące dane, dopytuje ShipsGo
+// gdy wypada, a płatne utworzenie robi TYLKO gdy tego kontenera nie ma jeszcze
+// w rejestrze. `allowCreate=false` pozwala odczytać stan bez ryzyka opłaty.
+async function resolveTracking(containerNo, { allowCreate, onBeforeCreate }) {
+  const existing = await getTracking(containerNo)
+
+  if (existing) {
+    const row = shouldPoll(existing) ? await pollAndSave(existing) : existing
+    return { row }
+  }
+
+  if (!allowCreate) return { row: null }
+
+  const reservation = await reserveTracking(containerNo)
+  if (!reservation.created) {
+    // Ktoś nas ubiegł między odczytem a rezerwacją — użyj jego wiersza.
+    return { row: reservation.row }
+  }
+
+  // Limit kosztowy konsumujemy dopiero TU: przed nami jest już pewność, że to
+  // realnie nowe, płatne utworzenie, a nie odczyt istniejącego śledzenia.
+  if (onBeforeCreate) {
+    const gate = await onBeforeCreate()
+    if (!gate.ok) {
+      await releaseReservation(containerNo)
+      return { gateError: gate }
+    }
+  }
+
+  return createAndSave(containerNo)
+}
+
+// POST /api/shipsgo-tracking/:documentSetId/enable — włącza śledzenie dla
+// własnej przesyłki. Może kosztować kredyt, ale tylko gdy tego kontenera nie ma
+// jeszcze w rejestrze (np. sprawdzonego wcześniej wyszukiwarką).
 router.post('/:documentSetId/enable', async (req, res, next) => {
   try {
-    if (!isEnabled()) return res.status(503).json({ error: 'Śledzenie ShipsGo jest wyłączone' })
-    if (!(await isUserAllowed(req.userId))) return res.status(403).json({ error: 'Brak dostępu' })
+    if (!(await ensureAccess(req, res))) return
 
     const set = await loadOwnedSet(req, res)
     if (!set) return
-
-    const existing = set.meta?.shipment?.shipsgo
-    if (existing?.id) {
-      return res.json({ success: true, alreadyEnabled: true, shipsgo: existing })
-    }
 
     const containerNo = set.meta?.shipment?.containerNo
     if (!containerNo) {
@@ -153,57 +251,42 @@ router.post('/:documentSetId/enable', async (req, res, next) => {
       return res.status(400).json({ error: 'Numer kontenera w tym zestawie nie przechodzi walidacji ISO 6346 (błędna cyfra kontrolna). Popraw go w edycji zestawu.' })
     }
 
-    const result = await createOceanShipment({ reference: set.id, containerNumber: containerNo })
-    if (!result.success) {
-      return sendShipsgoError(res, result)
-    }
+    const { row, error } = await resolveTracking(containerNo, { allowCreate: true })
+    if (error) return sendShipsgoError(res, error)
 
-    // Duplikat (409) może nie nieść pełnych danych w ciele odpowiedzi —
-    // wtedy nie mamy jeszcze `id` do zapisania i klient musi kliknąć „Odśwież"
-    // po tym, jak sami dociągniemy śledzenie po stronie ShipsGo (rzadki brzeg).
-    if (!result.data?.id) {
-      return res.json({ success: true, alreadyEnabled: result.alreadyExists, shipsgo: null })
-    }
+    // Zestaw dostaje kopię migawki, żeby lista przesyłek i szczegóły działały
+    // bez odpytywania rejestru per wpis (i żeby migawka audytowa była kompletna).
+    if (row.snapshot) await saveShipsgoSnapshot(set, row.snapshot)
 
-    const snapshot = trimShipmentData(result.data)
-    snapshot.geojson = await fetchGeojsonSafe(result.data.id)
-    await saveShipsgoSnapshot(set, snapshot)
-    res.json({ success: true, alreadyEnabled: result.alreadyExists, shipsgo: snapshot })
+    res.json(trackingResponse(row))
   } catch (e) {
     next(e)
   }
 })
 
 // GET /api/shipsgo-tracking/:documentSetId/refresh — dociąga świeże dane.
-// NIE kosztuje kredytu, ale i tak respektujemy checked_at (patrz CHECKED_AT_FRESH_MS)
-// — po co odpytywać ponownie, jeśli ShipsGo sam jeszcze nie zdążył sprawdzić.
+// NIE kosztuje kredytu i NIGDY nie tworzy nowego śledzenia (allowCreate:false):
+// jeśli tego kontenera nie ma w rejestrze, user musi świadomie kliknąć „Włącz".
 router.get('/:documentSetId/refresh', async (req, res, next) => {
   try {
-    if (!isEnabled()) return res.status(503).json({ error: 'Śledzenie ShipsGo jest wyłączone' })
-    if (!(await isUserAllowed(req.userId))) return res.status(403).json({ error: 'Brak dostępu' })
+    if (!(await ensureAccess(req, res))) return
 
     const set = await loadOwnedSet(req, res)
     if (!set) return
 
-    const existing = set.meta?.shipment?.shipsgo
-    if (!existing?.id) {
+    const containerNo = set.meta?.shipment?.containerNo
+    if (!containerNo) {
+      return res.status(400).json({ error: 'Zestaw nie ma numeru kontenera' })
+    }
+
+    const { row } = await resolveTracking(containerNo, { allowCreate: false })
+    if (!row) {
       return res.status(400).json({ error: 'Śledzenie nie zostało jeszcze włączone dla tego zestawu' })
     }
 
-    const checkedAt = existing.checkedAt ? new Date(existing.checkedAt).getTime() : 0
-    if (Date.now() - checkedAt < CHECKED_AT_FRESH_MS) {
-      return res.json({ success: true, fresh: false, shipsgo: existing })
-    }
+    if (row.snapshot) await saveShipsgoSnapshot(set, row.snapshot)
 
-    const result = await getOceanShipment(existing.id)
-    if (!result.success) {
-      return sendShipsgoError(res, result)
-    }
-
-    const snapshot = trimShipmentData(result.data)
-    snapshot.geojson = await fetchGeojsonSafe(existing.id)
-    await saveShipsgoSnapshot(set, snapshot)
-    res.json({ success: true, fresh: true, shipsgo: snapshot })
+    res.json(trackingResponse(row))
   } catch (e) {
     next(e)
   }
@@ -211,14 +294,12 @@ router.get('/:documentSetId/refresh', async (req, res, next) => {
 
 // POST /api/shipsgo-tracking/lookup — wolne wyszukiwanie po numerze kontenera
 // wpisanym w zakładce „Numer kontenera" (nie wymaga zapisanego DocumentSet).
-// KOSZTUJE KREDYT przy pierwszym sprawdzeniu danego kontenera (poza duplikatem
-// po stronie ShipsGo, który jest darmowy) — dlatego kolejność bramek: allowlist
-// → kształt numeru → CACHE → dopiero na końcu rate-limit + realne wywołanie,
-// żeby trafienie w cache nigdy nie zużywało limitu.
+// Kolejność bramek: dostęp → kształt numeru → cyfra kontrolna → rejestr →
+// dopiero na końcu rate-limit i płatne utworzenie (patrz onBeforeCreate), żeby
+// odczyt istniejącego śledzenia nigdy nie zużywał limitu ani kredytu.
 router.post('/lookup', async (req, res, next) => {
   try {
-    if (!isEnabled()) return res.status(503).json({ error: 'Śledzenie ShipsGo jest wyłączone' })
-    if (!(await isUserAllowed(req.userId))) return res.status(403).json({ error: 'Brak dostępu' })
+    if (!(await ensureAccess(req, res))) return
 
     const parsed = lookupSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -234,32 +315,20 @@ router.post('/lookup', async (req, res, next) => {
       return res.status(400).json({ error: 'Nieprawidłowa cyfra kontrolna numeru kontenera (norma ISO 6346). Sprawdź, czy numer jest wpisany poprawnie.' })
     }
 
-    const cached = lookupCache.get(containerNo)
-    if (cached && cached.expires > Date.now()) {
-      return res.json({ success: true, cached: true, shipsgo: cached.data })
-    }
+    const { row, error, gateError } = await resolveTracking(containerNo, {
+      allowCreate: true,
+      onBeforeCreate: async () => {
+        const limit = tryConsumeLookup(req.userId)
+        return limit.ok ? { ok: true } : { ok: false, retryAfter: limit.retryAfter }
+      },
+    })
 
-    const limit = tryConsumeLookup(req.userId)
-    if (!limit.ok) {
-      return res.status(429).json({ error: 'Zbyt wiele wyszukiwań w krótkim czasie', retryAfter: limit.retryAfter })
+    if (gateError) {
+      return res.status(429).json({ error: 'Zbyt wiele wyszukiwań w krótkim czasie', retryAfter: gateError.retryAfter })
     }
+    if (error) return sendShipsgoError(res, error)
 
-    const result = await createOceanShipment({ reference: `freeform-${containerNo}`, containerNumber: containerNo })
-    if (!result.success) {
-      return sendShipsgoError(res, result)
-    }
-
-    // Duplikat (409) bez pełnych danych w ciele — rzadki brzeg (patrz komentarz
-    // w createOceanShipment). Nie mamy `id`, więc nie ma czego cache'ować ani
-    // zwrócić — front prosi usera o ponowną próbę za chwilę.
-    if (!result.data?.id) {
-      return res.json({ success: true, cached: false, shipsgo: null, pending: true })
-    }
-
-    const snapshot = trimShipmentData(result.data)
-    snapshot.geojson = await fetchGeojsonSafe(result.data.id)
-    lookupCache.set(containerNo, { data: snapshot, expires: Date.now() + CHECKED_AT_FRESH_MS })
-    res.json({ success: true, cached: false, shipsgo: snapshot })
+    res.json(trackingResponse(row))
   } catch (e) {
     next(e)
   }

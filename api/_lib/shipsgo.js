@@ -10,7 +10,14 @@
 // ok. 100 req/min na całą firmę — cache/cooldown trzyma api/_routes/shipsgoTracking.js.
 
 const SHIPSGO_API_URL = 'https://api.shipsgo.com/v2'
+
+// Tworzenie sledzenia potrafi trwac dluzej niz zwykly odczyt, bo ShipsGo
+// dociaga dane od przewoznika. Przy 10 s nasz serwer poddawal sie ZANIM przyszla
+// odpowiedz, pokazywal userowi blad, a sledzenie i tak powstawalo po ich stronie
+// (i kosztowalo kredyt) — user placil i nie widzial nic. Funkcja na Vercelu ma
+// maxDuration 60 s (vercel.json), wiec 25 s miesci sie z zapasem na reszte obslugi.
 const TIMEOUT_MS = 10000
+const CREATE_TIMEOUT_MS = 25000
 
 function getToken() {
   const token = process.env.SHIPSGO_API_TOKEN
@@ -58,18 +65,37 @@ export function describeShipsgoError(code) {
   return ERROR_DESCRIPTIONS[code] || ERROR_DESCRIPTIONS.UNKNOWN
 }
 
+// Blad TRWALY = wina samego numeru kontenera; ponawianie nic nie da, a kazda
+// proba to ryzyko kolejnego kredytu. Reszta (siec, timeout, 429, 402, 401) jest
+// PRZEJSCIOWA: po ustaniu przyczyny ten sam numer ma prawo sprobowac ponownie.
+// Rozroznienie decyduje, czy w container_tracking zostaje `failed`, czy wiersz
+// jest kasowany (patrz releaseReservation w containerTrackingRepo.js).
+export function isPermanentError(code) {
+  return code === 'NOT_FOUND' || code === 'VALIDATION'
+}
+
+// Jedna, wspolna „etykieta" kontenera wysylana do ShipsGo z OBU sciezek
+// aplikacji. Wczesniej wyszukiwarka slala `freeform-{numer}`, a „Wlacz
+// sledzenie" slalo id zestawu dokumentow — ShipsGo widzialo dwa rozne
+// `reference` dla tego samego pudla i liczylo DWA osobne, platne sledzenia
+// (potwierdzone na koncie: MMAU1313642 utworzony dwukrotnie, 2026-08-05).
+export function containerReference(containerNo) {
+  return `container-${containerNo}`
+}
+
 async function shipsgoFetch(path, options = {}) {
+  const { timeoutMs = TIMEOUT_MS, ...fetchOptions } = options
   const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   try {
     const res = await fetch(`${SHIPSGO_API_URL}${path}`, {
-      ...options,
+      ...fetchOptions,
       signal: ctrl.signal,
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
         'X-Shipsgo-User-Token': getToken(),
-        ...options.headers,
+        ...fetchOptions.headers,
       },
     })
     return res
@@ -87,6 +113,7 @@ export async function createOceanShipment({ reference, containerNumber }) {
     const res = await shipsgoFetch('/ocean/shipments', {
       method: 'POST',
       body: JSON.stringify({ reference, container_number: containerNumber }),
+      timeoutMs: CREATE_TIMEOUT_MS,
     })
 
     if (res.status === 409) {

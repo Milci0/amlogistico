@@ -21,28 +21,36 @@ export async function getShipsgoStatus() {
   }
 }
 
-// enableTracking(documentSetId) -> Promise<{ success, alreadyEnabled, shipsgo }>
-//   KOSZTUJE KREDYT po stronie ShipsGo (poza duplikatem) — wołaj WYŁĄCZNIE
-//   na świadomy klik użytkownika, nigdy automatycznie.
+// Wszystkie trzy funkcje niżej zwracają ten sam kształt:
+//   { success, status, shipsgo, createdAt, lastPolledAt }
+// gdzie `status` to:
+//   'ready'   — `shipsgo` niesie dane do wyświetlenia
+//   'pending' — śledzenie istnieje w ShipsGo, ale dane jeszcze się nie pojawiły;
+//               wróć później, kolejne sprawdzenie TEGO SAMEGO numeru nie kosztuje
+//   'failed'  — ShipsGo trwale odrzuciło ten numer (nie ponawiamy automatycznie)
+
+// enableTracking(documentSetId)
+//   Może kosztować kredyt, ale TYLKO gdy tego kontenera nie ma jeszcze we
+//   wspólnym rejestrze (np. sprawdzonego wcześniej wyszukiwarką). Wołaj
+//   WYŁĄCZNIE na świadomy klik użytkownika, nigdy automatycznie.
 export async function enableTracking(documentSetId) {
   return api.post(`/shipsgo-tracking/${documentSetId}/enable`)
 }
 
-// refreshTracking(documentSetId) -> Promise<{ success, fresh, shipsgo }>
-//   NIE kosztuje kredytu. `fresh:false` = backend oddał cache bez odpytywania
-//   ShipsGo (ich dane i tak nie zdążyły się zmienić — patrz CHECKED_AT_FRESH_MS).
+// refreshTracking(documentSetId)
+//   NIE kosztuje kredytu i nigdy nie tworzy nowego śledzenia — jeśli kontener
+//   nie jest jeszcze śledzony, backend zwraca 400 zamiast płatnie go zakładać.
 export async function refreshTracking(documentSetId) {
   return api.get(`/shipsgo-tracking/${documentSetId}/refresh`)
 }
 
-// lookupContainer(containerNumber) -> Promise<{ success, cached, pending?, shipsgo }>
+// lookupContainer(containerNumber)
 //   Wolne wyszukiwanie w zakładce „Numer kontenera" — DOWOLNY numer, nie musi
-//   pochodzić z Twojego zestawu dokumentów. KOSZTUJE KREDYT przy pierwszym
-//   sprawdzeniu danego kontenera (backend cache'uje wynik per numer, kolejne
-//   sprawdzenia tego samego numeru — także przez innych userów — są darmowe
-//   przez godzinę). Wołaj WYŁĄCZNIE na świadomy klik „Sprawdź", nigdy
-//   automatycznie przy wpisywaniu. Rzuca ApiError (429/400/403/502/503) —
-//   wywołujący łapie i pokazuje komunikat z err.message.
+//   pochodzić z Twojego zestawu dokumentów. Kosztuje kredyt tylko przy PIERWSZYM
+//   sprawdzeniu danego kontenera (trwały rejestr w bazie, wspólny dla wszystkich
+//   userów i obu ścieżek w aplikacji). Wołaj WYŁĄCZNIE na świadomy klik
+//   „Sprawdź". Rzuca ApiError (429/400/403/502/503) — wywołujący łapie
+//   i pokazuje komunikat z err.message.
 export async function lookupContainer(containerNumber) {
   return api.post('/shipsgo-tracking/lookup', { containerNumber })
 }

@@ -763,7 +763,9 @@
         "etaUnknown": "Brak danych",
         "timelineTitle": "Historia przesyłki",
         "noMovements": "Brak jeszcze zarejestrowanych zdarzeń dla tego kontenera.",
-        "pending": "Śledzenie tego kontenera zostało dopiero co utworzone w ShipsGo, spróbuj sprawdzić ponownie za chwilę.",
+        "pending": "Śledzenie zostało utworzone, ale ShipsGo wciąż pobiera dane od przewoźnika. Zwykle trwa to kilka minut. Możesz zamknąć tę stronę i wrócić później, kolejne sprawdzenie tego numeru jest już bezpłatne.",
+        "checkAgain": "Sprawdź ponownie",
+        "failed": "ShipsGo nie rozpoznało tego numeru kontenera. Sprawdź, czy numer jest poprawny, albo spróbuj w agregatorze poniżej.",
         "rateLimited": "Zbyt wiele wyszukiwań w krótkim czasie. Spróbuj ponownie za ok. {{minutes}} min.",
         "genericError": "Nie udało się pobrać danych z ShipsGo. Spróbuj ponownie później."
       }

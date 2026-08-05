@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, ExternalLink, Loader2 } from 'lucide-react'
+import { Search, ExternalLink, Loader2, RefreshCw } from 'lucide-react'
 import { findCarrierByName, resolveHomeUrl } from '../../data/containerPrefixes'
 import { analyzeContainerNumber } from '../../utils/containerNumber'
 import { getShipsgoStatus, lookupContainer } from '../../services/shipsgoRepo'
@@ -63,21 +63,28 @@ export default function ContainerLookup() {
     // warto wydawać na niego jednego z dwóch testowych kredytów.
     const analysis = analyzeContainerNumber(trimmed)
     if (shipsgoAvailable && analysis.valid === true) {
-      setLookup({ status: 'loading', data: null, cached: false, error: null })
-      try {
-        const res = await lookupContainer(analysis.normalized)
-        if (res.shipsgo) {
-          setLookup({ status: 'done', data: res.shipsgo, cached: !!res.cached, error: null })
-        } else if (res.pending) {
-          setLookup({ status: 'pending', data: null, cached: false, error: null })
-        } else {
-          setLookup({ status: 'idle', data: null, cached: false, error: null })
-        }
-      } catch (err) {
-        setLookup({ status: 'error', data: null, cached: false, error: err })
-      }
+      await runLookup(analysis.normalized)
     } else {
       setLookup({ status: 'idle', data: null, cached: false, error: null })
+    }
+  }
+
+  // Ponowne sprawdzenie TEGO SAMEGO numeru nie tworzy nowego śledzenia i nie
+  // kosztuje kredytu (backend trzyma trwały rejestr per kontener), więc przy
+  // stanie „w przetwarzaniu" user może bezpiecznie kliknąć „Sprawdź ponownie".
+  async function runLookup(normalized) {
+    setLookup({ status: 'loading', data: null, cached: false, error: null })
+    try {
+      const res = await lookupContainer(normalized)
+      if (res.status === 'ready' && res.shipsgo) {
+        setLookup({ status: 'done', data: res.shipsgo, cached: false, error: null, containerNo: normalized })
+      } else if (res.status === 'failed') {
+        setLookup({ status: 'failed', data: null, cached: false, error: null, containerNo: normalized })
+      } else {
+        setLookup({ status: 'pending', data: null, cached: false, error: null, containerNo: normalized })
+      }
+    } catch (err) {
+      setLookup({ status: 'error', data: null, cached: false, error: err, containerNo: normalized })
     }
   }
 
@@ -112,7 +119,22 @@ export default function ContainerLookup() {
             <ShipsGoLookupResult data={lookup.data} cached={lookup.cached} />
           )}
           {lookup.status === 'pending' && (
-            <AlertBox type="info">{t('tracking.container.shipsgo.pending')}</AlertBox>
+            <AlertBox type="info">
+              <div>
+                <p>{t('tracking.container.shipsgo.pending')}</p>
+                <button
+                  type="button"
+                  onClick={() => runLookup(lookup.containerNo)}
+                  className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-orange-800 dark:text-orange-300 hover:underline"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.75} />
+                  {t('tracking.container.shipsgo.checkAgain')}
+                </button>
+              </div>
+            </AlertBox>
+          )}
+          {lookup.status === 'failed' && (
+            <AlertBox type="warning">{t('tracking.container.shipsgo.failed')}</AlertBox>
           )}
           {lookup.status === 'error' && (
             <AlertBox type="warning">
