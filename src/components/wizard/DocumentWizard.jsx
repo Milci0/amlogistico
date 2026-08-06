@@ -224,24 +224,6 @@ function Step1({ data, setData, multimodal, setMultimodal, onTransportChange, on
         ))}
       </div>
 
-      {/* Checkbox znika przy gałęzi „Multimodalny": tam multimodalność wynika już
-          z wyboru środka transportu, więc pytanie o nią byłoby powtórzeniem —
-          zastępuje ją pytanie o strukturę umowy poniżej. */}
-      {!isMultimodal && (
-        <label className="flex items-start gap-3 p-3.5 mb-5 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
-          <input
-            type="checkbox"
-            className="mt-0.5 w-4 h-4 accent-emerald-600 cursor-pointer flex-shrink-0"
-            checked={!!data.multimodal}
-            onChange={e => setData(d => ({ ...d, multimodal: e.target.checked }))}
-          />
-          <div>
-            <p className="text-sm font-medium text-gray-800 dark:text-slate-200">{t('route.multimodal.label')}</p>
-            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{t('route.multimodal.hint')}</p>
-          </div>
-        </label>
-      )}
-
       {/* Pytanie „Jak zorganizowany jest przewóz?" — rozwija się pod kafelkami
           wyłącznie dla gałęzi Multimodalny. Żadna opcja nie jest zaznaczona
           domyślnie (patrz initMultimodal w wizardState.js) — walidacja w
@@ -1448,9 +1430,9 @@ export default function DocumentWizard() {
     setRoute(r => ({
       ...r,
       transport: nextMode,
-      // Gałąź „Multimodalny" z definicji jest multimodalna — checkbox znika,
-      // więc flagę ustawiamy tutaj, żeby dobór dokumentów ją widział.
-      multimodal: nextMode === 'multimodal' ? true : r.multimodal,
+      // Bez osobnego checkboxa flaga multimodal jest 1:1 pochodną karty
+      // transportu — silnik doboru dokumentów widzi ją stąd.
+      multimodal: nextMode === 'multimodal',
     }))
     setPendingTransport(null)
   }

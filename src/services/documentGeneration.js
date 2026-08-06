@@ -151,43 +151,82 @@ export function getDocsForSnapshot(snapshot) {
   ]
 }
 
-// ── Etapy przewozu multimodalnego → carrierLegs szablonu MTD ───────────────────
+// ── Etapy przewozu multimodalnego → wiersze tabeli MTD ─────────────────────────
 //
-// Struktura data.carrierLegs.{preCarriage,mainCarriage,onCarriage} istniała już
-// wcześniej (Multimodal Transport Document) i JEST zachowana — krok „Towar" tylko
-// ją teraz zasila. Odwzorowanie listy etapów na trzy pola jest deterministyczne:
+// Zastępuje dawne trzy stałe sloty (preCarriage/mainCarriage/onCarriage)
+// wypełniane ślepo wg indeksu/liczby etapów, bez patrzenia na tryb czy
+// geografię. Nowa reguła:
 //
-//   1 etap   → mainCarriage
-//   2 etapy  → preCarriage + mainCarriage
-//   3+ etapy → pierwszy = preCarriage, drugi = mainCarriage, ostatni = onCarriage
+//   - dokładnie 3 etapy               → Pre-carriage / Main-carriage / On-carriage
+//     (struktura stała, tak jak w oryginalnym MTD — niezależna od trybu)
+//   - inna liczba etapów, JEST sea/air → pierwszy znaleziony etap sea/air to
+//     Main-carriage; wszystko przed nim to Pre-carriage (numerowane gdy >1),
+//     wszystko po nim to On-carriage (numerowane gdy >1)
+//   - inna liczba etapów, BRAK sea/air → sekwencyjne „Leg 1", „Leg 2"... BEZ
+//     etykiet Pre/Main/On — te mają sens tylko względem głównego odcinka
+//     morskiego/lotniczego (MTD bywa weryfikowany wg UCP 600), więc wymuszanie
+//     ich przy czysto drogowo-kolejowym łańcuchu byłoby mylące
 //
-// Gdy user nie wypełnił żadnego etapu, zostaje dotychczasowe zachowanie:
-// przewoźnik z Kroku „Strony" ląduje w mainCarriage.
-function buildCarrierLegs(multimodal, carrier) {
-  const empty = { name: '', address: '', vatNumber: '' }
-  const fromCarrierField = (leg) => (leg?.carrier ? { name: leg.carrier, address: '', vatNumber: '' } : empty)
-
+// Place of Receipt = „Skąd" pierwszego wiersza, Place of Delivery = „Dokąd"
+// ostatniego — zawsze, niezależnie od wariantu. POL/POD (Port of Loading/
+// Discharge) mają sens wyłącznie przy Main-carriage, więc pojawiają się TYLKO
+// tam; w wariancie „Leg 1/2/3" zostają puste na wszystkich wierszach.
+// „Dokąd" etapu N i „Skąd" etapu N+1 to ten sam punkt przeładunku — gdy jedno
+// jest puste, bierzemy drugie.
+//
+// Brak etapów w ogóle traktujemy jak wariant „bez sea/air": jeden neutralny
+// wiersz „Leg 1" z przewoźnikiem z Kroku „Strony" (dotychczasowy fallback).
+function buildTransportLegRows(multimodal, carrier) {
   const legs = (multimodal?.legs || []).filter((l) => l && (l.carrier || l.from || l.to || l.mode))
-  const fallbackMain = {
-    name: carrier.name,
-    address: carrier.address,
-    vatNumber: carrier.vat,
-  }
+  const fallbackCarrier = { carrierName: carrier.name, carrierAddress: carrier.address, carrierVatNumber: carrier.vat }
+  const carrierFrom = (leg) => ({ carrierName: leg?.carrier || '', carrierAddress: '', carrierVatNumber: '' })
 
   if (legs.length === 0) {
-    return { preCarriage: empty, mainCarriage: fallbackMain, onCarriage: empty }
+    return [{
+      label: 'Leg 1',
+      mode: '',
+      placeOfReceipt: '',
+      pol: '',
+      pod: '',
+      placeOfDelivery: '',
+      ...fallbackCarrier,
+    }]
   }
-  if (legs.length === 1) {
-    return { preCarriage: empty, mainCarriage: fromCarrierField(legs[0]), onCarriage: empty }
+
+  const boundaryBefore = (i) => (i === 0 ? legs[0].from || '' : (legs[i - 1].to || legs[i].from || ''))
+  const boundaryAfter = (i) => (i === legs.length - 1 ? legs[i].to || '' : (legs[i].to || legs[i + 1].from || ''))
+
+  const mkRow = (label, i, isMain) => ({
+    label,
+    mode: legs[i].mode || '',
+    placeOfReceipt: '',
+    pol: isMain ? boundaryBefore(i) : '',
+    pod: isMain ? boundaryAfter(i) : '',
+    placeOfDelivery: '',
+    ...carrierFrom(legs[i]),
+  })
+
+  let rows
+  if (legs.length === 3) {
+    rows = [mkRow('Pre-carriage', 0, false), mkRow('Main-carriage', 1, true), mkRow('On-carriage', 2, false)]
+  } else {
+    const mainIdx = legs.findIndex((l) => l.mode === 'sea' || l.mode === 'air')
+    if (mainIdx === -1) {
+      rows = legs.map((_, i) => mkRow(`Leg ${i + 1}`, i, false))
+    } else {
+      const preLegs = legs.slice(0, mainIdx)
+      const onLegs = legs.slice(mainIdx + 1)
+      rows = [
+        ...preLegs.map((_, i) => mkRow(preLegs.length > 1 ? `Pre-carriage ${i + 1}` : 'Pre-carriage', i, false)),
+        mkRow('Main-carriage', mainIdx, true),
+        ...onLegs.map((_, i) => mkRow(onLegs.length > 1 ? `On-carriage ${i + 1}` : 'On-carriage', mainIdx + 1 + i, false)),
+      ]
+    }
   }
-  if (legs.length === 2) {
-    return { preCarriage: fromCarrierField(legs[0]), mainCarriage: fromCarrierField(legs[1]), onCarriage: empty }
-  }
-  return {
-    preCarriage: fromCarrierField(legs[0]),
-    mainCarriage: fromCarrierField(legs[1]),
-    onCarriage: fromCarrierField(legs[legs.length - 1]),
-  }
+
+  rows[0].placeOfReceipt = legs[0].from || ''
+  rows[rows.length - 1].placeOfDelivery = legs[legs.length - 1].to || ''
+  return rows
 }
 
 // Język dokumentu — JEDNO źródło prawdy, przekazywane w dół do buildGeneratorData
@@ -255,7 +294,7 @@ export function buildGeneratorData(rawSnapshot, language) {
       contact: parties.carrier.contact,
       phone: parties.carrier.phone,
     },
-    carrierLegs: buildCarrierLegs(multimodal, parties.carrier),
+    carrierLegs: { rows: buildTransportLegRows(multimodal, parties.carrier) },
     vehicle: {
       type: road.vehicleType,
       typeEn: VEHICLE_TYPE_EN[road.vehicleType] || '',
