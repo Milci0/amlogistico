@@ -17,7 +17,7 @@ export default function TrackingDetail({ shipment }) {
     <div>
       <Link
         to="/tracking"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-600 dark:text-slate-300 font-medium hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-4"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-600 dark:text-slate-300 font-medium hover:text-orange-700 dark:hover:text-orange-400 transition-colors mb-4"
       >
         <ArrowLeft className="w-4 h-4" strokeWidth={1.8} />
         {t('tracking.backToList')}
@@ -25,8 +25,8 @@ export default function TrackingDetail({ shipment }) {
 
       {/* Nagłówek */}
       <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6">
-        <div className="shrink-0 w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
-          <BranchIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
+        <div className="shrink-0 w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
+          <BranchIcon className="w-6 h-6 text-orange-700 dark:text-orange-400" strokeWidth={1.5} />
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold text-gray-900 dark:text-white">{shipment.id}</h1>

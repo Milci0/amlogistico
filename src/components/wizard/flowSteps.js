@@ -20,9 +20,20 @@ const validateRoute = (s) =>
   nonEmpty(s.route.fromCity) &&
   nonEmpty(s.route.toCountry) &&
   nonEmpty(s.route.toCity) &&
-  nonEmpty(s.route.loadDate)
+  nonEmpty(s.route.loadDate) &&
+  // Gałąź „Multimodalny" wymaga świadomej odpowiedzi na „Jak zorganizowany
+  // jest przewóz?" — bez tego user mógłby przeklikać dalej i dostać MTD bez
+  // podstawy prawnej (żadna opcja nie jest zaznaczona domyślnie).
+  (s.route.transport !== 'multimodal' || nonEmpty(s.multimodal?.contractType))
 
-const validateCargo = (s) => nonEmpty(s.cargo.cargoName)
+// Przy multimodal+separate silnik dobiera dokument PER GAŁĄŹ z legs[] (patrz
+// addTransportLayerDocs w documentEngine.js) — bez choć jednej wypełnionej
+// gałęzi dostałby pustą listę i Krok 4 pokazałby zero dokumentów przewozowych.
+// Wymagamy więc minimum: co najmniej jedna gałąź ma wybrany `mode` (reszta pól
+// legu — carrier/from/to — zostaje nieblokowana, tak jak dziś).
+const validateCargo = (s) =>
+  nonEmpty(s.cargo.cargoName) &&
+  (s.multimodal?.contractType !== 'separate' || (s.multimodal.legs || []).some((l) => nonEmpty(l.mode)))
 
 const validateParties = (s) =>
   nonEmpty(s.parties.sender.name) &&

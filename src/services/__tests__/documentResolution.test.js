@@ -45,6 +45,24 @@ describe('getDocsForSnapshot na zunifikowanym silniku', () => {
     expect(getDocsForSnapshot(withRoute({ transport: 'multimodal' })).map((d) => d.key)).toContain('28_MTD')
   })
 
+  // Krok "Trasa" -> "Osobne umowy na odcinki" (2026-08-08): sprawdza calosc
+  // przewodu snapshot -> buildEngineFlags -> silnik, nie tylko sam silnik
+  // (documentEngine.matrix.test.js), zeby wychwycic pomylke w nazwie pola
+  // (multimodal.contractType/legs), gdyby sie kiedys rozjechala.
+  it('multimodal z osobnymi umowami czyta legs[] zamiast dawac MTD', () => {
+    const snap = withRoute({ transport: 'multimodal' })
+    snap.multimodal = {
+      contractType: 'separate',
+      legs: [
+        { order: 1, mode: 'road', from: '', to: '', carrier: '' },
+        { order: 2, mode: 'sea', from: '', to: '', carrier: '' },
+      ],
+    }
+    const keys = getDocsForSnapshot(snap).map((d) => d.key)
+    expect(keys).toEqual(expect.arrayContaining(['01_CMR', '05_BL']))
+    expect(keys).not.toContain('28_MTD')
+  })
+
   it('kazdy dokument ma sekcje, tryb wyjscia i nazwe', () => {
     for (const d of getDocsForSnapshot(withRoute({ toCountry: 'NG', transport: 'sea' }))) {
       expect(['required', 'optional', 'manual']).toContain(d.section)

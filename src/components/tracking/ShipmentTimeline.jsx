@@ -27,10 +27,10 @@ export default function ShipmentTimeline({ events }) {
                 className={`w-10 h-10 rounded-xl flex items-center justify-center
                   ${isDelay
                     ? 'bg-red-50 dark:bg-red-900/30'
-                    : 'bg-emerald-50 dark:bg-emerald-900/30'}`}
+                    : 'bg-orange-50 dark:bg-orange-900/30'}`}
               >
                 <Icon
-                  className={`w-5 h-5 ${isDelay ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}
+                  className={`w-5 h-5 ${isDelay ? 'text-red-600 dark:text-red-400' : 'text-orange-700 dark:text-orange-400'}`}
                   strokeWidth={1.5}
                 />
               </div>
