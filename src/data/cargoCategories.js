@@ -526,15 +526,18 @@ export function getTempRange(subcategoryId) {
   return CARGO_TEMP_RANGES[subcategoryId] || null
 }
 
-// Renderuje zakres transportu po polsku. Nie zmyśla brakującej granicy: gdy
-// źródło ma tylko sufit (typowe dla przepisów o mięsie/mrożonkach — "nie
-// więcej niż X°C"), pokazujemy "do X°C" / "X°C i poniżej", nie wymyślony dół.
-export function formatTempRange(range) {
+// Renderuje zakres transportu — string budowany z kluczy i18n (namespace
+// `cargo`, `temp.range*`), więc działa w PL i EN. Nie zmyśla brakującej
+// granicy: gdy źródło ma tylko sufit (typowe dla przepisów o mięsie/
+// mrożonkach — "nie więcej niż X°C"), pokazujemy „do X°C" / „X°C i poniżej",
+// nie wymyślony dół. `t` to funkcja tłumacząca namespace `cargo` — jedyny
+// konsument (TempRangeNote.jsx) ją przekazuje.
+export function formatTempRange(range, t) {
   if (!range) return null
   const { min, max } = range
-  if (min != null && max != null) return `od ${min} do ${max}°C`
-  if (max != null) return max < 0 ? `${max}°C i poniżej` : `do ${max}°C`
-  if (min != null) return `od ${min}°C`
+  if (min != null && max != null) return t('temp.rangeBoth', { min, max })
+  if (max != null) return max < 0 ? t('temp.rangeMaxNegative', { max }) : t('temp.rangeMaxOnly', { max })
+  if (min != null) return t('temp.rangeMinOnly', { min })
   return null
 }
 
