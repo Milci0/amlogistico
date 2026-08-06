@@ -23,6 +23,30 @@
       "label": "Multimodal transport",
       "hint": "The cargo travels by more than one mode, for example truck plus vessel. This adds an MTD document."
     },
+    "multimodalStructure": {
+      "question": "How is the carriage organised?",
+      "hint": "This determines which transport documents we generate.",
+      "single": {
+        "title": "One carrier for the whole route",
+        "desc": "A single contract covers all legs.",
+        "consequence": "One document: MTD"
+      },
+      "separate": {
+        "title": "Separate contracts per leg",
+        "desc": "Each leg has its own carrier.",
+        "consequence": "Separate documents for each leg"
+      },
+      "docsPreviewTitle": "Transport documents",
+      "docsPreviewHint": "Full list once the cargo details are filled in",
+      "docsPreviewEmpty": "Fill in the legs in the \"Cargo\" step to see a preview of the documents.",
+      "docsPreviewItem": "{{doc}} — {{leg}}",
+      "legSuffix": {
+        "road": "road leg",
+        "sea": "sea leg",
+        "rail": "rail leg",
+        "air": "air leg"
+      }
+    },
     "from": "From",
     "to": "To",
     "country": "Country",
@@ -128,6 +152,7 @@
     "multimodal": {
       "title": "Legs of the journey",
       "hint": "The order matters: the first leg is the pre-carriage, the second is the main carriage and the last is the on-carriage on the multimodal transport document.",
+      "needsLegMode": "You chose separate contracts per leg — select at least one mode of transport",
       "leg": "Leg {{order}}",
       "mode": "Mode",
       "chooseMode": "Choose",

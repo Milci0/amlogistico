@@ -15,6 +15,7 @@ import {
   computeBothEU,
   generateDocuments,
 } from '../../services/documentGeneration'
+import { getDocuments, LAYERS } from '../../utils/documentEngine'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import DocumentSelectList from '../documents/DocumentSelectList'
 import CargoCategoryPicker from '../cargo/CargoCategoryPicker'
@@ -164,8 +165,55 @@ function TransportChip({ id, active, onSelect }) {
   )
 }
 
-function Step1({ data, setData, onTransportChange, onNext, canNext }) {
+// Podgląd „Dokumenty przewozowe" pod pytaniem o strukturę umowy, WYŁĄCZNIE przy
+// 'separate' — pokazuje dokument podstawowy KAŻDEJ gałęzi z legs[] (Krok 2),
+// żeby user widział skutek wyboru natychmiast, nie dopiero w Kroku 4. Woła
+// getDocuments() wprost, per gałąź — dokładnie ta sama reguła co silnik użyje
+// finalnie, tylko bez wiedzy o cargoCategory (jeszcze nieznanej w Kroku 1) i bez
+// flag zależnych od Kroku 2 (containerized/consolidated/groupConsignment), więc
+// pokazujemy TYLKO dokument podstawowy (CMR/B-L/CIM.../AWB), nie komplet.
+function MultimodalDocsPreview({ legs, fromCountry, toCountry }) {
+  const { t, i18n } = useTranslation('wizard')
+  const legModes = (legs || []).map(l => l.mode).filter(Boolean)
+
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">
+        {t('route.multimodalStructure.docsPreviewTitle')}
+      </p>
+      <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-3">
+        {t('route.multimodalStructure.docsPreviewHint')}
+      </p>
+
+      {legModes.length === 0 ? (
+        <p className="text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-900 rounded-lg p-3">
+          {t('route.multimodalStructure.docsPreviewEmpty')}
+        </p>
+      ) : (
+        <ul className="space-y-1.5">
+          {legModes.map((legMode, i) => {
+            const result = getDocuments(fromCountry, toCountry, legMode, 'general', {}, { includeMetadata: true })
+            const doc = result.required.find(d => d.layer === LAYERS.TRANSPORT)
+            const docName = doc ? (i18n.language.startsWith('en') ? doc.name_en : doc.name_pl) : null
+            return (
+              <li key={i} className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" strokeWidth={1.75} />
+                {docName
+                  ? t('route.multimodalStructure.docsPreviewItem', { doc: docName, leg: t(`route.multimodalStructure.legSuffix.${legMode}`) })
+                  : t(`route.modes.${legMode}.label`)}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function Step1({ data, setData, multimodal, setMultimodal, onTransportChange, onNext, canNext }) {
   const { t } = useTranslation('wizard')
+  const isMultimodal = data.transport === 'multimodal'
+  const isSeparate = multimodal.contractType === 'separate'
 
   return (
     <div>
@@ -177,8 +225,9 @@ function Step1({ data, setData, onTransportChange, onNext, canNext }) {
       </div>
 
       {/* Checkbox znika przy gałęzi „Multimodalny": tam multimodalność wynika już
-          z wyboru środka transportu, więc pytanie o nią byłoby powtórzeniem. */}
-      {data.transport !== 'multimodal' && (
+          z wyboru środka transportu, więc pytanie o nią byłoby powtórzeniem —
+          zastępuje ją pytanie o strukturę umowy poniżej. */}
+      {!isMultimodal && (
         <label className="flex items-start gap-3 p-3.5 mb-5 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
           <input
             type="checkbox"
@@ -192,6 +241,75 @@ function Step1({ data, setData, onTransportChange, onNext, canNext }) {
           </div>
         </label>
       )}
+
+      {/* Pytanie „Jak zorganizowany jest przewóz?" — rozwija się pod kafelkami
+          wyłącznie dla gałęzi Multimodalny. Żadna opcja nie jest zaznaczona
+          domyślnie (patrz initMultimodal w wizardState.js) — walidacja w
+          flowSteps.js blokuje „Dalej", dopóki user świadomie nie wybierze. */}
+      <div className={`wizard-collapse mb-5 ${isMultimodal ? 'is-open' : ''}`} aria-hidden={!isMultimodal}>
+        <div>
+          <div className="pl-4 border-l-2 border-emerald-400 dark:border-emerald-600">
+            <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">
+              {t('route.multimodalStructure.question')}
+            </p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 mb-3">
+              {t('route.multimodalStructure.hint')}
+            </p>
+
+            <div className="space-y-2 mb-4">
+              {['single', 'separate'].map(opt => {
+                const active = multimodal.contractType === opt
+                return (
+                  <label
+                    key={opt}
+                    className={`flex items-start gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-colors
+                      ${active
+                        ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'
+                        : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'}`}
+                  >
+                    <input
+                      type="radio"
+                      name="multimodalContractType"
+                      className="mt-0.5 w-4 h-4 accent-emerald-600 cursor-pointer flex-shrink-0"
+                      checked={active}
+                      onChange={() => setMultimodal(m => ({
+                        ...m,
+                        contractType: opt,
+                        // 'separate' → 'single': legs[] traci sens (jeden przewoźnik na
+                        // całość), więc czyścimy do świeżego stanu — user zaczyna od nowa,
+                        // jeśli kiedyś wróci do 'separate'.
+                        legs: opt === 'single' ? [initMultimodalLeg(1)] : m.legs,
+                      }))}
+                    />
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold ${active ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-800 dark:text-slate-200'}`}>
+                        {t(`route.multimodalStructure.${opt}.title`)}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                        {t(`route.multimodalStructure.${opt}.desc`)}
+                      </p>
+                      <p className={`text-xs font-medium mt-1 ${active ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-slate-500'}`}>
+                        {t(`route.multimodalStructure.${opt}.consequence`)}
+                      </p>
+                    </div>
+                  </label>
+                )
+              })}
+            </div>
+
+            {/* Podgląd dokumentów — zagnieżdżony o poziom głębiej, linia cieńsza
+                i neutralna (nie kolorowa), żeby hierarchia była czytelna bez
+                narastania szerokości wcięcia na wąskich ekranach. */}
+            <div className={`wizard-collapse ${isSeparate ? 'is-open' : ''}`} aria-hidden={!isSeparate}>
+              <div>
+                <div className="pl-4 border-l border-gray-300 dark:border-slate-600">
+                  <MultimodalDocsPreview legs={multimodal.legs} fromCountry={data.fromCountry} toCountry={data.toCountry} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="mb-5">
         <SectionLabel>{t('route.from')}</SectionLabel>
@@ -379,6 +497,11 @@ function AirSection({ air, setAir }) {
 function MultimodalSection({ multimodal, setMultimodal }) {
   const { t } = useTranslation('wizard')
   const legs = multimodal.legs || []
+  // Wiąże blokadę „Dalej" z wyborem z Kroku 1 („Osobne umowy na odcinki") —
+  // bez tego user widziałby wyłącznie wyszarzony przycisk, nie skąd wymóg.
+  // Znika, jak tylko choć jedna gałąź ma wybrany `mode` (ta sama reguła co
+  // validateCargo w flowSteps.js).
+  const needsLegMode = multimodal.contractType === 'separate' && !legs.some(l => l.mode)
 
   const updateLeg = (i, patch) =>
     setMultimodal(m => ({
@@ -395,6 +518,11 @@ function MultimodalSection({ multimodal, setMultimodal }) {
 
   return (
     <BranchSection title={t('cargo.multimodal.title')} hint={t('cargo.multimodal.hint')}>
+      {needsLegMode && (
+        <div className="mb-4">
+          <AlertBox type="warning">{t('cargo.multimodal.needsLegMode')}</AlertBox>
+        </div>
+      )}
       <div className="space-y-4 mb-3">
         {legs.map((leg, i) => (
           <div key={i} className="border border-gray-200 dark:border-slate-700 rounded-lg p-4">
@@ -1366,6 +1494,8 @@ export default function DocumentWizard() {
           <Step1
             data={snapshot.route}
             setData={setRoute}
+            multimodal={snapshot.multimodal}
+            setMultimodal={setMultimodal}
             onTransportChange={requestTransportChange}
             onNext={next}
             canNext={canNext}

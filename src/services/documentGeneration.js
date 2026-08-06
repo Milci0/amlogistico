@@ -59,6 +59,13 @@ function buildEngineFlags(s) {
     // Checkbox „Transport multimodalny" (krok „Trasa") i checkbox ADR (krok
     // „Towar", gałąź drogowa) — obie reguły egzekwuje silnik.
     multimodal: !!s.route.multimodal,
+    // Pytanie „Jak zorganizowany jest przewóz?" (krok „Trasa", tylko gałąź
+    // multimodal) — 'single' → MTD jak dotąd, 'separate' → dokument per gałąź
+    // z legs[], patrz addTransportLayerDocs w documentEngine.js. legs[].mode
+    // zostaje spłaszczone do samych trybów (silnik nie potrzebuje carrier/from/to
+    // dla doboru dokumentów — te pola idą tylko na wydruk MTD/listów per odcinek).
+    multimodalContractType: s.multimodal?.contractType || null,
+    multimodalLegs: (s.multimodal?.legs || []).map((l) => l.mode).filter(Boolean),
     adr: !!s.road?.adr,
     woodenPackaging: !!s.cargo.woodenPackaging, // (*)
     temporaryExport: !!s.cargo.temporaryExport, // (*)

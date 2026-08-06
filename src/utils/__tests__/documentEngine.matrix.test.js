@@ -147,6 +147,43 @@ const MATRIX = [
   { n: 57, o: 'PL', d: 'US', m: 'sea', c: 'general', f: { multimodal: true }, required: ['05_BL', '28_MTD'] },
   { n: 58, o: 'PL', d: 'US', m: 'road', c: 'general', mustNot: ['28_MTD'] },
 
+  // ── Multimodal — osobne umowy na odcinki (2026-08-08) ─────────────────────
+  // Krok „Trasa": pytanie "Jak zorganizowany jest przewóz?" → 'separate' czyta
+  // legs[].mode i dobiera dokument KAŻDEJ zaznaczonej gałęzi (addTransportLayerDocs
+  // wywołana per gałąź), bez MTD — w odróżnieniu od 'single' (albo braku wyboru),
+  // gdzie zachowanie zostaje dokładnie takie jak w przypadku #55.
+  { n: 104, o: 'PL', d: 'DE', m: 'multimodal', c: 'general',
+    f: { multimodalContractType: 'separate', multimodalLegs: ['road', 'rail'] },
+    required: ['01_CMR', '27_CIM'], mustNot: ['28_MTD'] },
+  // Trasa siega strefy SMGS (Chiny) — odcinek kolejowy dostaje wspolny list
+  // CIM/SMGS zamiast zwyklego CIM, DOKLADNIE jak przy trybie 'rail' pojedynczym
+  // (przypadek reuzywa touchesSmgsOnly z gornego poziomu funkcji, nie liczy go
+  // od nowa per noga).
+  { n: 105, o: 'PL', d: 'CN', m: 'multimodal', c: 'general',
+    f: { multimodalContractType: 'separate', multimodalLegs: ['rail', 'sea'] },
+    required: ['134_CIM_SMGS', '05_BL'], mustNot: ['28_MTD', '27_CIM'] },
+  { n: 106, o: 'PL', d: 'US', m: 'multimodal', c: 'general',
+    f: { multimodalContractType: 'separate', multimodalLegs: ['air'] },
+    required: ['11_AWB'], mustNot: ['28_MTD'] },
+  // Brak zaznaczonych gałęzi (user wybrał 'separate', ale nie uzupełnił jeszcze
+  // legs[] w Kroku 2 — walidacja w flowSteps.js to blokuje, ale silnik i tak
+  // musi się zachować bezpiecznie: zero dokumentów transportowych, NIE fallback
+  // na MTD) — patrz walidacja `validateCargo`, ten stan nie powinien dotrzeć
+  // do Kroku 4, ale silnik nie może zgadywać, gdyby jednak dotarł.
+  { n: 107, o: 'PL', d: 'DE', m: 'multimodal', c: 'general',
+    f: { multimodalContractType: 'separate', multimodalLegs: [] },
+    mustNot: ['28_MTD', '01_CMR', '05_BL', '27_CIM', '134_CIM_SMGS', '11_AWB'] },
+  // 'single' (albo contractType nieustawiony) na trybie 'multimodal' — bez zmian
+  // wzgledem przypadku #55, mimo obecnosci nowych flag w wywolaniu.
+  { n: 108, o: 'PL', d: 'US', m: 'multimodal', c: 'general',
+    f: { multimodalContractType: 'single', multimodalLegs: ['road', 'sea'] },
+    required: ['28_MTD'], mustNot: ['01_CMR', '05_BL'] },
+  // Nowe flagi na trybie NIE-multimodalnym nie mają żadnego efektu — gałąź w
+  // silniku jest zabezpieczona warunkiem `mode === "multimodal"`.
+  { n: 109, o: 'PL', d: 'DE', m: 'road', c: 'general',
+    f: { multimodalContractType: 'separate', multimodalLegs: ['sea'] },
+    required: ['01_CMR'], mustNot: ['05_BL', '28_MTD'] },
+
   // ── Sankcje ────────────────────────────────────────────────────────────────
   { n: 59, o: 'PL', d: 'RU', m: 'road', c: 'general', warn: ['warn_sanctions_ru_by_dest'] },
   { n: 60, o: 'RU', d: 'PL', m: 'rail', c: 'general', warn: ['warn_sanctions_ru_by_origin'] },
