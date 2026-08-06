@@ -54,7 +54,12 @@ export function initMultimodalLeg(order) {
 }
 
 export function initMultimodal() {
-  return { legs: [initMultimodalLeg(1)] }
+  // contractType: '' (niewybrane) | 'single' | 'separate' — pytanie „Jak
+  // zorganizowany jest przewóz?" w kroku „Trasa", widoczne tylko gdy
+  // transport==='multimodal'. Świadomie puste domyślnie (patrz walidacja
+  // w flowSteps.js) — nikt nie ma dostać MTD bez podstawy prawnej przez samo
+  // przeklikanie dalej.
+  return { contractType: '', legs: [initMultimodalLeg(1)] }
 }
 
 export function initTerms() {

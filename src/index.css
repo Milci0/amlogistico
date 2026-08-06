@@ -60,6 +60,34 @@ body {
   .animate-page-in { animation: page-in-fade 220ms ease-out both; }
 }
 
+/* Rozwijanie sekcji zależnych od wyboru (np. pytanie „Jak zorganizowany jest
+   przewóz?" pod kafelkiem Multimodal w kroku „Trasa") — sama filozofia ruchu
+   co .animate-page-in (ta sama długość/easing), ale przez grid-template-rows
+   0fr→1fr zamiast fade+translate, żeby zawartość faktycznie rozsuwała miejsce
+   (nie nakładała się na pola pod spodem). Treść zostaje ZAWSZE zamontowana
+   (patrz DocumentWizard.jsx) — przełącza się tylko klasa `.is-open`, więc nie
+   ma migotania przy re-mouncie na granicy otwórz/zamknij. */
+.wizard-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 320ms cubic-bezier(0.16, 1, 0.3, 1), opacity 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.wizard-collapse > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.wizard-collapse.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wizard-collapse,
+  .wizard-collapse.is-open {
+    transition: opacity 220ms ease-out;
+  }
+}
+
 /* Ujawnianie kroków w AboutAppModal (panel "Dowiedz się więcej") przy scrollu
    wewnątrz panelu — IntersectionObserver w komponencie dokłada `.is-visible`
    do wiersza kroku. Ikona i treść ujawniają się z lekkim przesunięciem w czasie

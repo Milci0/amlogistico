@@ -190,6 +190,79 @@ const WARNING_SEVERITY = {
 // warn_atr_turkey_agri ZOSTAJE: niesie rozroznienie A.TR vs EUR.1 dla produktow
 // rolnych, czego zaden dokument nie zastepuje.
 
+// ─── WARSTWA 1: TRANSPORT — WYDZIELONA FUNKCJA ──────────────────────────────
+//
+// Dokumenty przewozowe dla JEDNEJ gałęzi. Wydzielona z getDocuments (2026-08-08),
+// żeby trasa multimodalna z osobnymi umowami na odcinki (`multimodalContractType
+// === "separate"`) mogła wywołać DOKŁADNIE tę samą regułę per zaznaczona gałąź
+// (`multimodalLegs`), zamiast pisać drugie, równoległe mapowanie gałąź→dokument.
+// Wywoływana raz dla trybu głównego (jak dotąd) albo raz na każdą gałąź z legs[].
+function addTransportLayerDocs(mode, flags, { addRequired, addConditional, warn, touchesSmgsOnly }) {
+  switch (mode) {
+    case "road":
+      addRequired("01_CMR", LAYERS.TRANSPORT, "transport_road");
+      addRequired("09_Zlecenie", LAYERS.TRANSPORT, "transport_road");
+      addRequired("10_POD", LAYERS.TRANSPORT, "transport_road");
+      break;
+    case "sea":
+      // B/L gdy odbiorca nieznany lub towar negocjowalny; Sea Waybill gdy odbiorca znany
+      addRequired("05_BL", LAYERS.TRANSPORT, "transport_sea");
+      addConditional("26_SeaWaybill", LAYERS.TRANSPORT, "transport_sea_named_consignee");
+      break;
+    case "air":
+      addRequired("11_AWB", LAYERS.TRANSPORT, "transport_air");
+      break;
+    case "rail":
+      // 27_CIM obejmuje strefe COTIF; gdy trasa siega SMGS, wlasciwy jest
+      // wspolny list przewozowy CIM/SMGS zamiast niego (nie obok).
+      if (touchesSmgsOnly) {
+        addRequired("134_CIM_SMGS", LAYERS.TRANSPORT, "transport_rail_smgs");
+        warn(
+          "warn_cim_smgs_route",
+          "Trasa siega strefy SMGS, wiec zamiast listu CIM wystawia sie wspolny list przewozowy " +
+          "CIM/SMGS. Jeden dokument obejmuje odcinek COTIF i odcinek SMGS, bez przepisywania na granicy rezimow."
+        );
+      } else {
+        addRequired("27_CIM", LAYERS.TRANSPORT, "transport_rail");
+      }
+      break;
+    case "multimodal":
+      addRequired("28_MTD", LAYERS.TRANSPORT, "transport_multimodal");
+      break;
+  }
+
+  // VGM - deklaracja zweryfikowanej masy brutto. SOLAS obejmuje KAZDY zapakowany
+  // kontener, ale nie ladunek drobnicowy (break-bulk), stad flaga zamiast samego
+  // trybu morskiego. Flage wylicza buildEngineFlags z pol kontenerowych migawki.
+  if (flags.containerized) {
+    if (mode === "sea") {
+      addRequired("119_VGM_SOLAS", LAYERS.TRANSPORT, "transport_sea_containerized");
+    } else if (mode === "multimodal") {
+      // Silnik nie zna etapow trasy multimodalnej, wiec nie wie, czy w ogole
+      // jest etap morski - ten sam kompromis co przy ISF.
+      addConditional("119_VGM_SOLAS", LAYERS.TRANSPORT, "transport_multimodal_sea_leg");
+    }
+  }
+
+  // MAWB (11_AWB) wystawia przewoznik lotniczy na cala przesylke; przy
+  // konsolidacji spedytor wystawia DODATKOWO HAWB dla kazdego nadawcy.
+  // Dokumenty lotnicze trzymamy przy mode === 'air': trasa multimodalna
+  // nie musi miec etapu lotniczego (bywa morze + droga).
+  if (flags.consolidated) {
+    if (mode === "air") {
+      addRequired("137_HAWB", LAYERS.TRANSPORT, "transport_air_consolidated");
+    } else if (mode === "multimodal") {
+      addConditional("137_HAWB", LAYERS.TRANSPORT, "transport_multimodal_air_leg");
+    }
+  }
+
+  // Wykaz wagonow - zalacznik do listu przewozowego przy przesylce grupowej.
+  // Warunkowany flaga, wiec NIE doklada sie do kazdej trasy kolejowej.
+  if ((mode === "rail" || mode === "multimodal") && flags.groupConsignment) {
+    addConditional("136_Wagon_List", LAYERS.TRANSPORT, "transport_rail_group_consignment");
+  }
+}
+
 // ─── GŁÓWNA FUNKCJA ───────────────────────────────────────────────────────────
 
 /**
@@ -264,68 +337,20 @@ export function getDocuments(origin, destination, mode, cargoCategory = "general
     inGroup(origin, "SMGS_ONLY");
 
   // ── WARSTWA 1: TRANSPORT ──────────────────────────────────────────
-  switch (mode) {
-    case "road":
-      addRequired("01_CMR", LAYERS.TRANSPORT, "transport_road");
-      addRequired("09_Zlecenie", LAYERS.TRANSPORT, "transport_road");
-      addRequired("10_POD", LAYERS.TRANSPORT, "transport_road");
-      break;
-    case "sea":
-      // B/L gdy odbiorca nieznany lub towar negocjowalny; Sea Waybill gdy odbiorca znany
-      addRequired("05_BL", LAYERS.TRANSPORT, "transport_sea");
-      addConditional("26_SeaWaybill", LAYERS.TRANSPORT, "transport_sea_named_consignee");
-      break;
-    case "air":
-      addRequired("11_AWB", LAYERS.TRANSPORT, "transport_air");
-      break;
-    case "rail":
-      // 27_CIM obejmuje strefe COTIF; gdy trasa siega SMGS, wlasciwy jest
-      // wspolny list przewozowy CIM/SMGS zamiast niego (nie obok).
-      if (touchesSmgsOnly) {
-        addRequired("134_CIM_SMGS", LAYERS.TRANSPORT, "transport_rail_smgs");
-        warn(
-          "warn_cim_smgs_route",
-          "Trasa siega strefy SMGS, wiec zamiast listu CIM wystawia sie wspolny list przewozowy " +
-          "CIM/SMGS. Jeden dokument obejmuje odcinek COTIF i odcinek SMGS, bez przepisywania na granicy rezimow."
-        );
-      } else {
-        addRequired("27_CIM", LAYERS.TRANSPORT, "transport_rail");
-      }
-      break;
-    case "multimodal":
-      addRequired("28_MTD", LAYERS.TRANSPORT, "transport_multimodal");
-      break;
-  }
+  const layer1Ctx = { addRequired, addConditional, warn, touchesSmgsOnly };
 
-  // VGM - deklaracja zweryfikowanej masy brutto. SOLAS obejmuje KAZDY zapakowany
-  // kontener, ale nie ladunek drobnicowy (break-bulk), stad flaga zamiast samego
-  // trybu morskiego. Flage wylicza buildEngineFlags z pol kontenerowych migawki.
-  if (flags.containerized) {
-    if (mode === "sea") {
-      addRequired("119_VGM_SOLAS", LAYERS.TRANSPORT, "transport_sea_containerized");
-    } else if (mode === "multimodal") {
-      // Silnik nie zna etapow trasy multimodalnej, wiec nie wie, czy w ogole
-      // jest etap morski - ten sam kompromis co przy ISF.
-      addConditional("119_VGM_SOLAS", LAYERS.TRANSPORT, "transport_multimodal_sea_leg");
+  // Multimodal z OSOBNYMI umowami na odcinki (krok „Trasa" → pytanie o strukturę
+  // umowy, wybór B): dokument właściwy KAŻDEJ zaznaczonej gałęzi, bez MTD.
+  // `mode` na tym poziomie to nadal "multimodal" (transport gałęzi głównej) —
+  // dopiero flagi z legs[] różnicują zachowanie, więc reguła backward-compat
+  // niżej (flags.multimodal && mode !== "multimodal") się tu NIE odpala.
+  if (mode === "multimodal" && flags.multimodalContractType === "separate") {
+    const legModes = Array.isArray(flags.multimodalLegs) ? flags.multimodalLegs : [];
+    for (const legMode of legModes) {
+      addTransportLayerDocs(legMode, flags, layer1Ctx);
     }
-  }
-
-  // MAWB (11_AWB) wystawia przewoznik lotniczy na cala przesylke; przy
-  // konsolidacji spedytor wystawia DODATKOWO HAWB dla kazdego nadawcy.
-  // Dokumenty lotnicze trzymamy przy mode === 'air': trasa multimodalna
-  // nie musi miec etapu lotniczego (bywa morze + droga).
-  if (flags.consolidated) {
-    if (mode === "air") {
-      addRequired("137_HAWB", LAYERS.TRANSPORT, "transport_air_consolidated");
-    } else if (mode === "multimodal") {
-      addConditional("137_HAWB", LAYERS.TRANSPORT, "transport_multimodal_air_leg");
-    }
-  }
-
-  // Wykaz wagonow - zalacznik do listu przewozowego przy przesylce grupowej.
-  // Warunkowany flaga, wiec NIE doklada sie do kazdej trasy kolejowej.
-  if ((mode === "rail" || mode === "multimodal") && flags.groupConsignment) {
-    addConditional("136_Wagon_List", LAYERS.TRANSPORT, "transport_rail_group_consignment");
+  } else {
+    addTransportLayerDocs(mode, flags, layer1Ctx);
   }
 
   // NIEWPIETE CELOWO - decyzja z 2026-08-04, nie przeoczenie:
