@@ -555,6 +555,10 @@
   "temp": {
     "label": "Temperatura transportu:",
     "legal": "Wymóg prawny",
-    "practice": "Dobra praktyka branżowa"
+    "practice": "Dobra praktyka branżowa",
+    "rangeBoth": "od {{min}} do {{max}}°C",
+    "rangeMaxNegative": "{{max}}°C i poniżej",
+    "rangeMaxOnly": "do {{max}}°C",
+    "rangeMinOnly": "od {{min}}°C"
   }
 }

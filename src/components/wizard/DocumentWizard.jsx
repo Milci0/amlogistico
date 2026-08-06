@@ -565,6 +565,7 @@ function MultimodalSection({ multimodal, setMultimodal }) {
 function Step2({ data, setData, road, setRoad, sea, setSea, rail, setRail, air, setAir, multimodal, setMultimodal, terms, setTerms, transport, fromCountry, toCountry, isAdmin, findMode, onNext, onBack, canNext }) {
   const { t } = useTranslation('wizard')
   const { t: ti } = useTranslation('incoterms')
+  const { t: tc } = useTranslation('cargo')
   const needsTemp = road.vehicleType === 'Chłodnia' || road.vehicleType === 'Mroźnia'
   const selectedIncoterm = INCOTERM_CODES.includes(terms.incoterms) ? terms.incoterms : null
 
@@ -581,15 +582,26 @@ function Step2({ data, setData, road, setRoad, sea, setSea, rail, setRail, air, 
           categoryId={data.cargoCategory}
           subcategoryId={data.cargoSubcategory}
           onChange={({ categoryId, subcategoryId, subcategory }) =>
-            setData(d => ({
-              ...d,
-              cargoCategory: categoryId,
-              cargoSubcategory: subcategoryId,
-              // Podpowiedź wchodzi tylko w puste pola — tego, co user wpisał
-              // ręcznie, nie ruszamy.
-              hsCode: subcategory && !d.hsCode.trim() ? subcategory.hsCode : d.hsCode,
-              cargoName: subcategory && !d.cargoName.trim() ? subcategory.name : d.cargoName,
-            }))
+            setData(d => {
+              // Podpowiedź odpala się przy FAKTYCZNEJ zmianie podkategorii (inne id
+              // niż poprzednio) — ponowne kliknięcie tej samej podkategorii nie
+              // nadpisuje pól. Ale przy realnej zmianie nadpisuje ZAWSZE, nawet gdy
+              // pola nie są puste: ręczna wartość opisywała POPRZEDNI towar i po
+              // zmianie na inny przestaje być prawdziwa — trzymanie jej byłoby
+              // gorsze niż nadpisanie. Nazwa idzie przez ten sam klucz i18n co
+              // dropdown (SubcategorySelect.nameOf), żeby auto-fill szedł w
+              // aktualnym języku UI, nie w polskim z danych źródłowych.
+              const changed = subcategoryId !== d.cargoSubcategory
+              return {
+                ...d,
+                cargoCategory: categoryId,
+                cargoSubcategory: subcategoryId,
+                hsCode: subcategory && changed ? subcategory.hsCode : d.hsCode,
+                cargoName: subcategory && changed
+                  ? tc(`subcategories.${subcategory.id}`, { defaultValue: subcategory.name })
+                  : d.cargoName,
+              }
+            })
           }
         />
       </div>

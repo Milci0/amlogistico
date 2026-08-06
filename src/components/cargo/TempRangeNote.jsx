@@ -16,7 +16,7 @@ export default function TempRangeNote({ range }) {
       <Thermometer className="w-4 h-4 text-sky-500 shrink-0 mt-0.5" strokeWidth={1.5} />
       <div className="flex-1">
         <p className="text-xs text-sky-800 dark:text-sky-300">
-          <span className="font-medium">{t('temp.label')}</span> {formatTempRange(range)}
+          <span className="font-medium">{t('temp.label')}</span> {formatTempRange(range, t)}
         </p>
         <span
           className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium
