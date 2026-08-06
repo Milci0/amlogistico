@@ -27,7 +27,7 @@ export default function CargoSummary({ cargo }) {
   return (
     <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5">
       <div className="flex items-center gap-2 mb-4">
-        <Package className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
+        <Package className="w-4 h-4 text-orange-700 dark:text-orange-400" strokeWidth={1.5} />
         <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">{t('tracking.cargo')}</h3>
       </div>
 
@@ -39,7 +39,7 @@ export default function CargoSummary({ cargo }) {
         <div>
           <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.units')}</p>
           {unit ? (
-            <span className="inline-flex items-center gap-1.5 mt-0.5 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+            <span className="inline-flex items-center gap-1.5 mt-0.5 px-2.5 py-1 rounded-full border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/30 text-xs font-medium text-orange-800 dark:text-orange-300">
               {cargo.packages} × {i18n.language.startsWith('en') && unit.nameEn ? unit.nameEn : unit.name} ({unit.code})
             </span>
           ) : (

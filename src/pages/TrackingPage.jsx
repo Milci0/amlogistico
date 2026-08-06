@@ -20,13 +20,20 @@ import ContainerLookup from '../components/tracking/ContainerLookup'
 // WYŁĄCZNIE gdy user nie ma jeszcze żadnej realnej przesyłki, wyraźnie
 // oznaczone jako przykład (patrz TrackingList).
 // Zakładka „Numer kontenera" — rozpoznanie linii po prefiksie BIC + linki
-// wychodzące do trackerów przewoźników/agregatorów. Zero integracji z API
-// przewoźników, zero przechowywania wpisanych numerów.
+// wychodzące do trackerów przewoźników/agregatorów, a od 2026-08-06 DODATKOWO
+// realne dane z ShipsGo Ocean API (gdy włączone, patrz ContainerLookup.jsx) —
+// zero przechowywania wpisanych numerów po naszej stronie w obu przypadkach.
 
 const TABS = [
   { id: 'list', labelKey: 'tracking.tabs.list' },
   { id: 'container', labelKey: 'tracking.tabs.container' },
 ]
+
+// Cała zakładka (obie pod-zakładki) w ciemnym pomarańczu — dopasowanie do
+// TradeRoutesPage (/routes), pod którym „Śledzenie ładunku" wisi w menu, ale
+// wyraźnie ciemniejsze (orange-600/700/800, nie amber-500/600 jak w /routes),
+// żeby dwie sąsiadujące zakładki dało się rozróżnić na pierwszy rzut oka.
+const TAB_ACCENT = 'border-orange-600 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300'
 
 export default function TrackingPage() {
   const { t } = useTranslation('pages')
@@ -55,7 +62,7 @@ export default function TrackingPage() {
 
       {!shipment && (
         <div className="flex items-start gap-4 border border-gray-200 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-800 mb-6">
-          <div className="w-12 h-12 rounded-xl shrink-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/40 dark:to-teal-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900">
+          <div className="w-12 h-12 rounded-xl shrink-0 flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/40 dark:to-amber-900/30 text-orange-700 dark:text-orange-400 border border-orange-100 dark:border-orange-900">
             <Navigation className="w-[26px] h-[26px]" strokeWidth={1.5} />
           </div>
           <div className="min-w-0">
@@ -78,7 +85,7 @@ export default function TrackingPage() {
                 onClick={() => setTab(id)}
                 className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition-colors
                   ${active
-                    ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                    ? TAB_ACCENT
                     : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'}`}
               >
                 {t(labelKey)}

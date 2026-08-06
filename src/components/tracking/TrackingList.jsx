@@ -7,9 +7,9 @@ import ShipmentCard from './ShipmentCard'
 import RealShipmentCard from './RealShipmentCard'
 
 const inputCls =
-  'w-full bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900 transition-colors'
+  'w-full bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-100 dark:focus:ring-orange-900 transition-colors'
 
-const STATUS_FILTERS = ['all', 'planned', 'in_transit', 'eta_passed', 'delivered']
+const STATUS_FILTERS = ['all', 'planned', 'in_transit', 'in_destination_port', 'discharged', 'eta_passed', 'delivered']
 
 // shipments = realne przesyłki (projekcja zestawów dokumentów, patrz
 // utils/shipmentFromSet.js). Puste → pokazujemy MOCK_SHIPMENTS jako WYRAŹNIE
@@ -39,14 +39,14 @@ export default function TrackingList({ shipments }) {
   if (!hasReal) {
     return (
       <div>
-        <div className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 mb-5">
-          <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" strokeWidth={1.75} />
+        <div className="flex items-start gap-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-900 rounded-xl p-4 mb-5">
+          <Sparkles className="w-5 h-5 text-orange-700 dark:text-orange-400 shrink-0 mt-0.5" strokeWidth={1.75} />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">{t('tracking.emptyRealTitle')}</p>
-            <p className="text-sm text-emerald-800 dark:text-emerald-300 mt-0.5">{t('tracking.emptyRealBody')}</p>
+            <p className="text-sm font-semibold text-orange-900 dark:text-orange-200">{t('tracking.emptyRealTitle')}</p>
+            <p className="text-sm text-orange-900 dark:text-orange-300 mt-0.5">{t('tracking.emptyRealBody')}</p>
             <Link
               to="/wybor-sciezki"
-              className="inline-block mt-3 px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+              className="inline-block mt-3 px-4 py-2 rounded-lg text-sm font-semibold bg-orange-700 hover:bg-orange-800 text-white transition-colors"
             >
               {t('tracking.emptyRealCta')}
             </Link>
@@ -94,7 +94,7 @@ export default function TrackingList({ shipments }) {
               onClick={() => setStatusFilter(key)}
               className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition-colors
                 ${active
-                  ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                  ? 'border-orange-600 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300'
                   : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'}`}
             >
               {label}

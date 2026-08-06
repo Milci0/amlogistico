@@ -24,7 +24,7 @@ function RoadDetails({ details }) {
         <div>
           <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('tracking.temperature')}</p>
           <p className="text-sm font-medium text-gray-800 dark:text-slate-100 mt-0.5 flex items-center gap-1.5">
-            <Thermometer className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
+            <Thermometer className="w-3.5 h-3.5 text-orange-700 dark:text-orange-400" strokeWidth={1.5} />
             {details.temperature}°C
           </p>
         </div>
@@ -79,8 +79,8 @@ function MultimodalDetails({ details }) {
             key={i}
             className="flex items-center gap-3 bg-gray-50 dark:bg-slate-900 rounded-lg p-3"
           >
-            <div className="shrink-0 w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
-              <LegIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
+            <div className="shrink-0 w-9 h-9 rounded-lg bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
+              <LegIcon className="w-4 h-4 text-orange-700 dark:text-orange-400" strokeWidth={1.5} />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-gray-800 dark:text-slate-100">
@@ -109,7 +109,7 @@ export default function BranchDetails({ shipment }) {
   return (
     <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5">
       <div className="flex items-center gap-2 mb-4">
-        <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
+        <Icon className="w-4 h-4 text-orange-700 dark:text-orange-400" strokeWidth={1.5} />
         <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">
           {t('tracking.detailsFor', { branch: t(`tracking.branches.${shipment.branch}`).toLowerCase() })}
         </h3>

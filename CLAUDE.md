@@ -1147,3 +1147,8 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 - Po zakończeniu sesji zaktualizuj sekcję "AKTUALNY STATUS"
 - Logika doboru dokumentów (TIR+EU vs TIR+poza-UE vs Morski) jest w `docs/2.Backend.md`
 - Lista krajów UE: stała `EU_CODES` w `src/services/documentGeneration.js`
+- **Nigdy nie używaj pauzy em-dash (—) ani en-dash (–) w żadnym nowym tekście**, ani w stringach
+  UI (JSX, `src/locales/`), ani w komunikatach błędów zwracanych z `api/`, ani w tym pliku. Dotyczy
+  całego repo, nie tylko `src/`. Zamiast tego: przecinek (zdanie z małą literą po myślniku),
+  nawias (etykieta + doprecyzowanie), dwukropek (skrót + rozwinięcie) albo zwykły łącznik `-`.
+  Wyjątek: komentarze w kodzie (`//`), tam zostają, bo tak jest w całym repo od dawna.

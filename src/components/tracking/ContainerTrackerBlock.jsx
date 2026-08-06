@@ -13,9 +13,26 @@ import AlertBox from '../ui/AlertBox'
 // showCheckDigitWarning=false w widoku przesyłki (numer pochodzi z zapisanych
 // danych, nie ze świeżo wpisywanego pola) — zostaje jako przełącznik, bo
 // literówka w kreatorze też jest możliwa i warto ją sygnalizować.
-export default function ContainerTrackerBlock({ containerNo, showCheckDigitWarning = true }) {
+//
+// Cała zakładka „Śledzenie ładunku" jest teraz w ciemnym pomarańczu (dopasowanie
+// do Trasy handlowe, pod którym wisi w menu — patrz TrackingPage.jsx), więc na
+// dziś jest tylko jeden akcent. Zostaje jako obiekt/prop (nie stałe klasy) —
+// tania furtka, gdyby kiedyś jednak trzeba było odróżnić dwa miejsca użycia.
+const ACCENTS = {
+  orange: {
+    recognizedWrap: 'bg-orange-50 dark:bg-orange-900/30 border-orange-600 dark:border-orange-600',
+    recognizedIcon: 'text-orange-700 dark:text-orange-400',
+    recognizedText: 'text-orange-900 dark:text-orange-300',
+    linkBorder: 'border-orange-200 dark:border-orange-900 hover:border-orange-600 dark:hover:border-orange-700',
+    linkBadge: 'text-orange-700 dark:text-orange-400',
+    linkIconHover: 'group-hover:text-orange-600',
+  },
+}
+
+export default function ContainerTrackerBlock({ containerNo, showCheckDigitWarning = true, accent = 'orange' }) {
   const { t } = useTranslation('pages')
   const result = identifyContainer(containerNo)
+  const a = ACCENTS[accent] || ACCENTS.orange
 
   return (
     <div className="space-y-4">
@@ -25,9 +42,9 @@ export default function ContainerTrackerBlock({ containerNo, showCheckDigitWarni
 
       {result.carrier?.type === 'carrier' && (
         <>
-          <div className="flex items-center gap-2 px-4 py-3 rounded-lg border-l-4 bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 dark:border-emerald-500">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" strokeWidth={1.75} />
-            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+          <div className={`flex items-center gap-2 px-4 py-3 rounded-lg border-l-4 ${a.recognizedWrap}`}>
+            <CheckCircle2 className={`w-5 h-5 shrink-0 ${a.recognizedIcon}`} strokeWidth={1.75} />
+            <p className={`text-sm font-medium ${a.recognizedText}`}>
               {t('tracking.container.recognized', { carrier: result.carrier.name, prefix: result.prefix })}
             </p>
           </div>
@@ -36,17 +53,17 @@ export default function ContainerTrackerBlock({ containerNo, showCheckDigitWarni
             href={resolveTrackerUrl(result.carrier, result.normalized)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between gap-3 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-800 hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors group"
+            className={`flex items-center justify-between gap-3 p-4 rounded-xl border bg-white dark:bg-slate-800 transition-colors group ${a.linkBorder}`}
           >
             <div className="min-w-0">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {t('tracking.container.directLinkLabel', { carrier: result.carrier.name })}
               </p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+              <p className={`text-xs font-medium mt-0.5 ${a.linkBadge}`}>
                 {t('tracking.container.directLinkBadge')}
               </p>
             </div>
-            <ExternalLink className="w-4 h-4 text-gray-400 dark:text-slate-500 group-hover:text-emerald-500 shrink-0" strokeWidth={1.75} />
+            <ExternalLink className={`w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0 ${a.linkIconHover}`} strokeWidth={1.75} />
           </a>
         </>
       )}

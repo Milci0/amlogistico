@@ -169,3 +169,32 @@ model HsChoiceLog {
   @@index([createdAt])
   @@map("hs_choice_log")
 }
+
+// container_tracking — TRWAŁY rejestr śledzeń ShipsGo, jeden wiersz na NUMER
+// KONTENERA (nie na usera, nie na zestaw dokumentów). Zastępuje dawny cache
+// w pamięci procesu, który znikał przy każdym cold-starcie na Vercelu i przez
+// to nie chronił kredytów (patrz komentarz w api/_routes/shipsgoTracking.js).
+//
+// Dlaczego numer kontenera jest kluczem: kredyt ShipsGo jest naliczany za
+// utworzenie sledzenia, a to samo pudlo moze byc sprawdzone i z wyszukiwarki
+// („Numer kontenera"), i z wlasnej przesylki („Wlacz sledzenie"). Wspolny wiersz
+// = jedno platne utworzenie na kontener, niezaleznie od sciezki w aplikacji.
+//
+// status:
+//   pending  - POST poszedl do ShipsGo (kredyt policzony), ale dane jeszcze nie
+//              sa kompletne; UI pokazuje „w przetwarzaniu", user moze wrocic
+//   ready    - mamy dane do wyswietlenia (snapshot != null)
+//   failed   - ShipsGo odrzucilo numer na stale (404/422); NIE probuj ponownie
+//              automatycznie, zeby nie palic kredytow na bledny numer
+model ContainerTracking {
+  containerNo  String    @id @map("container_no") // znormalizowany, ISO 6346
+  shipsgoId    String?   @map("shipsgo_id") // id przesylki po stronie ShipsGo
+  status       String    @default("pending") // pending | ready | failed
+  snapshot     Json? // trimShipmentData() + geojson; null dopoki brak danych
+  lastError    String?   @map("last_error") // kod bledu z ostatniej nieudanej proby
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastPolledAt DateTime? @map("last_polled_at") // ostatnie odpytanie ShipsGo (nie: ostatnie wejscie usera)
+
+  @@index([status, lastPolledAt])
+  @@map("container_tracking")
+}

@@ -312,7 +312,7 @@
       "documentLanguage": "Język dokumentów",
       "polish": "Polski",
       "english": "Angielski",
-      "documentLanguageHint": "Niezależne od języka interfejsu — dotyczy wyłącznie treści generowanych dokumentów PDF."
+      "documentLanguageHint": "Niezależne od języka interfejsu, dotyczy wyłącznie treści generowanych dokumentów PDF."
     },
     "security": {
       "currentPassword": "Aktualne hasło",
@@ -671,8 +671,27 @@
     "realStatuses": {
       "planned": "Zaplanowana",
       "in_transit": "W drodze",
+      "in_destination_port": "W porcie docelowym",
+      "discharged": "Rozładowany",
       "eta_passed": "ETA minęła",
       "delivered": "Dostarczona"
+    },
+    "dataSourceShipsgo": "Dane: ShipsGo",
+    "dataSourceManual": "Dane wprowadzone ręcznie",
+    "enableTracking": "Włącz śledzenie",
+    "enabling": "Włączanie...",
+    "refresh": "Odśwież",
+    "refreshing": "Odświeżanie...",
+    "shipsgoError": "Nie udało się połączyć ze ShipsGo. Spróbuj ponownie później.",
+    "shipsgoEvents": {
+      "EMSH": "Pusty wydany",
+      "GTIN": "Brama wjazdowa (port nadania)",
+      "LOAD": "Załadunek na statek",
+      "DEPA": "Wypłynięcie",
+      "ARRV": "Przypłynięcie",
+      "DISC": "Rozładunek",
+      "GTOT": "Brama wyjazdowa (port docelowy)",
+      "EMRT": "Zwrot pustego kontenera"
     },
     "statusNote": "Status wyliczony z wprowadzonych dat. Aktualny status sprawdź u przewoźnika.",
     "markDelivered": "Oznacz jako dostarczoną",
@@ -698,13 +717,26 @@
       "notYet": "Jeszcze niepotwierdzona",
       "notProvided": "Data nieuzupełniona"
     },
+    "map": {
+      "noDataTitle": "Brak jeszcze danych o trasie",
+      "noDataBody": "Trasa pojawi się tutaj, gdy ShipsGo potwierdzi pozycję kontenera.",
+      "routeDates": "Daty załadunku i wyładunku",
+      "transitProgress": "Postęp rejsu",
+      "transitDays_one": "{{count}} dzień",
+      "transitDays_few": "{{count}} dni",
+      "transitDays_many": "{{count}} dni",
+      "transitDays_other": "{{count}} dni",
+      "co2": "Szacowane CO2",
+      "co2Value": "{{value}} kg",
+      "openInShipsgo": "Otwórz na mapie ShipsGo"
+    },
     "trackerSection": "Śledzenie u przewoźnika",
     "addContainerNumber": "Dodaj numer kontenera, żeby śledzić przesyłkę.",
     "editSet": "Edytuj zestaw",
     "emptyRealTitle": "Nie masz jeszcze żadnej przesyłki",
-    "emptyRealBody": "Każdy zestaw dokumentów zapisany w Dokumentacji pojawi się tutaj automatycznie — nie trzeba nic wpisywać drugi raz.",
+    "emptyRealBody": "Każdy zestaw dokumentów zapisany w Dokumentacji pojawi się tutaj automatycznie, nie trzeba nic wpisywać drugi raz.",
     "emptyRealCta": "Stwórz pierwszy zestaw",
-    "exampleSectionTitle": "Tak wygląda lista przesyłek — przykład",
+    "exampleSectionTitle": "Tak wygląda lista przesyłek (przykład)",
     "exampleBadge": "Przykład",
     "tabs": {
       "list": "Lista przesyłek",
@@ -713,15 +745,30 @@
     "container": {
       "inputPlaceholder": "Numer kontenera, np. CGMU6913205",
       "checkButton": "Sprawdź",
-      "checkDigitWarning": "Numer wygląda na niepoprawny — sprawdź literówkę",
+      "checkDigitWarning": "Numer wygląda na niepoprawny, sprawdź literówkę",
       "recognized": "Rozpoznano linię: {{carrier}} · prefiks {{prefix}}",
       "directLinkLabel": "Sprawdź na stronie {{carrier}}",
       "directLinkBadge": "Dane bezpośrednio od przewoźnika",
-      "unrecognized": "Nie rozpoznaliśmy linii — spróbuj w agregatorze",
+      "unrecognized": "Nie rozpoznaliśmy linii, spróbuj w agregatorze",
       "nameSearchNote": "Wyszukiwanie po nazwie przewoźnika. Podaj numer kontenera, żeby przejść prosto do statusu.",
-      "leased": "Kontener leasingowany ({{lessor}}) — może być obsługiwany przez dowolną linię. Sprawdź w agregatorze.",
+      "leased": "Kontener leasingowany ({{lessor}}), może być obsługiwany przez dowolną linię. Sprawdź w agregatorze.",
       "aggregatorsTitle": "Agregatory śledzenia",
-      "footerNote": "Dane pochodzą od przewoźników. AMLogistico nie przechowuje statusów przesyłek."
+      "footerNote": "Dane pochodzą od przewoźników. AMLogistico nie przechowuje statusów przesyłek.",
+      "shipsgo": {
+        "resultTitle": "Dane na żywo z ShipsGo",
+        "checkedAt": "Sprawdzono: {{date}}",
+        "cachedNote": "wynik z cache",
+        "vessel": "Statek",
+        "vesselUnknown": "Brak danych o statku",
+        "etaUnknown": "Brak danych",
+        "timelineTitle": "Historia przesyłki",
+        "noMovements": "Brak jeszcze zarejestrowanych zdarzeń dla tego kontenera.",
+        "pending": "Śledzenie zostało utworzone, ale ShipsGo wciąż pobiera dane od przewoźnika. Zwykle trwa to kilka minut. Możesz zamknąć tę stronę i wrócić później, kolejne sprawdzenie tego numeru jest już bezpłatne.",
+        "checkAgain": "Sprawdź ponownie",
+        "failed": "ShipsGo nie rozpoznało tego numeru kontenera. Sprawdź, czy numer jest poprawny, albo spróbuj w agregatorze poniżej.",
+        "rateLimited": "Zbyt wiele wyszukiwań w krótkim czasie. Spróbuj ponownie za ok. {{minutes}} min.",
+        "genericError": "Nie udało się pobrać danych z ShipsGo. Spróbuj ponownie później."
+      }
     }
   },
   "admin": {
