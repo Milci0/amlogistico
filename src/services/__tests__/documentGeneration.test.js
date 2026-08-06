@@ -50,52 +50,97 @@ describe('stare migawki bez nowych slajsow', () => {
     expect(d.cargo.incoterms).toBe('FCA')
   })
 
-  it('bez etapow multimodalnych mainCarriage nadal bierze przewoznika z Kroku „Strony"', () => {
+  it('bez etapow multimodalnych jeden neutralny wiersz bierze przewoznika z Kroku „Strony"', () => {
     const d = buildGeneratorData(OLD_SNAPSHOT, 'PL')
-    expect(d.carrierLegs.mainCarriage).toEqual({
-      name: 'Przewoznik SA',
-      address: 'ul. Testowa 1',
-      vatNumber: 'PL999',
-    })
-    expect(d.carrierLegs.preCarriage.name).toBe('')
-    expect(d.carrierLegs.onCarriage.name).toBe('')
+    expect(d.carrierLegs.rows).toEqual([{
+      label: 'Leg 1',
+      mode: '',
+      placeOfReceipt: '',
+      pol: '',
+      pod: '',
+      placeOfDelivery: '',
+      carrierName: 'Przewoznik SA',
+      carrierAddress: 'ul. Testowa 1',
+      carrierVatNumber: 'PL999',
+    }])
   })
 })
 
-describe('etapy multimodalne → carrierLegs', () => {
+describe('etapy multimodalne → carrierLegs.rows', () => {
   const withLegs = (legs) => buildGeneratorData({ ...OLD_SNAPSHOT, multimodal: { legs } }, 'PL')
 
-  it('jeden etap trafia w przewoz glowny', () => {
+  it('jeden etap sea trafia w Main-carriage z POL/POD z jego wlasnych pol', () => {
     const d = withLegs([{ order: 1, mode: 'sea', from: 'Gdansk', to: 'Newark', carrier: 'Maersk' }])
-    expect(d.carrierLegs.mainCarriage.name).toBe('Maersk')
-    expect(d.carrierLegs.preCarriage.name).toBe('')
-    expect(d.carrierLegs.onCarriage.name).toBe('')
+    expect(d.carrierLegs.rows).toHaveLength(1)
+    expect(d.carrierLegs.rows[0]).toMatchObject({
+      label: 'Main-carriage',
+      mode: 'sea',
+      carrierName: 'Maersk',
+      placeOfReceipt: 'Gdansk',
+      pol: 'Gdansk',
+      pod: 'Newark',
+      placeOfDelivery: 'Newark',
+    })
   })
 
-  it('dwa etapy to dowoz plus przewoz glowny', () => {
+  it('dwa etapy (road + sea): dowoz jako Pre-carriage, POL glownego bierze punkt przeladunku z dowozu', () => {
     const d = withLegs([
       { order: 1, mode: 'road', from: 'Lodz', to: 'Gdansk', carrier: 'Trans PL' },
       { order: 2, mode: 'sea', from: 'Gdansk', to: 'Newark', carrier: 'Maersk' },
     ])
-    expect(d.carrierLegs.preCarriage.name).toBe('Trans PL')
-    expect(d.carrierLegs.mainCarriage.name).toBe('Maersk')
-    expect(d.carrierLegs.onCarriage.name).toBe('')
+    expect(d.carrierLegs.rows).toHaveLength(2)
+    expect(d.carrierLegs.rows[0]).toMatchObject({ label: 'Pre-carriage', carrierName: 'Trans PL', placeOfReceipt: 'Lodz', pol: '', pod: '' })
+    expect(d.carrierLegs.rows[1]).toMatchObject({ label: 'Main-carriage', carrierName: 'Maersk', pol: 'Gdansk', pod: 'Newark', placeOfDelivery: 'Newark' })
   })
 
-  it('trzy etapy wypelniaja dowoz, przewoz glowny i odwoz', () => {
+  it('dwa etapy bez sea/air: sekwencyjne Leg 1 / Leg 2, POL/POD puste', () => {
+    const d = withLegs([
+      { order: 1, mode: 'road', from: 'Lodz', to: 'Gdansk', carrier: 'Trans PL' },
+      { order: 2, mode: 'rail', from: 'Gdansk', to: 'Malmo', carrier: 'PKP Cargo' },
+    ])
+    expect(d.carrierLegs.rows).toHaveLength(2)
+    expect(d.carrierLegs.rows[0]).toMatchObject({ label: 'Leg 1', mode: 'road', carrierName: 'Trans PL', placeOfReceipt: 'Lodz', pol: '', pod: '' })
+    expect(d.carrierLegs.rows[1]).toMatchObject({ label: 'Leg 2', mode: 'rail', carrierName: 'PKP Cargo', pol: '', pod: '', placeOfDelivery: 'Malmo' })
+  })
+
+  it('dokladnie trzy etapy zawsze dostaja Pre/Main/On, niezaleznie od trybu', () => {
     const d = withLegs([
       { order: 1, mode: 'road', from: 'Lodz', to: 'Gdansk', carrier: 'Trans PL' },
       { order: 2, mode: 'sea', from: 'Gdansk', to: 'Newark', carrier: 'Maersk' },
       { order: 3, mode: 'rail', from: 'Newark', to: 'Chicago', carrier: 'Union Pacific' },
     ])
-    expect(d.carrierLegs.preCarriage.name).toBe('Trans PL')
-    expect(d.carrierLegs.mainCarriage.name).toBe('Maersk')
-    expect(d.carrierLegs.onCarriage.name).toBe('Union Pacific')
+    expect(d.carrierLegs.rows).toHaveLength(3)
+    expect(d.carrierLegs.rows[0]).toMatchObject({ label: 'Pre-carriage', carrierName: 'Trans PL', placeOfReceipt: 'Lodz' })
+    expect(d.carrierLegs.rows[1]).toMatchObject({ label: 'Main-carriage', carrierName: 'Maersk', pol: 'Gdansk', pod: 'Newark' })
+    expect(d.carrierLegs.rows[2]).toMatchObject({ label: 'On-carriage', carrierName: 'Union Pacific', placeOfDelivery: 'Chicago' })
+  })
+
+  it('cztery etapy z sea w srodku: Pre-carriage numerowane, On-carriage pojedyncze', () => {
+    const d = withLegs([
+      { order: 1, mode: 'road', from: 'Warszawa', to: 'Lodz', carrier: 'A' },
+      { order: 2, mode: 'road', from: 'Lodz', to: 'Gdansk', carrier: 'B' },
+      { order: 3, mode: 'sea', from: 'Gdansk', to: 'Newark', carrier: 'Maersk' },
+      { order: 4, mode: 'road', from: 'Newark', to: 'Chicago', carrier: 'C' },
+    ])
+    expect(d.carrierLegs.rows.map((r) => r.label)).toEqual(['Pre-carriage 1', 'Pre-carriage 2', 'Main-carriage', 'On-carriage'])
+    expect(d.carrierLegs.rows[0].placeOfReceipt).toBe('Warszawa')
+    expect(d.carrierLegs.rows[2]).toMatchObject({ pol: 'Gdansk', pod: 'Newark' })
+    expect(d.carrierLegs.rows[3].placeOfDelivery).toBe('Chicago')
+  })
+
+  it('brakujace „Dokad" etapu N spada na „Skad" etapu N+1 przy wyznaczaniu POL', () => {
+    const d = withLegs([
+      { order: 1, mode: 'road', from: 'Lodz', to: '', carrier: 'Trans PL' },
+      { order: 2, mode: 'sea', from: 'Gdansk', to: 'Newark', carrier: 'Maersk' },
+    ])
+    expect(d.carrierLegs.rows[1].pol).toBe('Gdansk')
   })
 
   it('same puste etapy nie kasuja przewoznika z Kroku „Strony"', () => {
     const d = withLegs([{ order: 1, mode: '', from: '', to: '', carrier: '' }])
-    expect(d.carrierLegs.mainCarriage.name).toBe('Przewoznik SA')
+    expect(d.carrierLegs.rows).toHaveLength(1)
+    expect(d.carrierLegs.rows[0].carrierName).toBe('Przewoznik SA')
+    expect(d.carrierLegs.rows[0].label).toBe('Leg 1')
   })
 })
 

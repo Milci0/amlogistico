@@ -19,10 +19,6 @@
   },
   "route": {
     "transportType": "Typ transportu",
-    "multimodal": {
-      "label": "Transport multimodalny",
-      "hint": "Towar jedzie kilkoma środkami transportu (np. ciężarówka + statek). Generuje dodatkowy dokument MTD."
-    },
     "multimodalStructure": {
       "question": "Jak zorganizowany jest przewóz?",
       "hint": "Od tego zależy, jakie dokumenty przewozowe wygenerujemy.",

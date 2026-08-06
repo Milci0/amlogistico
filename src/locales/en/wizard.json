@@ -19,10 +19,6 @@
   },
   "route": {
     "transportType": "Transport mode",
-    "multimodal": {
-      "label": "Multimodal transport",
-      "hint": "The cargo travels by more than one mode, for example truck plus vessel. This adds an MTD document."
-    },
     "multimodalStructure": {
       "question": "How is the carriage organised?",
       "hint": "This determines which transport documents we generate.",
