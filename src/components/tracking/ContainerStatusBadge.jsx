@@ -4,9 +4,9 @@ import { resolveContainerStatus } from '../../data/containerStatus'
 // Plakietka statusu rejsu. Pulsująca kropka WYŁĄCZNIE dla stanu „Pobieramy dane"
 // i tylko wtedy, gdy użytkownik nie prosił o ograniczenie animacji
 // (motion-reduce wyłącza sam ruch, kropka zostaje).
-export default function ContainerStatusBadge({ status, archived, className = '' }) {
+export default function ContainerStatusBadge({ status, archived, fetchState, className = '' }) {
   const { t } = useTranslation('pages')
-  const style = resolveContainerStatus({ status, archived })
+  const style = resolveContainerStatus({ status, archived, fetchState })
 
   return (
     <span

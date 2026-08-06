@@ -79,9 +79,25 @@ export async function createAndSave(row, { containerNumber, carrier }) {
   const result = await createOceanShipment({ containerNumber, carrier })
 
   if (!result.success) {
-    // Błąd TRWAŁY zostaje w bazie jako `failed` (nie próbuj w kółko), przejściowy
-    // kasuje rezerwację, żeby pusty wiersz nie zablokował numeru na zawsze.
-    if (isPermanentError(result.code)) {
+    // Rozstrzygnięcie "kasować rezerwację czy nie" idzie po tym, czy jest
+    // PEWNE, że ShipsGo nie policzyło kredytu:
+    //   - isPermanentError (404/422) - ShipsGo jawnie odrzuciło numer, request
+    //     nie mógł się powieść -> bezpiecznie zostawić `failed`, nie kasować
+    //   - 401/402/403/429/NETWORK - request odrzucony PRZED przetworzeniem
+    //     (zły token, brak kredytów, limit, brak połączenia) -> na pewno bez
+    //     opłaty, bezpiecznie skasować rezerwację i pozwolić na nową próbę
+    //   - KAŻDY INNY kod (dawne 'UNKNOWN' z nietypowego statusu, np. 500/503)
+    //     - NIEJEDNOZNACZNE: ShipsGo mogło już przetworzyć i policzyć kredyt,
+    //     zanim zwróciło zły status. Skasowanie rezerwacji pozwoliłoby kolejnej
+    //     próbie wysłać DRUGI płatny POST na ten sam numer - realny przypadek,
+    //     który się zdarzył (2026-08-08): kredyt zjedzony, wiersz skasowany,
+    //     zero śladu w bazie. Dlatego taki wynik ZOSTAJE w bazie jako `failed`
+    //     zamiast znikać, i NIE jest ponawiany automatycznie.
+    const definitelyNotCharged = ['UNAUTHORIZED', 'NO_CREDITS', 'FORBIDDEN', 'RATE_LIMIT', 'NETWORK'].includes(result.code)
+    if (isPermanentError(result.code) || !definitelyNotCharged) {
+      if (!definitelyNotCharged && !isPermanentError(result.code)) {
+        console.error('[shipsgo] utworzenie zakonczone niejednoznacznym bledem, zatrzymuje rezerwacje zamiast kasowac:', containerNumber, result.code, result.error)
+      }
       await markFailed(row.id, result.code)
     } else {
       await releaseReservation(row.id)
@@ -95,8 +111,14 @@ export async function createAndSave(row, { containerNumber, carrier }) {
   // próbujemy ją odnaleźć (GET jest darmowy).
   if (!raw?.id) raw = await findOceanShipmentByContainer(containerNumber)
   if (!raw?.id) {
-    await releaseReservation(row.id)
-    return { error: 'UNKNOWN' }
+    // ShipsGo POTWIERDZIŁO utworzenie (2xx) - kredyt niemal na pewno poszedł -
+    // ale nie udało się odczytać `id` ani odnaleźć przesyłki przez GET.
+    // Z TEGO SAMEGO POWODU co wyżej: rezerwacja ZOSTAJE (jako `failed`,
+    // z kodem opisującym dokładnie ten przypadek), retry NIE tworzy drugiej,
+    // płatnej przesyłki dla tego samego numeru.
+    console.error('[shipsgo] POST zwrocil sukces, ale brak id przesylki - mozliwy policzony kredyt bez zapisanego shipsgoId:', containerNumber, JSON.stringify(result.data))
+    await markFailed(row.id, 'CREATE_UNCERTAIN')
+    return { error: 'CREATE_UNCERTAIN' }
   }
 
   return { row: await persistShipment(row.id, raw) }

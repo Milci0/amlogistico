@@ -79,7 +79,8 @@ const ERROR_DESCRIPTIONS = {
   VALIDATION: { status: 422, message: 'ShipsGo odrzuciło numer kontenera jako nieprawidłowy.' },
   RATE_LIMIT: { status: 429, message: 'Zbyt wiele zapytań do ShipsGo w krótkim czasie. Spróbuj ponownie za chwilę.' },
   NETWORK: { status: 502, message: 'Nie udało się połączyć z ShipsGo. Spróbuj ponownie później.' },
-  UNKNOWN: { status: 502, message: 'ShipsGo nie odpowiedziało poprawnie. Spróbuj ponownie później.' },
+  UNKNOWN: { status: 502, message: 'ShipsGo nie odpowiedziało poprawnie. Ten numer został zapisany jako wymagający sprawdzenia i nie będzie automatycznie ponawiany, żeby uniknąć podwójnej opłaty. Skontaktuj się z nami, jeśli problem się powtórzy.' },
+  CREATE_UNCERTAIN: { status: 502, message: 'Nie udało się potwierdzić utworzenia śledzenia w ShipsGo, mimo że żądanie zostało przyjęte. Ten numer został zapisany jako wymagający sprawdzenia i nie będzie automatycznie ponawiany, żeby uniknąć podwójnej opłaty. Skontaktuj się z nami, jeśli problem się powtórzy.' },
 }
 
 // Zamienia { code } z createOceanShipment/getOceanShipment/getShipmentGeojson
@@ -116,6 +117,30 @@ export const OCEAN_STATUSES = [
 //      etykietami — ponowne sprawdzenie takiego kontenera platiloby trzeci raz.
 // Brak `reference` sprawia, ze dedupe idzie po samym `container_number`
 // i lapie KAZDE istniejace sledzenie tego pudla na naszym koncie.
+
+// Koperta odpowiedzi ShipsGo: pojedynczy zasob jest zagniezdzony pod kluczem
+// nazwanym po zasobie, nie zwracany plasko. POTWIERDZONE na realnym koncie
+// (2026-08-06): POST /ocean/shipments zwraca
+// {"message":"SUCCESS","shipment":{"id":6559745,...}}, nie {"id":...} na
+// gornym poziomie. Wczesniejszy kod zakladal plaska strukture i przez to
+// gubil `id` przy KAZDYM udanym utworzeniu — kredyt szedl, a przesylka
+// zostawala bez zapisanego shipsgoId (dwa realne przypadki: TLLU1080331,
+// MMAU1351730). Unwrap jest bezpieczny takze dla juz plaskiej odpowiedzi:
+// gdy `shipment` nie istnieje, zwraca body bez zmian.
+function unwrapShipment(body) {
+  return body?.shipment ?? body?.data ?? body ?? null
+}
+
+// Jak wyzej, ale dla odpowiedzi z LISTA przesylek (GET .../ocean/shipments
+// z filtrem). Klucz listy NIEPOTWIERDZONY na realnym koncie — po analogii do
+// `shipment` (liczba pojedyncza dla jednego zasobu) zakladamy `shipments`
+// (liczba mnoga dla listy), z fallbackiem na `data` i na goła tablice.
+function unwrapShipmentList(body) {
+  if (Array.isArray(body)) return body
+  if (Array.isArray(body?.shipments)) return body.shipments
+  if (Array.isArray(body?.data)) return body.data
+  return []
+}
 
 async function shipsgoFetch(path, options = {}) {
   const { timeoutMs = TIMEOUT_MS, ...fetchOptions } = options
@@ -161,13 +186,13 @@ export async function createOceanShipment({ containerNumber, carrier }) {
       // Duplikat — bez opłaty. Ciało może (ale nie musi) nieść dane istniejącego
       // śledzenia; jeśli nie niesie, wywołujący dociągnie przez GET osobno.
       const body = await res.json().catch(() => null)
-      return { success: true, alreadyExists: true, data: body?.data ?? body ?? null, error: null, code: null }
+      return { success: true, alreadyExists: true, data: unwrapShipment(body), error: null, code: null }
     }
 
     if (!res.ok) return { ...(await errorFromResponse(res)), alreadyExists: false }
 
-    const data = await res.json()
-    return { success: true, alreadyExists: false, data, error: null, code: null }
+    const resBody = await res.json()
+    return { success: true, alreadyExists: false, data: unwrapShipment(resBody), error: null, code: null }
   } catch (e) {
     console.error('[shipsgo] createOceanShipment nie powiodło się:', e)
     return { success: false, alreadyExists: false, data: null, error: null, code: 'NETWORK' }
@@ -179,8 +204,8 @@ export async function getOceanShipment(id) {
   try {
     const res = await shipsgoFetch(`/ocean/shipments/${encodeURIComponent(id)}`, { method: 'GET' })
     if (!res.ok) return errorFromResponse(res)
-    const data = await res.json()
-    return { success: true, data, error: null, code: null }
+    const body = await res.json()
+    return { success: true, data: unwrapShipment(body), error: null, code: null }
   } catch (e) {
     console.error('[shipsgo] getOceanShipment nie powiodło się:', e)
     return { success: false, data: null, error: null, code: 'NETWORK' }
@@ -198,7 +223,7 @@ export async function findOceanShipmentByContainer(containerNumber) {
     const res = await shipsgoFetch(`/ocean/shipments?${query}`, { method: 'GET' })
     if (!res.ok) return null
     const body = await res.json()
-    const list = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : []
+    const list = unwrapShipmentList(body)
     return list.find((s) => s?.id != null) || null
   } catch (e) {
     console.error('[shipsgo] findOceanShipmentByContainer nie powiodło się:', e)
@@ -397,9 +422,10 @@ export async function getOceanCarriers() {
     const res = await shipsgoFetch('/ocean/carriers?filters[status]=eq:ACTIVE', { method: 'GET' })
     if (!res.ok) return errorFromResponse(res)
     const body = await res.json()
-    // Kształt odpowiedzi niezweryfikowany — akceptujemy zarówno gołą tablicę,
-    // jak i kopertę { data: [...] }.
-    const list = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : []
+    // Kształt odpowiedzi niezweryfikowany — po analogii do potwierdzonego
+    // `shipment`/`shipments` (patrz unwrapShipment) próbujemy też `carriers`,
+    // obok gołej tablicy i koperty { data: [...] }.
+    const list = Array.isArray(body) ? body : Array.isArray(body?.carriers) ? body.carriers : Array.isArray(body?.data) ? body.data : []
     const carriers = list
       .map((c) => ({ scac: c.scac || c.code || null, name: c.name || null }))
       .filter((c) => c.scac && c.name)

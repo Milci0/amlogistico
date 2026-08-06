@@ -798,7 +798,8 @@
         "ARRIVED": "At destination port",
         "DISCHARGED": "Discharged",
         "UNTRACKED": "Not tracked",
-        "ARCHIVED": "Voyage completed"
+        "ARCHIVED": "Voyage completed",
+        "CREATE_FAILED": "Creation failed"
       },
       "pending": {
         "title": "The number has been accepted and passed on to the carrier",
@@ -850,6 +851,10 @@
         "title": "Start tracking a new voyage?",
         "body": "The previous voyage of this container is completed. Starting a new tracking record uses another ShipsGo credit. The old voyage data will be kept.",
         "confirm": "Start tracking"
+      },
+      "createFailed": {
+        "title": "Could not confirm tracking was created",
+        "body": "The request was sent to ShipsGo, but we could not confirm whether tracking was actually created. A credit may have been charged without any data being saved. We do not retry this automatically to avoid a double charge. Check the ShipsGo dashboard for a shipment with this number, and contact us if you find one."
       }
     }
   },

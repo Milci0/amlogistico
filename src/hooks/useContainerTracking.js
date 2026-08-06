@@ -55,7 +55,11 @@ export function useContainerPolling(container, onUpdate) {
   onUpdateRef.current = onUpdate
 
   const containerNumber = container?.containerNumber
-  const shouldPoll = !!containerNumber && !container?.archived && isPendingStatus(container?.status)
+  // `fetchState: 'failed'` znaczy, że rekord nigdy nie dostanie realnego
+  // statusu z ShipsGo (patrz api/_lib/shipsgoSync.js) - odpytywanie w kółko
+  // niczego by nie rozwiązało, tylko marnowało zapytania do naszego API.
+  const shouldPoll = !!containerNumber && !container?.archived
+    && container?.fetchState !== 'failed' && isPendingStatus(container?.status)
 
   useEffect(() => {
     if (!shouldPoll) {

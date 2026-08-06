@@ -26,6 +26,7 @@ import {
   findActiveByNumber,
   findLatestArchivedByNumber,
   findByShipsgoId,
+  findById,
   reserveTracking,
   markDiscarded,
   releaseReservation,
@@ -238,7 +239,18 @@ router.post('/containers', async (req, res, next) => {
     }
 
     const { row, error, retryAfter } = await createAndSave(reservation.row, { containerNumber, carrier })
-    if (error) return sendShipsgoError(res, error, retryAfter)
+    if (error) {
+      // createAndSave() zachowuje wiersz (fetchState:'failed') dla wyników
+      // NIEJEDNOZNACZNYCH (kredyt mógł już zostać policzony), zamiast go
+      // kasować - patrz obszerny komentarz w shipsgoSync.js. Bez podpięcia
+      // usera taki wiersz byłby niewidoczny na liście mimo zapłaconego
+      // kredytu (dokładnie to się stało 2026-08-06 z TLLU1080331/MMAU1351730,
+      // zanim naprawiono ręcznie) - user nie widziałby nawet stanu „Błąd
+      // utworzenia" i nie mógłby go usunąć.
+      const kept = await findById(reservation.row.id)
+      if (kept) await linkUser(req.userId, kept.id)
+      return sendShipsgoError(res, error, retryAfter)
+    }
 
     await linkUser(req.userId, row.id)
     res.json({ success: true, container: toDetail(row), created: true })

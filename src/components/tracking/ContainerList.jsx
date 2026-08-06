@@ -56,7 +56,7 @@ export default function ContainerList({ containers, loading, onOpen }) {
                     {describeRoute(t, c)}
                   </p>
                 </div>
-                <ContainerStatusBadge status={c.status} archived={c.archived} />
+                <ContainerStatusBadge status={c.status} archived={c.archived} fetchState={c.fetchState} />
                 <span className="text-xs text-gray-400 dark:text-slate-500 whitespace-nowrap">
                   {formatRelativeTime(c.updatedAt, i18n.language)}
                 </span>

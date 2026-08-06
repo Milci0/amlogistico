@@ -812,7 +812,8 @@
         "ARRIVED": "W porcie docelowym",
         "DISCHARGED": "Rozładowany",
         "UNTRACKED": "Bez śledzenia",
-        "ARCHIVED": "Rejs zakończony"
+        "ARCHIVED": "Rejs zakończony",
+        "CREATE_FAILED": "Blad utworzenia"
       },
       "pending": {
         "title": "Numer został przyjęty i przekazany do przewoźnika",
@@ -864,6 +865,10 @@
         "title": "Rozpocząć śledzenie nowego rejsu?",
         "body": "Poprzedni rejs tego kontenera jest zakończony. Rozpoczęcie nowego śledzenia zużyje kolejny kredyt ShipsGo. Dane starego rejsu zostaną zachowane.",
         "confirm": "Rozpocznij śledzenie"
+      },
+      "createFailed": {
+        "title": "Nie udalo sie potwierdzic utworzenia sledzenia",
+        "body": "Zadanie zostalo wyslane do ShipsGo, ale nie udalo sie potwierdzic, czy sledzenie faktycznie powstalo. Mogl zostac policzony kredyt bez zapisanych danych. Nie ponawiamy tego automatycznie, zeby nie ryzykowac podwojnej oplaty. Sprawdz w panelu ShipsGo, czy przesylka dla tego numeru istnieje, i napisz do nas, jesli tak."
       }
     }
   },

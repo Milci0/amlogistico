@@ -66,12 +66,26 @@ const ARCHIVED_STYLE = {
   pulse: false,
 }
 
+// Utworzenie w ShipsGo zakończyło się niejednoznacznie (np. status 500/503 po
+// wysłaniu POST-a, albo sukces bez możliwego do odczytania id) — rekord
+// ZOSTAJE w bazie (backend celowo go nie kasuje, żeby retry nie wysłał
+// drugiego, płatnego POST-a na ten sam numer), ale nigdy nie dostał realnego
+// statusu z ShipsGo, więc `status` zostaje na wartości domyślnej ('NEW').
+// Bez tego wpisu taki rekord wyglądałby jak zwykłe "Pobieramy dane" na zawsze.
+const CREATE_FAILED_STYLE = {
+  labelKey: 'tracking.container.status.CREATE_FAILED',
+  badge: 'bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-900',
+  dot: 'bg-red-500',
+  pulse: false,
+}
+
 const FALLBACK_STYLE = CONTAINER_STATUS_STYLES.UNTRACKED
 
 // Rejs zakończony ma własną etykietę i kolor wygaszony, żeby nikt nie wziął
 // archiwalnego „W drodze" za bieżący transport.
-export function resolveContainerStatus({ status, archived }) {
+export function resolveContainerStatus({ status, archived, fetchState }) {
   if (archived) return ARCHIVED_STYLE
+  if (fetchState === 'failed' && isPendingStatus(status)) return CREATE_FAILED_STYLE
   return CONTAINER_STATUS_STYLES[status] || FALLBACK_STYLE
 }
 

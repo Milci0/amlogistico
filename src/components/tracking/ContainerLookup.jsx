@@ -150,7 +150,15 @@ export default function ContainerLookup() {
 
   // ── Widok szczegółów (stany 3, 5, 5b, 6) ──────────────────────────────────
   if (selected) {
-    const pending = !selected.archived && isPendingStatus(selected.status)
+    // Rekord z `fetchState: 'failed'`, który nigdy nie dostał realnego statusu
+    // z ShipsGo (status zostaje na wartości domyślnej): utworzenie zakończyło
+    // się niejednoznacznie po naszej stronie (patrz api/_lib/shipsgoSync.js).
+    // Backend celowo NIE kasuje takiego wiersza (kasowanie pozwoliłoby retry
+    // wysłać drugi, płatny POST na ten sam numer), ale to znaczy, że taki
+    // rekord trzeba pokazać inaczej niż zwykłe "Pobieramy dane" - inaczej
+    // wyglądałby jak wiecznie trwające przetwarzanie.
+    const createFailed = !selected.archived && selected.fetchState === 'failed' && isPendingStatus(selected.status)
+    const pending = !selected.archived && !createFailed && isPendingStatus(selected.status)
     return (
       <div>
         {error && (
@@ -159,7 +167,32 @@ export default function ContainerLookup() {
           </div>
         )}
 
-        {pending ? (
+        {createFailed ? (
+          <div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="text-sm text-gray-600 dark:text-slate-300 font-medium hover:text-orange-700 dark:hover:text-orange-400 transition-colors mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
+            >
+              {t('tracking.container.backToContainers')}
+            </button>
+            <div className="border border-red-300 dark:border-red-900 rounded-xl p-5 bg-white dark:bg-slate-800">
+              <p className="text-base font-mono tracking-wider font-semibold text-gray-900 dark:text-white mb-3">
+                {selected.containerNumber}
+              </p>
+              <AlertBox type="error" title={t('tracking.container.createFailed.title')}>
+                {t('tracking.container.createFailed.body')}
+              </AlertBox>
+              <button
+                type="button"
+                onClick={() => setConfirm({ kind: 'remove' })}
+                className="mt-4 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
+              >
+                {t('tracking.container.removeFromList')}
+              </button>
+            </div>
+          </div>
+        ) : pending ? (
           <div>
             <button
               type="button"

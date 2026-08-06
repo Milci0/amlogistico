@@ -1,8 +1,64 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import crypto from 'node:crypto'
-import { trimShipmentData, trimGeojson, OCEAN_STATUSES } from '../shipsgo.js'
+import { trimShipmentData, trimGeojson, OCEAN_STATUSES, createOceanShipment, getOceanShipment } from '../shipsgo.js'
 import { validateContainerNumber, isValidContainerNumber } from '../containerChecksum.js'
 import { INACTIVE_STATUSES, isArchived } from '../containerTrackingRepo.js'
+
+// Kształt odpowiedzi ShipsGo (koperta z kluczem `shipment`), NIEZGADYWANY —
+// przechwycony z realnego konta 2026-08-06: POST /ocean/shipments zwrócił
+// {"message":"SUCCESS","shipment":{"id":6559745,...}}, a wcześniejszy kod
+// zakładał płaską strukturę i gubił `id` przy KAŻDYM udanym utworzeniu (dwa
+// realne, opłacone przypadki: TLLU1080331, MMAU1351730 - kredyt poszedł,
+// a numer został bez zapisanego shipsgoId). Te testy pilnują, żeby unwrap
+// się nie cofnął.
+describe('koperta odpowiedzi ShipsGo (unwrapShipment)', () => {
+  const REAL_CREATE_RESPONSE = {
+    message: 'SUCCESS',
+    shipment: { id: 6559745, reference: null, booking_number: null, container_number: 'TLLU1080331' },
+  }
+
+  beforeEach(() => {
+    process.env.SHIPSGO_API_TOKEN = 'test-token'
+    vi.stubGlobal('fetch', vi.fn())
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    delete process.env.SHIPSGO_API_TOKEN
+  })
+
+  it('createOceanShipment wyciąga id z koperty { shipment } zamiast z góry', async () => {
+    fetch.mockResolvedValue(new Response(JSON.stringify(REAL_CREATE_RESPONSE), { status: 200 }))
+    const result = await createOceanShipment({ containerNumber: 'TLLU1080331' })
+    expect(result.success).toBe(true)
+    expect(result.data?.id).toBe(6559745)
+    expect(result.data?.container_number).toBe('TLLU1080331')
+  })
+
+  it('createOceanShipment na 409 też wyciąga id z koperty { shipment }', async () => {
+    fetch.mockResolvedValue(new Response(JSON.stringify(REAL_CREATE_RESPONSE), { status: 409 }))
+    const result = await createOceanShipment({ containerNumber: 'TLLU1080331' })
+    expect(result.success).toBe(true)
+    expect(result.alreadyExists).toBe(true)
+    expect(result.data?.id).toBe(6559745)
+  })
+
+  it('getOceanShipment wyciąga id z tej samej koperty przy odczycie', async () => {
+    fetch.mockResolvedValue(new Response(JSON.stringify({
+      message: 'SUCCESS',
+      shipment: { id: 6559746, status: 'SAILING', carrier: { name: 'MAERSK LINE' } },
+    }), { status: 200 }))
+    const result = await getOceanShipment(6559746)
+    expect(result.success).toBe(true)
+    expect(result.data?.id).toBe(6559746)
+    expect(result.data?.status).toBe('SAILING')
+  })
+
+  it('unwrap jest bezpieczny dla już płaskiej odpowiedzi (bez klucza shipment)', async () => {
+    fetch.mockResolvedValue(new Response(JSON.stringify({ id: 999, status: 'NEW' }), { status: 200 }))
+    const result = await createOceanShipment({ containerNumber: 'AAAA1234561' })
+    expect(result.data?.id).toBe(999)
+  })
+})
 
 describe('containerChecksum (kopia backendowa)', () => {
   it('daje ten sam wynik co walidacja frontendowa', () => {
