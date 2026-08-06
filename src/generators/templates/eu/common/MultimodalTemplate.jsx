@@ -1,5 +1,15 @@
 import { formatDocumentDate } from '../../../../utils/formatDate'
 
+// Mapowanie trybu etapu (wartości silnika: 'road'|'sea'|'rail'|'air') na
+// etykiety checkboxów TRANSPORT ROUTE — ta sama kolejność na każdym wierszu,
+// niezależnie od roli (Pre/Main/On), zaznaczony ten, który pasuje do leg.mode.
+const MODE_CHECKBOXES = [
+  ['road', 'Road'],
+  ['rail', 'Rail'],
+  ['sea', 'Sea'],
+  ['air', 'Air'],
+]
+
 export function MultimodalTemplate({ data }) {
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
@@ -76,41 +86,26 @@ export function MultimodalTemplate({ data }) {
         <div style={{ ...thBlue, width: '80px', borderRight: b }}>Estimated Time</div>
       </div>
 
-      {/* WIERSZ 1: PRE-CARRIAGE */}
-      <div style={{ display: 'flex', borderLeft: b, minHeight: '30px' }}>
-        <div style={{ width: '140px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '8px', fontWeight: 'bold' }}>1 — Pre-carriage</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '8px' }}>&#9634; Road &nbsp; &#9634; Rail</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.fromCity}</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.carrierLegs?.preCarriage?.name}</div>
-        <div style={{ width: '80px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-      </div>
-
-      {/* WIERSZ 2: MAIN CARRIAGE */}
-      <div style={{ display: 'flex', borderLeft: b, minHeight: '30px' }}>
-        <div style={{ width: '140px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '8px', fontWeight: 'bold' }}>2 — Main carriage</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '8px' }}>&#9634; Sea &nbsp; &#9634; Air &nbsp; &#9634; Rail</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.fromCity}, {data.fromCountry}</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.fromCity}</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.toCity}</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.toCity}, {data.toCountry}</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.carrierLegs?.mainCarriage?.name}</div>
-        <div style={{ width: '80px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-      </div>
-
-      {/* WIERSZ 3: ON-CARRIAGE */}
-      <div style={{ display: 'flex', borderLeft: b, minHeight: '30px' }}>
-        <div style={{ width: '140px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '8px', fontWeight: 'bold' }}>3 — On-carriage</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '8px' }}>&#9634; Road &nbsp; &#9634; Rail</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.toCity}</div>
-        <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{data.carrierLegs?.onCarriage?.name}</div>
-        <div style={{ width: '80px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
-      </div>
+      {/* WIERSZE TRASY — dynamiczne, po jednym na etap z Kroku „Towar" (patrz
+          buildTransportLegRows w documentGeneration.js). Checkbox trybu
+          zaznaczony wg leg.mode; Place of Receipt/Delivery tylko na skrajnych
+          wierszach, POL/POD tylko na Main-carriage. */}
+      {(data.carrierLegs?.rows || []).map((row, i) => (
+        <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '30px' }}>
+          <div style={{ width: '140px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '8px', fontWeight: 'bold' }}>{i + 1} — {row.label}</div>
+          <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '8px' }}>
+            {MODE_CHECKBOXES.map(([mode, text], j) => (
+              <span key={mode}>{j > 0 && '  '}{row.mode === mode ? '▣' : '▢'} {text}</span>
+            ))}
+          </div>
+          <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{row.placeOfReceipt}</div>
+          <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{row.pol}</div>
+          <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{row.pod}</div>
+          <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{row.placeOfDelivery}</div>
+          <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }}>{row.carrierName}</div>
+          <div style={{ width: '80px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '9px' }} />
+        </div>
+      ))}
 
       {/* TABELA ŁADUNKU NAGŁÓWEK */}
       <div style={{ display: 'flex', borderLeft: b, marginTop: '0' }}>
