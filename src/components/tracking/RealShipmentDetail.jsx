@@ -111,9 +111,9 @@ export default function RealShipmentDetail({ shipment }) {
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">
-            {shipment.route.fromCity || '—'} ({tCountry(shipment.route.fromCountry, { defaultValue: shipment.route.fromCountry })})
+            {shipment.route.fromCity || '-'} ({tCountry(shipment.route.fromCountry, { defaultValue: shipment.route.fromCountry })})
             {' → '}
-            {shipment.route.toCity || '—'} ({tCountry(shipment.route.toCountry, { defaultValue: shipment.route.toCountry })})
+            {shipment.route.toCity || '-'} ({tCountry(shipment.route.toCountry, { defaultValue: shipment.route.toCountry })})
           </h1>
           {shipment.cargoDescription && (
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5 truncate">{shipment.cargoDescription}</p>

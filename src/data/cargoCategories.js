@@ -449,11 +449,11 @@ export const CARGO_TEMP_RANGES = {
   // nieparzystokopytny ("domestic solipeds"), objęty tą samą sekcją co
   // bydło/trzoda/owce/kozy (Załącznik I, definicja "zwierząt kopytnych").
   // https://www.legislation.gov.uk/eur/2004/853/annex/III/section/I
-  fa001: { max: 7, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sekcja I — mięso ssaków ≤7°C' }, // Wołowina świeża/chłodzona
-  fa003: { max: 7, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sekcja I — mięso ssaków ≤7°C' }, // Wieprzowina świeża/chłodzona
-  fa007: { max: 7, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sekcja I — mięso ssaków ≤7°C' }, // Mięso jagnięce/baranie
+  fa001: { max: 7, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sekcja I: mięso ssaków ≤7°C' }, // Wołowina świeża/chłodzona
+  fa003: { max: 7, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sekcja I: mięso ssaków ≤7°C' }, // Wieprzowina świeża/chłodzona
+  fa007: { max: 7, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sekcja I: mięso ssaków ≤7°C' }, // Mięso jagnięce/baranie
   fa008: { max: 7, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III Sekcja I + Zał. I (konie = domestic solipeds, ta sama sekcja)' }, // Mięso końskie
-  fa005: { max: 4, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III — drób (białe mięso) ≤4°C' }, // Mięso drobiowe świeże (kurczak)
+  fa005: { max: 4, legal: true, source: 'Rozp. (WE) 853/2004, Zał. III: drób (białe mięso) ≤4°C' }, // Mięso drobiowe świeże (kurczak)
 
   // ── Ryby/owoce morza świeże — Rozp. (WE) 853/2004, Zał. III, Sekcja VIII:
   // "temperatura zbliżona do topniejącego lodu". Przepis nie podaje liczby
@@ -468,7 +468,7 @@ export const CARGO_TEMP_RANGES = {
   // ── Ryby wędzone — UE, wymóg mikrobiologiczny (C. botulinum nie rośnie
   // ≤3°C; branżowa/urzędowa wytyczna UE dla ryb lekko konserwowanych ≤4-5°C).
   // https://food.ec.europa.eu/system/files/2018-10/biosafety_fh_guidance_essa_smoked-salted-marinated-fish.pdf
-  fa016: { max: 4, legal: true, source: 'EU Guide to Good Practice for Smoked/Salted/Marinated Fish (food.ec.europa.eu) — ≤4°C dla bezpieczeństwa mikrobiologicznego' }, // Ryby wędzone (łosoś wędzony)
+  fa016: { max: 4, legal: true, source: 'EU Guide to Good Practice for Smoked/Salted/Marinated Fish (food.ec.europa.eu): ≤4°C dla bezpieczeństwa mikrobiologicznego' }, // Ryby wędzone (łosoś wędzony)
 
   // ── Mrożone (mięso/ryby/owoce/warzywa) — Dyrektywa 89/108/EWG: "quick-frozen
   // foodstuffs" muszą być utrzymane w -18°C lub niżej PODCZAS TRANSPORTU
@@ -476,13 +476,13 @@ export const CARGO_TEMP_RANGES = {
   // z Rozp. 853/2004 Zał. III Sek. VIII, które używa tego samego -18°C
   // i wprost słowa "transport".
   // https://eur-lex.europa.eu/EN/legal-content/summary/quick-frozen-food.html
-  fa002: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG — quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Wołowina mrożona
-  fa004: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG — quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Wieprzowina mrożona
-  fa006: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG — quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Mięso drobiowe mrożone
+  fa002: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG: quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Wołowina mrożona
+  fa004: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG: quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Wieprzowina mrożona
+  fa006: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG: quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Mięso drobiowe mrożone
   fa012: { max: -18, legal: true, source: 'Rozp. (WE) 853/2004 Zał. III Sek. VIII (transport ryb mrożonych) + Dyrektywa 89/108/EWG' }, // Łosoś mrożony
   fa014: { max: -18, legal: true, source: 'Rozp. (WE) 853/2004 Zał. III Sek. VIII (transport ryb mrożonych) + Dyrektywa 89/108/EWG' }, // Krewetki mrożone
-  fp025: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG — quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Owoce mrożone
-  fp035: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG — quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Warzywa mrożone (mix)
+  fp025: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG: quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Owoce mrożone
+  fp035: { max: -18, legal: true, source: 'Dyrektywa 89/108/EWG: quick-frozen foodstuffs, -18°C podczas transportu (+3°C tolerancji)' }, // Warzywa mrożone (mix)
 
   // ── Awokado — DWA niezależne źródła transportowe (reefer), zbieżne:
   // Maersk Commodity Database: 4-7°C. freshknowledge.eu (transport practices
@@ -492,7 +492,7 @@ export const CARGO_TEMP_RANGES = {
   // PRZECHOWYWANIU nie transporcie, więc pominięte tutaj.
   // https://www.maersk.com/support/glossaries/commodity-database
   // https://www.freshknowledge.eu/en/increase-your-knowledge/crops/avocado/transport-practices-for-avocado.htm
-  fp016: { min: 4, max: 7, legal: false, source: 'Maersk Commodity Database (4-7°C) + freshknowledge.eu "transport practices for avocado" (5-7°C) — dot. odmian Hass/Fuerte' }, // Awokado świeże
+  fp016: { min: 4, max: 7, legal: false, source: 'Maersk Commodity Database (4-7°C) + freshknowledge.eu "transport practices for avocado" (5-7°C): dot. odmian Hass/Fuerte' }, // Awokado świeże
 
   // ── Kwiaty cięte — Sensitech, artykuł jawnie o transporcie kwiatów ciętych.
   // Zakres dla większości gatunków; kwiaty tropikalne (storczyki i in.)
@@ -500,24 +500,24 @@ export const CARGO_TEMP_RANGES = {
   // kwiaty tropikalne, więc ten zakres NIE pasuje do wszystkich kwiatów w tej
   // pozycji katalogu (do rozważenia rozbicie podkategorii w przyszłości).
   // https://www.sensitech.com/en/blog/blog-articles/blog-fresh-cut-flowers.html
-  fp053: { min: -1, max: 4, legal: false, source: 'Sensitech — Temperature Control on the Transportation of Flowers; NIE dotyczy gatunków tropikalnych (potrzebują 13-18°C)' }, // Kwiaty cięte świeże
+  fp053: { min: -1, max: 4, legal: false, source: 'Sensitech: Temperature Control on the Transportation of Flowers; NIE dotyczy gatunków tropikalnych (potrzebują 13-18°C)' }, // Kwiaty cięte świeże
 
   // ── Lody i mrożone desery — IDFA (International Dairy Foods Association):
   // dystrybucja ≤-25°C — surowsze niż ogólny standard mrożonek (-18°C),
   // bo niższa temperatura chroni teksturę (kryształki lodu).
   // https://www.idfa.org/tips-on-storing-handling-ice-cream
-  pr011: { max: -25, legal: false, source: 'IDFA — Tips on Storing & Handling Ice Cream: dystrybucja ≤-25°C (surowsze niż ogólny standard mrożonek)' }, // Lody i mrożone desery
+  pr011: { max: -25, legal: false, source: 'IDFA: Tips on Storing & Handling Ice Cream: dystrybucja ≤-25°C (surowsze niż ogólny standard mrożonek)' }, // Lody i mrożone desery
 
   // ── Farmaceutyki / wyroby medyczne klasy III — standard "cold chain"
   // 2-8°C, WHO + unijne wytyczne GDP (2013/C 343/01) dot. dystrybucji
   // produktów leczniczych wymagających kontroli temperatury podczas
   // transportu.
   // https://gdp.gmp-compliance.org (European GDP Association)
-  med001: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01 — standardowy łańcuch chłodniczy farmaceutyków' }, // Leki gotowe, tabletki i kapsułki
-  med003: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01 — standardowy łańcuch chłodniczy farmaceutyków' }, // Szczepionki
-  med004: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01 — standardowy łańcuch chłodniczy farmaceutyków' }, // Penicyliny i pochodne
-  med006: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01 — standardowy łańcuch chłodniczy farmaceutyków' }, // Narkotyki i psychotropy (kontrolowane)
-  mdc003: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01 — standardowy łańcuch chłodniczy farmaceutyków' }, // Wyroby medyczne klasy III
+  med001: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01: standardowy łańcuch chłodniczy farmaceutyków' }, // Leki gotowe, tabletki i kapsułki
+  med003: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01: standardowy łańcuch chłodniczy farmaceutyków' }, // Szczepionki
+  med004: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01: standardowy łańcuch chłodniczy farmaceutyków' }, // Penicyliny i pochodne
+  med006: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01: standardowy łańcuch chłodniczy farmaceutyków' }, // Narkotyki i psychotropy (kontrolowane)
+  mdc003: { min: 2, max: 8, legal: true, source: 'WHO / EU GDP Guidelines 2013/C 343/01: standardowy łańcuch chłodniczy farmaceutyków' }, // Wyroby medyczne klasy III
 }
 
 // ── Helpery ────────────────────────────────────────────────────────────────────

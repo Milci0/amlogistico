@@ -47,7 +47,7 @@ function formatPrice(min, max, currency, locale) {
     currency: currency || 'USD',
     maximumFractionDigits: 0,
   })
-  return min === max ? fmt.format(min) : `${fmt.format(min)} – ${fmt.format(max)}`
+  return min === max ? fmt.format(min) : `${fmt.format(min)} - ${fmt.format(max)}`
 }
 
 export default function FreightRates({

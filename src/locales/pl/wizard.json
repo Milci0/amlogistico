@@ -39,7 +39,7 @@
       "docsPreviewTitle": "Dokumenty przewozowe",
       "docsPreviewHint": "Pełna lista po uzupełnieniu danych ładunku",
       "docsPreviewEmpty": "Uzupełnij odcinki w kroku „Towar”, żeby zobaczyć podgląd dokumentów.",
-      "docsPreviewItem": "{{doc}} — {{leg}}",
+      "docsPreviewItem": "{{doc}} ({{leg}})",
       "legSuffix": {
         "road": "odcinek drogowy",
         "sea": "odcinek morski",
@@ -152,7 +152,7 @@
     "multimodal": {
       "title": "Etapy przewozu",
       "hint": "Kolejność ma znaczenie: pierwszy etap to dowóz, drugi to przewóz główny, a ostatni to odwóz na dokumencie transportu multimodalnego.",
-      "needsLegMode": "Wybrałeś osobne umowy na odcinki — wskaż przynajmniej jeden środek transportu",
+      "needsLegMode": "Wybrałeś osobne umowy na odcinki, wskaż przynajmniej jeden środek transportu",
       "leg": "Etap {{order}}",
       "mode": "Środek transportu",
       "chooseMode": "Wybierz",

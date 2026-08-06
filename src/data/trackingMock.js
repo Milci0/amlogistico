@@ -59,7 +59,7 @@ export const MOCK_SHIPMENTS = [
     },
     events: [
       { date: '2026-08-02', time: '06:15', location: 'Gdańsk, PL', description: 'Załadunek do kontenera reefer, plomba założona', locationEn: 'Gdansk, PL', descriptionEn: 'Loaded into a reefer container, seal applied', type: 'pickup' },
-      { date: '2026-08-02', time: '14:40', location: 'Port Gdańsk, PL', description: 'Wyjście z portu — MSC Brianna, rejs 412W', locationEn: 'Port of Gdansk, PL', descriptionEn: 'Departed the port on MSC Brianna, voyage 412W', type: 'departure' },
+      { date: '2026-08-02', time: '14:40', location: 'Port Gdańsk, PL', description: 'Wyjście z portu: MSC Brianna, rejs 412W', locationEn: 'Port of Gdansk, PL', descriptionEn: 'Departed the port on MSC Brianna, voyage 412W', type: 'departure' },
       { date: '2026-08-04', time: '09:00', location: 'Cieśnina Kilońska', description: 'Tranzyt przez Kanał Kiloński', locationEn: 'Kiel Strait', descriptionEn: 'Transit through the Kiel Canal', type: 'transit' },
       { date: '2026-08-06', time: '07:00', location: 'Rotterdam, NL', description: 'Planowane rozładowanie w porcie docelowym', locationEn: 'Rotterdam, NL', descriptionEn: 'Scheduled discharge at the destination port', type: 'arrival', planned: true },
     ],
@@ -100,9 +100,9 @@ export const MOCK_SHIPMENTS = [
     },
     events: [
       { date: '2026-07-18', time: '10:00', location: 'Szanghaj, CN', description: 'Załadunek do kontenera, odprawa eksportowa', locationEn: 'Shanghai, CN', descriptionEn: 'Loaded into the container, export clearance done', type: 'pickup' },
-      { date: '2026-07-19', time: '22:15', location: 'Port Szanghaj, CN', description: 'Wyjście z portu — CMA CGM Antoine, rejs 229E', locationEn: 'Port of Shanghai, CN', descriptionEn: 'Departed the port on CMA CGM Antoine, voyage 229E', type: 'departure' },
+      { date: '2026-07-19', time: '22:15', location: 'Port Szanghaj, CN', description: 'Wyjście z portu: CMA CGM Antoine, rejs 229E', locationEn: 'Port of Shanghai, CN', descriptionEn: 'Departed the port on CMA CGM Antoine, voyage 229E', type: 'departure' },
       { date: '2026-07-31', time: '13:00', location: 'Singapur', description: 'Przeładunek na jednostkę relacji Singapur-Hamburg', locationEn: 'Singapore', descriptionEn: 'Transhipped onto the Singapore to Hamburg service', type: 'transit' },
-      { date: '2026-08-02', time: '16:45', location: 'Singapur', description: 'Opóźnienie — przeciążenie terminala przeładunkowego, nowe ETA +6 dni', locationEn: 'Singapore', descriptionEn: 'Delay: transhipment terminal congestion, new ETA plus 6 days', type: 'delay' },
+      { date: '2026-08-02', time: '16:45', location: 'Singapur', description: 'Opóźnienie: przeciążenie terminala przeładunkowego, nowe ETA +6 dni', locationEn: 'Singapore', descriptionEn: 'Delay: transhipment terminal congestion, new ETA plus 6 days', type: 'delay' },
       { date: '2026-08-14', time: '06:00', location: 'Hamburg, DE', description: 'Nowe planowane rozładowanie', locationEn: 'Hamburg, DE', descriptionEn: 'New scheduled discharge', type: 'arrival', planned: true },
     ],
   },

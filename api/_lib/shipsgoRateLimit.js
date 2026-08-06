@@ -1,10 +1,12 @@
-// Limit kosztowy dla WOLNEGO wyszukiwania kontenera (POST /shipsgo-tracking/lookup).
-// W odróżnieniu od śledzenia doczepionego do własnych zestawów dokumentów, tu
-// każdy dopuszczony user (patrz SHIPSGO_ALLOWED_EMAILS) może wpisać DOWOLNY
-// numer kontenera — potrzebny twardszy hamulec kosztowy niż sam allowlist.
-// Trafienie w cache (patrz lookupCache w shipsgoTracking.js) NIE zużywa limitu —
-// konsumujemy go dopiero przy realnym wywołaniu ShipsGo, ten sam wzorzec co
-// api/_lib/hsRateLimit.js.
+// Limit kosztowy dla WOLNEGO wyszukiwania kontenera
+// (POST /api/tracking/containers). W odróżnieniu od śledzenia doczepionego do
+// własnych zestawów dokumentów, tu każdy dopuszczony user (patrz
+// SHIPSGO_ALLOWED_EMAILS) może wpisać DOWOLNY numer kontenera — potrzebny
+// twardszy hamulec kosztowy niż sam allowlist.
+//
+// Odczyt istniejącego rejsu z naszej bazy NIE zużywa limitu: konsumujemy go
+// dopiero po udanej rezerwacji wiersza, czyli tuż przed realnym, płatnym
+// wywołaniem ShipsGo (ten sam wzorzec co api/_lib/hsRateLimit.js).
 //
 // Store w pamięci procesu = best-effort (resetuje się przy cold-starcie na
 // Vercelu, nie jest współdzielony między instancjami) — akceptowalne, bo to

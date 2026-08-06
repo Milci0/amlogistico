@@ -11,6 +11,7 @@ import cronRouter from './_routes/cron.js'
 import hsCodeRouter from './_routes/hsCode.js'
 import freightRouter from './_routes/freight.js'
 import shipsgoTrackingRouter from './_routes/shipsgoTracking.js'
+import trackingRouter from './_routes/tracking.js'
 
 const app = express()
 
@@ -18,7 +19,12 @@ const app = express()
 // klienta (X-Forwarded-For), a nie jeden współdzielony adres proxy.
 app.set('trust proxy', 1)
 
-app.use(express.json())
+// `verify` zapisuje SUROWE bajty ciała żądania. Potrzebuje ich wyłącznie webhook
+// ShipsGo (api/_routes/tracking.js): podpis HMAC liczy się z tego, co faktycznie
+// przyszło, a ponowna serializacja sparsowanego JSON-a zmieniłaby kolejność kluczy
+// i białe znaki, więc HMAC nigdy by się nie zgodził. Dla pozostałych tras to
+// wyłącznie referencja do bufora, który i tak powstał podczas parsowania.
+app.use(express.json({ verify: (req, _res, buf) => { req.rawBody = buf } }))
 app.use(cookieParser())
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
@@ -33,6 +39,7 @@ app.use('/api/cron', cronRouter)
 app.use('/api/hs-code', hsCodeRouter)
 app.use('/api/freight', freightRouter)
 app.use('/api/shipsgo-tracking', shipsgoTrackingRouter)
+app.use('/api/tracking', trackingRouter)
 
 // Globalny handler błędów — łapie wyjątki z async tras (Express 5 forwarduje je tu)
 // eslint-disable-next-line no-unused-vars

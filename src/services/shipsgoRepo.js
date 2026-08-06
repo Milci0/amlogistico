@@ -1,10 +1,13 @@
 // ── Klient frontendowy dla /api/shipsgo-tracking ────────────────────────────
 //
 // Token ShipsGo NIGDY nie trafia tutaj — zostaje na backendzie (patrz
-// api/_lib/shipsgo.js). Ten plik tylko woła nasze 4 endpointy.
-// Numer kontenera dla enable/refresh NIGDY nie jest logowany ani przekazywany
-// w żądaniu — backend bierze go sam z zapisanego zestawu. Wyjątek: lookupContainer
-// (wolne wyszukiwanie) celowo WYSYŁA numer wpisany przez usera — patrz jego opis niżej.
+// api/_lib/shipsgo.js). Ten plik obsługuje WYŁĄCZNIE śledzenie doczepione do
+// własnej przesyłki (zakładka „Lista przesyłek"). Numer kontenera nigdy nie
+// jest tu logowany ani przekazywany w żądaniu — backend bierze go sam
+// z zapisanego zestawu dokumentów.
+//
+// Wolne wyszukiwanie po numerze („Numer kontenera") mieszka osobno,
+// w src/services/containerTrackingRepo.js.
 
 import { api } from '../lib/api'
 
@@ -44,13 +47,3 @@ export async function refreshTracking(documentSetId) {
   return api.get(`/shipsgo-tracking/${documentSetId}/refresh`)
 }
 
-// lookupContainer(containerNumber)
-//   Wolne wyszukiwanie w zakładce „Numer kontenera" — DOWOLNY numer, nie musi
-//   pochodzić z Twojego zestawu dokumentów. Kosztuje kredyt tylko przy PIERWSZYM
-//   sprawdzeniu danego kontenera (trwały rejestr w bazie, wspólny dla wszystkich
-//   userów i obu ścieżek w aplikacji). Wołaj WYŁĄCZNIE na świadomy klik
-//   „Sprawdź". Rzuca ApiError (429/400/403/502/503) — wywołujący łapie
-//   i pokazuje komunikat z err.message.
-export async function lookupContainer(containerNumber) {
-  return api.post('/shipsgo-tracking/lookup', { containerNumber })
-}

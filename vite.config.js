@@ -16,6 +16,9 @@ export default defineConfig({
   // testowana jest czysta logika, nie komponenty; nie potrzeba jsdom.
   test: {
     environment: 'node',
-    include: ['src/**/__tests__/**/*.test.{js,jsx}'],
+    // api/ dolaczone od 2026-08-06: logika sledzenia kontenerow (walidacja ISO 6346,
+    // przycinanie odpowiedzi ShipsGo, podpis webhooka) mieszka po stronie serwera,
+    // a jest wystarczajaco samodzielna, zeby testowac ja bez bazy i bez sieci.
+    include: ['src/**/__tests__/**/*.test.{js,jsx}', 'api/**/__tests__/**/*.test.js'],
   },
 })

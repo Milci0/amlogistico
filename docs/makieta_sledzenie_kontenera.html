@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AmLogistico - sledzenie kontenera, makieta stanow</title>
+<style>
+  :root{
+    --page:#111b28;
+    --card:#1b2635;
+    --card-2:#22303f;
+    --line:#2c3a4d;
+    --line-soft:#243040;# PROMPT: Zakladka "Numer kontenera" w sledzeniu ladunku, integracja ShipsGo API v2
+
+## Kontekst
+
+W AmLogistico istnieje strona "Sledzenie ladunku" z dwiema zakladkami: "Lista przesylek"
+(wlasne dokumenty uzytkownika, POZA zakresem tego zadania) oraz "Numer kontenera"
+(integracja z ShipsGo, PRZEDMIOT tego zadania).
+
+Obecna implementacja zakladki "Numer kontenera" ma krytyczna wade: wynik wyszukiwania
+zyje wylacznie w stanie Reacta. Po odswiezeniu strony znika. Uzytkownik traci dostep
+do przesylki, za ktora zostal juz pobrany kredyt ShipsGo.
+
+### Jak dziala ShipsGo, czego nie wolno zalozyc inaczej
+
+ShipsGo nie jest wyszukiwarka odpytywana w czasie rzeczywistym. Model jest nastepujacy:
+
+1. POST tworzy przesylke i kosztuje 1 kredyt. Zwraca liczbowe `id`.
+2. Bezposrednio po utworzeniu przesylka ma status INPROGRESS, a pola `route` i
+   `containers` sa puste (`route: null`, `containers: []`).
+3. ShipsGo odpytuje armatora w tle. Dane pojawiaja sie od kilkunastu minut do kilku
+   godzin pozniej.
+4. Aktualizacje przychodza webhookiem OCEAN.SHIPMENTS.SHIPMENT_UPDATED, ktory niesie
+   caly obiekt przesylki wraz z ruchami kontenerow. To jest ZALECANY sposob wg
+   dokumentacji, polling jest odradzany.
+5. GET po `id` nie kosztuje kredytow i mozna go wolac dowolnie czesto (w granicach
+   rate limitu).
+
+Zapisanie `id` po naszej stronie jest obowiazkowe. Bez tego tracimy dostep do
+oplaconej przesylki.
+
+### Parametry API v2 (zweryfikowane w dokumentacji, nie zmieniac)
+
+- Baza: `https://api.shipsgo.com/v2`
+- Auth: naglowek `X-Shipsgo-User-Token`, wartosc z ENV `SHIPSGO_API_TOKEN`
+- `POST /ocean/shipments`, body JSON: `reference`, `carrier`, `booking_number`,
+  `container_number`, `followers`, `tags`. Wszystkie opcjonalne, ale musi byc
+  podany `container_number` LUB `booking_number`.
+- `carrier` jest OPCJONALNY. Pattern `^(SG_)?[A-Z0-9]{4}$`. Nie wysylamy go domyslnie.
+- `container_number` pattern `^[A-Z]{4}[0-9]{7}$`
+- `GET /ocean/shipments/{id}` zwraca pelne dane
+- `GET /ocean/shipments/{id}/geojson` zwraca trase jako GeoJSON FeatureCollection
+  (oznaczona w dokumentacji jako experimental)
+- `GET /ocean/carriers?filters[status]=eq:ACTIVE` zwraca liste przewoznikow (scac, name)
+- Statusy ocean: NEW, INPROGRESS, BOOKED, LOADED, SAILING, ARRIVED, DISCHARGED, UNTRACKED
+- Kody bledow: 401 zly token, 402 brak kredytow, 403 brak uprawnien, 404 nie znaleziono,
+  409 juz istnieje, 422 zly payload, 429 za duzo zapytan, 500/503 po stronie ShipsGo
+- Rate limit: 100 zapytan na minute lacznie dla calej firmy. Odpowiedzi niosa naglowki
+  `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
+
+### Deduplikacja po stronie ShipsGo, bardzo wazne
+
+ShipsGo sprawdza duplikaty i zwraca 409 ALREADY_EXISTS z danymi istniejacej przesylki,
+BEZ pobierania kredytu. Zasady:
+
+- Jesli w requescie podano `reference`, ZAWSZE bierze udzial w sprawdzaniu duplikatu.
+- Jesli podano oba numery, do sprawdzenia uzywany jest tylko `booking_number`.
+- Jesli nie podano `booking_number`, sprawdzenie idzie po `container_number`.
+
+Wniosek operacyjny: NIE wysylamy pola `reference` przy tworzeniu przesylki z zakladki
+"Numer kontenera". Wyslanie unikalnego `reference` przy kazdym wyszukaniu spowodowaloby,
+ze kazde wyszukanie tego samego kontenera tworzy nowa przesylke i pobiera nowy kredyt.
+
+### Zatwierdzona makieta
+
+Wyglad wszystkich szesciu stanow zostal zatwierdzony i jest opisany w Etapie 4.
+Nie wymyslaj wlasnego ukladu. Odtworz opisany, dopasowujac klasy Tailwind do tych
+faktycznie uzywanych w projekcie.
+
+---
+
+## Etap 0: Rekonesans (OBOWIAZKOWY, przed jakimkolwiek kodem)
+
+Repo wygrywa. Kazda rozbieznosc miedzy tym promptem a stanem repo rozstrzygamy
+na korzysc repo i zglaszamy w raporcie.
+
+1. Znajdz obecna implementacje zakladki "Numer kontenera": komponent(y) React, wywolania
+   sieciowe, ewentualne endpointy w `api/`. Ustal:
+   - ktory host i ktora wersja API jest wolana (legacy `shipsgo.com/api/v1.x/ContainerService`
+     vs `api.shipsgo.com/v2`),
+   - jak przekazywany jest klucz (authCode w body vs naglowek),
+   - czy token nie wycieka do bundla frontendowego (sprawdz, czy wywolanie nie idzie
+     bezposrednio z przegladarki),
+   - czy gdziekolwiek zapisywany jest wynik (baza, localStorage, nic).
+2. Sprawdz `schema.prisma`: czy istnieje jakikolwiek model dotyczacy trackingu.
+   Wypisz istniejace modele uzytkownika i sposob powiazania rekordow z uzytkownikiem
+   (relacja, nazwa pola).
+3. Sprawdz strukture `api/`: konwencja plikow, sposob obslugi auth (JWT w httpOnly cookie),
+   sposob zwracania bledow, czy jest wspolny handler bledow.
+4. Sprawdz strone "Sledzenie ladunku" pod katem stylu: klasy Tailwind uzywane na
+   kartach, przyciskach, badge'ach, polach formularza. Wypisz konkretne klasy, ktore
+   bedziesz reuzywal, zeby nowy widok byl spojny.
+5. Sprawdz mechanizm i18n: gdzie leza pliki tlumaczen, jaka jest konwencja kluczy.
+6. Sprawdz, czy w `package.json` jest biblioteka do map (leaflet, react-leaflet,
+   mapbox-gl, react-map-gl). NIE instaluj niczego na tym etapie.
+7. Sprawdz, czy istnieje Upstash Redis lub inny mechanizm rate limitingu.
+8. Sprawdz `.env.example` pod katem zmiennych ShipsGo.
+
+Przedstaw raport z Etapu 0 i CZEKAJ na akceptacje przed Etapem 1.
+
+---
+
+## Etap 1: Model danych
+
+Dodaj model do `schema.prisma` i wygeneruj migracje.
+
+Model `ContainerTracking`:
+- `id` klucz glowny wg konwencji projektu
+- `shipsgoId` Int, UNIKALNY, identyfikator przesylki z ShipsGo
+- `containerNumber` String, indeksowany ale NIE unikalny, znormalizowany do wielkich liter
+- `bookingNumber` String opcjonalny
+- `carrierScac` String opcjonalny
+- `carrierName` String opcjonalny
+- `status` String, jedna z wartosci ShipsGo
+- `snapshot` Json, ostatni pelny obiekt `shipment` z ShipsGo
+- `geojson` Json opcjonalny, ostatnia pobrana trasa
+- `mapToken` String opcjonalny (z `tokens.map`)
+- `checkedAt` DateTime opcjonalny (z `checked_at` ShipsGo)
+- `discardedAt` DateTime opcjonalny (z `discarded_at` ShipsGo)
+- `createdAt`, `updatedAt`
+
+Model `ContainerTrackingUser` (powiazanie many-to-many uzytkownik - kontener):
+- relacja do uzytkownika wg konwencji z Etapu 0
+- relacja do `ContainerTracking`
+- `hiddenAt` DateTime opcjonalny, uzywany do ukrywania z listy uzytkownika
+- `addedAt` DateTime
+- unikalny indeks zlozony (uzytkownik + tracking)
+
+Powod rozdzielenia: dwoch uzytkownikow moze sledzic ten sam kontener. Przesylka w
+ShipsGo jest jedna i kredyt zostal pobrany raz. Lista jest per uzytkownik.
+
+### Pojecie aktywnego rejsu, kluczowe dla deduplikacji
+
+`containerNumber` NIE moze byc unikalny, bo ten sam kontener fizyczny jest uzywany
+wielokrotnie. CGMU6913205 plynie dzis z Szanghaju do Gdanska, a za trzy miesiace
+z Hamburga do Nowego Jorku. To ten sam numer i zupelnie inny transport.
+
+Kredyt ShipsGo pokrywa sledzenie do konca danego rejsu. Po jego zakonczeniu przesylka
+dostaje `discarded_at` i przestaje sie aktualizowac.
+
+Definicja rekordu AKTYWNEGO, uzywana w calym zadaniu:
+`discardedAt IS NULL` ORAZ `status NOT IN ('DISCHARGED', 'UNTRACKED')`.
+
+Zasada: dla jednego numeru kontenera moze istniec co najwyzej JEDEN rekord aktywny.
+Rekordow archiwalnych (zakonczone rejsy) moze byc wiele i sa zachowywane.
+Dodaj czesciowy indeks unikalny albo walidacje aplikacyjna wymuszajaca ta zasade,
+zaleznie od tego, co obsluguje Neon PostgreSQL w konfiguracji projektu. Wybor opisz
+w raporcie.
+
+---
+
+## Etap 2: Walidacja numeru kontenera (ISO 6346)
+
+Zaimplementuj w module wspoldzielonym miedzy frontendem a backendem (albo zduplikuj
+swiadomie, jesli struktura repo na to nie pozwala, i zaznacz to w raporcie).
+
+Algorytm cyfry kontrolnej:
+1. Znormalizuj: usun spacje i myslniki, zamien na wielkie litery.
+2. Sprawdz wzorzec `^[A-Z]{4}[0-9]{7}$`. Czwarta litera powinna byc U, J lub Z
+   (dla kontenerow towarowych zwykle U). Inna litera to ostrzezenie, nie blad twardy.
+3. Przypisz wartosci literom: A=10, B=12, C=13, D=14, E=15, F=16, G=17, H=18, I=19,
+   J=20, K=21, L=23, M=24, N=25, O=26, P=27, Q=28, R=29, S=30, T=31, U=32, V=34,
+   W=35, X=36, Y=37, Z=38. Cyfry maja wartosc rowna sobie.
+4. Pomnoz pierwszych 10 znakow przez wagi 2^0, 2^1, ... 2^9 i zsumuj.
+5. Reszta z dzielenia przez 11. Jesli wynosi 10, cyfra kontrolna to 0.
+6. Porownaj z jedenastym znakiem.
+
+Walidacja MUSI dzialac po stronie klienta przed wyslaniem czegokolwiek do backendu.
+Kazdy odrzucony numer to oszczedzony kredyt.
+
+Komunikaty bledow musza uczciwie odzwierciedlac to, co faktycznie da sie wyliczyc.
+Niezgodnosc checksumy nie wskazuje, KTORA z pierwszych dziesieciu pozycji jest zla,
+bo bledna moze byc dowolna z nich, a wynik wyglada identycznie. Jedyny przypadek,
+w ktorym mozna podac konkretna, poprawna wartosc, to blad na samej jedenastej
+pozycji (checksumie), bo wtedy pierwszych dziesiec znakow jest znanych i mozna
+wyliczyc, jaka checksuma powinna wyjsc.
+
+Rozroznij dwa komunikaty:
+- zly format (nie 4 litery + 7 cyfr): informacja o oczekiwanym ksztalcie
+- niezgodnosc checksumy, gdy 10 pierwszych znakow daje inny wynik niz podana
+  jedenasta cyfra: "Ten numer kontenera nie przechodzi weryfikacji. Sprawdz, czy
+  wszystkie znaki zostaly przepisane poprawnie, w szczegolnosci litery i cyfry
+  w srodku numeru." NIE zgaduj i NIE podawaj wyliczonej wartosci jako "poprawnej
+  cyfry" w tym przypadku, bo blad moze lezec w dowolnym z dziesieciu znakow, nie
+  tylko w checksumie.
+- WYJATEK, w ktorym mozna podac konkretna wartosc: jesli dziesiec pierwszych
+  znakow jest zgodnych z formatem i user zmienil tylko ostatni znak wzgledem
+  poprzednio poprawnie zwalidowanego numeru w tej samej sesji (np. edytuje pole
+  po nieudanej probie), mozna pokazac wyliczona checksume jako podpowiedz. W
+  ogolnym przypadku, bez takiego kontekstu, nie zgaduj ktora pozycja jest bledna.
+
+---
+
+## Etap 3: Backend w `api/`
+
+Wszystkie endpointy wymagaja zalogowanego uzytkownika. Token ShipsGo NIGDY nie moze
+trafic do frontendu.
+
+### `POST /api/tracking/containers`
+Body: `{ containerNumber, carrier? }`
+
+Logika:
+1. Waliduj numer (Etap 2). Blad walidacji, zwroc 400 bez kontaktu z ShipsGo.
+2. Szukaj AKTYWNEGO rekordu `ContainerTracking` po `containerNumber` (definicja
+   aktywnosci w Etapie 1). Jesli istnieje: podepnij uzytkownika (upsert
+   `ContainerTrackingUser`, wyczysc `hiddenAt`), zwroc zapisany snapshot.
+   ZERO zapytan do ShipsGo, zero kredytow. Dotyczy to rowniez sytuacji, gdy uzytkownik
+   wczesniej usunal ten kontener ze swojej listy. Usuniecie bylo tylko ukryciem,
+   wiec ponowne wyszukanie tego samego transportu nigdy nie kosztuje kredytu.
+3. Jesli aktywnego rekordu nie ma, ale istnieje rekord ARCHIWALNY (zakonczony rejs)
+   dla tego numeru: NIE tworz automatycznie nowej przesylki. Zwroc dane archiwalne
+   wraz z flaga informujaca frontend, ze to zakonczony rejs, oraz data jego zakonczenia.
+   Utworzenie nowego sledzenia wymaga osobnego, jawnego zadania uzytkownika
+   (patrz nizej, parametr `startNewVoyage`).
+4. Jesli nie ma zadnego rekordu, albo request zawiera `startNewVoyage: true`:
+   POST do ShipsGo z body zawierajacym WYLACZNIE
+   `container_number` (oraz `carrier`, jesli uzytkownik go jawnie wskazal).
+   Pole `reference` NIE moze byc wysylane.
+5. Odpowiedz 200: zapisz `ContainerTracking` ze statusem INPROGRESS, podepnij uzytkownika.
+6. Odpowiedz 409 ALREADY_EXISTS: to nie jest blad. ShipsGo zwraca dane istniejacej
+   przesylki. Wyciagnij z nich `id`, zapisz rekord tak samo jak przy 200 (przez
+   `shipsgoId`, ktory jest unikalny, wiec ponowne trafienie nie tworzy duplikatu),
+   podepnij uzytkownika, zwroc sukces.
+7. Odpowiedz 402: zwroc wlasny kod bledu oznaczajacy brak kredytow.
+8. Odpowiedz 429: zwroc wlasny kod bledu oznaczajacy przeciazenie, przekaz
+   `X-RateLimit-Reset` jesli jest.
+
+Ochrona przed rownoczesnymi zadaniami: dwoch uzytkownikow moze kliknac "Sprawdz" dla
+tego samego numeru w tej samej sekundzie. Zabezpiecz tworzenie przesylki blokada
+(transakcja z blokada wiersza albo lock w Redis na kluczu numeru kontenera), zeby nie
+powstaly dwie przesylki i dwa kredyty. ShipsGo przetwarza zadania tworzenia
+sekwencyjnie i przy nadmiarze rownoczesnych wywolan zwraca 429
+TOO_MANY_CONCURRENT_REQUESTS, wiec ta blokada chroni takze przed tym bledem.
+
+### `GET /api/tracking/containers`
+Lista kontenerow zalogowanego uzytkownika (bez ukrytych), posortowana po `addedAt` malejaco.
+Zwraca dane potrzebne do wiersza listy: numer, status, porty, przewoznik, `updatedAt`.
+Czyta wylacznie z bazy. Zero zapytan do ShipsGo.
+
+### `GET /api/tracking/containers/:containerNumber`
+Pelne dane jednego kontenera z bazy (snapshot + geojson). Sprawdz, czy uzytkownik ma
+do niego dostep. Zero zapytan do ShipsGo.
+
+### `POST /api/tracking/containers/:containerNumber/refresh`
+Reczne odswiezenie: GET do ShipsGo po `shipsgoId`, aktualizacja snapshotu. Dodatkowo,
+jesli status jest inny niz NEW i INPROGRESS, pobierz geojson i zapisz.
+Rate limit po stronie naszej aplikacji: nie czesciej niz raz na 5 minut na kontener,
+niezaleznie od liczby uzytkownikow. Ten endpoint jest zabezpieczeniem na wypadek
+niedzialajacego webhooka, nie podstawowym mechanizmem.
+
+### `DELETE /api/tracking/containers/:containerNumber`
+Ustawia `hiddenAt` w `ContainerTrackingUser`. NIE wola `DELETE` w ShipsGo.
+Decyzja swiadoma: usuniecie w ShipsGo jest nieodwracalne, a ponowne dodanie to nowy kredyt.
+
+### `POST /api/tracking/shipsgo-webhook`
+Publiczny endpoint (bez sesji uzytkownika), przyjmuje zdarzenia ShipsGo.
+1. Odczytaj surowe body PRZED parsowaniem JSON (potrzebne do podpisu).
+2. Policz HMAC-SHA256 z sekretu `SHIPSGO_WEBHOOK_SECRET` i surowego body, traktujac
+   payload jako UTF-8. Porownaj z naglowkiem `X-Shipsgo-Webhook-Signature`
+   funkcja o stalym czasie (`crypto.timingSafeEqual`), nigdy operatorem `==`.
+   Niezgodnosc, zwroc 401 i nie przetwarzaj.
+3. Obsluz `OCEAN.SHIPMENTS.SHIPMENT_UPDATED`: znajdz rekord po `shipment.id`,
+   nadpisz `snapshot`, `status`, `carrier*`, `checkedAt`, `discardedAt`.
+   Jesli status przeszedl z INPROGRESS na cokolwiek innego, dociagnij geojson.
+4. Obsluz `OCEAN.SHIPMENTS.SHIPMENT_DELETED`: oznacz rekord jako nieaktywny,
+   nie kasuj historii.
+5. Zwroc 200 szybko. Blad 5xx powoduje ponowienia ShipsGo (po 1, 5 i 10 minutach),
+   wiec przetwarzanie musi byc idempotentne.
+
+Do `.env.example` dodaj `SHIPSGO_API_TOKEN` i `SHIPSGO_WEBHOOK_SECRET` z komentarzem,
+skad je wziac.
+
+---
+
+## Etap 4: Frontend, szesc stanow wg zatwierdzonej makiety
+
+Sekcja listy nazywa sie "Twoje kontenery", NIE "Historia wyszukiwan". To lista
+aktywnie sledzonych przesylek, ktore aktualizuja sie same, a nie log wpisow.
+
+### Stan 1, poczatkowy
+Pole tekstowe (font monospace, placeholder z przykladowym numerem) plus przycisk
+"Sprawdz". Pod polem podpowiedz, ze wystarczy sam numer kontenera i ze przewoznik
+rozpoznawany jest automatycznie.
+Ponizej naglowek "Twoje kontenery" i stan pusty w ramce przerywanej, informujacy,
+ze kazdy sprawdzony kontener zostanie na liscie razem z historia zdarzen.
+Ten stan pusty musi byc widoczny OD RAZU, przed pierwszym wyszukaniem. To jedyny
+moment na ustawienie oczekiwan uzytkownika.
+
+USUN obecny podpis "AMLogistico nie przechowuje statusow przesylek". Jest nieprawdziwy
+w nowym modelu.
+
+### Stan 2, blad walidacji
+Obramowanie pola w kolorze bledu, komunikat pod polem. Zaden request nie wychodzi.
+
+### Stan 3, przyjete i przetwarzane
+Karta z numerem kontenera, data dodania i badge "Pobieramy dane" z pulsujaca kropka
+(pulsowanie wylaczone przy `prefers-reduced-motion`).
+Wyrozniony blok wyjasniajacy (lewa krawedz w kolorze ostrzegawczym): numer zostal
+przyjety i przekazany do przewoznika, dane nie sa dostepne od reki, zwykle kilkanascie
+minut, czasem kilka godzin, nie trzeba czekac na stronie ani wpisywac numeru ponownie.
+Ponizej cztery mini kroki ze znacznikami stanu:
+1. Numer zweryfikowany (zrobione)
+2. Zlecenie wyslane do ShipsGo (zrobione)
+3. Przewoznik przygotowuje dane (w toku)
+4. Trasa i historia zdarzen (oczekuje)
+
+NIE dodawaj licznika odliczajacego ani konkretnego ETA. Czas zalezy od armatora
+i falszywa precyzja szkodzi bardziej niz uczciwa niepewnosc.
+
+Rownoczesnie kontener pojawia sie na liscie "Twoje kontenery" ze statusem
+"Pobieramy dane". Po odswiezeniu strony musi tam byc.
+
+Odswiezanie widoku: dopoki status to NEW lub INPROGRESS, odpytuj WLASNY endpoint
+`GET /api/tracking/containers/:containerNumber` co 30 sekund, maksymalnie przez
+15 minut, potem przestan i pokaz przycisk recznego odswiezenia. To odpytywanie idzie
+do naszej bazy, nie do ShipsGo.
+
+### Stan 4, lista z wieloma kontenerami
+Wiersze: numer (monospace), pod nim trasa i przewoznik lub informacja, ze trasa jest
+jeszcze nieznana, po prawej badge statusu i czas ostatniej aktualizacji.
+Mapowanie statusow na etykiety i kolory:
+- NEW, INPROGRESS: "Pobieramy dane", kolor ostrzegawczy, kropka pulsujaca
+- BOOKED: "Zabookowany", kolor neutralny
+- LOADED: "Zaladowany", kolor informacyjny
+- SAILING: "W drodze", kolor informacyjny
+- ARRIVED: "W porcie docelowym", kolor informacyjny
+- DISCHARGED: "Rozladowany", kolor sukcesu
+- UNTRACKED: "Bez sledzenia", kolor szary
+Rekord archiwalny (zakonczony rejs) dostaje etykiete "Rejs zakonczony" w kolorze
+wygaszonym, niezaleznie od ostatniego statusu, i jest sortowany ponizej aktywnych.
+Kliniecie wiersza otwiera stan 5, a dla rekordu archiwalnego stan 5b.
+
+### Stan 5, pelne dane
+- Naglowek: numer, przewoznik, liczba i typ kontenerow, czas ostatniej aktualizacji,
+  badge statusu.
+- Pasek trasy: port zaladunku z kodem UN/LOCODE i data po lewej, port rozladunku po
+  prawej, pomiedzy pasek postepu.
+  WAZNE: postep licz z dat (`date_of_loading`, `date_of_discharge`, biezaca data),
+  NIE z pola `transit_percentage`. To pole potrafi zwracac 99 dla przesylki tuz po
+  wyplynieciu i wprowadza w blad.
+- Cztery kafelki: statek, numer rejsu, czas tranzytu, liczba przeladunkow z nazwa portu.
+- Mapa (patrz Etap 5).
+- Os czasu zdarzen z `containers[].movements`, chronologicznie. Mapowanie kodow:
+  EMSH kontener pusty wydany, GTIN przyjecie na terminal, LOAD zaladunek na statek,
+  DEPA wyjscie z portu, ARRV przyjscie do portu, DISC rozladunek, GTOT wydanie
+  z terminalu, EMRT zwrot pustego kontenera. Nieznany kod pokaz jako surowy,
+  nie ukrywaj zdarzenia.
+  Zdarzenia ze `status: "EST"` oznacz etykieta "szacowane" i przygaszonym kolorem.
+  Jesli `date_of_discharge` rozni sie od `date_of_discharge_initial`, pokaz przy
+  zdarzeniu informacje o dacie pierwotnej. Opoznienie to najwazniejsza informacja
+  dla spedytora.
+
+### Stan 5b, rejs zakonczony (dane archiwalne)
+Gdy backend zwroci flage rejsu zakonczonego, widok wyglada jak stan 5, ale:
+- badge statusu ma kolor wygaszony, etykieta "Rejs zakonczony"
+- nad karta pasek informacyjny: dane pochodza z rejsu zakonczonego podanego dnia
+  i nie sa juz aktualizowane
+- os czasu i trasa pozostaja widoczne, to jest wartosciowa historia
+- przycisk "Sledz nowy rejs tego kontenera", ktory przed wyslaniem zadania z
+  `startNewVoyage: true` pokazuje potwierdzenie informujace, ze rozpocznie to nowe
+  sledzenie. Bez tego potwierdzenia zadanie nie wychodzi.
+- po utworzeniu nowego sledzenia stary rekord zostaje w bazie i jest dostepny
+  z poziomu nowego widoku jako poprzedni rejs
+
+Uzasadnienie: automatyczne tworzenie nowego sledzenia przy wpisaniu numeru starego
+rejsu zuzywaloby kredyt bez wiedzy uzytkownika. Automatyczne pokazanie starych danych
+bez adnotacji pokazywaloby spedytorowi nieaktualna trase jako biezaca. Oba warianty
+sa gorsze niz jawny wybor.
+
+### Stan 6, UNTRACKED
+Karta z badge "Bez sledzenia" i blokiem wyjasniajacym z krawedzia w kolorze bledu.
+Tresc wymienia trzy realne przyczyny: kontener nie zostal jeszcze zabookowany,
+przewoznik spoza obslugiwanej listy, literowka w numerze.
+Dwa przyciski: "Wskaz przewoznika" (otwiera select zasilany z `GET /ocean/carriers`
+przez nasz backend, po wyborze tworzy nowa przesylke z polem `carrier`; ostrzez
+uzytkownika, ze to zuzyje kolejny kredyt) oraz "Usun z listy" (ukrycie, patrz Etap 3).
+
+---
+
+## Etap 5: Mapa
+
+1. Jesli w `package.json` jest juz biblioteka map, uzyj jej. Jesli nie ma zadnej,
+   uzyj `react-leaflet` z kaflami OpenStreetMap (bez klucza API, bez kosztow).
+   Zglos to w raporcie jako dodana zaleznosc.
+2. Zrodlem jest `geojson` zapisany w bazie. NIE wolaj ShipsGo z frontendu.
+3. Rysowanie wg struktury odpowiedzi: `Point` to porty, `LineString` to odcinki trasy.
+   Kazdy Feature ma `properties.status` o wartosci PAST, CURRENT lub FUTURE.
+   - PAST: linia ciagla, kolor akcentu aplikacji
+   - CURRENT: linia ciagla, kolor akcentu, plus marker pozycji statku z
+     `properties.current.coordinates` (moze byc `null`, obsluz to)
+   - FUTURE: linia przerywana, kolor przygaszony
+   `properties.vessel.name` i `properties.voyage` uzyj w dymku markera.
+4. Kolory markerow i linii z palety aplikacji. NIE zostawiaj domyslnych niebieskich
+   pinezek Leaflet.
+5. Stan bez danych geograficznych (status NEW, INPROGRESS lub pusty geojson):
+   zamiast mapy pokaz prostokat z informacja, ze trasa pojawi sie po otrzymaniu
+   danych od przewoznika. Nie renderuj pustej mapy swiata.
+6. Link "Otworz pelna mape" prowadzacy do
+   `https://map.shipsgo.com/ocean/shipments/{id}?token={mapToken}` jako opcja poboczna,
+   dyskretny, nie glowny element.
+7. Mapa musi dzialac na szerokosci mobilnej i miec sensowna wysokosc na obu breakpointach.
+
+---
+
+## Etap 6: Spojnosc z projektem
+
+1. Wszystkie nowe teksty przez istniejacy mechanizm i18n, w wersji PL i EN.
+   Zaden hardcoded string w jednym jezyku.
+2. Zero em dash i en dash (`check-dashes.js` musi przechodzic).
+3. Klasy Tailwind reuzyte z istniejacych komponentow (ustalone w Etapie 0), nie
+   wymyslone od nowa.
+4. Ikony z `lucide-react`, zgodnie z reszta aplikacji.
+5. Responsywnosc: na mobile kafelki w dwoch kolumnach, pasek trasy przechodzi
+   w uklad pionowy, os czasu bez poziomego przewijania.
+6. Focus widoczny na wszystkich elementach interaktywnych.
+
+---
+
+## Czego NIE robic
+
+- NIE wysylaj pola `reference` przy tworzeniu przesylki z tej zakladki. To zlamalo by
+  deduplikacje ShipsGo i kazde wyszukanie kosztowaloby kredyt.
+- NIE traktuj odpowiedzi 409 jako bledu. To sukces bez kosztu, zawiera dane przesylki.
+- NIE wymagaj przewoznika w glownym formularzu. Jedno pole, jeden przycisk.
+- NIE wolaj ShipsGo przy kazdym wejsciu na strone ani przy kazdym odswiezeniu listy.
+  Lista i szczegoly czytaja z naszej bazy.
+- NIE rob pollingu do ShipsGo z frontendu. Polling (co 30 sekund) idzie wylacznie do
+  naszego wlasnego endpointu.
+- NIE wolaj `DELETE /ocean/shipments/{id}` w ShipsGo. Usuwanie ukrywa rekord u nas.
+- NIE uzywaj `transit_percentage` do paska postepu.
+- NIE dodawaj licznika odliczajacego ani obietnicy konkretnego czasu w stanie INPROGRESS.
+- NIE porownuj podpisu webhooka operatorem `==`.
+- NIE eksponuj `SHIPSGO_API_TOKEN` w kodzie frontendowym ani w odpowiedziach API.
+- NIE pokazuj surowych kodow i tresci bledow ShipsGo w interfejsie.
+- NIE zostawiaj podpisu "AMLogistico nie przechowuje statusow przesylek".
+- NIE instaluj biblioteki map bez sprawdzenia `package.json` w Etapie 0.
+- NIE nadawaj `containerNumber` unikalnego indeksu. Ten sam kontener wraca
+  w kolejnych rejsach.
+- NIE tworz nowej przesylki automatycznie, gdy uzytkownik wpisze numer kontenera
+  z zakonczonego rejsu. Wymagaj jawnego potwierdzenia.
+- NIE pokazuj danych zakonczonego rejsu bez adnotacji, ze sa archiwalne.
+- NIE kasuj rekordow archiwalnych przy tworzeniu nowego sledzenia.
+- NIE uzywaj em dash ani en dash.
+
+---
+
+## Testy akceptacyjne
+
+1. Wpisanie numeru z bledna cyfra kontrolna pokazuje komunikat o nieprzejsciu
+   weryfikacji i NIE generuje zadnego zapytania sieciowego (sprawdzone w zakladce
+   Network). Komunikat NIE wskazuje konkretnej "poprawnej cyfry", chyba ze zachodzi
+   wyjatek opisany w Etapie 2.
+2. Pierwsze wyszukanie poprawnego, nieznanego numeru tworzy rekord w bazie ze statusem
+   INPROGRESS i pokazuje stan 3 zgodny z makieta.
+3. Odswiezenie strony (F5) po wyszukaniu zachowuje kontener na liscie "Twoje kontenery".
+4. Ponowne wpisanie tego samego numeru NIE generuje zapytania POST do ShipsGo
+   (sprawdzone w logach backendu). Odpowiedz przychodzi z bazy.
+5. Symulowana odpowiedz 409 z ShipsGo skutkuje poprawnym zapisem rekordu i widokiem
+   sukcesu, a nie komunikatem o bledzie.
+6. Symulowana odpowiedz 402 pokazuje czytelny komunikat o braku kredytow, bez kodu HTTP
+   i bez surowej tresci odpowiedzi.
+7. Webhook z poprawnym podpisem HMAC aktualizuje rekord w bazie i widok przechodzi
+   ze stanu 3 do stanu 5.
+8. Webhook z niepoprawnym podpisem zwraca 401 i NIE modyfikuje bazy.
+9. Ten sam webhook wyslany dwukrotnie nie powoduje duplikatow ani bledu (idempotencja).
+10. Status UNTRACKED renderuje stan 6 z trzema przyczynami i dwoma przyciskami.
+11. Pasek postepu trasy liczony jest z dat, a nie z `transit_percentage`
+    (potwierdzone w kodzie).
+12. Mapa rysuje odcinki PAST ciagle i FUTURE przerywane, w kolorach aplikacji,
+    a przy braku geojson pokazuje komunikat zastepczy zamiast pustej mapy.
+13. Usuniecie kontenera z listy ukrywa go u uzytkownika i NIE wysyla DELETE do ShipsGo.
+14. `SHIPSGO_API_TOKEN` nie wystepuje w zbudowanym bundlu frontendowym
+    (sprawdzone przeszukaniem `dist/`).
+15. Wszystkie nowe teksty istnieja w PL i EN, `check-dashes.js` przechodzi.
+16. Widok dziala poprawnie przy szerokosci 375 px.
+17. Usuniecie kontenera z listy, a nastepnie ponowne wpisanie tego samego numeru
+    przywraca go bez zadnego zapytania POST do ShipsGo (potwierdzone w logach).
+18. Wpisanie numeru kontenera, ktorego rejs jest zakonczony (`discardedAt` ustawione
+    lub status DISCHARGED), pokazuje stan 5b z adnotacja o danych archiwalnych
+    i NIE tworzy nowej przesylki automatycznie.
+19. Klikniecie "Sledz nowy rejs tego kontenera" bez potwierdzenia nie wysyla zadania.
+    Po potwierdzeniu powstaje nowy rekord, a stary pozostaje w bazie.
+20. Dwa rownoczesne zadania utworzenia tego samego numeru kontenera skutkuja jednym
+    wywolaniem POST do ShipsGo i jednym rekordem w bazie.
+
+---
+
+## Format raportu koncowego
+
+- Etap 0: ustalenia z rekonesansu, w tym rozbieznosci wzgledem zalozen tego promptu
+  i sposob ich rozstrzygniecia.
+- Etapy 1 do 6: co zostalo dodane i zmienione, z lista plikow.
+- Dodane zaleznosci (jesli jakiekolwiek) wraz z uzasadnieniem.
+- Wyniki testow akceptacyjnych 1 do 20, kazdy jako PASS lub FAIL z krotkim komentarzem.
+  Testy wymagajace prawdziwego tokenu ShipsGo oznacz jako NIE SPRAWDZONE i opisz,
+  jak je wykonac recznie po podpieciu tokenu.
+- Znane ograniczenia i rzeczy swiadomie odlozone.
+- Instrukcja konfiguracji: jakie zmienne srodowiskowe ustawic w Vercelu i jaki URL
+  wpisac w sekcji Webhooks na dashboardzie ShipsGo.# PROMPT: Zakladka "Numer kontenera" w sledzeniu ladunku, integracja ShipsGo API v2
+
+## Kontekst
+
+W AmLogistico istnieje strona "Sledzenie ladunku" z dwiema zakladkami: "Lista przesylek"
+(wlasne dokumenty uzytkownika, POZA zakresem tego zadania) oraz "Numer kontenera"
+(integracja z ShipsGo, PRZEDMIOT tego zadania).
+
+Obecna implementacja zakladki "Numer kontenera" ma krytyczna wade: wynik wyszukiwania
+zyje wylacznie w stanie Reacta. Po odswiezeniu strony znika. Uzytkownik traci dostep
+do przesylki, za ktora zostal juz pobrany kredyt ShipsGo.
+
+### Jak dziala ShipsGo, czego nie wolno zalozyc inaczej
+
+ShipsGo nie jest wyszukiwarka odpytywana w czasie rzeczywistym. Model jest nastepujacy:
+
+1. POST tworzy przesylke i kosztuje 1 kredyt. Zwraca liczbowe `id`.
+2. Bezposrednio po utworzeniu przesylka ma status INPROGRESS, a pola `route` i
+   `containers` sa puste (`route: null`, `containers: []`).
+3. ShipsGo odpytuje armatora w tle. Dane pojawiaja sie od kilkunastu minut do kilku
+   godzin pozniej.
+4. Aktualizacje przychodza webhookiem OCEAN.SHIPMENTS.SHIPMENT_UPDATED, ktory niesie
+   caly obiekt przesylki wraz z ruchami kontenerow. To jest ZALECANY sposob wg
+   dokumentacji, polling jest odradzany.
+5. GET po `id` nie kosztuje kredytow i mozna go wolac dowolnie czesto (w granicach
+   rate limitu).
+
+Zapisanie `id` po naszej stronie jest obowiazkowe. Bez tego tracimy dostep do
+oplaconej przesylki.
+
+### Parametry API v2 (zweryfikowane w dokumentacji, nie zmieniac)
+
+- Baza: `https://api.shipsgo.com/v2`
+- Auth: naglowek `X-Shipsgo-User-Token`, wartosc z ENV `SHIPSGO_API_TOKEN`
+- `POST /ocean/shipments`, body JSON: `reference`, `carrier`, `booking_number`,
+  `container_number`, `followers`, `tags`. Wszystkie opcjonalne, ale musi byc
+  podany `container_number` LUB `booking_number`.
+- `carrier` jest OPCJONALNY. Pattern `^(SG_)?[A-Z0-9]{4}$`. Nie wysylamy go domyslnie.
+- `container_number` pattern `^[A-Z]{4}[0-9]{7}$`
+- `GET /ocean/shipments/{id}` zwraca pelne dane
+- `GET /ocean/shipments/{id}/geojson` zwraca trase jako GeoJSON FeatureCollection
+  (oznaczona w dokumentacji jako experimental)
+- `GET /ocean/carriers?filters[status]=eq:ACTIVE` zwraca liste przewoznikow (scac, name)
+- Statusy ocean: NEW, INPROGRESS, BOOKED, LOADED, SAILING, ARRIVED, DISCHARGED, UNTRACKED
+- Kody bledow: 401 zly token, 402 brak kredytow, 403 brak uprawnien, 404 nie znaleziono,
+  409 juz istnieje, 422 zly payload, 429 za duzo zapytan, 500/503 po stronie ShipsGo
+- Rate limit: 100 zapytan na minute lacznie dla calej firmy. Odpowiedzi niosa naglowki
+  `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
+
+### Deduplikacja po stronie ShipsGo, bardzo wazne
+
+ShipsGo sprawdza duplikaty i zwraca 409 ALREADY_EXISTS z danymi istniejacej przesylki,
+BEZ pobierania kredytu. Zasady:
+
+- Jesli w requescie podano `reference`, ZAWSZE bierze udzial w sprawdzaniu duplikatu.
+- Jesli podano oba numery, do sprawdzenia uzywany jest tylko `booking_number`.
+- Jesli nie podano `booking_number`, sprawdzenie idzie po `container_number`.
+
+Wniosek operacyjny: NIE wysylamy pola `reference` przy tworzeniu przesylki z zakladki
+"Numer kontenera". Wyslanie unikalnego `reference` przy kazdym wyszukaniu spowodowaloby,
+ze kazde wyszukanie tego samego kontenera tworzy nowa przesylke i pobiera nowy kredyt.
+
+### Zatwierdzona makieta
+
+Wyglad wszystkich szesciu stanow zostal zatwierdzony i jest opisany w Etapie 4.
+Nie wymyslaj wlasnego ukladu. Odtworz opisany, dopasowujac klasy Tailwind do tych
+faktycznie uzywanych w projekcie.
+
+---
+
+## Etap 0: Rekonesans (OBOWIAZKOWY, przed jakimkolwiek kodem)
+
+Repo wygrywa. Kazda rozbieznosc miedzy tym promptem a stanem repo rozstrzygamy
+na korzysc repo i zglaszamy w raporcie.
+
+1. Znajdz obecna implementacje zakladki "Numer kontenera": komponent(y) React, wywolania
+   sieciowe, ewentualne endpointy w `api/`. Ustal:
+   - ktory host i ktora wersja API jest wolana (legacy `shipsgo.com/api/v1.x/ContainerService`
+     vs `api.shipsgo.com/v2`),
+   - jak przekazywany jest klucz (authCode w body vs naglowek),
+   - czy token nie wycieka do bundla frontendowego (sprawdz, czy wywolanie nie idzie
+     bezposrednio z przegladarki),
+   - czy gdziekolwiek zapisywany jest wynik (baza, localStorage, nic).
+2. Sprawdz `schema.prisma`: czy istnieje jakikolwiek model dotyczacy trackingu.
+   Wypisz istniejace modele uzytkownika i sposob powiazania rekordow z uzytkownikiem
+   (relacja, nazwa pola).
+3. Sprawdz strukture `api/`: konwencja plikow, sposob obslugi auth (JWT w httpOnly cookie),
+   sposob zwracania bledow, czy jest wspolny handler bledow.
+4. Sprawdz strone "Sledzenie ladunku" pod katem stylu: klasy Tailwind uzywane na
+   kartach, przyciskach, badge'ach, polach formularza. Wypisz konkretne klasy, ktore
+   bedziesz reuzywal, zeby nowy widok byl spojny.
+5. Sprawdz mechanizm i18n: gdzie leza pliki tlumaczen, jaka jest konwencja kluczy.
+6. Sprawdz, czy w `package.json` jest biblioteka do map (leaflet, react-leaflet,
+   mapbox-gl, react-map-gl). NIE instaluj niczego na tym etapie.
+7. Sprawdz, czy istnieje Upstash Redis lub inny mechanizm rate limitingu.
+8. Sprawdz `.env.example` pod katem zmiennych ShipsGo.
+
+Przedstaw raport z Etapu 0 i CZEKAJ na akceptacje przed Etapem 1.
+
+---
+
+## Etap 1: Model danych
+
+Dodaj model do `schema.prisma` i wygeneruj migracje.
+
+Model `ContainerTracking`:
+- `id` klucz glowny wg konwencji projektu
+- `shipsgoId` Int, UNIKALNY, identyfikator przesylki z ShipsGo
+- `containerNumber` String, indeksowany ale NIE unikalny, znormalizowany do wielkich liter
+- `bookingNumber` String opcjonalny
+- `carrierScac` String opcjonalny
+- `carrierName` String opcjonalny
+- `status` String, jedna z wartosci ShipsGo
+- `snapshot` Json, ostatni pelny obiekt `shipment` z ShipsGo
+- `geojson` Json opcjonalny, ostatnia pobrana trasa
+- `mapToken` String opcjonalny (z `tokens.map`)
+- `checkedAt` DateTime opcjonalny (z `checked_at` ShipsGo)
+- `discardedAt` DateTime opcjonalny (z `discarded_at` ShipsGo)
+- `createdAt`, `updatedAt`
+
+Model `ContainerTrackingUser` (powiazanie many-to-many uzytkownik - kontener):
+- relacja do uzytkownika wg konwencji z Etapu 0
+- relacja do `ContainerTracking`
+- `hiddenAt` DateTime opcjonalny, uzywany do ukrywania z listy uzytkownika
+- `addedAt` DateTime
+- unikalny indeks zlozony (uzytkownik + tracking)
+
+Powod rozdzielenia: dwoch uzytkownikow moze sledzic ten sam kontener. Przesylka w
+ShipsGo jest jedna i kredyt zostal pobrany raz. Lista jest per uzytkownik.
+
+### Pojecie aktywnego rejsu, kluczowe dla deduplikacji
+
+`containerNumber` NIE moze byc unikalny, bo ten sam kontener fizyczny jest uzywany
+wielokrotnie. CGMU6913205 plynie dzis z Szanghaju do Gdanska, a za trzy miesiace
+z Hamburga do Nowego Jorku. To ten sam numer i zupelnie inny transport.
+
+Kredyt ShipsGo pokrywa sledzenie do konca danego rejsu. Po jego zakonczeniu przesylka
+dostaje `discarded_at` i przestaje sie aktualizowac.
+
+Definicja rekordu AKTYWNEGO, uzywana w calym zadaniu:
+`discardedAt IS NULL` ORAZ `status NOT IN ('DISCHARGED', 'UNTRACKED')`.
+
+Zasada: dla jednego numeru kontenera moze istniec co najwyzej JEDEN rekord aktywny.
+Rekordow archiwalnych (zakonczone rejsy) moze byc wiele i sa zachowywane.
+Dodaj czesciowy indeks unikalny albo walidacje aplikacyjna wymuszajaca ta zasade,
+zaleznie od tego, co obsluguje Neon PostgreSQL w konfiguracji projektu. Wybor opisz
+w raporcie.
+
+---
+
+## Etap 2: Walidacja numeru kontenera (ISO 6346)
+
+Zaimplementuj w module wspoldzielonym miedzy frontendem a backendem (albo zduplikuj
+swiadomie, jesli struktura repo na to nie pozwala, i zaznacz to w raporcie).
+
+Algorytm cyfry kontrolnej:
+1. Znormalizuj: usun spacje i myslniki, zamien na wielkie litery.
+2. Sprawdz wzorzec `^[A-Z]{4}[0-9]{7}$`. Czwarta litera powinna byc U, J lub Z
+   (dla kontenerow towarowych zwykle U). Inna litera to ostrzezenie, nie blad twardy.
+3. Przypisz wartosci literom: A=10, B=12, C=13, D=14, E=15, F=16, G=17, H=18, I=19,
+   J=20, K=21, L=23, M=24, N=25, O=26, P=27, Q=28, R=29, S=30, T=31, U=32, V=34,
+   W=35, X=36, Y=37, Z=38. Cyfry maja wartosc rowna sobie.
+4. Pomnoz pierwszych 10 znakow przez wagi 2^0, 2^1, ... 2^9 i zsumuj.
+5. Reszta z dzielenia przez 11. Jesli wynosi 10, cyfra kontrolna to 0.
+6. Porownaj z jedenastym znakiem.
+
+Walidacja MUSI dzialac po stronie klienta przed wyslaniem czegokolwiek do backendu.
+Kazdy odrzucony numer to oszczedzony kredyt.
+
+Komunikaty bledow musza uczciwie odzwierciedlac to, co faktycznie da sie wyliczyc.
+Niezgodnosc checksumy nie wskazuje, KTORA z pierwszych dziesieciu pozycji jest zla,
+bo bledna moze byc dowolna z nich, a wynik wyglada identycznie. Jedyny przypadek,
+w ktorym mozna podac konkretna, poprawna wartosc, to blad na samej jedenastej
+pozycji (checksumie), bo wtedy pierwszych dziesiec znakow jest znanych i mozna
+wyliczyc, jaka checksuma powinna wyjsc.
+
+Rozroznij dwa komunikaty:
+- zly format (nie 4 litery + 7 cyfr): informacja o oczekiwanym ksztalcie
+- niezgodnosc checksumy, gdy 10 pierwszych znakow daje inny wynik niz podana
+  jedenasta cyfra: "Ten numer kontenera nie przechodzi weryfikacji. Sprawdz, czy
+  wszystkie znaki zostaly przepisane poprawnie, w szczegolnosci litery i cyfry
+  w srodku numeru." NIE zgaduj i NIE podawaj wyliczonej wartosci jako "poprawnej
+  cyfry" w tym przypadku, bo blad moze lezec w dowolnym z dziesieciu znakow, nie
+  tylko w checksumie.
+- WYJATEK, w ktorym mozna podac konkretna wartosc: jesli dziesiec pierwszych
+  znakow jest zgodnych z formatem i user zmienil tylko ostatni znak wzgledem
+  poprzednio poprawnie zwalidowanego numeru w tej samej sesji (np. edytuje pole
+  po nieudanej probie), mozna pokazac wyliczona checksume jako podpowiedz. W
+  ogolnym przypadku, bez takiego kontekstu, nie zgaduj ktora pozycja jest bledna.
+
+---
+
+## Etap 3: Backend w `api/`
+
+Wszystkie endpointy wymagaja zalogowanego uzytkownika. Token ShipsGo NIGDY nie moze
+trafic do frontendu.
+
+### `POST /api/tracking/containers`
+Body: `{ containerNumber, carrier? }`
+
+Logika:
+1. Waliduj numer (Etap 2). Blad walidacji, zwroc 400 bez kontaktu z ShipsGo.
+2. Szukaj AKTYWNEGO rekordu `ContainerTracking` po `containerNumber` (definicja
+   aktywnosci w Etapie 1). Jesli istnieje: podepnij uzytkownika (upsert
+   `ContainerTrackingUser`, wyczysc `hiddenAt`), zwroc zapisany snapshot.
+   ZERO zapytan do ShipsGo, zero kredytow. Dotyczy to rowniez sytuacji, gdy uzytkownik
+   wczesniej usunal ten kontener ze swojej listy. Usuniecie bylo tylko ukryciem,
+   wiec ponowne wyszukanie tego samego transportu nigdy nie kosztuje kredytu.
+3. Jesli aktywnego rekordu nie ma, ale istnieje rekord ARCHIWALNY (zakonczony rejs)
+   dla tego numeru: NIE tworz automatycznie nowej przesylki. Zwroc dane archiwalne
+   wraz z flaga informujaca frontend, ze to zakonczony rejs, oraz data jego zakonczenia.
+   Utworzenie nowego sledzenia wymaga osobnego, jawnego zadania uzytkownika
+   (patrz nizej, parametr `startNewVoyage`).
+4. Jesli nie ma zadnego rekordu, albo request zawiera `startNewVoyage: true`:
+   POST do ShipsGo z body zawierajacym WYLACZNIE
+   `container_number` (oraz `carrier`, jesli uzytkownik go jawnie wskazal).
+   Pole `reference` NIE moze byc wysylane.
+5. Odpowiedz 200: zapisz `ContainerTracking` ze statusem INPROGRESS, podepnij uzytkownika.
+6. Odpowiedz 409 ALREADY_EXISTS: to nie jest blad. ShipsGo zwraca dane istniejacej
+   przesylki. Wyciagnij z nich `id`, zapisz rekord tak samo jak przy 200 (przez
+   `shipsgoId`, ktory jest unikalny, wiec ponowne trafienie nie tworzy duplikatu),
+   podepnij uzytkownika, zwroc sukces.
+7. Odpowiedz 402: zwroc wlasny kod bledu oznaczajacy brak kredytow.
+8. Odpowiedz 429: zwroc wlasny kod bledu oznaczajacy przeciazenie, przekaz
+   `X-RateLimit-Reset` jesli jest.
+
+Ochrona przed rownoczesnymi zadaniami: dwoch uzytkownikow moze kliknac "Sprawdz" dla
+tego samego numeru w tej samej sekundzie. Zabezpiecz tworzenie przesylki blokada
+(transakcja z blokada wiersza albo lock w Redis na kluczu numeru kontenera), zeby nie
+powstaly dwie przesylki i dwa kredyty. ShipsGo przetwarza zadania tworzenia
+sekwencyjnie i przy nadmiarze rownoczesnych wywolan zwraca 429
+TOO_MANY_CONCURRENT_REQUESTS, wiec ta blokada chroni takze przed tym bledem.
+
+### `GET /api/tracking/containers`
+Lista kontenerow zalogowanego uzytkownika (bez ukrytych), posortowana po `addedAt` malejaco.
+Zwraca dane potrzebne do wiersza listy: numer, status, porty, przewoznik, `updatedAt`.
+Czyta wylacznie z bazy. Zero zapytan do ShipsGo.
+
+### `GET /api/tracking/containers/:containerNumber`
+Pelne dane jednego kontenera z bazy (snapshot + geojson). Sprawdz, czy uzytkownik ma
+do niego dostep. Zero zapytan do ShipsGo.
+
+### `POST /api/tracking/containers/:containerNumber/refresh`
+Reczne odswiezenie: GET do ShipsGo po `shipsgoId`, aktualizacja snapshotu. Dodatkowo,
+jesli status jest inny niz NEW i INPROGRESS, pobierz geojson i zapisz.
+Rate limit po stronie naszej aplikacji: nie czesciej niz raz na 5 minut na kontener,
+niezaleznie od liczby uzytkownikow. Ten endpoint jest zabezpieczeniem na wypadek
+niedzialajacego webhooka, nie podstawowym mechanizmem.
+
+### `DELETE /api/tracking/containers/:containerNumber`
+Ustawia `hiddenAt` w `ContainerTrackingUser`. NIE wola `DELETE` w ShipsGo.
+Decyzja swiadoma: usuniecie w ShipsGo jest nieodwracalne, a ponowne dodanie to nowy kredyt.
+
+### `POST /api/tracking/shipsgo-webhook`
+Publiczny endpoint (bez sesji uzytkownika), przyjmuje zdarzenia ShipsGo.
+1. Odczytaj surowe body PRZED parsowaniem JSON (potrzebne do podpisu).
+2. Policz HMAC-SHA256 z sekretu `SHIPSGO_WEBHOOK_SECRET` i surowego body, traktujac
+   payload jako UTF-8. Porownaj z naglowkiem `X-Shipsgo-Webhook-Signature`
+   funkcja o stalym czasie (`crypto.timingSafeEqual`), nigdy operatorem `==`.
+   Niezgodnosc, zwroc 401 i nie przetwarzaj.
+3. Obsluz `OCEAN.SHIPMENTS.SHIPMENT_UPDATED`: znajdz rekord po `shipment.id`,
+   nadpisz `snapshot`, `status`, `carrier*`, `checkedAt`, `discardedAt`.
+   Jesli status przeszedl z INPROGRESS na cokolwiek innego, dociagnij geojson.
+4. Obsluz `OCEAN.SHIPMENTS.SHIPMENT_DELETED`: oznacz rekord jako nieaktywny,
+   nie kasuj historii.
+5. Zwroc 200 szybko. Blad 5xx powoduje ponowienia ShipsGo (po 1, 5 i 10 minutach),
+   wiec przetwarzanie musi byc idempotentne.
+
+Do `.env.example` dodaj `SHIPSGO_API_TOKEN` i `SHIPSGO_WEBHOOK_SECRET` z komentarzem,
+skad je wziac.
+
+---
+
+## Etap 4: Frontend, szesc stanow wg zatwierdzonej makiety
+
+Sekcja listy nazywa sie "Twoje kontenery", NIE "Historia wyszukiwan". To lista
+aktywnie sledzonych przesylek, ktore aktualizuja sie same, a nie log wpisow.
+
+### Stan 1, poczatkowy
+Pole tekstowe (font monospace, placeholder z przykladowym numerem) plus przycisk
+"Sprawdz". Pod polem podpowiedz, ze wystarczy sam numer kontenera i ze przewoznik
+rozpoznawany jest automatycznie.
+Ponizej naglowek "Twoje kontenery" i stan pusty w ramce przerywanej, informujacy,
+ze kazdy sprawdzony kontener zostanie na liscie razem z historia zdarzen.
+Ten stan pusty musi byc widoczny OD RAZU, przed pierwszym wyszukaniem. To jedyny
+moment na ustawienie oczekiwan uzytkownika.
+
+USUN obecny podpis "AMLogistico nie przechowuje statusow przesylek". Jest nieprawdziwy
+w nowym modelu.
+
+### Stan 2, blad walidacji
+Obramowanie pola w kolorze bledu, komunikat pod polem. Zaden request nie wychodzi.
+
+### Stan 3, przyjete i przetwarzane
+Karta z numerem kontenera, data dodania i badge "Pobieramy dane" z pulsujaca kropka
+(pulsowanie wylaczone przy `prefers-reduced-motion`).
+Wyrozniony blok wyjasniajacy (lewa krawedz w kolorze ostrzegawczym): numer zostal
+przyjety i przekazany do przewoznika, dane nie sa dostepne od reki, zwykle kilkanascie
+minut, czasem kilka godzin, nie trzeba czekac na stronie ani wpisywac numeru ponownie.
+Ponizej cztery mini kroki ze znacznikami stanu:
+1. Numer zweryfikowany (zrobione)
+2. Zlecenie wyslane do ShipsGo (zrobione)
+3. Przewoznik przygotowuje dane (w toku)
+4. Trasa i historia zdarzen (oczekuje)
+
+NIE dodawaj licznika odliczajacego ani konkretnego ETA. Czas zalezy od armatora
+i falszywa precyzja szkodzi bardziej niz uczciwa niepewnosc.
+
+Rownoczesnie kontener pojawia sie na liscie "Twoje kontenery" ze statusem
+"Pobieramy dane". Po odswiezeniu strony musi tam byc.
+
+Odswiezanie widoku: dopoki status to NEW lub INPROGRESS, odpytuj WLASNY endpoint
+`GET /api/tracking/containers/:containerNumber` co 30 sekund, maksymalnie przez
+15 minut, potem przestan i pokaz przycisk recznego odswiezenia. To odpytywanie idzie
+do naszej bazy, nie do ShipsGo.
+
+### Stan 4, lista z wieloma kontenerami
+Wiersze: numer (monospace), pod nim trasa i przewoznik lub informacja, ze trasa jest
+jeszcze nieznana, po prawej badge statusu i czas ostatniej aktualizacji.
+Mapowanie statusow na etykiety i kolory:
+- NEW, INPROGRESS: "Pobieramy dane", kolor ostrzegawczy, kropka pulsujaca
+- BOOKED: "Zabookowany", kolor neutralny
+- LOADED: "Zaladowany", kolor informacyjny
+- SAILING: "W drodze", kolor informacyjny
+- ARRIVED: "W porcie docelowym", kolor informacyjny
+- DISCHARGED: "Rozladowany", kolor sukcesu
+- UNTRACKED: "Bez sledzenia", kolor szary
+Rekord archiwalny (zakonczony rejs) dostaje etykiete "Rejs zakonczony" w kolorze
+wygaszonym, niezaleznie od ostatniego statusu, i jest sortowany ponizej aktywnych.
+Kliniecie wiersza otwiera stan 5, a dla rekordu archiwalnego stan 5b.
+
+### Stan 5, pelne dane
+- Naglowek: numer, przewoznik, liczba i typ kontenerow, czas ostatniej aktualizacji,
+  badge statusu.
+- Pasek trasy: port zaladunku z kodem UN/LOCODE i data po lewej, port rozladunku po
+  prawej, pomiedzy pasek postepu.
+  WAZNE: postep licz z dat (`date_of_loading`, `date_of_discharge`, biezaca data),
+  NIE z pola `transit_percentage`. To pole potrafi zwracac 99 dla przesylki tuz po
+  wyplynieciu i wprowadza w blad.
+- Cztery kafelki: statek, numer rejsu, czas tranzytu, liczba przeladunkow z nazwa portu.
+- Mapa (patrz Etap 5).
+- Os czasu zdarzen z `containers[].movements`, chronologicznie. Mapowanie kodow:
+  EMSH kontener pusty wydany, GTIN przyjecie na terminal, LOAD zaladunek na statek,
+  DEPA wyjscie z portu, ARRV przyjscie do portu, DISC rozladunek, GTOT wydanie
+  z terminalu, EMRT zwrot pustego kontenera. Nieznany kod pokaz jako surowy,
+  nie ukrywaj zdarzenia.
+  Zdarzenia ze `status: "EST"` oznacz etykieta "szacowane" i przygaszonym kolorem.
+  Jesli `date_of_discharge` rozni sie od `date_of_discharge_initial`, pokaz przy
+  zdarzeniu informacje o dacie pierwotnej. Opoznienie to najwazniejsza informacja
+  dla spedytora.
+
+### Stan 5b, rejs zakonczony (dane archiwalne)
+Gdy backend zwroci flage rejsu zakonczonego, widok wyglada jak stan 5, ale:
+- badge statusu ma kolor wygaszony, etykieta "Rejs zakonczony"
+- nad karta pasek informacyjny: dane pochodza z rejsu zakonczonego podanego dnia
+  i nie sa juz aktualizowane
+- os czasu i trasa pozostaja widoczne, to jest wartosciowa historia
+- przycisk "Sledz nowy rejs tego kontenera", ktory przed wyslaniem zadania z
+  `startNewVoyage: true` pokazuje potwierdzenie informujace, ze rozpocznie to nowe
+  sledzenie. Bez tego potwierdzenia zadanie nie wychodzi.
+- po utworzeniu nowego sledzenia stary rekord zostaje w bazie i jest dostepny
+  z poziomu nowego widoku jako poprzedni rejs
+
+Uzasadnienie: automatyczne tworzenie nowego sledzenia przy wpisaniu numeru starego
+rejsu zuzywaloby kredyt bez wiedzy uzytkownika. Automatyczne pokazanie starych danych
+bez adnotacji pokazywaloby spedytorowi nieaktualna trase jako biezaca. Oba warianty
+sa gorsze niz jawny wybor.
+
+### Stan 6, UNTRACKED
+Karta z badge "Bez sledzenia" i blokiem wyjasniajacym z krawedzia w kolorze bledu.
+Tresc wymienia trzy realne przyczyny: kontener nie zostal jeszcze zabookowany,
+przewoznik spoza obslugiwanej listy, literowka w numerze.
+Dwa przyciski: "Wskaz przewoznika" (otwiera select zasilany z `GET /ocean/carriers`
+przez nasz backend, po wyborze tworzy nowa przesylke z polem `carrier`; ostrzez
+uzytkownika, ze to zuzyje kolejny kredyt) oraz "Usun z listy" (ukrycie, patrz Etap 3).
+
+---
+
+## Etap 5: Mapa
+
+1. Jesli w `package.json` jest juz biblioteka map, uzyj jej. Jesli nie ma zadnej,
+   uzyj `react-leaflet` z kaflami OpenStreetMap (bez klucza API, bez kosztow).
+   Zglos to w raporcie jako dodana zaleznosc.
+2. Zrodlem jest `geojson` zapisany w bazie. NIE wolaj ShipsGo z frontendu.
+3. Rysowanie wg struktury odpowiedzi: `Point` to porty, `LineString` to odcinki trasy.
+   Kazdy Feature ma `properties.status` o wartosci PAST, CURRENT lub FUTURE.
+   - PAST: linia ciagla, kolor akcentu aplikacji
+   - CURRENT: linia ciagla, kolor akcentu, plus marker pozycji statku z
+     `properties.current.coordinates` (moze byc `null`, obsluz to)
+   - FUTURE: linia przerywana, kolor przygaszony
+   `properties.vessel.name` i `properties.voyage` uzyj w dymku markera.
+4. Kolory markerow i linii z palety aplikacji. NIE zostawiaj domyslnych niebieskich
+   pinezek Leaflet.
+5. Stan bez danych geograficznych (status NEW, INPROGRESS lub pusty geojson):
+   zamiast mapy pokaz prostokat z informacja, ze trasa pojawi sie po otrzymaniu
+   danych od przewoznika. Nie renderuj pustej mapy swiata.
+6. Link "Otworz pelna mape" prowadzacy do
+   `https://map.shipsgo.com/ocean/shipments/{id}?token={mapToken}` jako opcja poboczna,
+   dyskretny, nie glowny element.
+7. Mapa musi dzialac na szerokosci mobilnej i miec sensowna wysokosc na obu breakpointach.
+
+---
+
+## Etap 6: Spojnosc z projektem
+
+1. Wszystkie nowe teksty przez istniejacy mechanizm i18n, w wersji PL i EN.
+   Zaden hardcoded string w jednym jezyku.
+2. Zero em dash i en dash (`check-dashes.js` musi przechodzic).
+3. Klasy Tailwind reuzyte z istniejacych komponentow (ustalone w Etapie 0), nie
+   wymyslone od nowa.
+4. Ikony z `lucide-react`, zgodnie z reszta aplikacji.
+5. Responsywnosc: na mobile kafelki w dwoch kolumnach, pasek trasy przechodzi
+   w uklad pionowy, os czasu bez poziomego przewijania.
+6. Focus widoczny na wszystkich elementach interaktywnych.
+
+---
+
+## Czego NIE robic
+
+- NIE wysylaj pola `reference` przy tworzeniu przesylki z tej zakladki. To zlamalo by
+  deduplikacje ShipsGo i kazde wyszukanie kosztowaloby kredyt.
+- NIE traktuj odpowiedzi 409 jako bledu. To sukces bez kosztu, zawiera dane przesylki.
+- NIE wymagaj przewoznika w glownym formularzu. Jedno pole, jeden przycisk.
+- NIE wolaj ShipsGo przy kazdym wejsciu na strone ani przy kazdym odswiezeniu listy.
+  Lista i szczegoly czytaja z naszej bazy.
+- NIE rob pollingu do ShipsGo z frontendu. Polling (co 30 sekund) idzie wylacznie do
+  naszego wlasnego endpointu.
+- NIE wolaj `DELETE /ocean/shipments/{id}` w ShipsGo. Usuwanie ukrywa rekord u nas.
+- NIE uzywaj `transit_percentage` do paska postepu.
+- NIE dodawaj licznika odliczajacego ani obietnicy konkretnego czasu w stanie INPROGRESS.
+- NIE porownuj podpisu webhooka operatorem `==`.
+- NIE eksponuj `SHIPSGO_API_TOKEN` w kodzie frontendowym ani w odpowiedziach API.
+- NIE pokazuj surowych kodow i tresci bledow ShipsGo w interfejsie.
+- NIE zostawiaj podpisu "AMLogistico nie przechowuje statusow przesylek".
+- NIE instaluj biblioteki map bez sprawdzenia `package.json` w Etapie 0.
+- NIE nadawaj `containerNumber` unikalnego indeksu. Ten sam kontener wraca
+  w kolejnych rejsach.
+- NIE tworz nowej przesylki automatycznie, gdy uzytkownik wpisze numer kontenera
+  z zakonczonego rejsu. Wymagaj jawnego potwierdzenia.
+- NIE pokazuj danych zakonczonego rejsu bez adnotacji, ze sa archiwalne.
+- NIE kasuj rekordow archiwalnych przy tworzeniu nowego sledzenia.
+- NIE uzywaj em dash ani en dash.
+
+---
+
+## Testy akceptacyjne
+
+1. Wpisanie numeru z bledna cyfra kontrolna pokazuje komunikat o nieprzejsciu
+   weryfikacji i NIE generuje zadnego zapytania sieciowego (sprawdzone w zakladce
+   Network). Komunikat NIE wskazuje konkretnej "poprawnej cyfry", chyba ze zachodzi
+   wyjatek opisany w Etapie 2.
+2. Pierwsze wyszukanie poprawnego, nieznanego numeru tworzy rekord w bazie ze statusem
+   INPROGRESS i pokazuje stan 3 zgodny z makieta.
+3. Odswiezenie strony (F5) po wyszukaniu zachowuje kontener na liscie "Twoje kontenery".
+4. Ponowne wpisanie tego samego numeru NIE generuje zapytania POST do ShipsGo
+   (sprawdzone w logach backendu). Odpowiedz przychodzi z bazy.
+5. Symulowana odpowiedz 409 z ShipsGo skutkuje poprawnym zapisem rekordu i widokiem
+   sukcesu, a nie komunikatem o bledzie.
+6. Symulowana odpowiedz 402 pokazuje czytelny komunikat o braku kredytow, bez kodu HTTP
+   i bez surowej tresci odpowiedzi.
+7. Webhook z poprawnym podpisem HMAC aktualizuje rekord w bazie i widok przechodzi
+   ze stanu 3 do stanu 5.
+8. Webhook z niepoprawnym podpisem zwraca 401 i NIE modyfikuje bazy.
+9. Ten sam webhook wyslany dwukrotnie nie powoduje duplikatow ani bledu (idempotencja).
+10. Status UNTRACKED renderuje stan 6 z trzema przyczynami i dwoma przyciskami.
+11. Pasek postepu trasy liczony jest z dat, a nie z `transit_percentage`
+    (potwierdzone w kodzie).
+12. Mapa rysuje odcinki PAST ciagle i FUTURE przerywane, w kolorach aplikacji,
+    a przy braku geojson pokazuje komunikat zastepczy zamiast pustej mapy.
+13. Usuniecie kontenera z listy ukrywa go u uzytkownika i NIE wysyla DELETE do ShipsGo.
+14. `SHIPSGO_API_TOKEN` nie wystepuje w zbudowanym bundlu frontendowym
+    (sprawdzone przeszukaniem `dist/`).
+15. Wszystkie nowe teksty istnieja w PL i EN, `check-dashes.js` przechodzi.
+16. Widok dziala poprawnie przy szerokosci 375 px.
+17. Usuniecie kontenera z listy, a nastepnie ponowne wpisanie tego samego numeru
+    przywraca go bez zadnego zapytania POST do ShipsGo (potwierdzone w logach).
+18. Wpisanie numeru kontenera, ktorego rejs jest zakonczony (`discardedAt` ustawione
+    lub status DISCHARGED), pokazuje stan 5b z adnotacja o danych archiwalnych
+    i NIE tworzy nowej przesylki automatycznie.
+19. Klikniecie "Sledz nowy rejs tego kontenera" bez potwierdzenia nie wysyla zadania.
+    Po potwierdzeniu powstaje nowy rekord, a stary pozostaje w bazie.
+20. Dwa rownoczesne zadania utworzenia tego samego numeru kontenera skutkuja jednym
+    wywolaniem POST do ShipsGo i jednym rekordem w bazie.
+
+---
+
+## Format raportu koncowego
+
+- Etap 0: ustalenia z rekonesansu, w tym rozbieznosci wzgledem zalozen tego promptu
+  i sposob ich rozstrzygniecia.
+- Etapy 1 do 6: co zostalo dodane i zmienione, z lista plikow.
+- Dodane zaleznosci (jesli jakiekolwiek) wraz z uzasadnieniem.
+- Wyniki testow akceptacyjnych 1 do 20, kazdy jako PASS lub FAIL z krotkim komentarzem.
+  Testy wymagajace prawdziwego tokenu ShipsGo oznacz jako NIE SPRAWDZONE i opisz,
+  jak je wykonac recznie po podpieciu tokenu.
+- Znane ograniczenia i rzeczy swiadomie odlozone.
+- Instrukcja konfiguracji: jakie zmienne srodowiskowe ustawic w Vercelu i jaki URL
+  wpisac w sekcji Webhooks na dashboardzie ShipsGo.
+    --em:#10b981;
+    --em-soft:#34d399;
+    --em-deep:#0d3b32;
+    --txt:#f1f5f9;
+    --txt-2:#93a4b8;
+    --txt-3:#64748b;
+    --amber:#f0b429;
+    --amber-deep:#3a2f10;
+    --red:#f87171;
+    --red-deep:#3a1c1c;
+    --blue:#60a5fa;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:#0b121c;color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;padding:40px 20px 80px;
+  }
+  .wrap{max-width:1000px;margin:0 auto}
+  .doc-head{border-bottom:1px solid var(--line);padding-bottom:24px;margin-bottom:40px}
+  .doc-head h1{font-size:26px;font-weight:600;margin:0 0 6px}
+  .doc-head p{color:var(--txt-2);margin:0;font-size:15px}
+  .step{margin-bottom:56px}
+  .step-head{margin-bottom:16px}
+  .num{
+    display:inline-block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--em-soft);background:var(--em-deep);border:1px solid #17564a;
+    padding:3px 10px;border-radius:999px;margin-bottom:10px;font-weight:600;
+  }
+  .step-head h2{font-size:19px;font-weight:600;margin:0 0 6px}
+  .step-head p{color:var(--txt-2);margin:0;font-size:14.5px;max-width:78ch}
+  .app{background:var(--page);border:1px solid var(--line);border-radius:14px;padding:24px}
+
+  .hero{background:var(--card);border:1px solid var(--line-soft);border-radius:12px;padding:18px 20px;display:flex;gap:16px;align-items:center;margin-bottom:20px}
+  .hero-icon{width:46px;height:46px;border-radius:12px;background:var(--em-deep);display:flex;align-items:center;justify-content:center;flex:none}
+  .hero h3{margin:0;font-size:20px;font-weight:700}
+  .hero p{margin:2px 0 0;color:var(--txt-2);font-size:14px}
+
+  .tabs{display:flex;gap:10px;margin-bottom:18px}
+  .tab{padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--txt);font-size:14.5px;font-weight:500}
+  .tab.on{border-color:var(--em);color:var(--em-soft);background:#132a29}
+
+  .searchrow{display:flex;gap:12px;margin-bottom:10px}
+  .field{flex:1;position:relative;display:flex;align-items:center;background:var(--card-2);border:1px solid var(--line);border-radius:10px;padding:0 14px;height:52px}
+  .field.err{border-color:#7f3535}
+  .field svg{flex:none;margin-right:10px;opacity:.55}
+  .field input{
+    background:none;border:0;outline:none;color:var(--txt);width:100%;height:100%;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:15px;letter-spacing:.04em;
+  }
+  .field input::placeholder{color:#5b6b7e}
+  .btn{background:var(--em);color:#06231b;border:0;border-radius:10px;padding:0 26px;height:52px;font-size:15.5px;font-weight:700}
+  .hint{color:var(--txt-3);font-size:13.5px;margin:0}
+  .hint.err{color:var(--red)}
+
+  .sec-title{display:flex;align-items:center;justify-content:space-between;margin:26px 0 12px}
+  .sec-title h4{margin:0;font-size:15px;font-weight:600;letter-spacing:.01em}
+  .sec-title span{color:var(--txt-3);font-size:13px}
+
+  .row{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+  .row .cn{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:15px;font-weight:600;letter-spacing:.04em}
+  .row .meta{color:var(--txt-2);font-size:13.5px;margin-top:2px}
+  .row .grow{flex:1;min-width:0}
+  .row .when{color:var(--txt-3);font-size:12.5px;white-space:nowrap}
+
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}
+  .b-prog{background:var(--amber-deep);color:#f5c451;border:1px solid #5a4715}
+  .b-sail{background:#12293d;color:#7cc0f8;border:1px solid #2b5578}
+  .b-done{background:var(--em-deep);color:var(--em-soft);border:1px solid #17564a}
+  .b-none{background:#2a2f36;color:#9aa5b1;border:1px solid #3b434d}
+  .b-err{background:var(--red-deep);color:#fca5a5;border:1px solid #6d2c2c}
+
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .pulse{animation:p 1.6s ease-in-out infinite}
+  @keyframes p{0%,100%{opacity:1}50%{opacity:.35}}
+  @media (prefers-reduced-motion:reduce){.pulse{animation:none}}
+
+  .panel{background:var(--card);border:1px solid var(--line-soft);border-radius:12px;padding:20px}
+  .panel-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .cn-big{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:21px;font-weight:700;letter-spacing:.05em;margin:0}
+  .sub{color:var(--txt-2);font-size:13.5px;margin:4px 0 0}
+
+  .note{display:flex;gap:14px;background:#1a2432;border:1px solid #2f3f52;border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:16px 18px;margin-top:18px}
+  .note h5{margin:0 0 6px;font-size:14.5px;font-weight:600}
+  .note p{margin:0;color:var(--txt-2);font-size:13.8px}
+  .note.ok{border-left-color:var(--em)}
+  .note.bad{border-left-color:var(--red)}
+
+  .steps-mini{margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft)}
+  .mini{display:flex;gap:12px;align-items:flex-start;padding:7px 0}
+  .mini .mk{width:18px;height:18px;border-radius:50%;flex:none;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+  .mk.done{background:var(--em-deep);color:var(--em-soft);border:1px solid #17564a}
+  .mk.now{background:var(--amber-deep);color:#f5c451;border:1px solid #5a4715}
+  .mk.next{background:#232d3a;color:#5c6b7c;border:1px solid #33404f}
+  .mini .mt{font-size:14px}
+  .mini .md{font-size:13px;color:var(--txt-3)}
+
+  .route{display:flex;align-items:center;gap:16px;margin:20px 0 4px}
+  .port{flex:none}
+  .port .pn{font-size:16px;font-weight:600}
+  .port .pc{font-family:ui-monospace,monospace;font-size:12.5px;color:var(--txt-3);letter-spacing:.05em}
+  .port .pd{font-size:13px;color:var(--txt-2);margin-top:4px}
+  .track{flex:1;height:3px;background:#2c3a4d;border-radius:3px;position:relative}
+  .track i{position:absolute;left:0;top:0;bottom:0;background:var(--em);border-radius:3px}
+  .track b{position:absolute;top:-5px;width:13px;height:13px;border-radius:50%;background:var(--em);border:2px solid var(--page)}
+  .pct{text-align:center;color:var(--txt-3);font-size:12.5px;margin-top:14px}
+
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+  .kpi{background:var(--card-2);border:1px solid var(--line-soft);border-radius:10px;padding:12px 14px}
+  .kpi .k{color:var(--txt-3);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .kpi .v{font-size:15.5px;font-weight:600;margin-top:3px}
+
+  .map{margin-top:18px;border:1px solid var(--line-soft);border-radius:12px;overflow:hidden;background:#16212f}
+  .map-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line-soft);font-size:13px;color:var(--txt-2)}
+  .map-bar a{color:var(--em-soft);text-decoration:none;font-size:12.5px}
+
+  .tl{margin-top:20px;padding-top:18px;border-top:1px solid var(--line-soft)}
+  .ev{display:grid;grid-template-columns:104px 20px 1fr;gap:12px;padding:9px 0}
+  .ev .d{color:var(--txt-3);font-size:12.8px;font-family:ui-monospace,monospace;padding-top:2px}
+  .ev .r{position:relative;display:flex;justify-content:center}
+  .ev .r::before{content:"";position:absolute;top:14px;bottom:-14px;width:1px;background:var(--line)}
+  .ev:last-child .r::before{display:none}
+  .ev .r i{width:9px;height:9px;border-radius:50%;background:var(--em);margin-top:6px;z-index:1}
+  .ev.fut .r i{background:#3c4a5c}
+  .ev .t{font-size:14.2px}
+  .ev.fut .t{color:var(--txt-2)}
+  .ev .s{font-size:12.8px;color:var(--txt-3)}
+  .est{font-size:11px;border:1px solid #3b434d;color:#9aa5b1;border-radius:4px;padding:1px 5px;margin-left:7px}
+
+  .empty{text-align:center;padding:34px 20px;border:1px dashed var(--line);border-radius:12px;color:var(--txt-3)}
+  .empty strong{display:block;color:var(--txt-2);font-weight:600;margin-bottom:4px;font-size:14.5px}
+  @media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}.route{flex-direction:column;align-items:stretch;gap:10px}.track{height:3px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <h1>Sledzenie ladunku, zakladka "Numer kontenera"</h1>
+  <p>Makieta wszystkich stanow ekranu. Kolejnosc odpowiada temu, co widzi uzytkownik od momentu wpisania numeru.</p>
+</div>
+
+<!-- KROK 1 -->
+<section class="step">
+  <div class="step-head">
+    <span class="num">Krok 1</span>
+    <h2>Stan poczatkowy, historia jest pusta</h2>
+    <p>Jedno pole, jeden przycisk. Pod spodem sekcja "Twoje kontenery", ktora od razu tlumaczy, ze wyszukane kontenery zostaja tu na stale. Dzieki temu uzytkownik wie, ze nie musi zapamietywac numeru.</p>
+  </div>
+  <div class="app">
+    <div class="hero">
+      <div class="hero-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></div>
+      <div><h3>Sledzenie ladunku</h3><p>Status i os czasu Twoich przesylek: drogowych, morskich, lotniczych i multimodalnych.</p></div>
+    </div>
+    <div class="tabs"><div class="tab">Lista przesylek</div><div class="tab on">Numer kontenera</div></div>
+    <div class="searchrow">
+      <div class="field">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#93a4b8" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input placeholder="Numer kontenera, np. CGMU6913205" readonly>
+      </div>
+      <button class="btn">Sprawdz</button>
+    </div>
+    <p class="hint">Wystarczy sam numer kontenera. Przewoznika rozpoznajemy automatycznie.</p>
+
+    <div class="sec-title"><h4>Twoje kontenery</h4></div>
+    <div class="empty">
+      <strong>Nie sledzisz jeszcze zadnego kontenera</strong>
+      Wpisz numer powyzej. Kazdy sprawdzony kontener zostanie tutaj razem z historia zdarzen.
+    </div>
+  </div>
+</section>
+
+<!-- KROK 2 -->
+<section class="step">
+  <div class="step-head">
+    <span class="num">Krok 2</span>
+    <h2>Bledny numer, zatrzymany po naszej stronie</h2>
+    <p>Format i cyfra kontrolna wg ISO 6346 sprawdzane sa w przegladarce. Zaden request nie idzie do ShipsGo, wiec bledny numer nie kosztuje kredytu. Komunikat mowi, co jest nie tak, a nie tylko ze cos jest nie tak.</p>
+  </div>
+  <div class="app">
+    <div class="searchrow">
+      <div class="field err">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#93a4b8" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input value="CGMU6913204" readonly>
+      </div>
+      <button class="btn">Sprawdz</button>
+    </div>
+    <p class="hint err">Cyfra kontrolna sie nie zgadza. Sprawdz ostatnia cyfre numeru, prawdopodobnie powinno byc 5.</p>
+  </div>
+</section>
+
+<!-- KROK 3 -->
+<section class="step">
+  <div class="step-head">
+    <span class="num">Krok 3</span>
+    <h2>Zlecenie przyjete, ShipsGo przetwarza</h2>
+    <p>To jest ten ekran, ktorego brakowalo. Kontener trafia na liste od razu, z jasnym opisem co sie dzieje i ile to potrwa. Trzy kroki pokazuja, na ktorym etapie jestesmy. Zaden licznik odliczajacy, bo czas zalezy od armatora i falszywa precyzja tylko zirytuje.</p>
+  </div>
+  <div class="app">
+    <div class="panel">
+      <div class="panel-top">
+        <div>
+          <p class="cn-big">CGMU6913205</p>
+          <p class="sub">Dodany 6 sierpnia, 14:32</p>
+        </div>
+        <span class="badge b-prog"><span class="dot pulse"></span>Pobieramy dane</span>
+      </div>
+
+      <div class="note">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#f0b429" stroke-width="2" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <div>
+          <h5>Numer zostal przyjety i przekazany do przewoznika</h5>
+          <p>Dane trasy nie sa dostepne od reki. Armator udostepnia je zwykle w ciagu kilkunastu minut, czasem po kilku godzinach. Nie musisz czekac na tej stronie ani wpisywac numeru ponownie. Kontener jest juz na Twojej liscie i uzupelni sie sam.</p>
+        </div>
+      </div>
+
+      <div class="steps-mini">
+        <div class="mini"><span class="mk done">&#10003;</span><div><div class="mt">Numer zweryfikowany</div><div class="md">Format i cyfra kontrolna poprawne</div></div></div>
+        <div class="mini"><span class="mk done">&#10003;</span><div><div class="mt">Zlecenie wyslane do ShipsGo</div><div class="md">Kontener dodany do stalego sledzenia</div></div></div>
+        <div class="mini"><span class="mk now">&#8226;</span><div><div class="mt">Przewoznik przygotowuje dane</div><div class="md">W toku, odswiezymy widok automatycznie</div></div></div>
+        <div class="mini"><span class="mk next">3</span><div><div class="mt">Trasa i historia zdarzen</div><div class="md">Pojawia sie tutaj po otrzymaniu danych</div></div></div>
+      </div>
+    </div>
+
+    <div class="sec-title"><h4>Twoje kontenery</h4><span>1 sledzony</span></div>
+    <div class="row">
+      <div class="grow"><div class="cn">CGMU6913205</div><div class="meta">Trasa jeszcze nieznana</div></div>
+      <span class="badge b-prog"><span class="dot pulse"></span>Pobieramy dane</span>
+      <span class="when">przed chwila</span>
+    </div>
+  </div>
+</section>
+
+<!-- KROK 4 -->
+<section class="step">
+  <div class="step-head">
+    <span class="num">Krok 4</span>
+    <h2>Historia, czyli powod dla ktorego to wszystko dziala</h2>
+    <p>Uzytkownik wraca nastepnego dnia i widzi wszystkie swoje kontenery z aktualnym statusem. Nic nie wpisuje ponownie, nic nie kosztuje kredytu. Kliknięcie w wiersz otwiera panel z Kroku 5.</p>
+  </div>
+  <div class="app">
+    <div class="searchrow">
+      <div class="field">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#93a4b8" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input placeholder="Numer kontenera, np. CGMU6913205" readonly>
+      </div>
+      <button class="btn">Sprawdz</button>
+    </div>
+    <div class="sec-title"><h4>Twoje kontenery</h4><span>4 sledzone</span></div>
+
+    <div class="row">
+      <div class="grow"><div class="cn">CGMU6913205</div><div class="meta">Szanghaj &rarr; Gdansk &middot; CMA CGM</div></div>
+      <span class="badge b-sail"><span class="dot"></span>W drodze</span>
+      <span class="when">2 godz. temu</span>
+    </div>
+    <div class="row">
+      <div class="grow"><div class="cn">MSDU7412589</div><div class="meta">Santos &rarr; Rotterdam &middot; MSC</div></div>
+      <span class="badge b-done"><span class="dot"></span>Rozladowany</span>
+      <span class="when">wczoraj</span>
+    </div>
+    <div class="row">
+      <div class="grow"><div class="cn">OOCU4935001</div><div class="meta">Trasa jeszcze nieznana</div></div>
+      <span class="badge b-prog"><span class="dot pulse"></span>Pobieramy dane</span>
+      <span class="when">18 min temu</span>
+    </div>
+    <div class="row">
+      <div class="grow"><div class="cn">TEMU2938471</div><div class="meta">Brak danych od przewoznika</div></div>
+      <span class="badge b-none"><span class="dot"></span>Bez sledzenia</span>
+      <span class="when">3 dni temu</span>
+    </div>
+  </div>
+</section>
+
+<!-- KROK 5 -->
+<section class="step">
+  <div class="step-head">
+    <span class="num">Krok 5</span>
+    <h2>Dane gotowe, pelny widok kontenera</h2>
+    <p>Trasa, mapa, parametry i os czasu zdarzen. Daty szacowane sa oznaczone etykieta, zeby nikt nie planowal odbioru na podstawie prognozy myslac, ze to fakt. Data pierwotna pokazana obok zmienionej, bo opoznienie to najwazniejsza informacja dla spedytora.</p>
+  </div>
+  <div class="app">
+    <div class="panel">
+      <div class="panel-top">
+        <div>
+          <p class="cn-big">CGMU6913205</p>
+          <p class="sub">CMA CGM &middot; 1 kontener 40 HC &middot; zaktualizowano 6 sierpnia, 09:14</p>
+        </div>
+        <span class="badge b-sail"><span class="dot"></span>W drodze</span>
+      </div>
+
+      <div class="route">
+        <div class="port">
+          <div class="pn">Szanghaj</div>
+          <div class="pc">CNSHA</div>
+          <div class="pd">Zaladunek 12 lipca</div>
+        </div>
+        <div class="track"><i style="width:62%"></i><b style="left:calc(62% - 6px)"></b></div>
+        <div class="port" style="text-align:right">
+          <div class="pn">Gdansk</div>
+          <div class="pc">PLGDN</div>
+          <div class="pd">Rozladunek 24 sierpnia</div>
+        </div>
+      </div>
+      <div class="pct">62 procent trasy za soba</div>
+
+      <div class="grid">
+        <div class="kpi"><div class="k">Statek</div><div class="v">CMA CGM Figaro</div></div>
+        <div class="kpi"><div class="k">Rejs</div><div class="v">FST1259</div></div>
+        <div class="kpi"><div class="k">Czas tranzytu</div><div class="v">43 dni</div></div>
+        <div class="kpi"><div class="k">Przeladunki</div><div class="v">1 &middot; Singapur</div></div>
+      </div>
+
+      <div class="map">
+        <div class="map-bar"><span>Pozycja statku, aktualizowana kilka razy dziennie</span><a href="#">Otworz pelna mape</a></div>
+        <svg width="100%" viewBox="0 0 900 240" style="display:block">
+          <rect width="900" height="240" fill="#16212f"/>
+          <path d="M0 150 Q120 130 240 148 T520 130 T900 158" stroke="#22313f" stroke-width="1" fill="none"/>
+          <path d="M0 90 Q160 70 300 96 T640 78 T900 104" stroke="#22313f" stroke-width="1" fill="none"/>
+          <path d="M120 178 C260 150 300 92 470 88 C610 84 660 120 780 78" stroke="#10b981" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M470 88 C610 84 660 120 780 78" stroke="#3c4a5c" stroke-width="2.5" fill="none" stroke-dasharray="6 7" stroke-linecap="round"/>
+          <circle cx="120" cy="178" r="6" fill="#10b981"/>
+          <text x="120" y="204" fill="#93a4b8" font-size="13" text-anchor="middle" font-family="sans-serif">Szanghaj</text>
+          <circle cx="470" cy="88" r="10" fill="#10b981" opacity=".22"/>
+          <circle cx="470" cy="88" r="5" fill="#34d399"/>
+          <text x="470" y="66" fill="#e2e8f0" font-size="13" text-anchor="middle" font-family="sans-serif">CMA CGM Figaro</text>
+          <circle cx="780" cy="78" r="6" fill="none" stroke="#5c6b7c" stroke-width="2"/>
+          <text x="780" y="56" fill="#93a4b8" font-size="13" text-anchor="middle" font-family="sans-serif">Gdansk</text>
+        </svg>
+      </div>
+
+      <div class="tl">
+        <div class="ev"><div class="d">08 lip 11:20</div><div class="r"><i></i></div><div><div class="t">Kontener pusty wydany</div><div class="s">Szanghaj</div></div></div>
+        <div class="ev"><div class="d">11 lip 07:45</div><div class="r"><i></i></div><div><div class="t">Przyjecie na terminal</div><div class="s">Szanghaj</div></div></div>
+        <div class="ev"><div class="d">12 lip 16:02</div><div class="r"><i></i></div><div><div class="t">Zaladunek na statek</div><div class="s">CMA CGM Figaro, rejs FST1259</div></div></div>
+        <div class="ev"><div class="d">13 lip 03:10</div><div class="r"><i></i></div><div><div class="t">Wyjscie z portu</div><div class="s">Szanghaj</div></div></div>
+        <div class="ev"><div class="d">29 lip 22:40</div><div class="r"><i></i></div><div><div class="t">Przeladunek</div><div class="s">Singapur</div></div></div>
+        <div class="ev fut"><div class="d">24 sie 12:00</div><div class="r"><i></i></div><div><div class="t">Przyjscie do portu<span class="est">szacowane</span></div><div class="s">Gdansk, pierwotnie 21 sierpnia</div></div></div>
+        <div class="ev fut"><div class="d">25 sie 12:00</div><div class="r"><i></i></div><div><div class="t">Rozladunek<span class="est">szacowane</span></div><div class="s">Gdansk</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KROK 6 -->
+<section class="step">
+  <div class="step-head">
+    <span class="num">Krok 6</span>
+    <h2>Przewoznik nie udostepnia danych</h2>
+    <p>Status UNTRACKED z ShipsGo. Kredyt zostal zuzyty, wiec nie mozna udawac, ze nic sie nie stalo. Ekran mowi wprost, co jest przyczyna i co uzytkownik moze zrobic. Wskazanie przewoznika recznie to jedyna realna droga naprawy.</p>
+  </div>
+  <div class="app">
+    <div class="panel">
+      <div class="panel-top">
+        <div><p class="cn-big">TEMU2938471</p><p class="sub">Sprawdzany 3 sierpnia, 10:08</p></div>
+        <span class="badge b-none"><span class="dot"></span>Bez sledzenia</span>
+      </div>
+      <div class="note bad">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></svg>
+        <div>
+          <h5>Przewoznik nie udostepnil danych dla tego numeru</h5>
+          <p>Najczestsze przyczyny: kontener nie zostal jeszcze zabookowany, numer nalezy do przewoznika spoza obslugiwanej listy, albo w numerze jest literowka. Mozesz wskazac przewoznika recznie, co czesto pomaga w rozpoznaniu.</p>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" style="height:44px;padding:0 18px;font-size:14.5px">Wskaz przewoznika</button>
+        <button class="btn" style="height:44px;padding:0 18px;font-size:14.5px;background:transparent;border:1px solid var(--line);color:var(--txt)">Usun z listy</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

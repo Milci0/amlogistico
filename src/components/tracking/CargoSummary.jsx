@@ -19,7 +19,7 @@ export default function CargoSummary({ cargo }) {
   const subName = cargo.cargoSubcategory
     ? tCargo(`subcategories.${cargo.cargoSubcategory}`, { defaultValue: '' })
     : ''
-  const label = [catName, subName].filter(Boolean).join(' — ')
+  const label = [catName, subName].filter(Boolean).join(', ')
     || cargoLabel(cargo.cargoCategory, cargo.cargoSubcategory)
   const unit = getUnitType(cargo.packageType)
   const tempRange = getTempRange(cargo.cargoSubcategory)

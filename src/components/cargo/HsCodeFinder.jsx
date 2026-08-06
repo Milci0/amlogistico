@@ -92,7 +92,7 @@ export default function HsCodeFinder({ fromCountry, toCountry, onUseCode }) {
   }
 
   // ── Stan rozwinięty ─────────────────────────────────────────────────────────────
-  const routeLabel = `${fromCountry || '—'} → ${toCountry || '—'}`
+  const routeLabel = `${fromCountry || '-'} → ${toCountry || '-'}`
 
   return (
     <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-900/20 p-4">
