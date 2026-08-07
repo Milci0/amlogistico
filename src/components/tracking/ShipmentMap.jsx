@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet'
+import { AttributionControl, MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { useTranslation } from 'react-i18next'
 import { MapPin, Maximize2 } from 'lucide-react'
@@ -140,8 +140,17 @@ function MapCanvas({ height, data, color, icons, interactive, wheelZoom }) {
         boxZoom={interactive}
         keyboard={interactive}
         zoomControl={interactive}
+        // Domyślna kontrolka wyłączona, bo jej prefiksu nie da się ustawić przez
+        // MapContainer. Własna niżej, z `prefix={false}`.
+        attributionControl={false}
         style={{ width: '100%', height: '100%' }}
       >
+        {/* `prefix={false}` usuwa dopisek „Leaflet" wraz z flagą Ukrainy, którą
+            biblioteka wstawia od wersji 1.8. Atrybucja OpenStreetMap ZOSTAJE:
+            wymaga jej licencja ODbL kafelków. Atrybucja samego Leafletu jest
+            dobrowolna, bo BSD-2 wymaga noty w kodzie źródłowym, nie na ekranie. */}
+        <AttributionControl position="bottomright" prefix={false} />
+
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

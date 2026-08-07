@@ -1057,12 +1057,36 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     zoomem i przeciąganiem, pełny rozmiar mapy od razu (982 z 984 px, 12 kafelków), Escape z powrotem
     ogniskowania, klik w tło, tabulator dosięga podglądu jako PIERWSZY element, Enter i spacja,
     przewijanie strony kółkiem bez zmiany zoomu, 375 px, ciemny motyw, wersja PL, zero błędów konsoli.
-  - **UWAGA przy oglądaniu na własnym koncie:** żaden z trzech rekordów w `container_tracking`
-    nie ma zapisanego `geojson` (sprawdzone w bazie 2026-08-07), więc wszystkie trzy pokazują dziś
-    komunikat „Brak jeszcze danych o trasie", a nie mapę. To stan sprzed tej zmiany, nie jej skutek.
-    Jedyny rekord, który może dostać trasę bez wydawania kredytu, to MMAU1351730 (SAILING) przez
-    przycisk „Odśwież" (GET). HLBU9258860 jest archiwalny (odświeżanie zablokowane), a TLLU1080331
-    ma status INPROGRESS, przy którym `shouldFetchGeojson` celowo nie pyta o trasę.
+- **FIX: mapa nigdy nie miała czego narysować (2026-08-08).** Przy sprawdzaniu, czemu podgląd
+  pokazuje „Brak jeszcze danych o trasie" na wszystkich trzech rekordach, wyszło, że ShipsGo
+  trasę ODDAJE, tylko w innym kształcie niż zakładał `trimGeojson`. Dwa błędne założenia, oba
+  z listy „NIE zweryfikowane bez realnego tokena":
+  - **Koperta.** `GET /ocean/shipments/{id}/geojson` zwraca `{ message, geojson: FeatureCollection }`,
+    a nie samą kolekcję. `trimGeojson` odrzucał więc KAŻDĄ odpowiedź (`raw.type !== 'FeatureCollection'`
+    → `null`), co po stronie interfejsu wyglądało dokładnie jak „przewoźnik jeszcze nie podał trasy".
+    Rozpakowuje to teraz `unwrapGeojson` w `getShipmentGeojson`, a `trimGeojson` przyjmuje oba
+    kształty (webhook może przynieść gołą kolekcję).
+  - **Nazwa portu.** Leży w `properties.location.name`, nie `properties.name`, więc wszystkie dymki
+    markerów byłyby puste. Teraz `p.location?.name || p.name`.
+  - Potwierdzony kształt (spisany w komentarzu przy `trimGeojson`): Point ma
+    `properties.location.{code,name,country}`, LineString ma `properties.vessel.{name,imo}`,
+    `properties.voyage`, `properties.events.{DEPA,ARRV}` i `properties.current`
+    (`null` albo `{index, coordinates}`). Pola `properties.type`, którego szuka `isVesselPoint`
+    w `ShipmentMap`, w odpowiedzi NIE MA, i to jest w porządku: marker statku i tak powstaje
+    z `properties.current` odcinka CURRENT.
+  - **Dane uzupełnione w bazie** darmowymi GET-ami (zapis tylko do pustej kolumny `geojson`):
+    HLBU9258860 i MMAU1351730 mają po 5 obiektów trasy. TLLU1080331 zostaje bez trasy, bo dla
+    statusu INPROGRESS ShipsGo zwraca pustą listę obiektów, i to jest poprawny stan.
+  - 4 nowe testy w `api/_lib/__tests__/shipsgoTracking.test.js` na realnym kształcie odpowiedzi
+    (770 testów łącznie).
+  - **Atrybucja mapy bez flagi (2026-08-08):** Leaflet od 1.8 dokleja do kontrolki własny dopisek
+    „Leaflet" poprzedzony flagą Ukrainy. Prefiksu nie da się ustawić przez `MapContainer`, więc
+    domyślna kontrolka jest wyłączona (`attributionControl={false}`), a w środku stoi własna
+    `<AttributionControl position="bottomright" prefix={false} />`. **Atrybucja OpenStreetMap
+    ZOSTAJE** (wymaga jej licencja ODbL kafelków); dobrowolna jest tylko atrybucja samego
+    Leafletu, bo BSD-2 wymaga noty w kodzie źródłowym, nie na ekranie. Zweryfikowane
+    w przeglądarce: `.leaflet-control-attribution` to dokładnie „© OpenStreetMap",
+    zero elementów `.leaflet-attribution-flag`, kafelki 8 z 8 wczytane.
 
 - **Powiadomienie „kontener gotowy do śledzenia" - GOTOWE (2026-08-07):** gdy śledzony kontener
   przestaje być w przygotowaniu i pojawiają się realne dane rejsu, każdy obserwujący dostaje
@@ -1143,6 +1167,9 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   `date_of_discharge_initial`, `transhipments`, `size_type`), format podpisu webhooka (hex czy
   base64) i czy `GET /ocean/shipments?filters[container_number]=eq:` działa jak zakłada fallback
   dla 409 bez `id`. Wpisać URL webhooka w dashboardzie ShipsGo i ustawić `SHIPSGO_WEBHOOK_SECRET`.
+  **Kształt odpowiedzi geojson potwierdzony 2026-08-08** (patrz FIX wyżej), reszta wciąż na
+  założeniach. Skoro `/geojson` niesie kopertę `{message, geojson}`, warto przy okazji sprawdzić,
+  czy `trimShipmentData` nie ma tego samego problemu z jakimś polem.
 - **Twoja weryfikacja w przeglądarce sześciu szablonów pod kątem łamania stron A4** — obiecana,
   wynik nieznany: `EudrDdsTemplate`, `ChedTracesTemplate`, `CbamDataSheetTemplate`,
   `EmcsEadTemplate`, `WagonListTemplate`, `AirCargoManifestTemplate`.

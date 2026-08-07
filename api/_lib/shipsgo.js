@@ -239,6 +239,17 @@ export async function findOceanShipmentByContainer(containerNumber) {
   }
 }
 
+// Trasa przychodzi w kopercie { message, geojson } — POTWIERDZONE na realnym
+// tokenie 2026-08-08. Wcześniej zakładaliśmy gołe FeatureCollection na najwyższym
+// poziomie, przez co trimGeojson odrzucał KAŻDĄ odpowiedź i mapa nigdy nie miała
+// czego narysować. Gołą kolekcję zostawiamy jako wariant, bo ten sam kształt
+// przychodzi też webhookiem.
+function unwrapGeojson(body) {
+  if (!body) return null
+  if (body.type === 'FeatureCollection') return body
+  return body.geojson || body.data?.geojson || body.data || null
+}
+
 // GET /ocean/shipments/{id}/geojson — trasa (porty + współrzędne) do rysowania
 // na własnej mapie (patrz src/components/tracking/ShipmentMap.jsx). NIE kosztuje
 // kredytu — ten sam limit współdzielony 100 req/min co reszta GET-ów.
@@ -246,8 +257,8 @@ export async function getShipmentGeojson(id) {
   try {
     const res = await shipsgoFetch(`/ocean/shipments/${encodeURIComponent(id)}/geojson`, { method: 'GET' })
     if (!res.ok) return errorFromResponse(res)
-    const data = await res.json()
-    return { success: true, data, error: null, code: null }
+    const body = await res.json()
+    return { success: true, data: unwrapGeojson(body), error: null, code: null }
   } catch (e) {
     console.error('[shipsgo] getShipmentGeojson nie powiodło się:', e)
     return { success: false, data: null, error: null, code: 'NETWORK' }
@@ -443,16 +454,24 @@ function isCoordPair(c) {
 }
 
 // Przycina odpowiedź GET .../geojson do geometrii + właściwości, których
-// faktycznie używa mapa (patrz ShipmentMap.jsx). NIEZWERYFIKOWANE bez realnego
-// tokena — zakładamy standardowy FeatureCollection (GeoJSON RFC 7946), ale
-// nie ufamy niczemu poza `type`/`geometry`/`coordinates`; nieznane właściwości
-// są ignorowane, a cały obiekt jest odrzucany (→ null), jeśli nie pasuje do
-// kształtu FeatureCollection. Front dostaje wtedy `null` i pokazuje prostokąt
-// z informacją zamiast pustej mapy świata.
+// faktycznie używa mapa (patrz ShipmentMap.jsx). Kształt POTWIERDZONY na realnym
+// tokenie 2026-08-08:
+//   • koperta { message, geojson: FeatureCollection } (rozpakowuje unwrapGeojson),
+//   • Point   → properties.status + properties.location.{code,name,country},
+//   • Line    → properties.status + properties.vessel.{name,imo} + properties.voyage
+//               + properties.events.{DEPA,ARRV} + properties.current
+//               (null albo { index, coordinates: [lng, lat] }).
+// Nazwa portu leży w properties.location.name, a NIE w properties.name — dawne
+// założenie zostawiało wszystkie dymki markerów puste. Pola `name` na najwyższym
+// poziomie pilnujemy dalej jako wariantu zapasowego.
 //
-// Endpoint geojson jest w dokumentacji ShipsGo oznaczony jako eksperymentalny,
-// więc każde pole poza geometrią traktujemy jako opcjonalne.
-export function trimGeojson(raw) {
+// Nie ufamy niczemu poza `type`/`geometry`/`coordinates`; nieznane właściwości są
+// ignorowane, a cały obiekt jest odrzucany (→ null), jeśli nie pasuje do kształtu
+// FeatureCollection albo nie ma ani jednego użytecznego obiektu. Front dostaje
+// wtedy `null` i pokazuje prostokąt z informacją zamiast pustej mapy świata
+// (tak wygląda przesyłka w stanie INPROGRESS: features to pusta tablica).
+export function trimGeojson(input) {
+  const raw = unwrapGeojson(input)
   if (!raw || raw.type !== 'FeatureCollection' || !Array.isArray(raw.features)) return null
 
   const features = raw.features
@@ -470,7 +489,7 @@ export function trimGeojson(raw) {
       return {
         geometry: { type, coordinates: f.geometry.coordinates },
         properties: {
-          name: p.name || null,
+          name: p.location?.name || p.name || null,
           type: p.type || null,
           status: FEATURE_STATUSES.includes(statusRaw) ? statusRaw : null,
           current,

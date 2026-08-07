@@ -378,6 +378,60 @@ describe('trimGeojson', () => {
     expect(trimGeojson(null)).toBeNull()
     expect(trimGeojson({ type: 'FeatureCollection', features: [] })).toBeNull()
   })
+
+  // Ksztalt POTWIERDZONY na realnym tokenie 2026-08-08. Dwa zalozenia okazaly sie
+  // bledne i przez oba mapa nigdy nie miala czego narysowac ani co pokazac w dymku.
+  describe('realny ksztalt odpowiedzi ShipsGo', () => {
+    const realna = {
+      message: 'SUCCESS',
+      geojson: {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [-76.940998, -12.164225] },
+            properties: {
+              status: 'PAST',
+              location: { code: 'PECLL', name: 'CALLAO (LIMA)', country: { code: 'PE', name: 'Peru' } },
+            },
+          },
+          {
+            type: 'Feature',
+            geometry: { type: 'LineString', coordinates: [[-79.565, 8.95], [4.48333, 51.9]] },
+            properties: {
+              status: 'CURRENT',
+              vessel: { name: 'MAERSK BOGOR', imo: 9394882 },
+              voyage: '628N',
+              events: { DEPA: { timestamp: '2026-07-25T12:00:00-05:00' } },
+              current: { index: 30, coordinates: [-5.071523, 49.46693] },
+            },
+          },
+        ],
+      },
+    }
+
+    it('rozpakowuje koperte { message, geojson }', () => {
+      const g = trimGeojson(realna)
+      expect(g).not.toBeNull()
+      expect(g.features).toHaveLength(2)
+    })
+
+    it('czyta nazwe portu z properties.location.name', () => {
+      const g = trimGeojson(realna)
+      expect(g.features[0].properties.name).toBe('CALLAO (LIMA)')
+    })
+
+    it('czyta pozycje statku, jednostke i rejs z odcinka CURRENT', () => {
+      const g = trimGeojson(realna)
+      expect(g.features[1].properties.current).toEqual([-5.071523, 49.46693])
+      expect(g.features[1].properties.vessel).toBe('MAERSK BOGOR')
+      expect(g.features[1].properties.voyage).toBe('628N')
+    })
+
+    it('przesylka w przygotowaniu ma pusta liste obiektow, czyli brak trasy', () => {
+      expect(trimGeojson({ message: 'SUCCESS', geojson: { type: 'FeatureCollection', features: [] } })).toBeNull()
+    })
+  })
 })
 
 // Podpis webhooka. Logika jest w api/_routes/tracking.js (funkcja lokalna),
