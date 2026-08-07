@@ -10,6 +10,19 @@ const MODE_CHECKBOXES = [
   ['air', 'Air'],
 ]
 
+// Pusty formularz (BlankTemplatesPage, wyszukiwarka szablonów, ponowne
+// pobranie z historii) woła generatePdf z `data: {}` — nie zbieramy etapów
+// trasy poza kreatorem, więc `carrierLegs.rows` nie istnieje. Bez fallbacku
+// tabela TRANSPORT ROUTE wyszłaby z samym nagłówkiem, bez ani jednego wiersza
+// do ręcznego wypełnienia. Trzy puste wiersze Pre/Main/On-carriage — ta sama
+// etykieta co dokładnie-3-etapowy przypadek w buildTransportLegRows
+// (documentGeneration.js), czyli najbardziej typowy układ trasy multimodalnej.
+const BLANK_ROWS = [
+  { label: 'Pre-carriage', mode: '', placeOfReceipt: '', pol: '', pod: '', placeOfDelivery: '', carrierName: '' },
+  { label: 'Main-carriage', mode: '', placeOfReceipt: '', pol: '', pod: '', placeOfDelivery: '', carrierName: '' },
+  { label: 'On-carriage', mode: '', placeOfReceipt: '', pol: '', pod: '', placeOfDelivery: '', carrierName: '' },
+]
+
 export function MultimodalTemplate({ data }) {
   const b = '1px solid #c0c0c0'
   const lbl = { fontSize: '7px', color: '#555', marginBottom: '1px' }
@@ -89,8 +102,10 @@ export function MultimodalTemplate({ data }) {
       {/* WIERSZE TRASY — dynamiczne, po jednym na etap z Kroku „Towar" (patrz
           buildTransportLegRows w documentGeneration.js). Checkbox trybu
           zaznaczony wg leg.mode; Place of Receipt/Delivery tylko na skrajnych
-          wierszach, POL/POD tylko na Main-carriage. */}
-      {(data.carrierLegs?.rows || []).map((row, i) => (
+          wierszach, POL/POD tylko na Main-carriage. Gdy `rows` nie istnieje
+          (pusty formularz, `data: {}` — patrz BLANK_ROWS wyżej) — trzy puste
+          wiersze Pre/Main/On-carriage do ręcznego wypełnienia. */}
+      {(data.carrierLegs?.rows?.length ? data.carrierLegs.rows : BLANK_ROWS).map((row, i) => (
         <div key={i} style={{ display: 'flex', borderLeft: b, minHeight: '30px' }}>
           <div style={{ width: '140px', padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '8px', fontWeight: 'bold' }}>{i + 1} — {row.label}</div>
           <div style={{ flex: 1, padding: '3px 5px', borderRight: b, borderBottom: b, fontSize: '8px' }}>

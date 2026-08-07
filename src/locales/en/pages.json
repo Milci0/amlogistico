@@ -360,6 +360,7 @@
       "reExport": "Re-export"
     },
     "generate": "Select documents",
+    "needsContractType": "Choose the multimodal contract structure above.",
     "routeCharacter": "Route type",
     "warningsTitle": "Worth checking",
     "noDocuments": "No documents for this configuration.",
