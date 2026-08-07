@@ -4,6 +4,7 @@ import CountrySelect from '../components/ui/CountrySelect'
 import AlertBox from '../components/ui/AlertBox'
 import DocumentSelectList from '../components/documents/DocumentSelectList'
 import CargoCategoryPicker from '../components/cargo/CargoCategoryPicker'
+import MultimodalContractPicker from '../components/MultimodalContractPicker'
 import { cargoLabel, engineCategoryFor } from '../data/cargoCategories'
 import { documentCatalog } from '../data/documentCatalog'
 import { getDocuments, getRouteLabel } from '../utils/documentEngine'
@@ -19,6 +20,14 @@ import { translateEngineWarning } from '../utils/translateEngineWarning'
 // z interfejsu w ogóle — mimo że istniały i były pokryte katalogiem.
 const TRANSPORT_MODE_IDS = ['road', 'sea', 'air', 'rail', 'multimodal']
 const FLAG_KEYS = ['woodenPackaging', 'temporaryExport', 'transhipment', 'reExport']
+
+// „Osobne umowy na odcinki" (patrz MultimodalContractPicker) — ta strona nie
+// zbiera realnych etapów trasy (celowo, to formularz do pustych szablonów,
+// nie kreator), więc zamiast pytać O KTÓRE środki transportu chodzi, prosimy
+// silnik o dokument podstawowy WSZYSTKICH czterech gałęzi naraz. User i tak
+// odznacza w liście poniżej to, czego nie potrzebuje — ta sama logika co
+// reszta tej strony (szeroki zestaw + checkboxy, nie zgadywanie).
+const MULTIMODAL_SEPARATE_LEGS = ['road', 'sea', 'rail', 'air']
 
 // ── Ikony ───────────────────────────────────────────────────────────────────────
 
@@ -79,6 +88,7 @@ export default function BlankTemplatesPage() {
   const [origin, setOrigin] = useState('PL')
   const [destination, setDestination] = useState('US')
   const [mode, setMode] = useState('road')
+  const [contractType, setContractType] = useState('')
   const [cargoCategory, setCargoCategory] = useState('')
   const [cargoSubcategory, setCargoSubcategory] = useState('')
   const [flags, setFlags] = useState({
@@ -99,7 +109,14 @@ export default function BlankTemplatesPage() {
     setResult(null)
     setZipState('idle')
     setSelectedIds(new Set())
-  }, [origin, destination, mode, cargoCategory, cargoSubcategory, flags])
+  }, [origin, destination, mode, contractType, cargoCategory, cargoSubcategory, flags])
+
+  // Zmiana gałęzi transportu czyści wybór struktury umowy — ten sam powód co
+  // w kreatorze (initMultimodal w wizardState.js): przy powrocie na
+  // Multimodalny user musi wybrać świadomie, nie dziedziczy starego wyboru.
+  useEffect(() => {
+    if (mode !== 'multimodal') setContractType('')
+  }, [mode])
 
   // Dokumenty w kształcie DocumentSelectList — tylko te faktycznie do pobrania
   // (dostępne + mają źródło pustego PDF-a); „Wkrótce" nie ma już sensu przy
@@ -164,7 +181,13 @@ export default function BlankTemplatesPage() {
     }
   }
 
+  // Blokuje „Generuj", dopóki user przy Multimodalnym świadomie nie wybierze
+  // struktury umowy — ten sam powód co walidacja Kroku 1 w kreatorze
+  // (flowSteps.js): bez tego silnik cicho spadłby na 'single' (sam MTD).
+  const needsContractType = mode === 'multimodal' && !contractType
+
   function handleGenerate() {
+    if (needsContractType) return
     // includeMetadata: ta strona potrzebuje `blanks` i `outputMode`, żeby pokazać
     // KTO wystawia dokument. Ostrzeżenia są wtedy obiektami z kodem — tłumaczy je
     // ta sama funkcja co dotąd (przyjmuje oba kształty).
@@ -172,7 +195,16 @@ export default function BlankTemplatesPage() {
     // mapuje się na `general`, więc reguł akcyzowych, CBAM i EUDR nie da się z niej
     // odróżnić. Kreator przekazuje to samo w buildEngineFlags — obie ścieżki muszą
     // liczyć identycznie (pilnuje tego „audyt flag" w documentEngine.matrix.test.js).
-    const engineFlags = { ...flags, cargoCategoryId: cargoCategory }
+    // multimodalContractType/multimodalLegs: ta sama umowa co Krok 1 kreatora
+    // (patrz buildEngineFlags w documentGeneration.js). Przy 'separate' dajemy
+    // WSZYSTKIE cztery gałęzie naraz (patrz komentarz przy MULTIMODAL_SEPARATE_LEGS)
+    // — user odznacza zbędne w liście dokumentów poniżej.
+    const engineFlags = {
+      ...flags,
+      cargoCategoryId: cargoCategory,
+      multimodalContractType: mode === 'multimodal' ? (contractType || null) : null,
+      multimodalLegs: mode === 'multimodal' && contractType === 'separate' ? MULTIMODAL_SEPARATE_LEGS : [],
+    }
     const res = getDocuments(origin, destination, mode, engineCategory, engineFlags, { includeMetadata: true })
     setResult(res)
     // ETAP 3 — domyślnie zaznaczone: wszystkie dokumenty z required=true.
@@ -256,6 +288,16 @@ export default function BlankTemplatesPage() {
           </div>
         </div>
 
+        {/* Struktura umowy przy Multimodalnym — ten sam komponent i te same
+            teksty co Krok 1 kreatora (route.multimodalStructure.* w
+            wizard.json). Bez podglądu dokumentów per etap i bez edytora
+            etapów — ta strona nie zbiera realnej trasy multimodalnej. */}
+        <MultimodalContractPicker
+          visible={mode === 'multimodal'}
+          contractType={contractType}
+          onChange={setContractType}
+        />
+
         {/* Kategoria towaru */}
         <CargoCategoryPicker
           categoryId={cargoCategory}
@@ -288,15 +330,23 @@ export default function BlankTemplatesPage() {
         </div>
 
         {/* Przycisk generowania */}
-        <button
-          onClick={handleGenerate}
-          className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          {t('blankTemplates.generate')}
-        </button>
+        <div>
+          <button
+            onClick={handleGenerate}
+            disabled={needsContractType}
+            className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            {t('blankTemplates.generate')}
+          </button>
+          {needsContractType && (
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-2 text-center">
+              {t('blankTemplates.needsContractType')}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* ── Wyniki ────────────────────────────────────────────────── */}

@@ -366,6 +366,7 @@
       "reExport": "Re-eksport"
     },
     "generate": "Generuj dokumenty",
+    "needsContractType": "Wybierz strukturę umowy przewozu multimodalnego powyżej.",
     "routeCharacter": "Charakter trasy",
     "warningsTitle": "Zwróć uwagę",
     "noDocuments": "Brak dokumentów dla tej konfiguracji.",
