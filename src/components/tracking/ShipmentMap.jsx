@@ -12,19 +12,25 @@ import 'leaflet/dist/leaflet.css'
 //
 // Cała zakładka „Śledzenie ładunku" jest w ciemnym pomarańczu (patrz
 // TrackingPage.jsx) — jeden akcent dla obu widoków (własne przesyłki
-// w RealShipmentDetail i wolne wyszukiwanie w ShipsGoLookupResult). `accent`
-// zostaje jako prop (nie stała klasa) — tania furtka na przyszłość.
+// w RealShipmentDetail i zakładka „Numer kontenera"). `accent` zostaje jako
+// prop (nie stała klasa) — tania furtka na przyszłość, ten sam wzorzec co
+// ACCENTS w ContainerTrackerBlock.jsx.
 //
-// Kształt GeoJSON-a jest NIEZWERYFIKOWANY bez realnego tokena ShipsGo (patrz
-// uwaga przy trimGeojson) — klasyfikacja punktów jest więc obronna: Point z
-// properties.type zawierającym „vessel"/„position" dostaje znacznik pozycji,
-// każdy inny Point to port/węzeł trasy. Brak dopasowania nie wywala mapy,
-// tylko renderuje punkt jako port.
+// ── Znaczenie properties.status ────────────────────────────────────────────
+//   PAST    – odcinek przebyty: linia ciągła w kolorze akcentu
+//   CURRENT – odcinek bieżący: linia ciągła + marker pozycji statku
+//             z properties.current.coordinates (MOŻE być null, obsłużone)
+//   FUTURE  – odcinek przed nami: linia przerywana, kolor przygaszony
+// Brak statusu (starsze migawki zapisane przed rozszerzeniem trimGeojson)
+// rysujemy jak PAST, żeby stara trasa nadal wyglądała sensownie.
 
 const ACCENT_HEX = { orange: '#c2410c' }
+const MUTED_HEX = '#94a3b8' // slate-400 — odcinki przyszłe
 
-function portIconHtml(color) {
-  return `<div style="width:22px;height:22px;border-radius:9999px;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.35);"></div>`
+function portIconHtml(color, filled) {
+  return filled
+    ? `<div style="width:22px;height:22px;border-radius:9999px;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.35);"></div>`
+    : `<div style="width:22px;height:22px;border-radius:9999px;background:white;border:3px solid ${color};box-shadow:0 1px 4px rgba(0,0,0,.35);"></div>`
 }
 
 function vesselIconHtml(color) {
@@ -57,39 +63,65 @@ function FitBounds({ points }) {
   return null
 }
 
+// [lng, lat] z GeoJSON → [lat, lng] oczekiwane przez Leaflet.
+function toLatLng(coord) {
+  return [coord[1], coord[0]]
+}
+
 export default function ShipmentMap({ geojson, accent = 'orange', fallbackPorts, height = 'h-64 sm:h-80' }) {
   const { t } = useTranslation('pages')
   const color = ACCENT_HEX[accent] || ACCENT_HEX.orange
-  const portIcon = useMemo(() => buildIcon(portIconHtml(color), 22), [color])
+  const portIcon = useMemo(() => buildIcon(portIconHtml(color, true), 22), [color])
+  const portIconFuture = useMemo(() => buildIcon(portIconHtml(color, false), 22), [color])
   const vesselIcon = useMemo(() => buildIcon(vesselIconHtml(color), 28), [color])
 
-  const { routeLines, markers, allPoints } = useMemo(() => {
+  const { routeLines, markers, vesselMarkers, allPoints } = useMemo(() => {
     const features = geojson?.features || []
     const routeLines = []
     const markers = []
+    const vesselMarkers = []
     const allPoints = []
 
     for (const f of features) {
       const { type, coordinates } = f.geometry
+      const status = f.properties?.status || null
+
       if (type === 'Point') {
-        const point = [coordinates[1], coordinates[0]]
+        const point = toLatLng(coordinates)
         allPoints.push(point)
-        markers.push({ point, vessel: isVesselPoint(f.properties), name: f.properties?.name })
-      } else if (type === 'LineString') {
-        const line = coordinates.map(([lng, lat]) => [lat, lng])
-        routeLines.push(line)
-        allPoints.push(...line)
-      } else if (type === 'MultiLineString') {
-        for (const part of coordinates) {
-          const line = part.map(([lng, lat]) => [lat, lng])
-          routeLines.push(line)
+        markers.push({
+          point,
+          vessel: isVesselPoint(f.properties),
+          future: status === 'FUTURE',
+          name: f.properties?.name,
+        })
+      } else if (type === 'LineString' || type === 'MultiLineString') {
+        const parts = type === 'LineString' ? [coordinates] : coordinates
+        for (const part of parts) {
+          const line = part.filter((c) => Array.isArray(c) && c.length >= 2).map(toLatLng)
+          if (line.length < 2) continue
+          routeLines.push({ line, status })
           allPoints.push(...line)
         }
       }
+
+      // Pozycja statku przychodzi w properties odcinka CURRENT, nie jako
+      // osobny Feature. Bywa null i to normalny stan (armator nie podał).
+      if (status === 'CURRENT' && f.properties?.current) {
+        const point = toLatLng(f.properties.current)
+        vesselMarkers.push({
+          point,
+          vessel: f.properties.vessel,
+          voyage: f.properties.voyage,
+        })
+        allPoints.push(point)
+      }
     }
-    return { routeLines, markers, allPoints }
+    return { routeLines, markers, vesselMarkers, allPoints }
   }, [geojson])
 
+  // Status NEW/INPROGRESS albo pusty geojson: prostokąt z informacją zamiast
+  // pustej mapy świata. Pusta mapa wygląda jak awaria, a to normalny etap.
   if (allPoints.length === 0) {
     return (
       <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40 p-5">
@@ -118,14 +150,37 @@ export default function ShipmentMap({ geojson, accent = 'orange', fallbackPorts,
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {routeLines.map((line, i) => (
-          <Polyline key={i} positions={line} pathOptions={{ color, weight: 3, opacity: 0.85 }} />
-        ))}
+
+        {routeLines.map(({ line, status }, i) => {
+          const future = status === 'FUTURE'
+          return (
+            <Polyline
+              key={i}
+              positions={line}
+              pathOptions={{
+                color: future ? MUTED_HEX : color,
+                weight: 3,
+                opacity: future ? 0.7 : 0.85,
+                dashArray: future ? '6 7' : undefined,
+              }}
+            />
+          )
+        })}
+
         {markers.map((m, i) => (
-          <Marker key={i} position={m.point} icon={m.vessel ? vesselIcon : portIcon}>
+          <Marker key={`p${i}`} position={m.point} icon={m.vessel ? vesselIcon : m.future ? portIconFuture : portIcon}>
             {m.name && <Popup>{m.name}</Popup>}
           </Marker>
         ))}
+
+        {vesselMarkers.map((m, i) => (
+          <Marker key={`v${i}`} position={m.point} icon={vesselIcon}>
+            {(m.vessel || m.voyage) && (
+              <Popup>{[m.vessel, m.voyage].filter(Boolean).join(' · ')}</Popup>
+            )}
+          </Marker>
+        ))}
+
         <FitBounds points={allPoints} />
       </MapContainer>
     </div>

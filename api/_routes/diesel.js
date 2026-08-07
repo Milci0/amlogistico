@@ -124,7 +124,7 @@ async function loadDiesel() {
   try {
     html = await fetchBulletinPage()
   } catch (e) {
-    console.error('[diesel] krok 1 — pobranie strony biuletynu nie powiodło się:', e)
+    console.error('[diesel] krok 1: pobranie strony biuletynu nie powiodło się:', e)
     return null
   }
 
@@ -134,7 +134,7 @@ async function loadDiesel() {
     excelUrl = extractExcelUrl(html)
     if (!excelUrl) throw new Error('nie znaleziono linku .xlsx/.xls z „oil_bulletin" na stronie')
   } catch (e) {
-    console.error('[diesel] krok 2 — wyodrębnienie linku Excel nie powiodło się:', e)
+    console.error('[diesel] krok 2: wyodrębnienie linku Excel nie powiodło się:', e)
     return null
   }
 
@@ -143,7 +143,7 @@ async function loadDiesel() {
   try {
     buf = await fetchExcel(excelUrl)
   } catch (e) {
-    console.error('[diesel] krok 3 — pobranie pliku Excel nie powiodło się:', e, '| url:', excelUrl)
+    console.error('[diesel] krok 3: pobranie pliku Excel nie powiodło się:', e, '| url:', excelUrl)
     return null
   }
 
@@ -153,7 +153,7 @@ async function loadDiesel() {
     if (!data) throw new Error('parser nie znalazł wiersza EU diesel w arkuszu')
     return data
   } catch (e) {
-    console.error('[diesel] krok 4 — parsowanie pliku Excel nie powiodło się:', e)
+    console.error('[diesel] krok 4: parsowanie pliku Excel nie powiodło się:', e)
     return null
   }
 }

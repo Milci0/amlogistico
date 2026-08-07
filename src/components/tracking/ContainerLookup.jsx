@@ -1,167 +1,285 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, ExternalLink, Loader2, RefreshCw } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { findCarrierByName, resolveHomeUrl } from '../../data/containerPrefixes'
-import { analyzeContainerNumber } from '../../utils/containerNumber'
-import { getShipsgoStatus, lookupContainer } from '../../services/shipsgoRepo'
+import { addContainer, getContainer, refreshContainer, removeContainer } from '../../services/containerTrackingRepo'
+import { useContainerList, useContainerPolling } from '../../hooks/useContainerTracking'
+import { isPendingStatus } from '../../data/containerStatus'
 import AlertBox from '../ui/AlertBox'
-import ContainerTrackerBlock from './ContainerTrackerBlock'
-import ShipsGoLookupResult from './ShipsGoLookupResult'
+import ConfirmDialog from '../ui/ConfirmDialog'
+import ContainerSearchForm from './ContainerSearchForm'
+import ContainerList from './ContainerList'
+import ContainerPendingCard from './ContainerPendingCard'
+import ContainerDetail from './ContainerDetail'
+import CarrierPickerModal from './CarrierPickerModal'
 
-// Numer wpisany przez użytkownika żyje WYŁĄCZNIE w tym stanie komponentu — nic
-// tu nie trafia do localStorage ani console.log (dane handlowe klienta).
-// WYJĄTEK: gdy ShipsGo jest włączone (SHIPSGO_ENABLED + user na allowlist),
-// numer JEST wysyłany do naszego backendu (patrz lookupContainer) — to jego
-// cel, backend woła realne ShipsGo Ocean API. Ciemny pomarańcz w tej zakładce
-// celowo — „Śledzenie ładunku" wisi pod „Trasy handlowe" w menu, pokrewny
-// akcent co TradeRoutesPage (/routes), ale wyraźnie ciemniejszy (patrz
-// TrackingPage.jsx, komentarz przy TAB_ACCENT).
+// Zakładka „Numer kontenera" — orkiestracja sześciu stanów z makiety.
+//
+// Wynik wyszukiwania NIE żyje już wyłącznie w stanie Reacta: każdy sprawdzony
+// kontener trafia do naszej bazy i jest podpięty pod konto użytkownika, więc
+// odświeżenie strony (F5) go nie gubi. To była główna wada poprzedniej wersji:
+// użytkownik tracił dostęp do przesyłki, za którą pobrano już kredyt ShipsGo.
+//
+// Ciemny pomarańcz w tej zakładce celowo — „Śledzenie ładunku" wisi pod
+// „Trasy handlowe" w menu, pokrewny akcent co TradeRoutesPage (/routes), ale
+// wyraźnie ciemniejszy (patrz TrackingPage.jsx, komentarz przy TAB_ACCENT).
 export default function ContainerLookup() {
   const { t } = useTranslation('pages')
-  const [input, setInput] = useState('')
-  const [result, setResult] = useState(null)
-  const [shipsgoAvailable, setShipsgoAvailable] = useState(false)
-  const [lookup, setLookup] = useState({ status: 'idle', data: null, cached: false, error: null })
+  const { containers, loading, upsert, remove } = useContainerList()
 
-  useEffect(() => {
-    let active = true
-    getShipsgoStatus().then((enabled) => { if (active) setShipsgoAvailable(enabled) })
-    return () => { active = false }
-  }, [])
+  const [selected, setSelected] = useState(null) // pełne dane otwartego kontenera
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  const [carrierHint, setCarrierHint] = useState(null) // wyszukiwanie po nazwie linii
+  const [refreshing, setRefreshing] = useState(false)
+  const [confirm, setConfirm] = useState(null) // { kind: 'remove' | 'newVoyage' }
+  const [carrierPicker, setCarrierPicker] = useState(false)
+  // Ostatni numer, który w tej sesji przeszedł walidację poprawnie. Trzymany
+  // TUTAJ, a nie w formularzu: otwarcie kontenera i powrót do listy
+  // przemontowuje formularz, więc jego stan wewnętrzny by przepadł.
+  const [lastValidNumber, setLastValidNumber] = useState('')
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    const trimmed = input.trim()
-    if (!trimmed) {
-      setResult(null)
-      setLookup({ status: 'idle', data: null, cached: false, error: null })
-      return
-    }
+  // Odświeżenie widoku w tle: polling pyta NASZ endpoint, nie ShipsGo.
+  const applyPolled = useCallback((fresh) => {
+    setSelected(fresh)
+    upsert(fresh)
+  }, [upsert])
+  const { pollingExhausted } = useContainerPolling(selected, applyPolled)
 
-    // Brak cyfr w znormalizowanym wejściu → to nie próba numeru kontenera
-    // (każdy poprawny numer ma 7 cyfr), tylko prawdopodobnie nazwa przewoźnika
-    // ("CMA CGM", "cmacgm", "maersk"...).
-    const normalizedForDigitCheck = trimmed.toUpperCase().replace(/[\s-]/g, '')
-    const looksLikeContainerNumber = /\d/.test(normalizedForDigitCheck)
-
-    if (!looksLikeContainerNumber) {
-      const carrier = findCarrierByName(trimmed)
-      if (carrier) {
-        setResult({ mode: 'nameSearch', carrier })
-        setLookup({ status: 'idle', data: null, cached: false, error: null })
-        return
-      }
-    }
-
-    setResult({ mode: 'containerNumber', containerNo: trimmed })
-
-    // Realne wyszukiwanie w ShipsGo — WYŁĄCZNIE na ten świadomy klik „Sprawdź",
-    // nigdy przy samym wpisywaniu (koszt kredytu przy pierwszym sprawdzeniu
-    // danego kontenera). Tylko gdy nasza WŁASNA walidacja cyfry kontrolnej
-    // wypadła pozytywnie (valid===true) — przy błędnej cyfrze kontrolnej numer
-    // prawdopodobnie ma literówkę (patrz checkDigitWarning niżej), więc nie
-    // warto wydawać na niego jednego z dwóch testowych kredytów.
-    const analysis = analyzeContainerNumber(trimmed)
-    if (shipsgoAvailable && analysis.valid === true) {
-      await runLookup(analysis.normalized)
-    } else {
-      setLookup({ status: 'idle', data: null, cached: false, error: null })
-    }
-  }
-
-  // Ponowne sprawdzenie TEGO SAMEGO numeru nie tworzy nowego śledzenia i nie
-  // kosztuje kredytu (backend trzyma trwały rejestr per kontener), więc przy
-  // stanie „w przetwarzaniu" user może bezpiecznie kliknąć „Sprawdź ponownie".
-  async function runLookup(normalized) {
-    setLookup({ status: 'loading', data: null, cached: false, error: null })
+  async function handleSearch(containerNumber) {
+    // Nazwa przewoźnika zamiast numeru („CMA CGM", „maersk") — istniejąca
+    // funkcja wyszukiwarki, zachowana. Numer ma zawsze 7 cyfr, więc wejście
+    // bez cyfr na pewno nim nie jest.
+    setCarrierHint(null)
+    setError(null)
+    setBusy(true)
     try {
-      const res = await lookupContainer(normalized)
-      if (res.status === 'ready' && res.shipsgo) {
-        setLookup({ status: 'done', data: res.shipsgo, cached: false, error: null, containerNo: normalized })
-      } else if (res.status === 'failed') {
-        setLookup({ status: 'failed', data: null, cached: false, error: null, containerNo: normalized })
-      } else {
-        setLookup({ status: 'pending', data: null, cached: false, error: null, containerNo: normalized })
-      }
-    } catch (err) {
-      setLookup({ status: 'error', data: null, cached: false, error: err, containerNo: normalized })
+      const res = await addContainer(containerNumber)
+      const full = res.container
+      setSelected(full)
+      upsert(full)
+    } catch (e) {
+      setError(e)
+    } finally {
+      setBusy(false)
     }
   }
 
+  // Wejście, które nie wygląda na numer kontenera, obsługujemy bez ruszania
+  // backendu: podpowiadamy stronę przewoźnika, jeśli rozpoznamy nazwę.
+  function handleRawInput(raw) {
+    const carrier = findCarrierByName(raw)
+    setCarrierHint(carrier || null)
+    return !!carrier
+  }
+
+  async function openContainer(item) {
+    setError(null)
+    setBusy(true)
+    try {
+      setSelected(await getContainer(item.containerNumber))
+    } catch (e) {
+      setError(e)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleRefresh() {
+    if (!selected) return
+    setRefreshing(true)
+    setError(null)
+    try {
+      const fresh = await refreshContainer(selected.containerNumber)
+      setSelected(fresh)
+      upsert(fresh)
+    } catch (e) {
+      setError(e)
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  // „Usuń z listy" ukrywa wpis u nas i NIE woła DELETE w ShipsGo: tam usunięcie
+  // jest nieodwracalne, a ponowne dodanie to nowy kredyt.
+  async function handleRemove() {
+    const number = selected.containerNumber
+    setConfirm(null)
+    try {
+      await removeContainer(number)
+      remove(number)
+      setSelected(null)
+    } catch (e) {
+      setError(e)
+    }
+  }
+
+  // Nowy rejs dla numeru z zakończonego transportu. Potwierdzenie jest
+  // OBOWIĄZKOWE: bez niego użytkownik nie wie, że wydaje kolejny kredyt.
+  async function handleStartNewVoyage() {
+    const number = selected.containerNumber
+    setConfirm(null)
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await addContainer(number, { startNewVoyage: true })
+      setSelected(res.container)
+      upsert(res.container)
+    } catch (e) {
+      setError(e)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleCarrierConfirm(scac) {
+    const number = selected.containerNumber
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await addContainer(number, { carrier: scac, startNewVoyage: true })
+      setSelected(res.container)
+      upsert(res.container)
+      setCarrierPicker(false)
+    } catch (e) {
+      setError(e)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // ── Widok szczegółów (stany 3, 5, 5b, 6) ──────────────────────────────────
+  if (selected) {
+    // Rekord z `fetchState: 'failed'`, który nigdy nie dostał realnego statusu
+    // z ShipsGo (status zostaje na wartości domyślnej): utworzenie zakończyło
+    // się niejednoznacznie po naszej stronie (patrz api/_lib/shipsgoSync.js).
+    // Backend celowo NIE kasuje takiego wiersza (kasowanie pozwoliłoby retry
+    // wysłać drugi, płatny POST na ten sam numer), ale to znaczy, że taki
+    // rekord trzeba pokazać inaczej niż zwykłe "Pobieramy dane" - inaczej
+    // wyglądałby jak wiecznie trwające przetwarzanie.
+    const createFailed = !selected.archived && selected.fetchState === 'failed' && isPendingStatus(selected.status)
+    const pending = !selected.archived && !createFailed && isPendingStatus(selected.status)
+    return (
+      <div>
+        {error && (
+          <div className="mb-4">
+            <AlertBox type="warning">{error.message}</AlertBox>
+          </div>
+        )}
+
+        {createFailed ? (
+          <div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="text-sm text-gray-600 dark:text-slate-300 font-medium hover:text-orange-700 dark:hover:text-orange-400 transition-colors mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
+            >
+              {t('tracking.container.backToContainers')}
+            </button>
+            <div className="border border-red-300 dark:border-red-900 rounded-xl p-5 bg-white dark:bg-slate-800">
+              <p className="text-base font-mono tracking-wider font-semibold text-gray-900 dark:text-white mb-3">
+                {selected.containerNumber}
+              </p>
+              <AlertBox type="error" title={t('tracking.container.createFailed.title')}>
+                {t('tracking.container.createFailed.body')}
+              </AlertBox>
+              <button
+                type="button"
+                onClick={() => setConfirm({ kind: 'remove' })}
+                className="mt-4 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
+              >
+                {t('tracking.container.removeFromList')}
+              </button>
+            </div>
+          </div>
+        ) : pending ? (
+          <div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="text-sm text-gray-600 dark:text-slate-300 font-medium hover:text-orange-700 dark:hover:text-orange-400 transition-colors mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
+            >
+              {t('tracking.container.backToContainers')}
+            </button>
+            <ContainerPendingCard
+              container={selected}
+              onRefresh={handleRefresh}
+              refreshing={refreshing}
+              pollingExhausted={pollingExhausted}
+            />
+          </div>
+        ) : (
+          <ContainerDetail
+            container={selected}
+            onBack={() => setSelected(null)}
+            onRefresh={handleRefresh}
+            refreshing={refreshing}
+            onRemove={() => setConfirm({ kind: 'remove' })}
+            onPickCarrier={() => setCarrierPicker(true)}
+            onStartNewVoyage={() => setConfirm({ kind: 'newVoyage' })}
+          />
+        )}
+
+        <ConfirmDialog
+          open={confirm?.kind === 'remove'}
+          title={t('tracking.container.confirmRemove.title')}
+          description={t('tracking.container.confirmRemove.body')}
+          confirmLabel={t('tracking.container.confirmRemove.confirm')}
+          destructive
+          onConfirm={handleRemove}
+          onCancel={() => setConfirm(null)}
+        />
+
+        <ConfirmDialog
+          open={confirm?.kind === 'newVoyage'}
+          title={t('tracking.container.confirmNewVoyage.title')}
+          description={t('tracking.container.confirmNewVoyage.body')}
+          confirmLabel={t('tracking.container.confirmNewVoyage.confirm')}
+          onConfirm={handleStartNewVoyage}
+          onCancel={() => setConfirm(null)}
+        />
+
+        {carrierPicker && (
+          <CarrierPickerModal
+            containerNumber={selected.containerNumber}
+            submitting={busy}
+            onCancel={() => setCarrierPicker(false)}
+            onConfirm={handleCarrierConfirm}
+          />
+        )}
+      </div>
+    )
+  }
+
+  // ── Widok główny (stany 1, 2, 4) ──────────────────────────────────────────
   return (
     <div>
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 mb-5">
-        <div className="flex items-center gap-2 px-3 py-2.5 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg flex-1">
-          <Search className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" strokeWidth={2} />
-          <input
-            type="text"
-            className="bg-transparent text-sm font-mono tracking-wider outline-none flex-1 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
-            placeholder={t('tracking.container.inputPlaceholder')}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            autoComplete="off"
-            spellCheck={false}
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={lookup.status === 'loading'}
-          className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-orange-700 hover:bg-orange-800 disabled:opacity-60 text-white transition-colors shrink-0 flex items-center justify-center gap-2"
-        >
-          {lookup.status === 'loading' && <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />}
-          {t('tracking.container.checkButton')}
-        </button>
-      </form>
+      <ContainerSearchForm
+        onSubmit={handleSearch}
+        onRawInput={handleRawInput}
+        busy={busy}
+        lastValidNumber={lastValidNumber}
+        onValidNumber={setLastValidNumber}
+      />
 
-      {result?.mode === 'containerNumber' && (
-        <div className="space-y-5">
-          {lookup.status === 'done' && lookup.data && (
-            <ShipsGoLookupResult data={lookup.data} cached={lookup.cached} />
-          )}
-          {lookup.status === 'pending' && (
-            <AlertBox type="info">
-              <div>
-                <p>{t('tracking.container.shipsgo.pending')}</p>
-                <button
-                  type="button"
-                  onClick={() => runLookup(lookup.containerNo)}
-                  className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-orange-800 dark:text-orange-300 hover:underline"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.75} />
-                  {t('tracking.container.shipsgo.checkAgain')}
-                </button>
-              </div>
-            </AlertBox>
-          )}
-          {lookup.status === 'failed' && (
-            <AlertBox type="warning">{t('tracking.container.shipsgo.failed')}</AlertBox>
-          )}
-          {lookup.status === 'error' && (
-            <AlertBox type="warning">
-              {lookup.error?.status === 429
-                ? t('tracking.container.shipsgo.rateLimited', {
-                    minutes: Math.ceil((lookup.error?.data?.retryAfter || 60) / 60),
-                  })
-                : lookup.error?.message || t('tracking.container.shipsgo.genericError')}
-            </AlertBox>
-          )}
-
-          <ContainerTrackerBlock containerNo={result.containerNo} />
+      {error && (
+        <div className="mb-5">
+          <AlertBox type="warning">{error.message}</AlertBox>
         </div>
       )}
 
-      {result?.mode === 'nameSearch' && (
-        <div className="space-y-4">
+      {carrierHint && (
+        <div className="mb-5 space-y-3">
           <AlertBox type="info">{t('tracking.container.nameSearchNote')}</AlertBox>
           <a
-            href={resolveHomeUrl(result.carrier)}
+            href={resolveHomeUrl(carrierHint)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between gap-3 p-4 rounded-xl border border-orange-200 dark:border-orange-900 bg-white dark:bg-slate-800 hover:border-orange-600 dark:hover:border-orange-700 transition-colors group"
+            className="flex items-center justify-between gap-3 p-4 rounded-xl border border-orange-200 dark:border-orange-900 bg-white dark:bg-slate-800 hover:border-orange-600 dark:hover:border-orange-700 transition-colors group focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
           >
             <div className="min-w-0">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                {t('tracking.container.directLinkLabel', { carrier: result.carrier.name })}
+                {t('tracking.container.directLinkLabel', { carrier: carrierHint.name })}
               </p>
               <p className="text-xs text-orange-700 dark:text-orange-400 font-medium mt-0.5">
                 {t('tracking.container.directLinkBadge')}
@@ -172,9 +290,7 @@ export default function ContainerLookup() {
         </div>
       )}
 
-      <p className="text-xs text-gray-400 dark:text-slate-500 mt-6">
-        {t('tracking.container.footerNote')}
-      </p>
+      <ContainerList containers={containers} loading={loading} onOpen={openContainer} />
     </div>
   )
 }

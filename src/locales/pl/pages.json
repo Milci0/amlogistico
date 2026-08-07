@@ -746,12 +746,13 @@
       "inputPlaceholder": "Numer kontenera, np. CGMU6913205",
       "checkButton": "Sprawdź",
       "checkDigitWarning": "Numer wygląda na niepoprawny, sprawdź literówkę",
+      "recognized": "Rozpoznano linię: {{carrier}} · prefiks {{prefix}}",
       "directLinkLabel": "Sprawdź na stronie {{carrier}}",
       "directLinkBadge": "Dane bezpośrednio od przewoźnika",
-      "unrecognized": "Nie rozpoznaliśmy linii dla tego numeru",
+      "unrecognized": "Nie rozpoznaliśmy linii, spróbuj w agregatorze",
       "nameSearchNote": "Wyszukiwanie po nazwie przewoźnika. Podaj numer kontenera, żeby przejść prosto do statusu.",
-      "leased": "Kontener leasingowany ({{lessor}}), może być obsługiwany przez dowolną linię.",
-      "footerNote": "Dane pochodzą od przewoźników. AMLogistico nie przechowuje statusów przesyłek.",
+      "leased": "Kontener leasingowany ({{lessor}}), może być obsługiwany przez dowolną linię. Sprawdź w agregatorze.",
+      "aggregatorsTitle": "Agregatory śledzenia",
       "shipsgo": {
         "resultTitle": "Dane na żywo z ShipsGo",
         "checkedAt": "Sprawdzono: {{date}}",
@@ -766,6 +767,108 @@
         "failed": "ShipsGo nie rozpoznało tego numeru kontenera. Sprawdź, czy numer jest poprawny, albo spróbuj w agregatorze poniżej.",
         "rateLimited": "Zbyt wiele wyszukiwań w krótkim czasie. Spróbuj ponownie za ok. {{minutes}} min.",
         "genericError": "Nie udało się pobrać danych z ShipsGo. Spróbuj ponownie później."
+      },
+      "inputLabel": "Numer kontenera",
+      "inputHint": "Wystarczy sam numer kontenera. Przewoźnika rozpoznajemy automatycznie.",
+      "listTitle": "Twoje kontenery",
+      "listCount_one": "{{count}} śledzony",
+      "listCount_few": "{{count}} śledzone",
+      "listCount_many": "{{count}} śledzonych",
+      "listCount_other": "{{count}} śledzonych",
+      "emptyTitle": "Nie śledzisz jeszcze żadnego kontenera",
+      "emptyBody": "Każdy sprawdzony kontener zostanie na tej liście razem z historią zdarzeń. Nie musisz wpisywać numeru drugi raz ani czekać na stronie.",
+      "emptyLoading": "Wczytywanie listy...",
+      "routeUnknown": "Trasa jeszcze nieznana",
+      "noCarrierData": "Brak danych od przewoźnika",
+      "portUnknown": "Port nieznany",
+      "addedAt": "Dodany {{date}}",
+      "updatedAt": "zaktualizowano {{date}}",
+      "containerCount_one": "{{count}} kontener {{type}}",
+      "containerCount_few": "{{count}} kontenery {{type}}",
+      "containerCount_many": "{{count}} kontenerów {{type}}",
+      "containerCount_other": "{{count}} kontenerów {{type}}",
+      "backToContainers": "Wróć do listy kontenerów",
+      "removeFromList": "Usuń z listy",
+      "refreshNow": "Sprawdź teraz",
+      "estimated": "szacowane",
+      "originalDate": "Pierwotnie: {{date}}",
+      "progressLabel": "Za sobą {{percent}} procent trasy",
+      "cancel": "Anuluj",
+      "previousVoyages_one": "Ten kontener ma u Ciebie {{count}} wcześniejszy rejs w historii.",
+      "previousVoyages_few": "Ten kontener ma u Ciebie {{count}} wcześniejsze rejsy w historii.",
+      "previousVoyages_many": "Ten kontener ma u Ciebie {{count}} wcześniejszych rejsów w historii.",
+      "previousVoyages_other": "Ten kontener ma u Ciebie {{count}} wcześniejszych rejsów w historii.",
+      "validation": {
+        "empty": "Wpisz numer kontenera.",
+        "format": "Numer kontenera składa się z 4 liter i 7 cyfr, na przykład MSCU1234567.",
+        "checksum": "Ten numer kontenera nie przechodzi weryfikacji. Sprawdź, czy wszystkie znaki zostały przepisane poprawnie, w szczególności litery i cyfry w środku numeru.",
+        "checksumHint": "Ten numer kontenera nie przechodzi weryfikacji. Przy tych dziesięciu pierwszych znakach ostatnia cyfra powinna wynosić {{digit}}."
+      },
+      "status": {
+        "INPROGRESS": "Pobieramy dane",
+        "BOOKED": "Zabookowany",
+        "LOADED": "Załadowany",
+        "SAILING": "W drodze",
+        "ARRIVED": "W porcie docelowym",
+        "DISCHARGED": "Rozładowany",
+        "UNTRACKED": "Bez śledzenia",
+        "ARCHIVED": "Rejs zakończony",
+        "CREATE_FAILED": "Blad utworzenia"
+      },
+      "pending": {
+        "title": "Numer został przyjęty i przekazany do przewoźnika",
+        "body": "Dane nie są dostępne od ręki. Zwykle trwa to kilkanaście minut, czasem kilka godzin. Nie musisz czekać na tej stronie ani wpisywać numeru ponownie: kontener jest już na Twojej liście i sam się zaktualizuje.",
+        "steps": {
+          "verified": {
+            "title": "Numer zweryfikowany",
+            "desc": "Format i cyfra kontrolna poprawne"
+          },
+          "sent": {
+            "title": "Zlecenie wysłane do ShipsGo",
+            "desc": "Kontener dodany do stałego śledzenia"
+          },
+          "carrier": {
+            "title": "Przewoźnik przygotowuje dane",
+            "desc": "W toku, odświeżymy widok automatycznie"
+          },
+          "route": {
+            "title": "Trasa i historia zdarzeń",
+            "desc": "Pojawią się tutaj po otrzymaniu danych"
+          }
+        }
+      },
+      "archived": {
+        "title": "Dane archiwalne",
+        "body": "Te dane pochodzą z zakończonego rejsu i nie są już aktualizowane.",
+        "bodyWithDate": "Te dane pochodzą z rejsu zakończonego {{date}} i nie są już aktualizowane.",
+        "startNew": "Śledź nowy rejs tego kontenera"
+      },
+      "untracked": {
+        "title": "Przewoźnik nie udostępnił danych dla tego numeru",
+        "reason1": "kontener nie został jeszcze zabookowany",
+        "reason2": "numer należy do przewoźnika spoza obsługiwanej listy",
+        "reason3": "w numerze jest literówka",
+        "pickCarrier": "Wskaż przewoźnika",
+        "pickCarrierBody": "Wybierz linię obsługującą kontener {{number}}. Wskazanie przewoźnika często pozwala odnaleźć przesyłkę, której automatyczne rozpoznanie nie znalazło.",
+        "creditWarning": "Wskazanie przewoźnika utworzy nowe śledzenie i zużyje kolejny kredyt ShipsGo.",
+        "carrierLabel": "Przewoźnik",
+        "carrierPlaceholder": "Wybierz z listy",
+        "loadingCarriers": "Wczytywanie listy przewoźników...",
+        "confirmCarrier": "Utwórz śledzenie"
+      },
+      "confirmRemove": {
+        "title": "Usunąć kontener z listy?",
+        "body": "Kontener zniknie z Twojej listy. Śledzenie po stronie ShipsGo zostaje, więc ponowne wpisanie tego samego numeru przywróci go bez żadnej opłaty.",
+        "confirm": "Usuń z listy"
+      },
+      "confirmNewVoyage": {
+        "title": "Rozpocząć śledzenie nowego rejsu?",
+        "body": "Poprzedni rejs tego kontenera jest zakończony. Rozpoczęcie nowego śledzenia zużyje kolejny kredyt ShipsGo. Dane starego rejsu zostaną zachowane.",
+        "confirm": "Rozpocznij śledzenie"
+      },
+      "createFailed": {
+        "title": "Nie udalo sie potwierdzic utworzenia sledzenia",
+        "body": "Zadanie zostalo wyslane do ShipsGo, ale nie udalo sie potwierdzic, czy sledzenie faktycznie powstalo. Mogl zostac policzony kredyt bez zapisanych danych. Nie ponawiamy tego automatycznie, zeby nie ryzykowac podwojnej oplaty. Sprawdz w panelu ShipsGo, czy przesylka dla tego numeru istnieje, i napisz do nas, jesli tak."
       }
     }
   },

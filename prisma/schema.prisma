@@ -44,8 +44,9 @@ model User {
   // Studio — brak UI do zarządzania adminami (MVP).
   isAdmin           Boolean  @default(false) @map("is_admin")
 
-  documentSets  DocumentSet[]
-  notifications Notification[]
+  documentSets       DocumentSet[]
+  notifications      Notification[]
+  containerTrackings ContainerTrackingUser[]
 
   @@map("users")
 }
@@ -170,31 +171,78 @@ model HsChoiceLog {
   @@map("hs_choice_log")
 }
 
-// container_tracking — TRWAŁY rejestr śledzeń ShipsGo, jeden wiersz na NUMER
-// KONTENERA (nie na usera, nie na zestaw dokumentów). Zastępuje dawny cache
-// w pamięci procesu, który znikał przy każdym cold-starcie na Vercelu i przez
-// to nie chronił kredytów (patrz komentarz w api/_routes/shipsgoTracking.js).
+// container_tracking — TRWAŁY rejestr śledzeń ShipsGo, jeden wiersz na REJS
+// (nie na usera, nie na zestaw dokumentów). Zastępuje dawny cache w pamięci
+// procesu, który znikał przy każdym cold-starcie na Vercelu i przez to nie
+// chronił kredytów (patrz komentarz w api/_routes/shipsgoTracking.js).
 //
-// Dlaczego numer kontenera jest kluczem: kredyt ShipsGo jest naliczany za
-// utworzenie sledzenia, a to samo pudlo moze byc sprawdzone i z wyszukiwarki
-// („Numer kontenera"), i z wlasnej przesylki („Wlacz sledzenie"). Wspolny wiersz
-// = jedno platne utworzenie na kontener, niezaleznie od sciezki w aplikacji.
+// Dlaczego rejestr jest wspólny: kredyt ShipsGo jest naliczany za utworzenie
+// śledzenia, a to samo pudło może być sprawdzone i z wyszukiwarki („Numer
+// kontenera"), i z własnej przesyłki („Włącz śledzenie"). Wspólny wiersz
+// = jedno płatne utworzenie na rejs, niezależnie od ścieżki w aplikacji.
 //
-// status:
-//   pending  - POST poszedl do ShipsGo (kredyt policzony), ale dane jeszcze nie
-//              sa kompletne; UI pokazuje „w przetwarzaniu", user moze wrocic
-//   ready    - mamy dane do wyswietlenia (snapshot != null)
-//   failed   - ShipsGo odrzucilo numer na stale (404/422); NIE probuj ponownie
-//              automatycznie, zeby nie palic kredytow na bledny numer
+// DLACZEGO NUMER KONTENERA NIE JEST KLUCZEM (zmiana 2026-08-06): ten sam
+// kontener fizyczny wraca w kolejnych rejsach. CGMU6913205 płynie dziś
+// z Szanghaju do Gdańska, a za trzy miesiące z Hamburga do Nowego Jorku —
+// ten sam numer, zupełnie inny transport. Kredyt pokrywa jeden rejs; po jego
+// zakończeniu ShipsGo ustawia `discarded_at` i przestaje aktualizować dane.
+// Rekordy archiwalne ZOSTAJĄ (to wartościowa historia), a zasadę „co najwyżej
+// jeden AKTYWNY rejs na numer" wymusza CZĘŚCIOWY indeks unikalny, zakładany
+// osobno przez scripts/apply-tracking-index.js (Prisma nie deklaruje indeksów
+// z warunkiem WHERE w schemacie). Definicja rekordu aktywnego:
+//   discarded_at IS NULL AND status NOT IN ('DISCHARGED', 'UNTRACKED')
+//
+// Dwie kolumny stanu, celowo rozdzielone:
+//   status     - stan REJSU wg ShipsGo (NEW, INPROGRESS, BOOKED, LOADED,
+//                SAILING, ARRIVED, DISCHARGED, UNTRACKED)
+//   fetchState - stan NASZEGO pobierania: pending (POST poszedł, dane jeszcze
+//                niekompletne) | ready (mamy co pokazać) | failed (ShipsGo
+//                trwale odrzuciło numer, 404/422 — nie ponawiaj automatycznie,
+//                żeby nie palić kredytów na błędny numer)
 model ContainerTracking {
-  containerNo  String    @id @map("container_no") // znormalizowany, ISO 6346
-  shipsgoId    String?   @map("shipsgo_id") // id przesylki po stronie ShipsGo
-  status       String    @default("pending") // pending | ready | failed
-  snapshot     Json? // trimShipmentData() + geojson; null dopoki brak danych
-  lastError    String?   @map("last_error") // kod bledu z ostatniej nieudanej proby
-  createdAt    DateTime  @default(now()) @map("created_at")
-  lastPolledAt DateTime? @map("last_polled_at") // ostatnie odpytanie ShipsGo (nie: ostatnie wejscie usera)
+  id              String    @id @default(uuid())
+  shipsgoId       Int?      @unique @map("shipsgo_id") // id przesyłki po stronie ShipsGo; null między rezerwacją a odpowiedzią
+  containerNumber String    @map("container_number") // znormalizowany ISO 6346; INDEKSOWANY, ale NIE unikalny
+  bookingNumber   String?   @map("booking_number")
+  carrierScac     String?   @map("carrier_scac")
+  carrierName     String?   @map("carrier_name")
+  status          String    @default("NEW") // status rejsu wg ShipsGo
+  fetchState      String    @default("pending") @map("fetch_state") // pending | ready | failed
+  lastError       String?   @map("last_error") // kod błędu z ostatniej nieudanej próby
+  snapshot        Json? // trimShipmentData(); null dopóki brak danych
+  geojson         Json? // trimGeojson(); trasa do narysowania na mapie
+  mapToken        String?   @map("map_token") // tokens.map — link do pełnej mapy ShipsGo
+  checkedAt       DateTime? @map("checked_at") // checked_at z ShipsGo
+  discardedAt     DateTime? @map("discarded_at") // discarded_at z ShipsGo = rejs zakończony
+  lastPolledAt    DateTime? @map("last_polled_at") // ostatnie odpytanie ShipsGo (nie: ostatnie wejście usera)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  @@index([status, lastPolledAt])
+  users ContainerTrackingUser[]
+
+  @@index([containerNumber])
+  @@index([fetchState, lastPolledAt])
   @@map("container_tracking")
+}
+
+// container_tracking_users — kto śledzi który rejs. Osobna tabela, bo dwóch
+// użytkowników może śledzić ten sam kontener: przesyłka w ShipsGo jest JEDNA
+// i kredyt poszedł RAZ, ale lista jest per użytkownik.
+//
+// `hiddenAt` zamiast kasowania wiersza: „Usuń z listy" ukrywa rejs u tego
+// użytkownika, ale NIE usuwa śledzenia w ShipsGo (tam usunięcie jest
+// nieodwracalne, a ponowne dodanie to nowy kredyt). Dzięki temu ponowne
+// wpisanie tego samego numeru przywraca wpis za darmo.
+model ContainerTrackingUser {
+  id         String            @id @default(uuid())
+  userId     String            @map("user_id")
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackingId String            @map("tracking_id")
+  tracking   ContainerTracking @relation(fields: [trackingId], references: [id], onDelete: Cascade)
+  hiddenAt   DateTime?         @map("hidden_at")
+  addedAt    DateTime          @default(now()) @map("added_at")
+
+  @@unique([userId, trackingId])
+  @@index([userId, hiddenAt])
+  @@map("container_tracking_users")
 }

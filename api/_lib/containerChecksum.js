@@ -26,13 +26,30 @@ function computeCheckDigit(tenChars) {
   return remainder === 10 ? 0 : remainder
 }
 
-// Zwraca true tylko gdy numer ma pełny kształt ISO 6346 I cyfra kontrolna się zgadza.
-// Nie normalizuje wejścia — wywołujący przekazuje już znormalizowany numer
-// (wielkie litery, bez spacji/myślników), tak jak jest zapisany w DocumentSet.
-export function isValidContainerNumber(raw) {
-  const normalized = (raw || '').toUpperCase().replace(/[\s-]/g, '')
-  if (!FULL_PATTERN.test(normalized)) return false
-  const body = normalized.slice(0, 10)
+export function normalizeContainerNumber(raw) {
+  return (raw || '').toUpperCase().replace(/[\s-]/g, '')
+}
+
+// Zwraca { normalized, ok, code } gdzie code to 'ok' | 'empty' | 'format' | 'checksum'.
+// Rozróżnienie kształtu od sumy kontrolnej jest po to, żeby trasa mogła zwrócić
+// właściwy komunikat, a nie jeden generyczny „nieprawidłowy numer".
+//
+// Backend NIGDY nie podpowiada wyliczonej cyfry kontrolnej — niezgodność sumy
+// nie wskazuje, która z pierwszych dziesięciu pozycji jest zła (patrz obszerny
+// komentarz w src/utils/containerNumber.js). Wyjątek opisany tam wymaga wiedzy
+// o poprzednim wpisie w tej samej sesji, której backend nie ma i mieć nie powinien.
+export function validateContainerNumber(raw) {
+  const normalized = normalizeContainerNumber(raw)
+  if (!normalized) return { normalized, ok: false, code: 'empty' }
+  if (!FULL_PATTERN.test(normalized)) return { normalized, ok: false, code: 'format' }
   const providedCheckDigit = Number(normalized[10])
-  return computeCheckDigit(body) === providedCheckDigit
+  if (computeCheckDigit(normalized.slice(0, 10)) !== providedCheckDigit) {
+    return { normalized, ok: false, code: 'checksum' }
+  }
+  return { normalized, ok: true, code: 'ok' }
+}
+
+// Zwraca true tylko gdy numer ma pełny kształt ISO 6346 I cyfra kontrolna się zgadza.
+export function isValidContainerNumber(raw) {
+  return validateContainerNumber(raw).ok
 }

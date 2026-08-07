@@ -35,7 +35,7 @@
       "docsPreviewTitle": "Transport documents",
       "docsPreviewHint": "Full list once the cargo details are filled in",
       "docsPreviewEmpty": "Fill in the legs in the \"Cargo\" step to see a preview of the documents.",
-      "docsPreviewItem": "{{doc}} — {{leg}}",
+      "docsPreviewItem": "{{doc}} ({{leg}})",
       "legSuffix": {
         "road": "road leg",
         "sea": "sea leg",
@@ -148,7 +148,7 @@
     "multimodal": {
       "title": "Legs of the journey",
       "hint": "The order matters: the first leg is the pre-carriage, the second is the main carriage and the last is the on-carriage on the multimodal transport document.",
-      "needsLegMode": "You chose separate contracts per leg — select at least one mode of transport",
+      "needsLegMode": "You chose separate contracts per leg, select at least one mode of transport",
       "leg": "Leg {{order}}",
       "mode": "Mode",
       "chooseMode": "Choose",

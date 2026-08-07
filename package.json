@@ -11,6 +11,7 @@
     "dev:full": "concurrently -n \"frontend,backend\" -c \"cyan,green\" \"npm run dev\" \"npm run server\"",
     "postinstall": "prisma generate",
     "lint:locales": "node scripts/check-locales.js",
+    "lint:dashes": "node scripts/check-dashes.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },

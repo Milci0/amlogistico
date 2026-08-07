@@ -1090,7 +1090,7 @@ function QuoteStep({ route, onNext, onBack }) {
               result={result}
               loading={loading}
               searched={searched}
-              routeLabel={`${route.fromCity} – ${route.toCity}`}
+              routeLabel={`${route.fromCity} - ${route.toCity}`}
               cargoLabel={t('quote.cargoLabel')}
               compact
             />

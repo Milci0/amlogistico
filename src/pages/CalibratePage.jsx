@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { generateGrid, probePosition } from '../generators/calibrate'
 
 const TEMPLATES = [
-  { label: 'CMR — List Przewozowy',          path: '/templates/eu/land/01_CMR_List_Przewozowy.pdf' },
+  { label: 'CMR (List Przewozowy)',          path: '/templates/eu/land/01_CMR_List_Przewozowy.pdf' },
   { label: 'Packing List',                   path: '/templates/eu/common/02_Packing_List.pdf' },
   { label: 'Faktura Handlowa',               path: '/templates/eu/common/03_Faktura_Handlowa.pdf' },
   { label: 'Faktura Proforma',               path: '/templates/eu/common/04_Faktura_Proforma.pdf' },

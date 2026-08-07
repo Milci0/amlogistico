@@ -43,6 +43,29 @@ function codeForStatus(status) {
   return STATUS_CODE_MAP[status] || 'UNKNOWN'
 }
 
+// Wspólny kształt błędu z odpowiedzi HTTP. `retryAfter` (sekundy) bierzemy
+// z nagłówka X-RateLimit-Reset, żeby przy 429 móc powiedzieć użytkownikowi
+// KIEDY spróbować ponownie, zamiast samego „za chwilę".
+async function errorFromResponse(res) {
+  const body = await res.json().catch(() => null)
+  const reset = res.headers.get('x-ratelimit-reset')
+  const resetNum = reset ? Number(reset) : null
+  // Nagłówek bywa podawany albo jako liczba sekund do resetu, albo jako
+  // znacznik czasu uniksowy. Wartość większa niż rok w sekundach to na pewno
+  // znacznik, więc liczymy różnicę; mniejsza to już gotowy odstęp.
+  let retryAfter = null
+  if (Number.isFinite(resetNum) && resetNum > 0) {
+    retryAfter = resetNum > 31_536_000 ? Math.max(1, resetNum - Math.floor(Date.now() / 1000)) : resetNum
+  }
+  return {
+    success: false,
+    data: null,
+    error: body?.message || null,
+    code: codeForStatus(res.status),
+    retryAfter,
+  }
+}
+
 // Komunikaty PL per kod błędu — WYŁĄCZNIE to, i nigdy surowy status/treść
 // odpowiedzi ShipsGo, trafia do JSON-a zwracanego z api/_routes/shipsgoTracking.js.
 // Ten sam wzorzec co reszta backendu (api/_routes/auth.js itd.) — komunikaty
@@ -56,7 +79,8 @@ const ERROR_DESCRIPTIONS = {
   VALIDATION: { status: 422, message: 'ShipsGo odrzuciło numer kontenera jako nieprawidłowy.' },
   RATE_LIMIT: { status: 429, message: 'Zbyt wiele zapytań do ShipsGo w krótkim czasie. Spróbuj ponownie za chwilę.' },
   NETWORK: { status: 502, message: 'Nie udało się połączyć z ShipsGo. Spróbuj ponownie później.' },
-  UNKNOWN: { status: 502, message: 'ShipsGo nie odpowiedziało poprawnie. Spróbuj ponownie później.' },
+  UNKNOWN: { status: 502, message: 'ShipsGo nie odpowiedziało poprawnie. Ten numer został zapisany jako wymagający sprawdzenia i nie będzie automatycznie ponawiany, żeby uniknąć podwójnej opłaty. Skontaktuj się z nami, jeśli problem się powtórzy.' },
+  CREATE_UNCERTAIN: { status: 502, message: 'Nie udało się potwierdzić utworzenia śledzenia w ShipsGo, mimo że żądanie zostało przyjęte. Ten numer został zapisany jako wymagający sprawdzenia i nie będzie automatycznie ponawiany, żeby uniknąć podwójnej opłaty. Skontaktuj się z nami, jeśli problem się powtórzy.' },
 }
 
 // Zamienia { code } z createOceanShipment/getOceanShipment/getShipmentGeojson
@@ -74,13 +98,48 @@ export function isPermanentError(code) {
   return code === 'NOT_FOUND' || code === 'VALIDATION'
 }
 
-// Jedna, wspolna „etykieta" kontenera wysylana do ShipsGo z OBU sciezek
-// aplikacji. Wczesniej wyszukiwarka slala `freeform-{numer}`, a „Wlacz
-// sledzenie" slalo id zestawu dokumentow — ShipsGo widzialo dwa rozne
-// `reference` dla tego samego pudla i liczylo DWA osobne, platne sledzenia
-// (potwierdzone na koncie: MMAU1313642 utworzony dwukrotnie, 2026-08-05).
-export function containerReference(containerNo) {
-  return `container-${containerNo}`
+// Statusy rejsu wg ShipsGo Ocean. Trzymane tutaj, bo to slownik API, a nie nasz
+// wlasny — front mapuje je na etykiety i kolory (patrz containerStatus.js).
+export const OCEAN_STATUSES = [
+  'NEW', 'INPROGRESS', 'BOOKED', 'LOADED', 'SAILING', 'ARRIVED', 'DISCHARGED', 'UNTRACKED',
+]
+
+// ── DLACZEGO NIE WYSYLAMY POLA `reference` ─────────────────────────────────
+// ShipsGo sprawdza duplikaty przed naliczeniem kredytu, ale jesli w zadaniu
+// jest `reference`, ZAWSZE bierze ono udzial w tym sprawdzeniu. Wysylanie
+// jakiejkolwiek etykiety zawezalo wiec dedupe do „ten kontener Z TA SAMA
+// etykieta". Historycznie kosztowalo to realne pieniadze dwa razy:
+//   1. wyszukiwarka slala `freeform-{numer}`, a „Wlacz sledzenie" id zestawu
+//      dokumentow — to samo pudlo, dwie etykiety, dwa platne sledzenia
+//      (potwierdzone na koncie: MMAU1313642, 2026-08-05),
+//   2. ujednolicona etykieta `container-{numer}` naprawila punkt 1, ale nie
+//      dedupowala sie ze sledzeniami zalozonymi WCZESNIEJ, pod starymi
+//      etykietami — ponowne sprawdzenie takiego kontenera platiloby trzeci raz.
+// Brak `reference` sprawia, ze dedupe idzie po samym `container_number`
+// i lapie KAZDE istniejace sledzenie tego pudla na naszym koncie.
+
+// Koperta odpowiedzi ShipsGo: pojedynczy zasob jest zagniezdzony pod kluczem
+// nazwanym po zasobie, nie zwracany plasko. POTWIERDZONE na realnym koncie
+// (2026-08-06): POST /ocean/shipments zwraca
+// {"message":"SUCCESS","shipment":{"id":6559745,...}}, nie {"id":...} na
+// gornym poziomie. Wczesniejszy kod zakladal plaska strukture i przez to
+// gubil `id` przy KAZDYM udanym utworzeniu — kredyt szedl, a przesylka
+// zostawala bez zapisanego shipsgoId (dwa realne przypadki: TLLU1080331,
+// MMAU1351730). Unwrap jest bezpieczny takze dla juz plaskiej odpowiedzi:
+// gdy `shipment` nie istnieje, zwraca body bez zmian.
+function unwrapShipment(body) {
+  return body?.shipment ?? body?.data ?? body ?? null
+}
+
+// Jak wyzej, ale dla odpowiedzi z LISTA przesylek (GET .../ocean/shipments
+// z filtrem). Klucz listy NIEPOTWIERDZONY na realnym koncie — po analogii do
+// `shipment` (liczba pojedyncza dla jednego zasobu) zakladamy `shipments`
+// (liczba mnoga dla listy), z fallbackiem na `data` i na goła tablice.
+function unwrapShipmentList(body) {
+  if (Array.isArray(body)) return body
+  if (Array.isArray(body?.shipments)) return body.shipments
+  if (Array.isArray(body?.data)) return body.data
+  return []
 }
 
 async function shipsgoFetch(path, options = {}) {
@@ -105,14 +164,21 @@ async function shipsgoFetch(path, options = {}) {
 }
 
 // POST /ocean/shipments — tworzy śledzenie. KOSZTUJE KREDYT (poza duplikatem).
-// `carrier` celowo NIE jest wysyłany — ShipsGo sam wykrywa linię z numeru kontenera.
+// Body niesie WYŁĄCZNIE `container_number`, a `carrier` tylko wtedy, gdy
+// użytkownik wskazał go jawnie (stan „Bez śledzenia" → „Wskaż przewoźnika").
+// Domyślnie ShipsGo sam wykrywa linię z numeru kontenera.
+// `reference` NIE jest wysyłany nigdy — patrz komentarz wyżej, to warunek
+// działania deduplikacji po stronie ShipsGo.
 // Zwraca { success, alreadyExists, data, error }. 409 (ALREADY_EXISTS) traktujemy
 // jako sukces bez opłaty, nie jako błąd.
-export async function createOceanShipment({ reference, containerNumber }) {
+export async function createOceanShipment({ containerNumber, carrier }) {
   try {
+    const body = { container_number: containerNumber }
+    if (carrier) body.carrier = carrier
+
     const res = await shipsgoFetch('/ocean/shipments', {
       method: 'POST',
-      body: JSON.stringify({ reference, container_number: containerNumber }),
+      body: JSON.stringify(body),
       timeoutMs: CREATE_TIMEOUT_MS,
     })
 
@@ -120,22 +186,13 @@ export async function createOceanShipment({ reference, containerNumber }) {
       // Duplikat — bez opłaty. Ciało może (ale nie musi) nieść dane istniejącego
       // śledzenia; jeśli nie niesie, wywołujący dociągnie przez GET osobno.
       const body = await res.json().catch(() => null)
-      return { success: true, alreadyExists: true, data: body?.data ?? body ?? null, error: null, code: null }
+      return { success: true, alreadyExists: true, data: unwrapShipment(body), error: null, code: null }
     }
 
-    if (!res.ok) {
-      const body = await res.json().catch(() => null)
-      return {
-        success: false,
-        alreadyExists: false,
-        data: null,
-        error: body?.message || null,
-        code: codeForStatus(res.status),
-      }
-    }
+    if (!res.ok) return { ...(await errorFromResponse(res)), alreadyExists: false }
 
-    const data = await res.json()
-    return { success: true, alreadyExists: false, data, error: null, code: null }
+    const resBody = await res.json()
+    return { success: true, alreadyExists: false, data: unwrapShipment(resBody), error: null, code: null }
   } catch (e) {
     console.error('[shipsgo] createOceanShipment nie powiodło się:', e)
     return { success: false, alreadyExists: false, data: null, error: null, code: 'NETWORK' }
@@ -146,15 +203,31 @@ export async function createOceanShipment({ reference, containerNumber }) {
 export async function getOceanShipment(id) {
   try {
     const res = await shipsgoFetch(`/ocean/shipments/${encodeURIComponent(id)}`, { method: 'GET' })
-    if (!res.ok) {
-      const body = await res.json().catch(() => null)
-      return { success: false, data: null, error: body?.message || null, code: codeForStatus(res.status) }
-    }
-    const data = await res.json()
-    return { success: true, data, error: null, code: null }
+    if (!res.ok) return errorFromResponse(res)
+    const body = await res.json()
+    return { success: true, data: unwrapShipment(body), error: null, code: null }
   } catch (e) {
     console.error('[shipsgo] getOceanShipment nie powiodło się:', e)
     return { success: false, data: null, error: null, code: 'NETWORK' }
+  }
+}
+
+// Ratunek na wypadek 409 ALREADY_EXISTS, którego ciało nie niesie `id`
+// istniejącej przesyłki. Bez id nie umiemy jej później odpytać, a kredyt już
+// kiedyś za nią zapłacono. GET nie kosztuje, więc próba jest darmowa.
+// Kształt filtra NIEZWERYFIKOWANY bez realnego tokena — brak wyniku zwraca
+// null i wywołujący pokazuje prośbę o ponowienie, zamiast płacić drugi raz.
+export async function findOceanShipmentByContainer(containerNumber) {
+  try {
+    const query = `filters[container_number]=eq:${encodeURIComponent(containerNumber)}`
+    const res = await shipsgoFetch(`/ocean/shipments?${query}`, { method: 'GET' })
+    if (!res.ok) return null
+    const body = await res.json()
+    const list = unwrapShipmentList(body)
+    return list.find((s) => s?.id != null) || null
+  } catch (e) {
+    console.error('[shipsgo] findOceanShipmentByContainer nie powiodło się:', e)
+    return null
   }
 }
 
@@ -164,10 +237,7 @@ export async function getOceanShipment(id) {
 export async function getShipmentGeojson(id) {
   try {
     const res = await shipsgoFetch(`/ocean/shipments/${encodeURIComponent(id)}/geojson`, { method: 'GET' })
-    if (!res.ok) {
-      const body = await res.json().catch(() => null)
-      return { success: false, data: null, error: body?.message || null, code: codeForStatus(res.status) }
-    }
+    if (!res.ok) return errorFromResponse(res)
     const data = await res.json()
     return { success: true, data, error: null, code: null }
   } catch (e) {
@@ -176,63 +246,142 @@ export async function getShipmentGeojson(id) {
   }
 }
 
-// Przycina pełną odpowiedź ShipsGo do tego, co faktycznie wyświetlamy —
-// zapisywane w DocumentSet.meta.shipment.shipsgo. Nie trzymamy całego payloadu
-// (mniej danych klienta w naszej bazie niż konieczne, mniejszy JSON).
-export function trimShipmentData(raw) {
-  if (!raw) return null
-  const movements = (raw.containers?.[0]?.movements || []).map((m) => ({
+// Pierwsza niepusta wartość spośród kilku prawdopodobnych ścieżek. Kształt
+// odpowiedzi ShipsGo jest NIEZWERYFIKOWANY bez realnego tokena (mieliśmy tylko
+// 2 kredyty testowe), a dokumentacja podaje same nazwy pól bez pełnego drzewa —
+// dlatego zamiast zgadywać jedną ścieżkę, sprawdzamy kilka i przy braku
+// dopasowania zwracamy null. Front pokazuje wtedy „brak danych" zamiast
+// fałszywej wartości.
+function firstOf(...values) {
+  for (const v of values) {
+    if (v !== undefined && v !== null && v !== '') return v
+  }
+  return null
+}
+
+function trimLocation(loc) {
+  if (!loc) return null
+  return {
+    code: loc.code || null,
+    name: loc.name || null,
+    country: loc.country?.name || loc.country || null,
+  }
+}
+
+function trimMovements(list) {
+  return (list || []).map((m) => ({
     event: m.event || null,
+    // 'ACT' = zdarzenie faktyczne, 'EST' = szacowane. Front oznacza szacowane
+    // etykietą i przygaszonym kolorem, żeby nikt nie planował odbioru na
+    // podstawie prognozy myśląc, że to fakt.
     status: m.status || null,
-    location: m.location
-      ? { code: m.location.code || null, name: m.location.name || null, country: m.location.country?.name || null }
-      : null,
-    vessel: m.vessel?.name || null,
+    location: trimLocation(m.location),
+    vessel: m.vessel?.name || m.vessel || null,
     voyage: m.voyage || null,
     timestamp: m.timestamp || null,
   }))
+}
+
+// Przycina pełną odpowiedź ShipsGo do tego, co faktycznie wyświetlamy —
+// zapisywane w ContainerTracking.snapshot (i w kopii w DocumentSet.meta dla
+// zakładki „Lista przesyłek"). Nie trzymamy całego payloadu (mniej danych
+// klienta w naszej bazie niż konieczne, mniejszy JSON).
+export function trimShipmentData(raw) {
+  if (!raw) return null
+
+  const containersRaw = Array.isArray(raw.containers) ? raw.containers : []
+  const first = containersRaw[0] || null
+  const pol = raw.route?.port_of_loading || null
+  const pod = raw.route?.port_of_discharge || null
+
+  const loadingDate = firstOf(pol?.date, pol?.date_of_loading, raw.date_of_loading)
+  const dischargeDate = firstOf(pod?.date, pod?.date_of_discharge, pod?.eta, raw.date_of_discharge, raw.eta)
+  const dischargeDateInitial = firstOf(pod?.date_initial, pod?.date_of_discharge_initial, raw.date_of_discharge_initial)
+
+  // Przeładunki: nazwa portu jest potrzebna w kafelku „Przeładunki", więc
+  // zbieramy lokalizacje, nie samą liczbę.
+  const transhipmentsRaw = Array.isArray(raw.route?.transhipments)
+    ? raw.route.transhipments
+    : Array.isArray(raw.transhipments)
+      ? raw.transhipments
+      : []
+  const transhipments = transhipmentsRaw.map((t) => trimLocation(t.location || t)).filter(Boolean)
+
+  // Statek i rejs: bierzemy z ostatniego ruchu, który je niesie (najświeższa
+  // znana jednostka), a gdy ruchów nie ma, z pól przesyłki.
+  const allMovements = trimMovements(first?.movements)
+  const lastWithVessel = [...allMovements].reverse().find((m) => m.vessel) || null
 
   return {
     id: raw.id ?? null,
     status: raw.status || null,
-    containerStatus: raw.containers?.[0]?.status || null,
+    containerStatus: first?.status || null,
     carrier: raw.carrier ? { scac: raw.carrier.scac || null, name: raw.carrier.name || null } : null,
-    loadingLocation: raw.route?.port_of_loading?.location
-      ? { code: raw.route.port_of_loading.location.code, name: raw.route.port_of_loading.location.name }
-      : null,
-    dischargeLocation: raw.route?.port_of_discharge?.location
-      ? { code: raw.route.port_of_discharge.location.code, name: raw.route.port_of_discharge.location.name }
-      : null,
-    // NIEZWERYFIKOWANE bez realnego tokena (2 kredyty testowe, jeszcze nieużyte
-    // na strukturę z ETA) — próbujemy kilku prawdopodobnych ścieżek pola z typowych
-    // API śledzenia morskiego. Brak dopasowania → null, front pokazuje "brak danych"
-    // zamiast fałszywej wartości. DO POTWIERDZENIA na pierwszej realnej odpowiedzi.
-    eta: raw.route?.port_of_discharge?.date
-      || raw.route?.port_of_discharge?.eta
-      || raw.eta
-      || null,
-    // Data pierwotna vs. aktualna — jak wyżej, NIEZWERYFIKOWANE bez realnego
-    // tokena. Brak dopasowania → null, front wtedy NIE pokazuje porównania
-    // (patrz VoyageDetails.jsx), nie zgaduje.
-    loadingDateInitial: raw.route?.port_of_loading?.date_initial || null,
-    dischargeDateInitial: raw.route?.port_of_discharge?.date_initial || null,
+    bookingNumber: raw.booking_number || null,
+
+    // ── Trasa ────────────────────────────────────────────────────────────────
+    loadingLocation: trimLocation(pol?.location),
+    dischargeLocation: trimLocation(pod?.location),
+    loadingDate,
+    dischargeDate,
+    dischargeDateInitial,
+    transhipments,
+
+    // ── Kontenery ────────────────────────────────────────────────────────────
+    // Liczba i typ trafiają do nagłówka stanu 5 („1 kontener 40 HC").
+    containerCount: containersRaw.length || 0,
+    containers: containersRaw.map((c) => ({
+      number: c.number || c.container_number || null,
+      type: firstOf(c.size_type, c.type, c.container_type),
+      status: c.status || null,
+    })),
+    containerType: firstOf(first?.size_type, first?.type, first?.container_type),
+
+    // ── Rejs ─────────────────────────────────────────────────────────────────
+    vessel: firstOf(lastWithVessel?.vessel, raw.vessel?.name, raw.vessel),
+    voyageNo: firstOf(lastWithVessel?.voyage, raw.voyage),
     transitTime: typeof raw.transit_time === 'number' ? raw.transit_time : null,
-    transitPercentage: typeof raw.transit_percentage === 'number' ? raw.transit_percentage : null,
     co2Emission: typeof raw.co2_emission === 'number' ? raw.co2_emission : null,
-    movements,
+
+    movements: allMovements,
     mapToken: raw.tokens?.map || null,
     checkedAt: raw.checked_at || null,
+    discardedAt: raw.discarded_at || null,
     fetchedAt: new Date().toISOString(),
+
+    // ── Zgodność wsteczna z zakładką „Lista przesyłek" ───────────────────────
+    // RealShipmentDetail i utils/shipmentFromSet.js czytają te nazwy z migawek
+    // zapisanych w DocumentSet.meta. Zostają jako aliasy, żeby stare zestawy
+    // dalej się renderowały.
+    eta: dischargeDate,
+    loadingDateInitial: firstOf(pol?.date_initial, pol?.date_of_loading_initial),
+    // transit_percentage z ShipsGo jest CELOWO nieprzenoszone do paska postępu
+    // (potrafi zwracać 99 dla przesyłki tuż po wypłynięciu). Postęp liczymy
+    // z dat, patrz src/utils/voyageProgress.js. Pole zostaje wyłącznie jako
+    // surowa wartość informacyjna z API.
+    transitPercentage: typeof raw.transit_percentage === 'number' ? raw.transit_percentage : null,
   }
 }
 
-// Przycina odpowiedź GET .../geojson do samej geometrii + minimalnych etykiet
-// potrzebnych na mapie (patrz ShipmentMap.jsx). NIEZWERYFIKOWANE bez realnego
+// Statusy odcinka trasy w GeoJSON-ie ShipsGo. PAST i CURRENT rysujemy linią
+// ciągłą w kolorze akcentu, FUTURE przerywaną i przygaszoną.
+const FEATURE_STATUSES = ['PAST', 'CURRENT', 'FUTURE']
+
+// Współrzędna GeoJSON to [lng, lat] — sprawdzamy kształt, zanim trafi na mapę.
+function isCoordPair(c) {
+  return Array.isArray(c) && c.length >= 2 && typeof c[0] === 'number' && typeof c[1] === 'number'
+}
+
+// Przycina odpowiedź GET .../geojson do geometrii + właściwości, których
+// faktycznie używa mapa (patrz ShipmentMap.jsx). NIEZWERYFIKOWANE bez realnego
 // tokena — zakładamy standardowy FeatureCollection (GeoJSON RFC 7946), ale
 // nie ufamy niczemu poza `type`/`geometry`/`coordinates`; nieznane właściwości
 // są ignorowane, a cały obiekt jest odrzucany (→ null), jeśli nie pasuje do
-// kształtu FeatureCollection. Front dostaje wtedy `null` i pokazuje fallback
-// tekstowy (lista portów/dat) zamiast wybuchać na nieoczekiwanym formacie.
+// kształtu FeatureCollection. Front dostaje wtedy `null` i pokazuje prostokąt
+// z informacją zamiast pustej mapy świata.
+//
+// Endpoint geojson jest w dokumentacji ShipsGo oznaczony jako eksperymentalny,
+// więc każde pole poza geometrią traktujemy jako opcjonalne.
 export function trimGeojson(raw) {
   if (!raw || raw.type !== 'FeatureCollection' || !Array.isArray(raw.features)) return null
 
@@ -241,11 +390,22 @@ export function trimGeojson(raw) {
       if (!f?.geometry?.type || !f.geometry.coordinates) return null
       const type = f.geometry.type
       if (type !== 'Point' && type !== 'LineString' && type !== 'MultiLineString') return null
+
+      const p = f.properties || {}
+      const statusRaw = typeof p.status === 'string' ? p.status.toUpperCase() : null
+      // Pozycja statku bywa `null` nawet na odcinku CURRENT (armator nie podał
+      // jeszcze koordynatów) — to normalny stan, nie błąd.
+      const current = isCoordPair(p.current?.coordinates) ? p.current.coordinates : null
+
       return {
         geometry: { type, coordinates: f.geometry.coordinates },
         properties: {
-          name: f.properties?.name || null,
-          type: f.properties?.type || null,
+          name: p.name || null,
+          type: p.type || null,
+          status: FEATURE_STATUSES.includes(statusRaw) ? statusRaw : null,
+          current,
+          vessel: p.vessel?.name || (typeof p.vessel === 'string' ? p.vessel : null),
+          voyage: p.voyage || null,
         },
       }
     })
@@ -253,4 +413,26 @@ export function trimGeojson(raw) {
 
   if (features.length === 0) return null
   return { type: 'FeatureCollection', features }
+}
+
+// GET /ocean/carriers?filters[status]=eq:ACTIVE — lista przewoźników do wyboru
+// w stanie „Bez śledzenia". NIE kosztuje kredytu.
+export async function getOceanCarriers() {
+  try {
+    const res = await shipsgoFetch('/ocean/carriers?filters[status]=eq:ACTIVE', { method: 'GET' })
+    if (!res.ok) return errorFromResponse(res)
+    const body = await res.json()
+    // Kształt odpowiedzi niezweryfikowany — po analogii do potwierdzonego
+    // `shipment`/`shipments` (patrz unwrapShipment) próbujemy też `carriers`,
+    // obok gołej tablicy i koperty { data: [...] }.
+    const list = Array.isArray(body) ? body : Array.isArray(body?.carriers) ? body.carriers : Array.isArray(body?.data) ? body.data : []
+    const carriers = list
+      .map((c) => ({ scac: c.scac || c.code || null, name: c.name || null }))
+      .filter((c) => c.scac && c.name)
+      .sort((a, b) => a.name.localeCompare(b.name))
+    return { success: true, data: carriers, error: null, code: null }
+  } catch (e) {
+    console.error('[shipsgo] getOceanCarriers nie powiodło się:', e)
+    return { success: false, data: null, error: null, code: 'NETWORK' }
+  }
 }

@@ -134,7 +134,7 @@ export default function TradeRoutesPage() {
     })
   }
 
-  const routeLabel = `${origin.toUpperCase()} – ${destination.toUpperCase()}`
+  const routeLabel = `${origin.toUpperCase()} - ${destination.toUpperCase()}`
   const cargoLabel = `${quantity}× ${t(`routes.loadTypes.${loadtype}`, { defaultValue: loadtype })}`
 
   return (

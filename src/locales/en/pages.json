@@ -738,12 +738,13 @@
       "inputPlaceholder": "Container number, e.g. CGMU6913205",
       "checkButton": "Check",
       "checkDigitWarning": "This number looks incorrect, check for a typo",
+      "recognized": "Line recognized: {{carrier}} · prefix {{prefix}}",
       "directLinkLabel": "Check on {{carrier}}'s site",
       "directLinkBadge": "Data directly from the carrier",
-      "unrecognized": "We couldn't recognize the line for this number",
+      "unrecognized": "We couldn't recognize the line, try an aggregator",
       "nameSearchNote": "Searching by carrier name. Enter a container number to jump straight to the status.",
-      "leased": "Leased container ({{lessor}}), may be operated by any line.",
-      "footerNote": "Data comes from the carriers. AMLogistico does not store shipment statuses.",
+      "leased": "Leased container ({{lessor}}), may be operated by any line. Try an aggregator.",
+      "aggregatorsTitle": "Tracking aggregators",
       "shipsgo": {
         "resultTitle": "Live data from ShipsGo",
         "checkedAt": "Checked: {{date}}",
@@ -758,6 +759,102 @@
         "failed": "ShipsGo did not recognize this container number. Check that the number is correct, or try an aggregator below.",
         "rateLimited": "Too many searches in a short time. Try again in about {{minutes}} min.",
         "genericError": "Could not fetch data from ShipsGo. Please try again later."
+      },
+      "inputLabel": "Container number",
+      "inputHint": "The container number alone is enough. We identify the carrier automatically.",
+      "listTitle": "Your containers",
+      "listCount_one": "{{count}} tracked",
+      "listCount_other": "{{count}} tracked",
+      "emptyTitle": "You are not tracking any container yet",
+      "emptyBody": "Every container you check stays on this list together with its event history. You do not need to enter the number again or wait on this page.",
+      "emptyLoading": "Loading the list...",
+      "routeUnknown": "Route not known yet",
+      "noCarrierData": "No data from the carrier",
+      "portUnknown": "Port unknown",
+      "addedAt": "Added {{date}}",
+      "updatedAt": "updated {{date}}",
+      "containerCount_one": "{{count}} container {{type}}",
+      "containerCount_other": "{{count}} containers {{type}}",
+      "backToContainers": "Back to the container list",
+      "removeFromList": "Remove from list",
+      "refreshNow": "Check now",
+      "estimated": "estimated",
+      "originalDate": "Originally: {{date}}",
+      "progressLabel": "{{percent}} percent of the route completed",
+      "cancel": "Cancel",
+      "previousVoyages_one": "You have {{count}} earlier voyage of this container in your history.",
+      "previousVoyages_other": "You have {{count}} earlier voyages of this container in your history.",
+      "validation": {
+        "empty": "Enter a container number.",
+        "format": "A container number is 4 letters and 7 digits, for example MSCU1234567.",
+        "checksum": "This container number does not pass verification. Check that every character was copied correctly, especially the letters and digits in the middle of the number.",
+        "checksumHint": "This container number does not pass verification. With these first ten characters the last digit should be {{digit}}."
+      },
+      "status": {
+        "INPROGRESS": "Fetching data",
+        "BOOKED": "Booked",
+        "LOADED": "Loaded",
+        "SAILING": "In transit",
+        "ARRIVED": "At destination port",
+        "DISCHARGED": "Discharged",
+        "UNTRACKED": "Not tracked",
+        "ARCHIVED": "Voyage completed",
+        "CREATE_FAILED": "Creation failed"
+      },
+      "pending": {
+        "title": "The number has been accepted and passed on to the carrier",
+        "body": "The data is not available instantly. It usually takes a dozen or so minutes, sometimes a few hours. You do not have to wait on this page or enter the number again: the container is already on your list and will update itself.",
+        "steps": {
+          "verified": {
+            "title": "Number verified",
+            "desc": "Format and check digit are correct"
+          },
+          "sent": {
+            "title": "Request sent to ShipsGo",
+            "desc": "Container added to continuous tracking"
+          },
+          "carrier": {
+            "title": "Carrier is preparing the data",
+            "desc": "In progress, we will refresh the view automatically"
+          },
+          "route": {
+            "title": "Route and event history",
+            "desc": "Will appear here once the data arrives"
+          }
+        }
+      },
+      "archived": {
+        "title": "Archived data",
+        "body": "This data comes from a completed voyage and is no longer being updated.",
+        "bodyWithDate": "This data comes from a voyage completed on {{date}} and is no longer being updated.",
+        "startNew": "Track a new voyage of this container"
+      },
+      "untracked": {
+        "title": "The carrier did not provide data for this number",
+        "reason1": "the container has not been booked yet",
+        "reason2": "the number belongs to a carrier outside the supported list",
+        "reason3": "there is a typo in the number",
+        "pickCarrier": "Select a carrier",
+        "pickCarrierBody": "Choose the line operating container {{number}}. Naming the carrier often finds a shipment that automatic detection missed.",
+        "creditWarning": "Selecting a carrier creates a new tracking record and uses another ShipsGo credit.",
+        "carrierLabel": "Carrier",
+        "carrierPlaceholder": "Pick from the list",
+        "loadingCarriers": "Loading the carrier list...",
+        "confirmCarrier": "Create tracking"
+      },
+      "confirmRemove": {
+        "title": "Remove the container from your list?",
+        "body": "The container will disappear from your list. Tracking on the ShipsGo side stays, so entering the same number again restores it at no cost.",
+        "confirm": "Remove from list"
+      },
+      "confirmNewVoyage": {
+        "title": "Start tracking a new voyage?",
+        "body": "The previous voyage of this container is completed. Starting a new tracking record uses another ShipsGo credit. The old voyage data will be kept.",
+        "confirm": "Start tracking"
+      },
+      "createFailed": {
+        "title": "Could not confirm tracking was created",
+        "body": "The request was sent to ShipsGo, but we could not confirm whether tracking was actually created. A credit may have been charged without any data being saved. We do not retry this automatically to avoid a double charge. Check the ShipsGo dashboard for a shipment with this number, and contact us if you find one."
       }
     }
   },

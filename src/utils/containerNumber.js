@@ -62,6 +62,67 @@ export function analyzeContainerNumber(raw) {
   return { normalized, prefix, valid: checkDigit === providedCheckDigit, checkDigit }
 }
 
+// Litera kategorii (czwarty znak). Dla kontenerów towarowych praktycznie zawsze
+// U; J to sprzęt wymienny, Z to podwozia i naczepy. Inna litera to OSTRZEŻENIE,
+// nie błąd twardy: numer może być poprawny, a my nie chcemy blokować czegoś,
+// czego norma nie zabrania wprost.
+const CATEGORY_LETTERS = ['U', 'J', 'Z']
+
+// Pełna walidacja pola „numer kontenera" przed wysłaniem czegokolwiek do
+// backendu. Każdy odrzucony tutaj numer to oszczędzony kredyt ShipsGo.
+//
+// Zwraca:
+//   normalized         – numer po normalizacji
+//   ok                 – czy wolno wysłać zapytanie
+//   code               – 'ok' | 'empty' | 'format' | 'checksum'
+//   expectedCheckDigit – wyliczona cyfra kontrolna, ale TYLKO w jednym,
+//                        wąskim przypadku (patrz niżej). Poza nim ZAWSZE null.
+//   categoryWarning    – czwarta litera spoza U/J/Z (ostrzeżenie, ok zostaje true)
+//
+// DLACZEGO NIE PODPOWIADAMY „poprawnej cyfry" przy zwykłej niezgodności:
+// niezgodność sumy kontrolnej nie wskazuje, KTÓRA z pierwszych dziesięciu
+// pozycji jest zła. Błędna może być dowolna z nich, a wynik wygląda identycznie.
+// Podanie wyliczonej cyfry sugerowałoby, że błąd jest na ostatniej pozycji,
+// co zwykle jest nieprawdą i wysyła użytkownika w złą stronę.
+//
+// JEDYNY WYJĄTEK: `lastValidNumber` to numer, który w TEJ SAMEJ sesji przeszedł
+// już walidację poprawnie. Jeśli użytkownik zmienił względem niego wyłącznie
+// ostatni znak, to pierwszych dziesięć znaków jest znanych i poprawnych, więc
+// wyliczona cyfra kontrolna jest realną podpowiedzią, a nie zgadywaniem.
+export function validateContainerNumber(raw, { lastValidNumber = '' } = {}) {
+  const normalized = normalizeContainerNumber(raw)
+
+  if (!normalized) {
+    return { normalized, ok: false, code: 'empty', expectedCheckDigit: null, categoryWarning: false }
+  }
+
+  if (!FULL_PATTERN.test(normalized)) {
+    return { normalized, ok: false, code: 'format', expectedCheckDigit: null, categoryWarning: false }
+  }
+
+  const categoryWarning = !CATEGORY_LETTERS.includes(normalized[3])
+  const body = normalized.slice(0, 10)
+  const checkDigit = computeCheckDigit(body)
+
+  if (checkDigit === Number(normalized[10])) {
+    return { normalized, ok: true, code: 'ok', expectedCheckDigit: null, categoryWarning }
+  }
+
+  const previous = normalizeContainerNumber(lastValidNumber)
+  const onlyLastCharChanged =
+    FULL_PATTERN.test(previous) &&
+    previous.slice(0, 10) === body &&
+    previous[10] !== normalized[10]
+
+  return {
+    normalized,
+    ok: false,
+    code: 'checksum',
+    expectedCheckDigit: onlyLastCharChanged ? checkDigit : null,
+    categoryWarning,
+  }
+}
+
 // Łączy analyzeContainerNumber + lookupCarrierByPrefix w jedno wywołanie —
 // WSPÓLNA ścieżka dla ContainerLookup (wyszukiwarka w Śledzeniu ładunku) i
 // widoku szczegółów przesyłki (link do trackera z zapisanego numeru

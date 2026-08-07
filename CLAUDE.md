@@ -837,7 +837,100 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
       dywizu) nie trafiała w `132_EMCS_eAD`, bo nazwa dokumentu to „e-AD / e-SAD" — dopisane tagi
       `ead`/`esad` do wpisu `emcs_ead` w `templateCatalog.js`. **612 → 616 testów.**
 
+- **Zakładka "Numer kontenera" na trwałym rejestrze rejsów (ShipsGo API v2) - GOTOWE (2026-08-06):**
+  wynik wyszukiwania przestał żyć wyłącznie w stanie Reacta. Każdy sprawdzony kontener trafia do
+  bazy i jest podpięty pod konto, więc F5 go nie gubi, a lista "Twoje kontenery" aktualizuje się sama.
+  - **Model: jeden wiersz na REJS, nie na numer kontenera.** `ContainerTracking` ma teraz `id` (uuid)
+    zamiast `containerNo` jako klucza, `shipsgoId Int? @unique`, kolumny `geojson`, `mapToken`,
+    `checkedAt`, `discardedAt`, `carrierScac/Name`, `bookingNumber` oraz DWIE kolumny stanu:
+    `status` (NEW...UNTRACKED wg ShipsGo) i `fetchState` (pending|ready|failed, nasze pobieranie).
+    Powód rozdzielenia numeru od rejsu: ten sam kontener wraca w kolejnych transportach, a kredyt
+    pokrywa jeden rejs. **Definicja rekordu AKTYWNEGO** (używana wszędzie):
+    `discardedAt IS NULL AND status NOT IN ('DISCHARGED','UNTRACKED')`.
+  - **`ContainerTrackingUser`** (userId + trackingId, `@@unique`, `hiddenAt`) - lista jest per
+    użytkownik, a przesyłka w ShipsGo jedna. "Usuń z listy" ustawia `hiddenAt`, NIE woła DELETE
+    w ShipsGo (tam usunięcie jest nieodwracalne, a ponowne dodanie to nowy kredyt).
+  - **`scripts/apply-tracking-index.js`** - częściowy indeks unikalny
+    `container_tracking_active_number_key` na `container_number` WHERE aktywny. Prisma nie
+    deklaruje indeksów z warunkiem, więc zakładany osobno RAW SQL-em; lista statusów wchodzi do
+    SQL-a z tej samej stałej `INACTIVE_STATUSES`, której używa kod. **Uruchom po każdym `db push`.**
+    To ten indeks, a nie kolejność w Node, rozstrzyga wyścig dwóch równoczesnych "Sprawdź".
+  - **`reference` NIE jest już wysyłane do ShipsGo.** Jeśli pole jest w żądaniu, ZAWSZE bierze
+    udział w sprawdzaniu duplikatu, więc zawężało dedupe do "ten kontener z TĄ etykietą".
+    Kosztowało to realnie dwa razy: (1) dwie ścieżki słały różne etykiety (MMAU1313642), (2) po
+    ujednoliceniu na `container-{numer}` śledzenia założone WCZEŚNIEJ, pod starymi etykietami,
+    nadal się nie dedupowały. Bez `reference` dedupe idzie po samym `container_number`.
+  - **Backend `api/_routes/tracking.js`** (mount `/api/tracking`, doczepiony do istniejącej funkcji):
+    `POST /containers` (jedyna trasa mogąca wydać kredyt), `GET /containers` (lista z bazy),
+    `GET /containers/:containerNumber` (pełne dane, to odpytuje polling), `POST .../refresh`
+    (GET do ShipsGo, cooldown 5 min NA REJS), `DELETE /containers/:containerNumber` (ukrycie),
+    `GET /carriers` (proxy do `/ocean/carriers`, cache 12 h), `POST /shipsgo-webhook` (publiczny).
+  - **Webhook:** HMAC-SHA256 z SUROWEGO body (`express.json({ verify })` w `api/index.js` zapisuje
+    `req.rawBody`), porównanie `crypto.timingSafeEqual`, akceptowany hex i base64 z opcjonalnym
+    prefiksem `sha256=`. Zły podpis to 401 bez dotykania bazy. Przetwarzanie idempotentne
+    (ShipsGo ponawia po 1, 5 i 10 minutach). `SHIPMENT_DELETED` ustawia `discardedAt`, nie kasuje.
+  - **`api/_lib/shipsgoSync.js`** (nowy) - JEDNO miejsce, z którego wychodzi płatny POST
+    (`createAndSave`), wspólne dla wyszukiwarki i przycisku "Włącz śledzenie". `api/_lib/shipsgoAccess.js`
+    - wspólna bramka `SHIPSGO_ENABLED` + `SHIPSGO_ALLOWED_EMAILS`. **Bramka jest sprawdzana dopiero
+    przed płatną ścieżką**, więc odczyt zapisanych danych działa też po wyłączeniu flagi.
+  - **Kolejność bramek w `POST /containers`:** kształt numeru → cyfra kontrolna → aktywny rejs
+    w bazie (zwróć, zero ruchu) → rejs archiwalny (zwróć z flagą `archived`, NIE twórz nowego) →
+    dostęp → rezerwacja wiersza → limit kosztowy → płatny POST. `startNewVoyage: true` (jawna zgoda
+    użytkownika po potwierdzeniu w UI) jest jedynym sposobem na nowy rejs dla znanego numeru.
+  - **Walidacja ISO 6346 rozdzielona na trzy komunikaty** (`validateContainerNumber` w
+    `src/utils/containerNumber.js` + kopia backendowa w `api/_lib/containerChecksum.js`):
+    zły kształt / niezgodna suma / **wyjątek**: konkretną cyfrę podpowiadamy WYŁĄCZNIE gdy
+    użytkownik zmienił sam ostatni znak względem numeru, który w tej sesji przeszedł walidację.
+    Poza tym przypadkiem nie zgadujemy, bo błędna może być dowolna z dziesięciu pierwszych pozycji.
+    `lastValidNumber` żyje w `ContainerLookup`, nie w formularzu (formularz przemontowuje się przy
+    powrocie ze szczegółów i wyjątek byłby nieosiągalny).
+  - **Frontend, sześć stanów wg zatwierdzonej makiety** (`docs/makieta_sledzenie_kontenera.html`):
+    `ContainerSearchForm` (1, 2), `ContainerList` (1-pusty, 4), `ContainerPendingCard` (3),
+    `ContainerDetail` (5, 5b, 6), `ContainerRouteBar`, `ContainerTimeline`, `ContainerStatusBadge`,
+    `CarrierPickerModal`, `useContainerTracking` (lista + polling), `containerTrackingRepo` (klient),
+    `voyageProgress` (postęp), `containerStatus` (mapowanie statusów). Makieta jest w zieleni na
+    ciemnym tle demo, ale zakładka zostaje w **ciemnym pomarańczu** zgodnie z resztą repo.
+  - **Postęp trasy liczony Z DAT** (`computeVoyageProgress`), nigdy z `transit_percentage` - to pole
+    potrafi zwrócić 99 dla przesyłki tuż po wypłynięciu. Surowa wartość zostaje w migawce jako
+    informacja z API i nie steruje niczym. Brak którejś daty = brak paska (null), nie zero.
+  - **Polling co 30 s przez maks. 15 minut idzie do NASZEGO endpointu**, nie do ShipsGo; po
+    wyczerpaniu pojawia się przycisk ręcznego odświeżenia. Stan 3 celowo BEZ licznika odliczającego.
+  - **Mapa:** `trimGeojson` zachowuje teraz `properties.status` (PAST/CURRENT/FUTURE), `current`
+    (pozycja statku, bywa `null` i to normalny stan), `vessel` i `voyage`. `ShipmentMap` rysuje
+    PAST/CURRENT linią ciągłą w akcencie, FUTURE przerywaną i przygaszoną, plus marker statku
+    z dymkiem. Brak trasy = prostokąt z informacją, nie pusta mapa świata.
+  - **`trimShipmentData` rozszerzone** o `loadingDate`/`dischargeDate`/`dischargeDateInitial`,
+    `containerCount`/`containerType`/`containers[]`, `transhipments[]`, `vessel`/`voyageNo`,
+    `bookingNumber`, `discardedAt`. Stare aliasy (`eta`, `loadingLocation`, `transitPercentage`)
+    zostają, żeby zakładka "Lista przesyłek" renderowała zapisane wcześniej migawki.
+  - **Usunięte:** `POST /shipsgo-tracking/lookup` i `lookupContainer` (zastąpione przez
+    `POST /api/tracking/containers`), podpis "AMLogistico nie przechowuje statusów przesyłek"
+    (nieprawdziwy w nowym modelu, skasowany z PL i EN).
+  - **`scripts/check-dashes.js`** (`npm run lint:dashes`, NOWY - reguła istniała w CLAUDE.md, ale
+    nie miała narzędzia): skanuje `src/` i `api/`, pomija komentarze, szablony PDF, nazwy dokumentów
+    i testy; `--docs` dokłada CLAUDE.md. Przy okazji posprzątane **48 zastanych wystąpień** myślnika
+    w tekstach. Skaner musiał nauczyć się dwóch pułapek: apostrof w polskim komentarzu otwierał
+    fikcyjny string, a regex z cudzysłowem (`/[\\/:*?"<>|]/g`) psuł rozpoznawanie dalszej części pliku.
+  - **`vite.config.js`:** `test.include` obejmuje teraz także `api/**/__tests__`. **670 testów**
+    (przed sesją 623), w tym nowe `src/utils/__tests__/containerTracking.test.js`
+    i `api/_lib/__tests__/shipsgoTracking.test.js`.
+  - Zweryfikowane: build zielony, 670/670 testów, `lint:locales` (1808 kluczy) i `lint:dashes` czyste,
+    **E2E backendu 22/22** (zaślepiony ShipsGo: dedupe, 409, 402, 429 z `retryAfter`, webhook
+    poprawny/błędny/powtórzony, rejs archiwalny, `startNewVoyage`, wyścig dwóch żądań = 1 POST)
+    oraz **E2E interfejsu 21/21** (Playwright, tymczasowy entry Vite skasowany po teście: wszystkie
+    sześć stanów, pasek 60 procent zamiast 99, mapa z geojsona, 375 px, ciemny motyw, 0 błędów konsoli).
+    `SHIPSGO_API_TOKEN` nie występuje w `dist/`.
+  - **Nie zweryfikowane:** nic nie było wołane do PRAWDZIWEGO ShipsGo (mamy 2 kredyty testowe).
+    Kształt odpowiedzi, nazwy pól dat, format podpisu webhooka i filtr `?filters[container_number]`
+    pozostają założeniami opartymi na dokumentacji, obronnymi w kodzie (brak dopasowania = `null`,
+    nie wyjątek). Limit `shipsgoRateLimit` to **5 utworzeń na godzinę na użytkownika** - do podniesienia
+    po wykupieniu pakietu.
+
 **Do zrobienia:**
+- **ShipsGo na realnym tokenie:** potwierdzić kształt odpowiedzi (`date_of_loading`,
+  `date_of_discharge_initial`, `transhipments`, `size_type`), format podpisu webhooka (hex czy
+  base64) i czy `GET /ocean/shipments?filters[container_number]=eq:` działa jak zakłada fallback
+  dla 409 bez `id`. Wpisać URL webhooka w dashboardzie ShipsGo i ustawić `SHIPSGO_WEBHOOK_SECRET`.
 - **Twoja weryfikacja w przeglądarce sześciu szablonów pod kątem łamania stron A4** — obiecana,
   wynik nieznany: `EudrDdsTemplate`, `ChedTracesTemplate`, `CbamDataSheetTemplate`,
   `EmcsEadTemplate`, `WagonListTemplate`, `AirCargoManifestTemplate`.

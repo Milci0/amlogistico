@@ -27,13 +27,13 @@ import { SeaWaybillTemplate } from './templates/eu/sea/SeaWaybillTemplate'
 export const DOCUMENTS = [
   {
     key: 'cmr', transport: ['road'], required: true,
-    name: 'CMR — list przewozowy', desc: 'Podstawowy dokument transportu drogowego',
+    name: 'CMR (list przewozowy)', desc: 'Podstawowy dokument transportu drogowego',
     icon: 'doc', filename: 'CMR.pdf', template: CmrTemplate,
     blankFile: '/templates/eu/land/01_CMR_List_Przewozowy.pdf',
   },
   {
     key: 'bol', transport: ['sea'], required: true,
-    name: 'Bill of Lading', desc: 'Konosament morski — negocjowalny dokument tytułowy',
+    name: 'Bill of Lading', desc: 'Konosament morski: negocjowalny dokument tytułowy',
     icon: 'doc', filename: 'Bill_of_Lading.pdf', template: BillOfLadingTemplate,
     blankFile: '/templates/eu/sea/05_Bill_of_Lading.pdf',
   },
@@ -69,7 +69,7 @@ export const DOCUMENTS = [
   },
   {
     key: 'seawaybill', transport: ['sea'], required: false,
-    name: 'Sea Waybill', desc: 'Morski list przewozowy — szybszy odbiór niż B/L',
+    name: 'Sea Waybill', desc: 'Morski list przewozowy: szybszy odbiór niż B/L',
     icon: 'doc', filename: 'Sea_Waybill.pdf', template: SeaWaybillTemplate,
     blankFile: '/templates/eu/sea/26_Sea_Waybill.pdf',
   },
