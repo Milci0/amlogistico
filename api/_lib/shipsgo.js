@@ -215,16 +215,24 @@ export async function getOceanShipment(id) {
 // Ratunek na wypadek 409 ALREADY_EXISTS, którego ciało nie niesie `id`
 // istniejącej przesyłki. Bez id nie umiemy jej później odpytać, a kredyt już
 // kiedyś za nią zapłacono. GET nie kosztuje, więc próba jest darmowa.
-// Kształt filtra NIEZWERYFIKOWANY bez realnego tokena — brak wyniku zwraca
-// null i wywołujący pokazuje prośbę o ponowienie, zamiast płacić drugi raz.
+//
+// Numer kontenera jest ZWYKŁYM parametrem zapytania, nie wpisem w `filters[]`:
+// dokumentacja dopuszcza w `filters[]` dla oceanu wyłącznie status, carrier,
+// port_of_loading_country, date_of_loading, tags i creator. Wcześniejsze
+// `filters[container_number]=eq:` albo kończyło się odrzuceniem zapytania,
+// albo — gorzej — zwracało NIEfiltrowaną listę całego konta i podpinało pod nasz
+// numer pierwszą lepszą cudzą przesyłkę. Dlatego wynik i tak sprawdzamy po
+// stronie Node: bierzemy wyłącznie przesyłkę o dokładnie tym numerze, a brak
+// dopasowania zwraca null i wywołujący prosi o ponowienie zamiast płacić drugi raz.
 export async function findOceanShipmentByContainer(containerNumber) {
   try {
-    const query = `filters[container_number]=eq:${encodeURIComponent(containerNumber)}`
+    const query = `container_number=${encodeURIComponent(containerNumber)}`
     const res = await shipsgoFetch(`/ocean/shipments?${query}`, { method: 'GET' })
     if (!res.ok) return null
     const body = await res.json()
     const list = unwrapShipmentList(body)
-    return list.find((s) => s?.id != null) || null
+    const wanted = String(containerNumber).trim().toUpperCase()
+    return list.find((s) => s?.id != null && String(s.container_number || '').trim().toUpperCase() === wanted) || null
   } catch (e) {
     console.error('[shipsgo] findOceanShipmentByContainer nie powiodło się:', e)
     return null
@@ -246,17 +254,63 @@ export async function getShipmentGeojson(id) {
   }
 }
 
-// Pierwsza niepusta wartość spośród kilku prawdopodobnych ścieżek. Kształt
-// odpowiedzi ShipsGo jest NIEZWERYFIKOWANY bez realnego tokena (mieliśmy tylko
-// 2 kredyty testowe), a dokumentacja podaje same nazwy pól bez pełnego drzewa —
-// dlatego zamiast zgadywać jedną ścieżkę, sprawdzamy kilka i przy braku
-// dopasowania zwracamy null. Front pokazuje wtedy „brak danych" zamiast
-// fałszywej wartości.
+// Pierwsza niepusta wartość spośród kilku ścieżek. Kolejność argumentów NIE jest
+// przypadkowa: na pierwszym miejscu stoi ścieżka z dokumentacji ShipsGo, dalej
+// warianty zgadywane, zanim dokumentacja trafiła do repo. Zgadywanki zostają
+// jako zabezpieczenie do czasu potwierdzenia kształtu na realnym tokenie, ale
+// nigdy nie wygrywają z udokumentowaną nazwą. Brak dopasowania → null, a front
+// pokazuje „brak danych" zamiast fałszywej wartości.
 function firstOf(...values) {
   for (const v of values) {
     if (v !== undefined && v !== null && v !== '') return v
   }
   return null
+}
+
+// Jak firstOf, ale dla pól LICZBOWYCH. Osobna funkcja, bo dla liczb zero jest
+// wartością pełnoprawną (0 procent trasy, 0 kg CO2), a firstOf odrzuciłoby je
+// razem z pustym stringiem.
+function firstNumber(...values) {
+  for (const v of values) {
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+  }
+  return null
+}
+
+// Typ kontenera składany z DWÓCH osobnych pól odpowiedzi (`size` i `type`,
+// np. 20 + „High Cube"). Wcześniej czytaliśmy nieistniejące `size_type`, przez
+// co nagłówek pokazywał samo „1 kontener" bez rozmiaru. Sklejamy tylko części
+// niepuste, więc sam typ nie daje wiodącej spacji, a sam rozmiar nie gubi się
+// przez brak drugiego pola.
+function containerLabel(c) {
+  if (!c) return null
+  const parts = [c.size, c.type]
+    .filter((v) => v !== undefined && v !== null && String(v).trim() !== '')
+    .map((v) => String(v).trim())
+  return parts.length > 0 ? parts.join(' ') : firstOf(c.size_type, c.container_type)
+}
+
+// Lista portów przeładunku. ShipsGo podaje w `route.ts_count` samą LICZBĘ
+// przeładunków, a kafelek „Przeładunki" potrzebuje nazw, więc porty wyciągamy
+// z ruchów kontenera: unikalne lokalizacje w kolejności wystąpienia, z
+// pominięciem portu załadunku i wyładunku.
+//
+// Porównanie idzie po KODZIE lokalizacji, nie po nazwie, bo ten sam port bywa
+// w odpowiedzi nazwany różnie w różnych polach (port załadunku „CALLAO (LIMA)"
+// obok ruchu w „CALLAO") i porównanie po nazwie wpisałoby port załadunku jako
+// przeładunek. Lokalizacja bez kodu jest pomijana z tego samego powodu: nie da
+// się jej rozstrzygnąć względem trasy, a zgadywanie zafałszowałoby kafelek.
+function collectTranshipments(movements, polLocation, podLocation) {
+  const skip = new Set([polLocation?.code, podLocation?.code].filter(Boolean))
+  const seen = new Set()
+  const out = []
+  for (const m of movements) {
+    const code = m.location?.code
+    if (!code || skip.has(code) || seen.has(code)) continue
+    seen.add(code)
+    out.push(m.location)
+  }
+  return out
 }
 
 function trimLocation(loc) {
@@ -291,57 +345,73 @@ export function trimShipmentData(raw) {
 
   const containersRaw = Array.isArray(raw.containers) ? raw.containers : []
   const first = containersRaw[0] || null
-  const pol = raw.route?.port_of_loading || null
-  const pod = raw.route?.port_of_discharge || null
+  // `route` czytane RAZ do zmiennej, bo mieszkają w nim nie tylko porty, ale też
+  // czas przewozu, postęp i emisja CO2 — te trzy były wcześniej czytane
+  // z poziomu głównego odpowiedzi i przez to zawsze puste.
+  const route = raw.route || {}
+  const pol = route.port_of_loading || null
+  const pod = route.port_of_discharge || null
 
-  const loadingDate = firstOf(pol?.date, pol?.date_of_loading, raw.date_of_loading)
-  const dischargeDate = firstOf(pod?.date, pod?.date_of_discharge, pod?.eta, raw.date_of_discharge, raw.eta)
-  const dischargeDateInitial = firstOf(pod?.date_initial, pod?.date_of_discharge_initial, raw.date_of_discharge_initial)
+  const loadingDate = firstOf(pol?.date_of_loading, pol?.date, raw.date_of_loading)
+  const dischargeDate = firstOf(pod?.date_of_discharge, pod?.date, pod?.eta, raw.date_of_discharge, raw.eta)
+  const dischargeDateInitial = firstOf(pod?.date_of_discharge_initial, pod?.date_initial, raw.date_of_discharge_initial)
 
-  // Przeładunki: nazwa portu jest potrzebna w kafelku „Przeładunki", więc
-  // zbieramy lokalizacje, nie samą liczbę.
-  const transhipmentsRaw = Array.isArray(raw.route?.transhipments)
-    ? raw.route.transhipments
-    : Array.isArray(raw.transhipments)
-      ? raw.transhipments
-      : []
-  const transhipments = transhipmentsRaw.map((t) => trimLocation(t.location || t)).filter(Boolean)
+  const loadingLocation = trimLocation(pol?.location)
+  const dischargeLocation = trimLocation(pod?.location)
 
   // Statek i rejs: bierzemy z ostatniego ruchu, który je niesie (najświeższa
   // znana jednostka), a gdy ruchów nie ma, z pól przesyłki.
   const allMovements = trimMovements(first?.movements)
   const lastWithVessel = [...allMovements].reverse().find((m) => m.vessel) || null
 
+  // Liczba przeładunków wprost z odpowiedzi. Rozróżnienie null kontra 0 jest
+  // istotne dla użytkownika: 0 znaczy „przewoźnik potwierdził przewóz
+  // bezpośredni", brak pola znaczy „jeszcze nie wiadomo". Kafelek pokazuje
+  // w każdym z tych przypadków co innego.
+  const tsCount = firstNumber(route.ts_count)
+  const transhipments = collectTranshipments(allMovements, loadingLocation, dischargeLocation)
+
+  // Rozjazd oznacza, że ruchy nie pokrywają całej trasy (np. lokalizacje bez
+  // kodu). Autorytatywna jest wtedy liczba z API, a lista nazw zostaje
+  // najlepszym przybliżeniem — to nie jest powód, żeby odrzucić całą odpowiedź.
+  if (tsCount !== null && tsCount !== transhipments.length) {
+    console.warn('[shipsgo] route.ts_count nie zgadza sie z liczba portow wyliczonych z ruchow:', tsCount, 'kontra', transhipments.length)
+  }
+
   return {
     id: raw.id ?? null,
     status: raw.status || null,
     containerStatus: first?.status || null,
-    carrier: raw.carrier ? { scac: raw.carrier.scac || null, name: raw.carrier.name || null } : null,
+    // Kod linii nazywa się w odpowiedzi `code`; `scac` było zgadywanką i przez
+    // to kolumna carrier_scac zostawała pusta. Nazwa pola w NASZEJ migawce
+    // zostaje bez zmian (front i baza już jej używają), zmienia się źródło.
+    carrier: raw.carrier ? { scac: firstOf(raw.carrier.code, raw.carrier.scac), name: raw.carrier.name || null } : null,
     bookingNumber: raw.booking_number || null,
 
     // ── Trasa ────────────────────────────────────────────────────────────────
-    loadingLocation: trimLocation(pol?.location),
-    dischargeLocation: trimLocation(pod?.location),
+    loadingLocation,
+    dischargeLocation,
     loadingDate,
     dischargeDate,
     dischargeDateInitial,
+    tsCount,
     transhipments,
 
     // ── Kontenery ────────────────────────────────────────────────────────────
-    // Liczba i typ trafiają do nagłówka stanu 5 („1 kontener 40 HC").
+    // Liczba i typ trafiają do nagłówka stanu 5 („1 kontener 40 High Cube").
     containerCount: containersRaw.length || 0,
     containers: containersRaw.map((c) => ({
       number: c.number || c.container_number || null,
-      type: firstOf(c.size_type, c.type, c.container_type),
+      type: containerLabel(c),
       status: c.status || null,
     })),
-    containerType: firstOf(first?.size_type, first?.type, first?.container_type),
+    containerType: containerLabel(first),
 
     // ── Rejs ─────────────────────────────────────────────────────────────────
     vessel: firstOf(lastWithVessel?.vessel, raw.vessel?.name, raw.vessel),
     voyageNo: firstOf(lastWithVessel?.voyage, raw.voyage),
-    transitTime: typeof raw.transit_time === 'number' ? raw.transit_time : null,
-    co2Emission: typeof raw.co2_emission === 'number' ? raw.co2_emission : null,
+    transitTime: firstNumber(route.transit_time, raw.transit_time),
+    co2Emission: firstNumber(route.co2_emission, raw.co2_emission),
 
     movements: allMovements,
     mapToken: raw.tokens?.map || null,
@@ -354,12 +424,12 @@ export function trimShipmentData(raw) {
     // zapisanych w DocumentSet.meta. Zostają jako aliasy, żeby stare zestawy
     // dalej się renderowały.
     eta: dischargeDate,
-    loadingDateInitial: firstOf(pol?.date_initial, pol?.date_of_loading_initial),
-    // transit_percentage z ShipsGo jest CELOWO nieprzenoszone do paska postępu
-    // (potrafi zwracać 99 dla przesyłki tuż po wypłynięciu). Postęp liczymy
-    // z dat, patrz src/utils/voyageProgress.js. Pole zostaje wyłącznie jako
-    // surowa wartość informacyjna z API.
-    transitPercentage: typeof raw.transit_percentage === 'number' ? raw.transit_percentage : null,
+    loadingDateInitial: firstOf(pol?.date_of_loading_initial, pol?.date_initial),
+    // transit_percentage jest wartością Z API i tak jest prezentowane. Pasek
+    // postępu na osi czasu własnej przesyłki liczy się osobno z dat (patrz
+    // src/utils/voyageProgress.js), bo ta wartość potrafi zwracać 99 dla
+    // przesyłki tuż po wypłynięciu.
+    transitPercentage: firstNumber(route.transit_percentage, raw.transit_percentage),
   }
 }
 

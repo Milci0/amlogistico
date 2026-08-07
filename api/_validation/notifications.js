@@ -1,11 +1,18 @@
 import { z } from 'zod'
+import { KIND_ADMIN_MESSAGE } from '../_lib/autoNotifications.js'
 
 // Walidacja wysyłki powiadomienia (POST /api/notifications, tylko admin).
 // target='user' → wymagany email odbiorcy; target='all' → broadcast do wszystkich.
+//
+// `kind` NIE jest polem formularza: kategorię ustawia trasa. Gdyby ktoś dopisał ją
+// do żądania ręcznie, jedyną dopuszczalną wartością jest ADMIN_MESSAGE — panelem
+// admina nie da się podszyć pod powiadomienie generowane automatycznie (te mają
+// własną regułę odradzania się co 7 dni i własny znacznik odroczenia na koncie).
 export const createNotificationSchema = z
   .object({
     target: z.enum(['user', 'all']),
     email: z.email('Podaj poprawny adres email').optional(),
+    kind: z.literal(KIND_ADMIN_MESSAGE, 'Panel admina wysyła wyłącznie powiadomienia zwykłe').optional(),
     type: z.enum(['info', 'success', 'warning']).default('info'),
     title: z.string().trim().min(1, 'Podaj tytuł'),
     body: z.string().trim().min(1, 'Podaj treść'),

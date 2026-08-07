@@ -2,7 +2,10 @@
 //
 // JEDYNE miejsce z dostępem do /api/notifications. Wzorzec 1:1 z documentSetsRepo:
 // woła api.* (cookie leci automatycznie), funkcje async, po każdej mutacji emituje
-// 'notifications:changed' — listy/liczniki (dzwonek) nasłuchują i się odświeżają.
+// 'notifications:changed' — dzwonek nasłuchuje i się odświeża.
+//
+// Cały stan powiadomień jest własnością konta i leży w bazie. Frontend niczego tu
+// nie decyduje i nic nie zapisuje w localStorage: czyta listę i woła endpointy akcji.
 
 import { api } from '../lib/api'
 
@@ -12,13 +15,24 @@ function notifyChange() {
   }
 }
 
-// listNotifications() -> Promise<Notification[]>  (moje, najnowsze pierwsze)
-export async function listNotifications() {
-  const { notifications } = await api.get('/notifications')
-  return Array.isArray(notifications) ? notifications : []
+// refreshNotifications() -> void
+//   Wymusza ponowne pobranie listy bez własnej mutacji. Woła to ProfilePage po
+//   zapisie danych firmy: GET uruchamia synchronizację po stronie serwera, więc
+//   aktywna zachęta zamyka się od razu, bez przeładowania strony.
+export function refreshNotifications() {
+  notifyChange()
 }
 
-// markRead(id) -> Promise<void>
+// listNotifications() -> Promise<{ items, unreadCount }>
+//   Zawartość dzwonka: nieprzeczytane I przeczytane, oba źródła, najnowsze pierwsze.
+//   Dzwonek jest jedyną historią powiadomień, osobnej podstrony nie ma.
+export async function listNotifications() {
+  const { notifications, unreadCount } = await api.get('/notifications')
+  const items = Array.isArray(notifications) ? notifications : []
+  return { items, unreadCount: unreadCount ?? items.filter((n) => !n.readAt).length }
+}
+
+// markRead(id) -> Promise<void>   (klik w powiadomienie)
 export async function markRead(id) {
   await api.patch(`/notifications/${id}/read`)
   notifyChange()
@@ -31,13 +45,11 @@ export async function markAllRead() {
   return count ?? 0
 }
 
-// deleteNotification(id) -> Promise<void>
+// deleteNotification(id) -> Promise<void>   („X" na pojedynczym powiadomieniu)
+//   Kasuje rekord NA STAŁE. Dla zachęty „Uzupełnij dane firmy" serwer zapisuje przy
+//   okazji 7-dniowe odroczenie na koncie, więc nie wraca od razu po skasowaniu.
 export async function deleteNotification(id) {
-  try {
-    await api.del(`/notifications/${id}`)
-  } catch (err) {
-    if (err?.status !== 404) throw err // 404 = już nie ma → traktujemy jak sukces
-  }
+  await api.del(`/notifications/${id}`)
   notifyChange()
 }
 

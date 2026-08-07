@@ -12,6 +12,11 @@ import './index.css'
 // od razu dostały właściwy język (bez migotania angielskich kluczy).
 import './i18n'
 import App from './App.jsx'
+import { cleanupLegacyNotificationKeys } from './services/cleanupLegacyKeys'
+
+// Martwe klucze localStorage po dawnej zachęcie „Uzupełnij dane firmy" (stan
+// powiadomień jest teraz własnością konta i leży w bazie).
+cleanupLegacyNotificationKeys()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

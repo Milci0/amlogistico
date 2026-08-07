@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../auth/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
-import { shouldShowNudge, snoozeNudge } from '../../utils/profileNudge'
 import { useNotifications } from '../../hooks/useNotifications'
 import { markRead as markNotifRead, markAllRead, deleteNotification } from '../../services/notificationsRepo'
+import { notificationContent, KIND_ADMIN_MESSAGE } from '../../utils/notificationContent'
 import TemplateSearch from './TemplateSearch'
 import LanguageSwitcher from '../LanguageSwitcher'
 
-// Typ powiadomienia z serwera → ikona + kolory kafelka.
+// Waga wizualna powiadomienia (kolumna `type`) → ikona + kolory kafelka.
 const NOTIF_STYLE = {
   info:    { tile: 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300',
              path: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -58,60 +58,91 @@ function useDismissable(open, setOpen, ref) {
   }, [open, setOpen, ref])
 }
 
+// Ikona kafelka powiadomienia automatycznego (budynek firmy). Powiadomienia admina
+// używają ikony wynikającej z wagi wizualnej (NOTIF_STYLE).
+const AUTO_ICON = 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2M5 21H3m6-14h1m-1 4h1m4-4h1m-1 4h1m-6 6h4v4H9v-4z'
+
 // ── Dzwonek powiadomień ─────────────────────────────────────────────────────────
-// Dwa źródła: powiadomienia z serwera (useNotifications — wysyłane przez admina)
-// oraz zachęta do uzupełnienia danych firmy (nudge). Reguły nudge'a w
-// utils/profileNudge.js:
-//   • znika na zawsze, gdy user ma ≥1 pole osobowe i ≥1 pole firmy,
-//   • po odrzuceniu (X) uśpiony na 7 dni (per konto).
-// Licznik = suma źródeł.
+// Jedno źródło prawdy: /api/notifications. W jednej liście, posortowanej po dacie,
+// są zarówno wysyłki admina (kind = ADMIN_MESSAGE), jak i powiadomienia generowane
+// automatycznie (kind = PROFILE_COMPANY_DATA, zachęta do uzupełnienia danych firmy).
+// Cały stan (czy powiadomienie istnieje, czy zostało przeczytane, kiedy może wrócić)
+// jest własnością KONTA i liczy go serwer. Front nie zapisuje tu niczego lokalnie.
+//
+// DZWONEK JEST HISTORIĄ POWIADOMIEŃ — osobnej podstrony nie ma. Przeczytany wpis
+// zostaje na liście, tylko przygaszony; znika dopiero po skasowaniu przyciskiem „X",
+// które usuwa go z konta na stałe.
 //
 // Newsy NIE są tu pokazywane — nowe artykuły sygnalizuje czerwona kropka przy
 // pozycji „Newsy" w menu bocznym (Sidebar + NewsContext).
-function NotificationsBell({ user }) {
+function NotificationsBell() {
   const { t } = useTranslation()
-  const { items: notifs, unreadCount } = useNotifications()
+  const { items, unreadCount, loading, error } = useNotifications()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   useDismissable(open, setOpen, ref)
 
-  // Bump po odrzuceniu → wymusza ponowne przeliczenie shouldShowNudge (czyta świeży
-  // stan uśpienia z localStorage). Klucz uśpienia jest oparty na user.id (prop),
-  // więc jest stabilny mimo hydratacji sesji.
-  const [nudgeBump, setNudgeBump] = useState(0)
-  const showNudge = useMemo(
-    () => shouldShowNudge(user),
-    // nudgeBump celowo w zależnościach — służy tylko do wymuszenia przeliczenia
-    // po odrzuceniu (shouldShowNudge czyta stan uśpienia z localStorage).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, nudgeBump]
-  )
-  const count = unreadCount + (showNudge ? 1 : 0)
+  // Optymistyczny obraz akcji, zanim odpowie serwer: skasowane znikają z listy,
+  // przeczytane szarzeją. Przy błędzie odpowiedzi wpis wraca do poprzedniego stanu
+  // i pokazujemy komunikat o niepowodzeniu.
+  const [removedIds, setRemovedIds] = useState(() => new Set())
+  const [readIds, setReadIds] = useState(() => new Set())
+  const [actionError, setActionError] = useState(null)
 
-  function dismissNudge(e) {
-    e.stopPropagation()
-    snoozeNudge(user?.id)
-    setNudgeBump((n) => n + 1)
-  }
+  const withId = (setter, id, add) =>
+    setter((prev) => {
+      const next = new Set(prev)
+      if (add) next.add(id)
+      else next.delete(id)
+      return next
+    })
 
-  function openNudge() {
-    setOpen(false)
-    navigate('/profile?tab=firma')
-  }
+  const visible = items.filter((n) => !removedIds.has(n.id))
+  const isRead = (n) => !!n.readAt || readIds.has(n.id)
+  const hasUnread = visible.some((n) => !isRead(n))
 
-  // Klik w powiadomienie z serwera → oznacz przeczytane i (jeśli jest link) przejdź.
-  function openNotif(n) {
-    if (!n.readAt) markNotifRead(n.id).catch(() => {})
-    if (n.ctaUrl) {
+  // Licznik zdejmuje to, co użytkownik już kliknął, żeby badge nie został
+  // z zawyżoną liczbą do czasu odpowiedzi serwera. Bazą jest `unreadCount`
+  // z serwera, a nie długość listy: lista bywa obcięta do ostatnich 50 wpisów.
+  const cleared = items.filter((n) => !n.readAt && (removedIds.has(n.id) || readIds.has(n.id))).length
+  const count = loading || error ? 0 : Math.max(0, unreadCount - cleared)
+
+  // Klik w powiadomienie → oznacz przeczytane i (jeśli jest link) przejdź.
+  function openNotif(n, ctaUrl) {
+    setActionError(null)
+    if (!isRead(n)) {
+      withId(setReadIds, n.id, true)
+      markNotifRead(n.id).catch(() => {
+        withId(setReadIds, n.id, false)
+        setActionError(t('notifications.actionFailed'))
+      })
+    }
+    if (ctaUrl) {
       setOpen(false)
-      navigate(n.ctaUrl)
+      navigate(ctaUrl)
     }
   }
 
-  function removeNotif(e, id) {
+  // „X" → kasuje powiadomienie z konta na stałe (nie ma dokąd go przenieść).
+  function remove(e, id) {
     e.stopPropagation()
-    deleteNotification(id).catch(() => {})
+    setActionError(null)
+    withId(setRemovedIds, id, true)
+    deleteNotification(id).catch(() => {
+      withId(setRemovedIds, id, false)
+      setActionError(t('notifications.actionFailed'))
+    })
+  }
+
+  function handleMarkAllRead() {
+    setActionError(null)
+    const ids = visible.filter((n) => !isRead(n)).map((n) => n.id)
+    ids.forEach((id) => withId(setReadIds, id, true))
+    markAllRead().catch(() => {
+      ids.forEach((id) => withId(setReadIds, id, false))
+      setActionError(t('notifications.actionFailed'))
+    })
   }
 
   return (
@@ -129,7 +160,7 @@ function NotificationsBell({ user }) {
       </IconBtn>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl ring-1 ring-black/5 overflow-hidden z-50">
+        <div className="absolute right-0 mt-2 w-[28rem] max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl ring-1 ring-black/5 overflow-hidden z-50">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('notifications.title')}</p>
             {count > 0 && (
@@ -139,7 +170,17 @@ function NotificationsBell({ user }) {
             )}
           </div>
 
-          {notifs.length === 0 && !showNudge && (
+          {actionError && (
+            <p className="px-4 py-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20">{actionError}</p>
+          )}
+
+          {/* Trzy stany, nie dwa: dopóki trwa pobieranie, nie renderujemy ani listy,
+              ani pustego stanu. Błąd zapytania też nie może udawać pustej listy. */}
+          {loading ? (
+            <p className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">{t('notifications.loading')}</p>
+          ) : error ? (
+            <p className="px-4 py-8 text-center text-sm text-red-600 dark:text-red-400">{t('notifications.loadFailed')}</p>
+          ) : visible.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
               <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,120 +190,83 @@ function NotificationsBell({ user }) {
               </div>
               <p className="text-sm text-slate-400 dark:text-slate-500">{t('notifications.empty')}</p>
             </div>
-          )}
-
-          <div className="p-2 space-y-2 max-h-[26rem] overflow-y-auto">
-            {/* Powiadomienia z serwera (od admina) — na górze, najnowsze pierwsze */}
-            {notifs.map((n) => {
-              const s = NOTIF_STYLE[n.type] || NOTIF_STYLE.info
-              const unread = !n.readAt
-              return (
-                <div
-                  key={n.id}
-                  onClick={() => openNotif(n)}
-                  className={
-                    'relative rounded-xl border p-3.5 transition-colors cursor-pointer ' +
-                    (unread
-                      ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60'
-                      : 'border-slate-100 dark:border-slate-700/60 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-700/40')
-                  }
-                >
-                  <button
-                    onClick={(e) => removeNotif(e, n.id)}
-                    aria-label={t('notifications.delete')}
-                    className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/70 transition-colors"
+          ) : (
+            <div className="p-2 space-y-2 max-h-96 overflow-y-auto">
+              {visible.map((n) => {
+                const auto = n.kind !== KIND_ADMIN_MESSAGE
+                const read = isRead(n)
+                const c = notificationContent(n, t)
+                const s = NOTIF_STYLE[n.type] || NOTIF_STYLE.info
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => openNotif(n, c.ctaUrl)}
+                    className={
+                      'relative rounded-xl border p-3.5 transition-colors cursor-pointer ' +
+                      // Przeczytane zostają na liście (dzwonek jest historią), tylko przygaszone.
+                      (read ? 'opacity-60 ' : '') +
+                      (auto && !read
+                        ? 'border-emerald-200/70 dark:border-emerald-800/60 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/25 dark:to-slate-800'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60')
+                    }
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-
-                  <div className="flex items-start gap-3 pr-5">
-                    <div className={'shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ' + s.tile}>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={s.path} />
+                    <button
+                      onClick={(e) => remove(e, n.id)}
+                      aria-label={t('notifications.delete')}
+                      title={t('notifications.delete')}
+                      className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/70 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        {unread && <span className="shrink-0 w-2 h-2 rounded-full bg-emerald-500" />}
-                        <p className={'text-sm truncate ' + (unread ? 'font-semibold text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-slate-300')}>
-                          {n.title}
-                        </p>
+                    </button>
+
+                    <div className="flex items-start gap-3 pr-5">
+                      <div
+                        className={
+                          'shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ' +
+                          (auto
+                            ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-sm shadow-emerald-600/20'
+                            : s.tile)
+                        }
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={auto ? AUTO_ICON : s.path} />
+                        </svg>
                       </div>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed whitespace-pre-line">{n.body}</p>
-                      {n.ctaLabel && n.ctaUrl && (
-                        <span className="inline-flex items-center gap-1.5 mt-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg shadow-sm transition-colors">
-                          {n.ctaLabel}
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                          </svg>
-                        </span>
-                      )}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          {!read && <span className="shrink-0 w-2 h-2 rounded-full bg-emerald-500" />}
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{c.title}</p>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed whitespace-pre-line">{c.body}</p>
+                        {c.ctaLabel && c.ctaUrl && (
+                          <span className="inline-flex items-center gap-1.5 mt-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg shadow-sm transition-colors">
+                            {c.ctaLabel}
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
+          )}
 
-            {unreadCount > 0 && (
+          {/* Poza przewijalną listą - zawsze widoczny, nie znika przy scrollu. */}
+          {hasUnread && (
+            <div className="p-2 border-t border-slate-100 dark:border-slate-700">
               <button
-                onClick={() => markAllRead().catch(() => {})}
+                onClick={handleMarkAllRead}
                 className="w-full text-center text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
               >
                 {t('notifications.markAllRead')}
               </button>
-            )}
-
-            {showNudge && (
-              <div className="relative rounded-xl border border-emerald-200/70 dark:border-emerald-800/60 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/25 dark:to-slate-800 p-3.5">
-                <button
-                  onClick={dismissNudge}
-                  aria-label={t('nudge.dismiss')}
-                  title={t('nudge.remindLater')}
-                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/70 transition-colors"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-
-                <div className="flex items-start gap-3 pr-5">
-                  <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-sm shadow-emerald-600/20">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2M5 21H3m6-14h1m-1 4h1m4-4h1m-1 4h1m-6 6h4v4H9v-4z" />
-                    </svg>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{t('nudge.title')}</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                      {t('nudge.body')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 mt-3 pl-13">
-                  <button
-                    onClick={openNudge}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 rounded-lg shadow-sm transition-colors"
-                  >
-                    {t('nudge.cta')}
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={dismissNudge}
-                    className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-2 py-2 rounded-lg transition-colors"
-                  >
-                    {t('nudge.later')}
-                  </button>
-                </div>
-              </div>
-            )}
-
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -385,7 +389,7 @@ export default function Topbar({ onOpenSidebar }) {
       {!loading && user && (
         <div className="flex items-center gap-2 ml-auto">
           <LanguageSwitcher className="hidden sm:block" />
-          <NotificationsBell user={user} />
+          <NotificationsBell />
           <IconBtn onClick={toggle} label={t('theme.toggle')}>
             {dark ? <SunIcon /> : <MoonIcon />}
           </IconBtn>

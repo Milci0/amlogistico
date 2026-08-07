@@ -29,6 +29,7 @@ import { translateEngineWarning } from '../../utils/translateEngineWarning'
 import FreightRates from '../freight/FreightRates'
 import useFreightRates from '../../hooks/useFreightRates'
 import { findSeaPortCode } from '../../data/seaPorts'
+import { companyDataStatus, fillSenderFromProfile } from '../../utils/senderProfileFill'
 
 const CURRENCIES = ['EUR', 'PLN', 'USD', 'GBP', 'CHF']
 const CONTAINER_TYPES = ['', '20ft', '40ft', '40ft HC', 'LCL']
@@ -892,57 +893,26 @@ function PartySection({ title, subtitle, data, onChange, showBank = false }) {
   )
 }
 
-// Składa dane profilu firmy w kształt sekcji „Nadawca" (jeden wiersz adresu).
-// Uzupełniamy CZĘŚCIOWO — puste pola profilu po prostu nie trafiają do patcha,
-// więc nie kasują tego, co user zdążył wpisać ręcznie.
-function profileToSenderPatch(user) {
-  const line2 = [user.postalCode, user.city].filter(Boolean).join(' ')
-  const address = [user.address, line2, user.country].filter(Boolean).join(', ')
-  const patch = {}
-  if (user.companyName) patch.name = user.companyName
-  if (user.vatNumber) patch.vat = user.vatNumber
-  if (address) patch.address = address
-  return patch
-}
-
-// Pola profilu, które potrafimy przenieść do sekcji „Nadawca".
-// Wystarczy JEDNO wypełnione (np. sama nazwa firmy), żeby auto-uzupełnianie działało —
-// nie wymagamy kompletnego profilu (`profileCompleted`), bo ten jest `true` dopiero
-// przy pełnym adresie i blokował podpowiadanie częściowych danych.
-const SENDER_SOURCE_FIELDS = ['companyName', 'vatNumber', 'address', 'city', 'postalCode', 'country']
-
-function hasCompanyDataToFill(user) {
-  return SENDER_SOURCE_FIELDS.some((f) => String(user?.[f] ?? '').trim() !== '')
-}
-
-function isSenderEmpty(sender) {
-  return !['name', 'vat', 'address', 'contact', 'phone'].some(k => (sender[k] || '').trim())
-}
-
-function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext }) {
+function Step3({ data, setData, findMode, user, profileLoading, onNext, onBack, canNext }) {
   const { t } = useTranslation('wizard')
-  const profileReady = hasCompanyDataToFill(user)
-  const [autofilled, setAutofilled] = useState(false)
-
-  // Auto-fill „Nadawca" z profilu — TYLKO świeży kreator (create), gdy w profilu jest
-  // cokolwiek do wstawienia (choćby sama nazwa firmy) i sekcja Nadawca jest całkowicie
-  // pusta. NIGDY w resume/edit (nie nadpisujemy migawki).
-  useEffect(() => {
-    if (mode !== 'create' || !profileReady || !isSenderEmpty(data.sender)) return
-    setData(d => ({ ...d, sender: { ...d.sender, ...profileToSenderPatch(user) } }))
-    setAutofilled(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const [justFilled, setJustFilled] = useState(false)
+  // Blok nad Nadawcą zależy WYŁĄCZNIE od zakładki „Dane firmy" w profilu (ten sam
+  // moduł, co powiadomienie o pustym profilu) - nigdy od zawartości formularza
+  // kreatora. Dopóki profil się ładuje, nie renderujemy ani przycisku, ani
+  // żadnego komunikatu (inaczej user z pełnym profilem widziałby przez chwilę
+  // fałszywą zachętę do jego uzupełnienia).
+  const status = profileLoading ? 'loading' : companyDataStatus(user)
 
   function fillFromProfile() {
-    setData(d => ({ ...d, sender: { ...d.sender, ...profileToSenderPatch(user) } }))
+    setData(d => ({ ...d, sender: fillSenderFromProfile(d.sender, user) }))
+    setJustFilled(true)
   }
 
   return (
     <div>
       <BackButton onClick={onBack} />
 
-      {profileReady && (
+      {(status === 'full' || status === 'partial') && (
         <button
           type="button"
           onClick={fillFromProfile}
@@ -954,14 +924,27 @@ function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext })
           {t('parties.fillFromProfile')}
         </button>
       )}
-      {!profileReady && user && (
-        <p className="mb-3 text-xs text-gray-400 dark:text-slate-500">
-          {t('parties.fillFasterPrefix')}{' '}
-          <Link to="/profile?tab=firma" className="text-emerald-600 hover:underline">
-            {t('parties.fillFasterLink')}
-          </Link>
-          .
-        </p>
+      {status === 'partial' && (
+        <div className="mb-3">
+          <AlertBox type="info">
+            {t('parties.companyDataPartialPrefix')}{' '}
+            <Link to="/profile?tab=firma" className="text-emerald-600 hover:underline">
+              {t('parties.companyDataPartialLink')}
+            </Link>
+            .
+          </AlertBox>
+        </div>
+      )}
+      {status === 'empty' && (
+        <div className="mb-3">
+          <AlertBox type="info">
+            {t('parties.companyDataEmptyPrefix')}{' '}
+            <Link to="/profile?tab=firma" className="text-emerald-600 hover:underline">
+              {t('parties.companyDataEmptyLink')}
+            </Link>
+            .
+          </AlertBox>
+        </div>
       )}
 
       <PartySection
@@ -970,18 +953,9 @@ function Step3({ data, setData, findMode, mode, user, onNext, onBack, canNext })
         onChange={s => setData(d => ({ ...d, sender: s }))}
         showBank
       />
-      {autofilled && (
+      {justFilled && (
         <p className="-mt-2 mb-4 text-xs text-gray-400 dark:text-slate-500">
-          {t('parties.autofilled')}
-          {user?.profileCompleted !== true && (
-            <>
-              {' '}
-              <Link to="/profile?tab=firma" className="text-emerald-600 hover:underline">
-                {t('parties.autofilledCompleteLink')}
-              </Link>
-              {t('parties.autofilledCompleteSuffix')}
-            </>
-          )}
+          {t('parties.filledFromProfile')}
         </p>
       )}
       <PartySection
@@ -1377,7 +1351,7 @@ function Step4({ onBack }) {
 export default function DocumentWizard() {
   const { t } = useTranslation('wizard')
   const wiz = useWizard()
-  const { user } = useAuth()
+  const { user, loading: profileLoading } = useAuth()
   const { snapshot, currentStep, maxStepReached, flow, mode, next, prev, goToStep } = wiz
 
   const setRoute      = (u) => wiz.setStepData('route', u)
@@ -1475,7 +1449,7 @@ export default function DocumentWizard() {
           />
         )}
         {stepKey === 'parties' && (
-          <Step3 data={snapshot.parties} setData={setParties} findMode={findMode} mode={mode} user={user} onNext={next} onBack={prev} canNext={canNext} />
+          <Step3 data={snapshot.parties} setData={setParties} findMode={findMode} user={user} profileLoading={profileLoading} onNext={next} onBack={prev} canNext={canNext} />
         )}
         {stepKey === 'forwarders' && <ForwardersStep onNext={next} onBack={prev} />}
         {stepKey === 'quote' && <QuoteStep route={snapshot.route} onNext={next} onBack={prev} />}

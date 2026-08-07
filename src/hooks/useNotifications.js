@@ -1,26 +1,30 @@
 import { useCallback, useEffect, useState } from 'react'
 import { listNotifications } from '../services/notificationsRepo'
 
-// Hook powiadomień z serwera (dzwonek). Wzorzec jak useDocumentSetList:
-// fetch z loading/error, refetch po zdarzeniu 'notifications:changed'. Dodatkowo
-// odświeża po powrocie do karty (window 'focus') — serverless nie pushuje, więc
-// nowe powiadomienia dociągamy przy okazji fokusu (bez pollingu w tle).
+// Zawartość dzwonka: nieprzeczytane I przeczytane, oba źródła w jednej liście.
+// Dzwonek jest jedyną historią powiadomień, osobnej podstrony nie ma.
+//
+// TRZY stany, nie dwa: `loading` (jeszcze nic nie wiemy, nic nie renderujemy),
+// lista niepusta, lista pusta. Błąd zapytania NIE jest sygnałem, że coś trzeba
+// pokazać — przy błędzie lista zostaje pusta i dzwonek nie kłamie.
+//
+// Odświeżanie: zdarzenie 'notifications:changed' po każdej mutacji oraz powrót do
+// karty ('focus') — serverless nie pushuje, więc świeże powiadomienia dociągamy
+// przy okazji fokusu, bez pollingu w tle.
 export function useNotifications() {
+  const [version, setVersion] = useState(0)
   const [items, setItems] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [version, setVersion] = useState(0)
-
-  const refresh = useCallback(() => setVersion((v) => v + 1), [])
 
   useEffect(() => {
-    const onChanged = () => setVersion((v) => v + 1)
-    const onFocus = () => setVersion((v) => v + 1)
-    window.addEventListener('notifications:changed', onChanged)
-    window.addEventListener('focus', onFocus)
+    const bump = () => setVersion((v) => v + 1)
+    window.addEventListener('notifications:changed', bump)
+    window.addEventListener('focus', bump)
     return () => {
-      window.removeEventListener('notifications:changed', onChanged)
-      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('notifications:changed', bump)
+      window.removeEventListener('focus', bump)
     }
   }, [])
 
@@ -28,13 +32,25 @@ export function useNotifications() {
     let active = true
     // Nie migamy spinnerem przy cichym refetchu (focus/event) — tylko przy pierwszym.
     listNotifications()
-      .then((r) => { if (active) { setItems(r); setError(null) } })
-      .catch((e) => { if (active) setError(e) })
+      .then((r) => {
+        if (!active) return
+        setItems(r.items)
+        setUnreadCount(r.unreadCount)
+        setError(null)
+      })
+      .catch((e) => {
+        if (!active) return
+        setError(e)
+        setItems([])
+        setUnreadCount(0)
+      })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [version])
 
-  const unreadCount = items.filter((n) => !n.readAt).length
+  const refresh = useCallback(() => {
+    window.dispatchEvent(new Event('notifications:changed'))
+  }, [])
 
   return { items, unreadCount, loading, error, refresh }
 }

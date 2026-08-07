@@ -55,17 +55,19 @@
     "title": "Notifications",
     "badge_one": "{{count}} new",
     "badge_other": "{{count}} new",
-    "empty": "No new notifications",
+    "empty": "No notifications",
+    "loading": "Loading...",
+    "loadFailed": "Could not load notifications",
+    "actionFailed": "Could not save the change. Please try again.",
     "markAllRead": "Mark all as read",
-    "delete": "Delete"
-  },
-  "nudge": {
-    "dismiss": "Dismiss",
-    "remindLater": "Remind me later",
-    "title": "Finish setting up your company",
-    "body": "Add your company details once and we fill them in automatically on every document and order. You save time on every shipment.",
-    "cta": "Complete profile",
-    "later": "Later"
+    "delete": "Delete notification",
+    "auto": {
+      "profileCompanyData": {
+        "title": "Finish setting up your company",
+        "body": "Add your company details once and we fill them in automatically on every document and order. You save time on every shipment.",
+        "cta": "Complete profile"
+      }
+    }
   },
   "actions": {
     "save": "Save",

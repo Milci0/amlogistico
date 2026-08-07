@@ -95,74 +95,100 @@ describe('isArchived (definicja rekordu aktywnego)', () => {
   })
 })
 
-describe('trimShipmentData', () => {
-  const raw = {
-    id: 4242,
-    status: 'SAILING',
-    booking_number: 'BKG123',
-    carrier: { scac: 'CMDU', name: 'CMA CGM' },
-    transit_time: 43,
-    transit_percentage: 99, // celowo mylaca wartosc z API
-    co2_emission: 1200,
-    checked_at: '2026-08-06T09:14:00Z',
-    tokens: { map: 'tok123' },
-    route: {
-      port_of_loading: { location: { code: 'CNSHA', name: 'Shanghai' }, date: '2026-07-12' },
-      port_of_discharge: {
-        location: { code: 'PLGDN', name: 'Gdansk' },
-        date: '2026-08-24',
-        date_initial: '2026-08-21',
-      },
-      transhipments: [{ location: { code: 'SGSIN', name: 'Singapore' } }],
+// ── Fixture wg UDOKUMENTOWANEGO ksztaltu odpowiedzi ShipsGo Ocean ───────────
+// Poprzednia wersja tego bloku budowala obiekt z nazwami pol, ktorych API nie
+// zwraca (`route.transhipments`, `size_type`, `transit_time`/`transit_percentage`/
+// `co2_emission` na poziomie glownym, `carrier.scac`). Testy przechodzily, kod
+// wygladal na sprawny, a produkcja dostawala inny obiekt i kafelki byly puste.
+// To byla wlasciwa przyczyna usterki, dlatego fixture jest tu wazniejszy niz
+// same asercje: wszystko ponizej odwzorowuje dokumentacje 1:1.
+//
+// Trasa: CALLAO -> PANAMA CITY (przeladunek) -> ROTTERDAM, dwa statki, czesc
+// zdarzen faktyczna (ACT), czesc szacowana (EST).
+const CALLAO = { code: 'PECLL', name: 'CALLAO', timezone: 'America/Lima', country: { code: 'PE', name: 'Peru' } }
+const BALBOA = { code: 'PABLB', name: 'PANAMA CITY (BALBOA)', timezone: 'America/Panama', country: { code: 'PA', name: 'Panama' } }
+const ROTTERDAM = { code: 'NLRTM', name: 'ROTTERDAM', timezone: 'Europe/Amsterdam', country: { code: 'NL', name: 'Netherlands' } }
+
+const FIGARO = { name: 'CMA CGM FIGARO' }
+const RIVOLI = { name: 'CMA CGM RIVOLI' }
+
+const OCEAN_SHIPMENT = {
+  id: 6559745,
+  reference: null,
+  booking_number: 'BKG778812',
+  container_number: 'CGMU6913205',
+  status: 'SAILING',
+  carrier: { code: 'CMDU', name: 'CMA CGM' },
+  route: {
+    port_of_loading: {
+      // Nazwa portu zaladunku CELOWO inna niz w ruchach („CALLAO (LIMA)" kontra
+      // „CALLAO") - to dlatego porownanie idzie po kodzie, nie po nazwie.
+      location: { ...CALLAO, name: 'CALLAO (LIMA)' },
+      date_of_loading: '2026-07-08T18:20:00Z',
+      date_of_loading_initial: '2026-07-06T18:20:00Z',
     },
-    containers: [
-      {
-        number: 'CGMU6913205',
-        size_type: '40 HC',
-        status: 'ON_VESSEL',
-        movements: [
-          { event: 'LOAD', status: 'ACT', timestamp: '2026-07-12T16:02:00Z', vessel: { name: 'CMA CGM Figaro' }, voyage: 'FST1259' },
-          { event: 'DISC', status: 'EST', timestamp: '2026-08-25T12:00:00Z' },
-        ],
-      },
-    ],
-  }
+    ts_count: 1,
+    port_of_discharge: {
+      location: ROTTERDAM,
+      date_of_discharge: '2026-08-22T06:00:00Z',
+      date_of_discharge_initial: '2026-08-19T06:00:00Z',
+    },
+    transit_time: 45,
+    transit_percentage: 60,
+    co2_emission: 1240,
+  },
+  containers: [
+    {
+      number: 'CGMU6913205',
+      status: 'ON_VESSEL',
+      size: 40,
+      type: 'High Cube',
+      movements: [
+        { event: 'EMSH', status: 'ACT', location: CALLAO, vessel: null, voyage: null, timestamp: '2026-07-02T11:00:00Z' },
+        { event: 'GTIN', status: 'ACT', location: CALLAO, vessel: null, voyage: null, timestamp: '2026-07-06T08:30:00Z' },
+        { event: 'LOAD', status: 'ACT', location: CALLAO, vessel: FIGARO, voyage: 'FST1259', timestamp: '2026-07-08T18:20:00Z' },
+        { event: 'DEPA', status: 'ACT', location: CALLAO, vessel: FIGARO, voyage: 'FST1259', timestamp: '2026-07-09T02:10:00Z' },
+        { event: 'ARRV', status: 'ACT', location: BALBOA, vessel: FIGARO, voyage: 'FST1259', timestamp: '2026-07-22T14:05:00Z' },
+        { event: 'DEPA', status: 'ACT', location: BALBOA, vessel: RIVOLI, voyage: 'RVL014W', timestamp: '2026-07-25T09:40:00Z' },
+        { event: 'ARRV', status: 'EST', location: ROTTERDAM, vessel: RIVOLI, voyage: 'RVL014W', timestamp: '2026-08-22T06:00:00Z' },
+        { event: 'DISC', status: 'EST', location: ROTTERDAM, vessel: null, voyage: null, timestamp: '2026-08-22T15:30:00Z' },
+      ],
+    },
+  ],
+  tokens: { map: 'tok123' },
+  checked_at: '2026-08-07T09:14:00Z',
+}
 
+describe('trimShipmentData', () => {
   it('wyciaga daty trasy potrzebne do paska postepu', () => {
-    const s = trimShipmentData(raw)
-    expect(s.loadingDate).toBe('2026-07-12')
-    expect(s.dischargeDate).toBe('2026-08-24')
-    expect(s.dischargeDateInitial).toBe('2026-08-21')
+    const s = trimShipmentData(OCEAN_SHIPMENT)
+    expect(s.loadingDate).toBe('2026-07-08T18:20:00Z')
+    expect(s.dischargeDate).toBe('2026-08-22T06:00:00Z')
+    expect(s.dischargeDateInitial).toBe('2026-08-19T06:00:00Z')
   })
 
-  it('zachowuje transit_percentage jako surowa wartosc, ale to nie ono steruje paskiem', () => {
-    // Pasek liczy computeVoyageProgress z dat (patrz src/utils/voyageProgress.js).
-    // Tu tylko utrwalamy, ze wartosc z API jest przenoszona bez interpretacji.
-    expect(trimShipmentData(raw).transitPercentage).toBe(99)
-  })
-
-  it('liczy kontenery i przenosi typ', () => {
-    const s = trimShipmentData(raw)
+  it('liczy kontenery i sklada typ z rozmiaru i typu', () => {
+    const s = trimShipmentData(OCEAN_SHIPMENT)
     expect(s.containerCount).toBe(1)
-    expect(s.containerType).toBe('40 HC')
+    expect(s.containerType).toBe('40 High Cube')
     expect(s.containers[0].number).toBe('CGMU6913205')
-  })
-
-  it('przenosi przeladunki z nazwa portu', () => {
-    expect(trimShipmentData(raw).transhipments).toEqual([
-      { code: 'SGSIN', name: 'Singapore', country: null },
-    ])
+    expect(s.containers[0].type).toBe('40 High Cube')
   })
 
   it('bierze statek i rejs z ostatniego ruchu, ktory je niesie', () => {
-    const s = trimShipmentData(raw)
-    expect(s.vessel).toBe('CMA CGM Figaro')
-    expect(s.voyageNo).toBe('FST1259')
+    const s = trimShipmentData(OCEAN_SHIPMENT)
+    expect(s.vessel).toBe('CMA CGM RIVOLI')
+    expect(s.voyageNo).toBe('RVL014W')
   })
 
   it('zachowuje status EST przy zdarzeniach szacowanych', () => {
-    const s = trimShipmentData(raw)
-    expect(s.movements[1].status).toBe('EST')
+    const s = trimShipmentData(OCEAN_SHIPMENT)
+    expect(s.movements.at(-1).status).toBe('EST')
+    expect(s.movements[0].status).toBe('ACT')
+  })
+
+  it('bierze kod linii z carrier.code', () => {
+    expect(trimShipmentData(OCEAN_SHIPMENT).carrier).toEqual({ scac: 'CMDU', name: 'CMA CGM' })
   })
 
   it('nie wywala sie na pustej odpowiedzi (status INPROGRESS)', () => {
@@ -178,10 +204,125 @@ describe('trimShipmentData', () => {
   })
 
   it('zachowuje aliasy uzywane przez zakladke Lista przesylek', () => {
-    const s = trimShipmentData(raw)
-    expect(s.eta).toBe('2026-08-24')
-    expect(s.loadingLocation.code).toBe('CNSHA')
-    expect(s.dischargeLocation.code).toBe('PLGDN')
+    const s = trimShipmentData(OCEAN_SHIPMENT)
+    expect(s.eta).toBe('2026-08-22T06:00:00Z')
+    expect(s.loadingLocation.code).toBe('PECLL')
+    expect(s.dischargeLocation.code).toBe('NLRTM')
+    expect(s.loadingDateInitial).toBe('2026-07-06T18:20:00Z')
+  })
+})
+
+// ── Testy regresyjne: kazdy z nich ZAWODZI na kodzie sprzed poprawki ─────────
+describe('trimShipmentData - pola czytane z niewlasciwych sciezek (regresja)', () => {
+  it('czas przewozu, postep i emisja CO2 pochodza z route, nie z poziomu glownego', () => {
+    const s = trimShipmentData(OCEAN_SHIPMENT)
+    expect(s.transitTime).toBe(45)
+    expect(s.transitPercentage).toBe(60)
+    expect(s.co2Emission).toBe(1240)
+  })
+
+  it('te same trzy pola czytane sa zapasowo takze z poziomu glownego', () => {
+    const s = trimShipmentData({ ...OCEAN_SHIPMENT, route: undefined, transit_time: 12, transit_percentage: 30, co2_emission: 900 })
+    expect(s.transitTime).toBe(12)
+    expect(s.transitPercentage).toBe(30)
+    expect(s.co2Emission).toBe(900)
+  })
+
+  it('ts_count = 1 daje tsCount 1 i dokladnie jeden port przeladunku', () => {
+    const s = trimShipmentData(OCEAN_SHIPMENT)
+    expect(s.tsCount).toBe(1)
+    expect(s.transhipments).toHaveLength(1)
+    expect(s.transhipments[0]).toEqual({ code: 'PABLB', name: 'PANAMA CITY (BALBOA)', country: 'Panama' })
+  })
+
+  it('brak ts_count daje null, a NIE zero', () => {
+    const { ts_count, ...routeBezLiczby } = OCEAN_SHIPMENT.route
+    const s = trimShipmentData({ ...OCEAN_SHIPMENT, route: routeBezLiczby })
+    expect(s.tsCount).toBeNull()
+    // Rozroznienie ma znaczenie dla uzytkownika: null to „nie wiemy", zero to
+    // „przewoznik potwierdzil przewoz bezposredni".
+    expect(s.tsCount).not.toBe(0)
+  })
+
+  it('ts_count = 0 daje zero i pusta liste portow', () => {
+    const bezposredni = {
+      ...OCEAN_SHIPMENT,
+      route: { ...OCEAN_SHIPMENT.route, ts_count: 0 },
+      containers: [{
+        ...OCEAN_SHIPMENT.containers[0],
+        movements: [
+          { event: 'LOAD', status: 'ACT', location: CALLAO, vessel: FIGARO, voyage: 'FST1259', timestamp: '2026-07-08T18:20:00Z' },
+          { event: 'DISC', status: 'EST', location: ROTTERDAM, vessel: FIGARO, voyage: 'FST1259', timestamp: '2026-08-22T06:00:00Z' },
+        ],
+      }],
+    }
+    const s = trimShipmentData(bezposredni)
+    expect(s.tsCount).toBe(0)
+    expect(s.transhipments).toEqual([])
+  })
+
+  it('port zaladunku i wyladunku nie trafiaja na liste przeladunkow mimo innej nazwy w ruchach', () => {
+    // Ruchy w CALLAO nazywaja port „CALLAO", a trasa „CALLAO (LIMA)" - gdyby
+    // porownanie szlo po nazwie, port zaladunku wygladalby na przeladunek.
+    const kody = trimShipmentData(OCEAN_SHIPMENT).transhipments.map((p) => p.code)
+    expect(kody).not.toContain('PECLL')
+    expect(kody).not.toContain('NLRTM')
+  })
+
+  it('rozjazd ts_count z lista portow jest logowany, ale nie przerywa przetwarzania', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const s = trimShipmentData({ ...OCEAN_SHIPMENT, route: { ...OCEAN_SHIPMENT.route, ts_count: 2 } })
+    // Autorytatywna jest liczba z API, lista nazw zostaje przyblizeniem.
+    expect(s.tsCount).toBe(2)
+    expect(s.transhipments).toHaveLength(1)
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  // Same pola rozmiaru i typu, bez ruchow. ts_count zerowane razem z nimi, zeby
+  // brak portow nie wywolywal ostrzezenia o rozjezdzie (osobny test wyzej).
+  const zTypem = (container) => trimShipmentData({
+    ...OCEAN_SHIPMENT,
+    route: { ...OCEAN_SHIPMENT.route, ts_count: 0 },
+    containers: [container],
+  })
+
+  it('typ kontenera: rozmiar i typ skladaja sie w jedna etykiete', () => {
+    expect(zTypem({ number: 'X', size: 40, type: 'RF' }).containerType).toBe('40 RF')
+  })
+
+  it('typ kontenera: sam typ bez wiodacej spacji', () => {
+    expect(zTypem({ number: 'X', type: 'RF' }).containerType).toBe('RF')
+  })
+
+  it('typ kontenera: sam rozmiar tez sie nie gubi', () => {
+    expect(zTypem({ number: 'X', size: 20 }).containerType).toBe('20')
+  })
+
+  it('typ kontenera: brak obu pol daje null, nie pusty string', () => {
+    expect(zTypem({ number: 'X' }).containerType).toBeNull()
+  })
+
+  it('migawka w starym ksztalcie (bez route) nie wywraca funkcji', () => {
+    // Rekordy zapisane przed ta poprawka zostaja w bazie w starym ksztalcie -
+    // trim musi je zniesc, a brakujace pola daja null, nie wyjatek.
+    const stary = {
+      id: 4242,
+      status: 'SAILING',
+      booking_number: 'BKG123',
+      carrier: { scac: 'CMDU', name: 'CMA CGM' },
+      containers: [{ number: 'CGMU6913205', size_type: '40 HC', status: 'ON_VESSEL' }],
+    }
+    const s = trimShipmentData(stary)
+    expect(s.tsCount).toBeNull()
+    expect(s.transhipments).toEqual([])
+    expect(s.transitTime).toBeNull()
+    expect(s.co2Emission).toBeNull()
+    expect(s.loadingLocation).toBeNull()
+    // Zapasowy odczyt starych nazw zostaje, dopoki ksztalt nie zostanie
+    // potwierdzony na realnym tokenie.
+    expect(s.containerType).toBe('40 HC')
+    expect(s.carrier).toEqual({ scac: 'CMDU', name: 'CMA CGM' })
   })
 })
 

@@ -42,9 +42,22 @@ export default function ContainerDetail({
   const untracked = container.status === 'UNTRACKED'
   const archived = !!container.archived
 
-  const transhipment = s.transhipments?.length
-    ? `${s.transhipments.length} · ${s.transhipments.map((x) => x.name).filter(Boolean).join(', ')}`
+  // Kafelek „Przeładunki" ma TRZY stany, nie dwa. Liczba idzie wprost z
+  // odpowiedzi ShipsGo (`tsCount`), a nazwy portów są wyliczone z ruchów
+  // kontenera, więc lista nazw bywa krótsza niż liczba (patrz trimShipmentData
+  // w api/_lib/shipsgo.js) — wtedy pokazujemy samą liczbę.
+  //
+  // Brak liczby to „brak danych", a NIE „przewóz bezpośredni". Mylenie tych
+  // dwóch było pierwotną usterką: kafelek twierdził „bez przeładunków", podczas
+  // gdy oś czasu obok pokazywała przeładunek. Migawki zapisane przed poprawką
+  // nie mają `tsCount` w ogóle i trafiają dokładnie w ten stan.
+  const transhipmentPorts = s.transhipments?.map((x) => x.name).filter(Boolean).join(', ')
+  const transhipment = s.tsCount > 0
+    ? [s.tsCount, transhipmentPorts].filter(Boolean).join(' · ')
     : null
+  const transhipmentEmpty = s.tsCount === 0
+    ? t('tracking.noTransshipments')
+    : t('tracking.container.shipsgo.etaUnknown')
 
   return (
     <div>
@@ -98,13 +111,18 @@ export default function ContainerDetail({
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Tile icon={Ship} label={t('tracking.container.shipsgo.vessel')} value={s.vessel} empty={t('tracking.container.shipsgo.etaUnknown')} />
                 <Tile icon={Hash} label={t('tracking.voyageFields.voyageNo')} value={s.voyageNo} empty={t('tracking.container.shipsgo.etaUnknown')} />
+                {/* Postęp rejsu jako wartość Z API. Pasek postępu własnej
+                    przesyłki liczy się osobno z dat (src/utils/voyageProgress.js),
+                    bo transit_percentage potrafi pokazać 99 tuż po wypłynięciu. */}
                 <Tile
                   icon={Clock}
                   label={t('tracking.map.transitProgress')}
-                  value={typeof s.transitTime === 'number' ? t('tracking.map.transitDays', { count: s.transitTime }) : null}
+                  value={typeof s.transitPercentage === 'number'
+                    ? `${Math.round(Math.min(100, Math.max(0, s.transitPercentage)))}%`
+                    : null}
                   empty={t('tracking.container.shipsgo.etaUnknown')}
                 />
-                <Tile icon={Repeat} label={t('tracking.transshipments')} value={transhipment} empty={t('tracking.noTransshipments')} />
+                <Tile icon={Repeat} label={t('tracking.transshipments')} value={transhipment} empty={transhipmentEmpty} />
               </div>
 
               <ShipmentMap

@@ -434,7 +434,11 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
   rozwiniętej karty → realny PDF, 0 błędów konsoli.
 
 - **FIX + zmiana reguł nudge'a „Uzupełnij dane firmy" (2026-07-21):** `src/utils/profileNudge.js`
-  (nowy) + `Topbar.jsx` (dzwonek). Dwa problemy:
+  (nowy) + `Topbar.jsx` (dzwonek).
+  **CAŁA TA SEKCJA JEST HISTORIĄ: 2026-08-07 nudge przestał istnieć jako osobny mechanizm.**
+  `profileNudge.js` USUNIĘTY, stan przeniesiony do bazy jako zwykły rekord `Notification`
+  (patrz „Powiadomienia per konto" niżej). Zostawione, bo tłumaczy, skąd wzięły się martwe
+  klucze `localStorage` kasowane dziś przez `cleanupLegacyKeys.js`. Dwa ówczesne problemy:
   1. **Nudge wracał po każdym odświeżeniu mimo kliknięcia X** — klucz odrzucenia liczony był z
      `getCurrentUserId()`, które podczas hydratacji sesji (`/auth/me`) zwraca jeszcze `'local-user'`
      (efekt ustawiający realne `userId` w `AuthContext` odpala się PO pierwszym renderze dzwonka).
@@ -470,7 +474,8 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 
 - **System powiadomień admin→konto (2026-07-21) — GOTOWE:** możliwość wysłania powiadomienia z
   panelu admina na konkretne konto (po emailu) lub do wszystkich; odbiorca widzi je w dzwonku na
-  dowolnym urządzeniu (per-konto, przez backend). To TRZECIE źródło dzwonka obok newsów i nudge'a.
+  dowolnym urządzeniu (per-konto, przez backend). (Od 2026-08-07 dzwonek ma JEDNO źródło: tabelę
+  `notifications`; newsy i nudge zostały z niego wypisane.)
   - **Baza:** model `Notification` w `schema.prisma` (relacja do `User`, `onDelete: Cascade`,
     `@@index([userId, readAt])`, pola `type`(info/success/warning)/`title`/`body`/`ctaLabel`/`ctaUrl`/
     `readAt`/`createdAt`) + flaga `User.isAdmin` (`@default(false)`, nadawana RĘCZNIE w Prisma Studio —
@@ -484,7 +489,8 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     nosi tylko userId). Montaż w `index.js`. `isAdmin` dodane do `publicUser()`/`publicProfile()`.
   - **Front:** `src/services/notificationsRepo.js` (api.*, emituje `notifications:changed`),
     `src/hooks/useNotifications.js` (refetch na mount/event/`window focus`, `unreadCount`). Dzwonek
-    (`Topbar.jsx`): `count = unreadCount + news + nudge`; karty powiadomień z serwera na górze listy
+    (`Topbar.jsx`): `count = unreadCount + news + nudge` (NIEAKTUALNE od 2026-08-07: sam
+    `unreadCount`); karty powiadomień z serwera na górze listy
     (kafelek wg typu, kropka nieprzeczytania, treść, opcjonalny przycisk CTA, „X"=usuń); klik karty =
     `markRead` + nawigacja do `ctaUrl`; „Oznacz wszystkie jako przeczytane" gdy są nieprzeczytane.
     Karty READ zostają widoczne (przyciemnione) — dlatego pusty stan zależy od realnej zawartości, nie
@@ -499,6 +505,86 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     broadcast=liczba kont) + front E2E Playwright (panel+wysyłka, badge, karta, „oznacz wszystkie",
     persist po reloadzie, „X" usuwa, nie-admin redirect + brak linku), build zielony. Stan testowy
     (powiadomienia + isAdmin) posprzątany po testach.
+
+- **Powiadomienia per konto: jedno źródło w dzwonku - GOTOWE (2026-08-07):** zachęta „Uzupełnij
+  dane firmy" przestała być osobnym mechanizmem w `localStorage` i jest dziś zwykłym rekordem
+  w tabeli `notifications`. Dzwonek ma JEDNO źródło danych i jeden licznik.
+  - **Co było nie tak:** stan nudge'a (`amlogistico:v1:${userId}:profileNudgeSnoozedUntil`) żył
+    per przeglądarka, więc zachęta wracała na innym urządzeniu mimo wypełnionych danych firmy,
+    7-dniowe odroczenie nie wędrowało między urządzeniami, a wyczyszczenie danych przeglądarki
+    kasowało stan. Licznik przy dzwonku był sumą dwóch niezależnych światów
+    (`unreadCount + (showNudge ? 1 : 0)`).
+  - **Reguła (OR, celowa):** powiadomienie powstaje TYLKO gdy WSZYSTKIE siedem pól zakładki
+    „Dane firmy" jest pustych. Jedno wypełnione pole całkowicie je wyłącza. Pola zakładek
+    „Dane osobowe", „Preferencje", „Bezpieczeństwo" i „Zgody" NIE liczą się. Nie mylić
+    z `profileCompleted`, które jest koniunkcją piątki pól adresowych i służy do auto-fill
+    nadawcy w kreatorze.
+  - **`api/_lib/companyDataStatus.js`** (nowy) - JEDYNA definicja listy pól „Dane firmy"
+    (`COMPANY_DATA_FIELDS`) i `hasAnyCompanyData(user)`. Puste = `null`/`undefined`/pusty
+    string/same białe znaki. Nie duplikować: gdy lista będzie potrzebna w kreatorze, front
+    ma zaimportować ten plik, a nie przepisać go do `src/`. Leży w `api/_lib/`, bo Vercel
+    buduje `api/index.js` z wszystkim, co ten plik importuje, i to jedyna ścieżka sprawdzona
+    w tym repo (`shared/` w rootcie nie było nigdy testowane deployem).
+  - **`api/_lib/autoNotifications.js`** (nowy) - `syncAutoNotifications(userId)` wołane LENIWIE
+    przy `GET /api/notifications` (żadnego crona). Algorytm: dane firmy niepuste → oznacz
+    aktywne jako przeczytane i wyjdź; istnieje nieprzeczytane → nic; znacznik odroczenia pusty
+    albo starszy niż 7 dni → utwórz nowy; inaczej nic. Eksportuje też `recordReminderAction`
+    i `isAutoKind`, więc trasy nie muszą wiedzieć, która kategoria jest automatyczna.
+  - **DLACZEGO ZNACZNIK ODROCZENIA LEŻY NA KONCIE, A NIE NA POWIADOMIENIU:** „X" w dzwonku
+    KASUJE rekord fizycznie (`DELETE`), więc znacznik zapisany na powiadomieniu zginąłby razem
+    z nim i zachęta wracałaby natychmiast przy najbliższym `GET`. Stąd `User.profileReminderDismissedAt`
+    (steruje regułą 7 dni) + `profileReminderLastAction` (`dismissed`/`read`, wyłącznie do
+    analizy zachowań, nie wpływa na żadną decyzję).
+  - **Automatyczne zamknięcie NIE jest akcją użytkownika:** gdy user uzupełni dane firmy,
+    powiadomienie dostaje `readAt`, ale znacznik odroczenia zostaje nietknięty. Dzięki temu
+    wyczyszczenie danych firmy nazajutrz przywraca zachętę od razu, a nie po tygodniu.
+  - **DZWONEK JEST HISTORIĄ POWIADOMIEŃ.** Osobnej podstrony NIE MA (była w drzewie roboczym
+    jako `NotificationHistoryPage` + trasa `/notifications` + `GET /notifications/history` -
+    wszystko usunięte na życzenie). `GET /api/notifications` zwraca nieprzeczytane I przeczytane
+    (limit 50, najnowsze pierwsze); przeczytane zostają na liście przygaszone (`opacity-60`,
+    bez zielonej kropki) i znikają dopiero po „X". `unreadCount` liczony osobnym `count`, więc
+    obcięcie listy nie zaniża czerwonej cyfry.
+  - **Model:** `Notification` dostał `kind` (`ADMIN_MESSAGE` | `PROFILE_COMPANY_DATA`, domyślnie
+    `ADMIN_MESSAGE`, więc stare rekordy migrują same) i `params Json?`. Stanem jest SAM `readAt`
+    (puste = nieprzeczytane); kolumny `status`/`dismissed_at` z wcześniejszego, wycofanego
+    podejścia usunięte. **`kind` to NIE `type`** - `type` niesie wagę wizualną (info/success/
+    warning) i jest częścią kontraktu panelu admina.
+  - **Ochrona przed duplikatem:** częściowy indeks unikalny `(user_id, kind)
+    WHERE read_at IS NULL AND kind IN (kategorie automatyczne)`, zakładany przez
+    **`scripts/apply-notification-index.js`** (Prisma nie deklaruje warunku WHERE w schemacie).
+    **Uruchom po każdym `db push`.** Dwie karty przeglądarki odpytujące `GET` równocześnie lecą
+    na serverless w dwóch instancjach, więc transakcja w jednym procesie by tego nie złapała;
+    druga wstawka dostaje P2002, a `createIfAbsent` traktuje to jak sukces. Powiadomień admina
+    indeks celowo nie obejmuje (tych może wisieć wiele naraz).
+  - **i18n treści (mechanizm ogólny, do ponownego użycia):** rekord powstaje na serwerze, który
+    nie zna języka wybranego w przeglądarce, więc `src/utils/notificationContent.js` składa
+    tekst z tłumaczeń na podstawie `kind` (mapa `CONTENT_KEYS` → prefiks kluczy w `common`)
+    i `params`, a `title`/`body` z bazy są WYŁĄCZNIE tekstem zapasowym przy braku klucza.
+    Powiadomienia admina idą prosto z bazy. Kolejna kategoria = wiersz w `CONTENT_KEYS`
+    + komplet kluczy EN/PL.
+  - **Trasy:** `GET /` (sync + lista + licznik), `PATCH /:id/read`, `POST /read-all`,
+    `DELETE /:id` (kasuje na stałe), `POST /` (admin). Wszystkie za `requireAuth`, `userId`
+    zawsze z tokenu, cudze id = 404. Odroczenie ustawiane w `DELETE`, `PATCH read` i `read-all`,
+    ale wyłącznie dla kategorii automatycznych. `PATCH read` na już przeczytanym nie nadpisuje
+    `readAt` ani odroczenia. Admin nie wyśle kategorii automatycznej: `kind` w Zod to
+    `z.literal('ADMIN_MESSAGE').optional()`, a trasa i tak ustawia je twardo.
+  - **Front:** `profileNudge.js` USUNIĘTY. `Topbar.jsx` bez `showNudge`/`nudgeBump`/`dismissNudge`
+    - licznik to czysty `unreadCount` z serwera (minus optymistycznie kliknięte). Trzy stany
+    panelu (`loading` / lista / pusto); błąd zapytania NIGDY nie udaje pustej listy ani nie
+    pokazuje zachęty. `ProfilePage` po zapisie woła `refreshNotifications()`, więc powiadomienie
+    znika bez przeładowania strony. `src/services/cleanupLegacyKeys.js` kasuje przy starcie
+    martwe klucze po sufiksie: `:profileNudgeSnoozedUntil`, `:profileNudgeDismissed`.
+  - Zweryfikowane: **717 testów** (przed sesją 704; nowe: `companyDataStatus`, przepisane
+    `autoNotifications`, nowy `notificationContent`), build zielony, `lint:locales` (1809 kluczy)
+    i `lint:dashes` czyste, oraz **E2E 22/22 na realnym backendzie i bazie** (konta testowe
+    zakładane wprost w bazie, żeby ominąć limit 10 żądań/15 min na `/auth/*`, skasowane po
+    teście - potwierdzone: 13 kont produkcyjnych bez zmian, 0 powiadomień). Pokryte: reguła OR
+    na czterech wariantach pól, same spacje, wyścig trzech równoczesnych `GET` = 1 rekord,
+    odroczenie na koncie widoczne w nowej sesji, granice 6 i 8 dni, natychmiastowy powrót po
+    wyczyszczeniu danych firmy, 404 na cudzym, 401 bez sesji na pięciu trasach, rekord sprzed
+    migracji, wysyłka admina w tej samej liście, odmowa 400 przy podszyciu się pod kategorię
+    automatyczną. **NIE zweryfikowane w przeglądarce** (Playwright nie jest zainstalowany
+    w repo): wygląd przygaszonych wpisów, zachowanie przy błędzie sieci, przełączenie języka.
 
 - **Czystka tekstów i martwego kodu — GOTOWE (2026-07-22):**
   - **Myślniki „—" usunięte z tekstów UI** (104 wystąpienia w `src/`). Zamiana kontekstowa,
@@ -1236,6 +1322,12 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
 - Tabele companies/payments — jeszcze nie zaczęte (schema w `docs/3.Baza danych.md`)
 
 ## Zasady pracy
+- **OBOWIĄZKOWE: przed rozpoczęciem nowej pracy w kodzie zrób `git pull origin main`**, jeśli
+  repo ma zdalne `origin` (sprawdź, np. `git remote -v`). Dotyczy każdej nowej sesji/zadania,
+  nie tylko pierwszej w danym dniu.
+- **OBOWIĄZKOWE: jeśli praca toczy się na branchu innym niż `main`, po zmergowaniu tego brancha
+  do `main` usuń go** (lokalnie, a jeśli był wypchnięty na zdalne, to i tam), żeby nie zostawiać
+  zmergowanych branchy w repo.
 - Przed większymi zmianami przedstaw krótki plan
 - Po zakończeniu sesji zaktualizuj sekcję "AKTUALNY STATUS"
 - Logika doboru dokumentów (TIR+EU vs TIR+poza-UE vs Morski) jest w `docs/2.Backend.md`

@@ -44,6 +44,16 @@ model User {
   // Studio — brak UI do zarządzania adminami (MVP).
   isAdmin           Boolean  @default(false) @map("is_admin")
 
+  // Odroczenie powiadomienia automatycznego „Uzupełnij dane firmy" (7 dni od
+  // ostatniej akcji użytkownika). Znacznik MUSI leżeć na koncie, a nie na
+  // powiadomieniu: „X" w dzwonku kasuje wiersz powiadomienia fizycznie, więc
+  // znacznik zapisany tam zginąłby razem z nim i zachęta wracałaby natychmiast
+  // przy najbliższym pobraniu listy.
+  // `profileReminderLastAction` ('dismissed' po „X", 'read' po przeczytaniu) nie
+  // wpływa na żadną decyzję — służy wyłącznie późniejszej analizie zachowań.
+  profileReminderDismissedAt DateTime? @map("profile_reminder_dismissed_at")
+  profileReminderLastAction  String?   @map("profile_reminder_last_action")
+
   documentSets       DocumentSet[]
   notifications      Notification[]
   containerTrackings ContainerTrackingUser[]
@@ -51,23 +61,52 @@ model User {
   @@map("users")
 }
 
-// notifications — powiadomienia w aplikacji (dzwonek). Wysyłane przez admina na
-// konkretne konto lub do wszystkich (fan-out: osobny wiersz na użytkownika).
+// notifications — powiadomienia w aplikacji (dzwonek). Jeden wiersz na użytkownika,
+// niezależnie od źródła. Dwa źródła, JEDNA tabela i jedna lista w dzwonku:
+//   • wysyłka admina (kind = ADMIN_MESSAGE), na konkretne konto albo fan-out do wszystkich,
+//   • powiadomienia generowane automatycznie (kind = PROFILE_COMPANY_DATA), tworzone
+//     leniwie przy pobraniu listy przez api/_lib/autoNotifications.js.
+//
+// DLACZEGO `kind`, A NIE `type` (decyzja 2026-08-07): pole `type` istnieje od początku
+// i niesie WAGĘ WIZUALNĄ (info/success/warning) — steruje ikoną i kolorem kafelka
+// w dzwonku oraz jest częścią kontraktu panelu admina (Zod + formularz wysyłki).
+// Kategoria powiadomienia musiała więc dostać własną kolumnę, zamiast nadpisywać `type`.
+//
+// STAN POWIADOMIENIA TO JEDNO POLE: `readAt`. Puste = nieprzeczytane (liczy się do
+// czerwonej cyfry przy dzwonku), wypełnione = przeczytane (wpis zostaje w dzwonku,
+// tylko przygaszony). Trzeciego stanu nie ma, bo „X" KASUJE wiersz na stałe —
+// dzwonek jest jedyną historią powiadomień i nie ma osobnej podstrony, na której
+// zamknięte wpisy mogłyby zalegać.
+//
+// `params` niesie wartości do wstawienia w tłumaczoną treść powiadomienia
+// automatycznego (dziś żadne ich nie potrzebuje, ale mechanizm jest gotowy).
+// Powiadomienia admina mają w `title`/`body` prawdziwy tekst wpisany ręcznie.
+//
+// Powtórne wygenerowanie powiadomienia automatycznego po 7 dniach od ostatniej akcji
+// (znacznik `users.profile_reminder_dismissed_at`) chroni CZĘŚCIOWY indeks unikalny
+// (user_id, kind) WHERE read_at IS NULL i kind w zbiorze automatycznych — zakładany
+// przez scripts/apply-notification-index.js (Prisma nie deklaruje indeksów z warunkiem
+// WHERE). Bez niego dwie karty przeglądarki odpytujące listę równocześnie potrafiłyby
+// utworzyć dwa rekordy. Powiadomień admina indeks celowo NIE obejmuje — tych może być
+// wiele nieprzeczytanych naraz.
 model Notification {
   id        String    @id @default(uuid())
   userId    String    @map("user_id")
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type      String    @default("info") // info | success | warning
+  kind      String    @default("ADMIN_MESSAGE") // ADMIN_MESSAGE | PROFILE_COMPANY_DATA
+  type      String    @default("info") // waga wizualna: info | success | warning
   title     String
   body      String
   ctaLabel  String?   @map("cta_label") // etykieta przycisku (opcjonalnie)
   ctaUrl    String?   @map("cta_url")   // link przycisku (opcjonalnie)
+  params    Json? // parametry treści powiadomień automatycznych (interpolacja i18n)
 
-  readAt    DateTime? @map("read_at")
-  createdAt DateTime  @default(now()) @map("created_at")
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
 
   @@index([userId, readAt])
+  @@index([userId, kind, createdAt])
   @@map("notifications")
 }
 

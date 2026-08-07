@@ -10,3 +10,6 @@ scripts/.cache/
 # Specyfikacje API ubezpieczycieli — materiał referencyjny od dostawcy,
 # trzymany lokalnie (nic w kodzie ich nie importuje)
 docs/insurance-ref/*.yml
+
+# Claude Code — lokalne/personalne permission rules, nie dla zespołu
+.claude/settings.local.json

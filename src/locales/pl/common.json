@@ -57,17 +57,19 @@
     "badge_few": "{{count}} nowe",
     "badge_many": "{{count}} nowych",
     "badge_other": "{{count}} nowych",
-    "empty": "Brak nowych powiadomień",
+    "empty": "Brak powiadomień",
+    "loading": "Wczytywanie...",
+    "loadFailed": "Nie udało się pobrać powiadomień",
+    "actionFailed": "Nie udało się zapisać zmiany. Spróbuj ponownie.",
     "markAllRead": "Oznacz wszystkie jako przeczytane",
-    "delete": "Usuń"
-  },
-  "nudge": {
-    "dismiss": "Odrzuć",
-    "remindLater": "Przypomnij później",
-    "title": "Dokończ konfigurację firmy",
-    "body": "Dodaj dane firmy raz, a my uzupełnimy je automatycznie w każdym dokumencie i zleceniu. Oszczędzasz czas przy każdej wysyłce.",
-    "cta": "Uzupełnij profil",
-    "later": "Później"
+    "delete": "Usuń powiadomienie",
+    "auto": {
+      "profileCompanyData": {
+        "title": "Dokończ konfigurację firmy",
+        "body": "Dodaj dane firmy raz, a my uzupełnimy je automatycznie w każdym dokumencie i zleceniu. Oszczędzasz czas przy każdej wysyłce.",
+        "cta": "Uzupełnij profil"
+      }
+    }
   },
   "actions": {
     "save": "Zapisz",

@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
+import { refreshNotifications } from '../services/notificationsRepo'
 import AlertBox from '../components/ui/AlertBox'
 import { inputCls, labelCls, submitCls } from '../components/auth/AuthShell'
 import { formatDocumentDate } from '../utils/formatDate'
@@ -58,6 +59,10 @@ function useProfileSave(updateUser) {
     try {
       const { profile } = await api.patch('/profile', patch)
       updateUser(profile)
+      // Powiadomienie „Uzupełnij dane firmy" zamyka serwer przy najbliższym
+      // pobraniu listy, więc wystarczy wymusić refetch: aktywny wpis znika
+      // z dzwonka od razu, bez przeładowania strony.
+      refreshNotifications()
       s.setStatus('success')
       s.setMessage(t('profile.saved'))
     } catch (err) {
