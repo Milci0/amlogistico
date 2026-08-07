@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Radar, Ship, MapPinned, ExternalLink, Leaf } from 'lucide-react'
+import { Radar, Ship, MapPinned, Leaf } from 'lucide-react'
 import { formatDocumentDate } from '../../utils/formatDate'
 import { mapShipsgoStatus } from '../../utils/shipmentFromSet'
 import { SHIPSGO_EVENT_ICONS, SHIPSGO_EVENT_FALLBACK_ICON } from '../../data/shipsgoEvents'
@@ -174,18 +174,6 @@ export default function ShipsGoLookupResult({ data, cached }) {
             </div>
           )}
         </div>
-
-        {data.mapToken && (
-          <a
-            href={`https://map.shipsgo.com/ocean/shipments/${data.id}?token=${data.mapToken}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-orange-700 dark:hover:text-orange-400 transition-colors"
-          >
-            {t('tracking.map.openInShipsgo')}
-            <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
-          </a>
-        )}
       </div>
     </div>
   )

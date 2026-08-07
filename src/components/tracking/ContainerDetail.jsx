@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Ship, Hash, Clock, Repeat, RefreshCw, ExternalLink, AlertCircle, Archive, Loader2 } from 'lucide-react'
+import { ArrowLeft, Ship, Hash, Clock, Repeat, RefreshCw, AlertCircle, Archive, Loader2 } from 'lucide-react'
 import { formatDocumentDate } from '../../utils/formatDate'
 import ContainerStatusBadge from './ContainerStatusBadge'
 import ContainerRouteBar from './ContainerRouteBar'
@@ -125,9 +125,13 @@ export default function ContainerDetail({
                 <Tile icon={Repeat} label={t('tracking.transshipments')} value={transhipment} empty={transhipmentEmpty} />
               </div>
 
+              {/* Podgląd: klik otwiera tę samą mapę w oknie modalnym,
+                  z pełną interakcją. Bez danych o trasie podgląd zamienia się
+                  w nieklikalny komunikat (patrz ShipmentMap). */}
               <ShipmentMap
                 geojson={container.geojson}
                 accent="orange"
+                variant="preview"
                 fallbackPorts={{ from: s.loadingLocation?.name, to: s.dischargeLocation?.name }}
               />
 
@@ -175,20 +179,6 @@ export default function ContainerDetail({
               >
                 {t('tracking.container.removeFromList')}
               </button>
-            )}
-
-            {/* Pełna mapa ShipsGo jako opcja poboczna, celowo dyskretna: nasza
-                mapa jest głównym widokiem, a tamta wyprowadza użytkownika z aplikacji. */}
-            {container.mapToken && container.shipsgoId && (
-              <a
-                href={`https://map.shipsgo.com/ocean/shipments/${container.shipsgoId}?token=${container.mapToken}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-auto inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-orange-700 dark:hover:text-orange-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
-              >
-                {t('tracking.map.openInShipsgo')}
-                <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
-              </a>
             )}
           </div>
         </div>

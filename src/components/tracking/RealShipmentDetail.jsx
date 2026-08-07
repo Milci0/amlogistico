@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, RefreshCw, ExternalLink, Leaf } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Leaf } from 'lucide-react'
 import { BRANCHES } from '../../data/trackingMock'
 import { markDelivered } from '../../services/documentSetsRepo'
 import { getShipsgoStatus, enableTracking, refreshTracking } from '../../services/shipsgoRepo'
@@ -169,9 +169,11 @@ export default function RealShipmentDetail({ shipment }) {
 
       {shipsgo?.id && (
         <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6">
+          {/* Podgląd: klik otwiera tę samą mapę w oknie modalnym (patrz ShipmentMap). */}
           <ShipmentMap
             geojson={shipsgo.geojson}
             accent="orange"
+            variant="preview"
             fallbackPorts={{ from: shipsgo.loadingLocation?.name, to: shipsgo.dischargeLocation?.name }}
           />
 
@@ -212,18 +214,6 @@ export default function RealShipmentDetail({ shipment }) {
               </div>
             )}
           </div>
-
-          {shipsgo.mapToken && (
-            <a
-              href={`https://map.shipsgo.com/ocean/shipments/${shipsgo.id}?token=${shipsgo.mapToken}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-orange-700 dark:hover:text-orange-400 transition-colors mt-5"
-            >
-              {t('tracking.map.openInShipsgo')}
-              <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
-            </a>
-          )}
         </div>
       )}
 

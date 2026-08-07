@@ -1,5 +1,20 @@
 import { z } from 'zod'
 import { KIND_ADMIN_MESSAGE } from '../_lib/autoNotifications.js'
+import { KIND_CONTAINER_READY } from '../_lib/containerReadyNotifications.js'
+
+// Oznaczenie jako przeczytane po OBIEKCIE, którego powiadomienie dotyczy
+// (POST /api/notifications/read-by-object). Klucz w `params`, po którym szukamy,
+// wynika z kategorii i jest ustalany na serwerze, nie przychodzi z żądania.
+// Kategorie bez powiązanego obiektu (wysyłki admina, zachęta profilowa) są tu
+// nieosiągalne, bo lista jest zamknięta.
+export const OBJECT_PARAM_BY_KIND = {
+  [KIND_CONTAINER_READY]: 'trackingId',
+}
+
+export const readByObjectSchema = z.object({
+  kind: z.enum(Object.keys(OBJECT_PARAM_BY_KIND), 'Nieobsługiwana kategoria powiadomienia'),
+  objectId: z.string().trim().min(1, 'Podaj identyfikator obiektu').max(100),
+})
 
 // Walidacja wysyłki powiadomienia (POST /api/notifications, tylko admin).
 // target='user' → wymagany email odbiorcy; target='all' → broadcast do wszystkich.

@@ -68,6 +68,12 @@
         "title": "Dokończ konfigurację firmy",
         "body": "Dodaj dane firmy raz, a my uzupełnimy je automatycznie w każdym dokumencie i zleceniu. Oszczędzasz czas przy każdej wysyłce.",
         "cta": "Uzupełnij profil"
+      },
+      "containerReady": {
+        "title": "Kontener {{containerNumber}} jest gotowy do śledzenia",
+        "body": "{{carrier}} udostępnił trasę i harmonogram przewozu. {{portOfLoading}} → {{portOfDischarge}}.",
+        "bodyNoRoute": "Przewoźnik udostępnił dane przewozu tego kontenera.",
+        "cta": "Zobacz szczegóły"
       }
     }
   },

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
@@ -38,8 +38,20 @@ const TAB_ACCENT = 'border-orange-600 dark:border-orange-400 bg-orange-50 dark:b
 export default function TrackingPage() {
   const { t } = useTranslation('pages')
   const [searchParams] = useSearchParams()
-  const [tab, setTab] = useState('list')
   const shipmentId = searchParams.get('shipmentId')
+
+  // Trwały odnośnik do konkretnego rejsu: /tracking?tab=container&trackingId=<id>.
+  // Tędy wchodzi przycisk z powiadomienia „kontener gotowy do śledzenia".
+  const tabParam = searchParams.get('tab')
+  const trackingId = searchParams.get('trackingId')
+  const [tab, setTab] = useState(tabParam === 'container' || trackingId ? 'container' : 'list')
+
+  // Sam stan początkowy nie wystarczy: klik w powiadomienie, gdy strona śledzenia
+  // jest już otwarta, zmienia tylko parametry adresu, bez przemontowania widoku.
+  useEffect(() => {
+    if (tabParam === 'container' || trackingId) setTab('container')
+    else if (tabParam === 'list') setTab('list')
+  }, [tabParam, trackingId])
 
   const { sets, loading } = useDocumentSetList({ status: 'completed' })
   const shipments = useMemo(() => buildShipments(sets), [sets])
@@ -108,7 +120,7 @@ export default function TrackingPage() {
       ) : mockShipment ? (
         <TrackingDetail shipment={mockShipment} />
       ) : tab === 'container' ? (
-        <ContainerLookup />
+        <ContainerLookup initialTrackingId={trackingId} />
       ) : loading ? (
         <div className="flex items-center justify-center py-16 text-gray-400 dark:text-slate-500">
           <Loader2 className="w-5 h-5 animate-spin" strokeWidth={1.75} />

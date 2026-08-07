@@ -37,6 +37,7 @@ import {
   hideForUser,
   listForUser,
   findVisibleForUser,
+  findVisibleByIdForUser,
   listPreviousVoyages,
 } from '../_lib/containerTrackingRepo.js'
 
@@ -137,6 +138,10 @@ function sendShipsgoError(res, code, retryAfter) {
 function toListItem(row) {
   const s = row.snapshot || {}
   return {
+    // NASZE id rejsu. Potrzebne, bo numer kontenera wraca w kolejnych rejsach:
+    // odnośnik z powiadomienia i oznaczanie powiadomienia jako przeczytane muszą
+    // wskazywać jednoznacznie ten jeden transport.
+    id: row.id,
     containerNumber: row.containerNumber,
     status: row.status,
     fetchState: row.fetchState,
@@ -290,6 +295,22 @@ async function loadOwnContainer(req, res) {
   }
   return row
 }
+
+// GET /api/tracking/containers/by-id/:trackingId — pełne dane rejsu wskazanego
+// NASZYM id. Tędy wchodzi odnośnik z powiadomienia „kontener gotowy do śledzenia":
+// ten sam numer kontenera potrafi mieć kilka rejsów, a powiadomienie dotyczy
+// dokładnie jednego. Czyta wyłącznie z bazy, zero zapytań do ShipsGo.
+// Zarejestrowane PRZED trasą z numerem, żeby kolejność dopasowania była oczywista.
+router.get('/containers/by-id/:trackingId', async (req, res, next) => {
+  try {
+    const row = await findVisibleByIdForUser(req.userId, req.params.trackingId)
+    if (!row) return res.status(404).json({ error: 'Nie znaleziono kontenera na Twojej liście' })
+    const previous = await listPreviousVoyages(req.userId, row.containerNumber, row.id)
+    res.json({ container: toDetail(row, previous) })
+  } catch (e) {
+    next(e)
+  }
+})
 
 // GET /api/tracking/containers/:containerNumber — pełne dane jednego rejsu
 // z bazy (snapshot + geojson). Zero zapytań do ShipsGo. To jest endpoint,

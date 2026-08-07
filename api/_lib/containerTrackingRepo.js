@@ -234,6 +234,18 @@ export async function findVisibleForUser(userId, containerNumber) {
   return { ...chosen.tracking, addedAt: chosen.addedAt }
 }
 
+// Rejs widoczny dla usera po NASZYM id. Uzywane przez odnosnik z powiadomienia
+// „kontener gotowy do sledzenia": numer kontenera wraca w kolejnych rejsach, wiec
+// tylko id jest jednoznaczne. Brak powiazania albo ukryty = brak dostepu (404).
+export async function findVisibleByIdForUser(userId, trackingId) {
+  const link = await prisma.containerTrackingUser.findUnique({
+    where: { userId_trackingId: { userId, trackingId } },
+    include: { tracking: true },
+  })
+  if (!link || link.hiddenAt) return null
+  return { ...link.tracking, addedAt: link.addedAt }
+}
+
 // Poprzednie rejsy tego kontenera, do ktorych user ma dostep (widok 5b linkuje
 // do nich z biezacego rejsu).
 export async function listPreviousVoyages(userId, containerNumber, excludeId) {

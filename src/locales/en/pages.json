@@ -721,7 +721,9 @@
       "transitDays_other": "{{count}} days",
       "co2": "Estimated CO2",
       "co2Value": "{{value}} kg",
-      "openInShipsgo": "Open on the ShipsGo map"
+      "previewHint": "Enlarge",
+      "previewAria": "Enlarge the route map",
+      "modalTitle": "Shipment route"
     },
     "trackerSection": "Track with the carrier",
     "addContainerNumber": "Add a container number to track this shipment.",

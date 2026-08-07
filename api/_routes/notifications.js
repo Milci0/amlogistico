@@ -7,7 +7,7 @@ import {
   isAutoKind,
   KIND_ADMIN_MESSAGE,
 } from '../_lib/autoNotifications.js'
-import { createNotificationSchema } from '../_validation/notifications.js'
+import { createNotificationSchema, readByObjectSchema, OBJECT_PARAM_BY_KIND } from '../_validation/notifications.js'
 import { formatZodError } from '../_validation/auth.js'
 
 const router = Router()
@@ -77,6 +77,33 @@ router.post('/read-all', async (req, res) => {
     data: { readAt: new Date() },
   })
   await recordReminderAction(req.userId, affected.map((n) => n.kind), 'read')
+  res.json({ ok: true, count: result.count })
+})
+
+// POST /api/notifications/read-by-object — oznacza jako przeczytane powiadomienia
+// dotyczące konkretnego obiektu, niezależnie od tego, czy użytkownik przyszedł
+// z dzwonka, czy z listy. Dziś jedyne zastosowanie: wejście w szczegóły kontenera
+// zamyka powiadomienie „gotowy do śledzenia" o tym rejsie.
+//
+// DLACZEGO TRASA, A NIE SZUKANIE PO STRONIE KLIENTA: dzwonek pobiera najwyżej
+// 50 ostatnich wpisów i tylko wtedy, gdy jest zamontowany. Trasa nie zależy ani
+// od jednego, ani od drugiego, a `userId` bierze z tokenu, więc cudzych
+// powiadomień nie ruszy. Cudzy albo nieistniejący obiekt daje po prostu 0.
+router.post('/read-by-object', async (req, res) => {
+  const parsed = readByObjectSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Błąd walidacji', fields: formatZodError(parsed.error) })
+  }
+  const { kind, objectId } = parsed.data
+  const result = await prisma.notification.updateMany({
+    where: {
+      userId: req.userId,
+      kind,
+      readAt: null,
+      params: { path: [OBJECT_PARAM_BY_KIND[kind]], equals: objectId },
+    },
+    data: { readAt: new Date() },
+  })
   res.json({ ok: true, count: result.count })
 })
 

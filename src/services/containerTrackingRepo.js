@@ -37,6 +37,15 @@ export async function getContainer(containerNumber) {
   return container
 }
 
+// getContainerById(trackingId)
+//   Wejście z odnośnika w powiadomieniu „kontener gotowy do śledzenia". Numer
+//   kontenera wraca w kolejnych rejsach, więc tylko nasze id wskazuje jednoznacznie
+//   ten jeden transport. Czyta z naszej bazy, zero kontaktu z ShipsGo.
+export async function getContainerById(trackingId) {
+  const { container } = await api.get(`/tracking/containers/by-id/${encodeURIComponent(trackingId)}`)
+  return container
+}
+
 export async function refreshContainer(containerNumber) {
   const { container } = await api.post(`/tracking/containers/${encodeURIComponent(containerNumber)}/refresh`)
   return container

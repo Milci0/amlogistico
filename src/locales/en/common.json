@@ -66,6 +66,12 @@
         "title": "Finish setting up your company",
         "body": "Add your company details once and we fill them in automatically on every document and order. You save time on every shipment.",
         "cta": "Complete profile"
+      },
+      "containerReady": {
+        "title": "Container {{containerNumber}} is ready to track",
+        "body": "{{carrier}} has published the route and schedule. {{portOfLoading}} → {{portOfDischarge}}.",
+        "bodyNoRoute": "The carrier has published transport data for this container.",
+        "cta": "View details"
       }
     }
   },

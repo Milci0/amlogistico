@@ -406,9 +406,12 @@ uzytkownika, ze to zuzyje kolejny kredyt) oraz "Usun z listy" (ukrycie, patrz Et
 5. Stan bez danych geograficznych (status NEW, INPROGRESS lub pusty geojson):
    zamiast mapy pokaz prostokat z informacja, ze trasa pojawi sie po otrzymaniu
    danych od przewoznika. Nie renderuj pustej mapy swiata.
-6. Link "Otworz pelna mape" prowadzacy do
-   `https://map.shipsgo.com/ocean/shipments/{id}?token={mapToken}` jako opcja poboczna,
-   dyskretny, nie glowny element.
+6. Mapa NIE wyprowadza uzytkownika z aplikacji (decyzja 2026-08-07, zastapila
+   wczesniejszy odnosnik "Otworz pelna mape" do zewnetrznej mapy przewoznika).
+   W szczegolach kontenera i w widoku wlasnej przesylki renderuj niski podglad
+   bez zadnej interakcji z mapa, ze wskazowka o powiekszeniu; klikniecie w podglad
+   otwiera te sama mape w oknie modalnym, z pelna interakcja. Podglad bez danych
+   o trasie nie jest klikalny i nie obiecuje powiekszenia.
 7. Mapa musi dzialac na szerokosci mobilnej i miec sensowna wysokosc na obu breakpointach.
 
 ---
@@ -903,9 +906,12 @@ uzytkownika, ze to zuzyje kolejny kredyt) oraz "Usun z listy" (ukrycie, patrz Et
 5. Stan bez danych geograficznych (status NEW, INPROGRESS lub pusty geojson):
    zamiast mapy pokaz prostokat z informacja, ze trasa pojawi sie po otrzymaniu
    danych od przewoznika. Nie renderuj pustej mapy swiata.
-6. Link "Otworz pelna mape" prowadzacy do
-   `https://map.shipsgo.com/ocean/shipments/{id}?token={mapToken}` jako opcja poboczna,
-   dyskretny, nie glowny element.
+6. Mapa NIE wyprowadza uzytkownika z aplikacji (decyzja 2026-08-07, zastapila
+   wczesniejszy odnosnik "Otworz pelna mape" do zewnetrznej mapy przewoznika).
+   W szczegolach kontenera i w widoku wlasnej przesylki renderuj niski podglad
+   bez zadnej interakcji z mapa, ze wskazowka o powiekszeniu; klikniecie w podglad
+   otwiera te sama mape w oknie modalnym, z pelna interakcja. Podglad bez danych
+   o trasie nie jest klikalny i nie obiecuje powiekszenia.
 7. Mapa musi dzialac na szerokosci mobilnej i miec sensowna wysokosc na obu breakpointach.
 
 ---

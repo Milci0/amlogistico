@@ -729,7 +729,9 @@
       "transitDays_other": "{{count}} dni",
       "co2": "Szacowane CO2",
       "co2Value": "{{value}} kg",
-      "openInShipsgo": "Otwórz na mapie ShipsGo"
+      "previewHint": "Powiększ",
+      "previewAria": "Powiększ mapę trasy",
+      "modalTitle": "Trasa przesyłki"
     },
     "trackerSection": "Śledzenie u przewoźnika",
     "addContainerNumber": "Dodaj numer kontenera, żeby śledzić przesyłkę.",

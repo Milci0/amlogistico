@@ -1012,6 +1012,132 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     nie wyjątek). Limit `shipsgoRateLimit` to **5 utworzeń na godzinę na użytkownika** - do podniesienia
     po wykupieniu pakietu.
 
+- **Mapa trasy u nas zamiast przekierowania na ShipsGo - GOTOWE (2026-08-07):** zniknęły wszystkie
+  odnośniki wyprowadzające użytkownika na zewnętrzną mapę ShipsGo, a `ShipmentMap` dostał tryb
+  podglądu z powiększaniem w oknie modalnym. Wyłącznie warstwa interfejsu: żadnej zmiany w źródle
+  danych mapy, w budowaniu GeoJSON-a, po stronie serwera ani w integracji ShipsGo.
+  - **`ShipmentMap` ma prop `variant`** (`full` domyślnie, `preview`). `full` zachowuje dotychczasowe
+    zachowanie co do joty. `preview` to niski podgląd (`h-40 sm:h-48`) z WYŁĄCZONYMI wszystkimi
+    uchwytami Leafleta naraz (`dragging`, `doubleClickZoom`, `touchZoom`, `boxZoom`, `keyboard`,
+    `zoomControl`), przykryty warstwą przechwytującą kliknięcia. Cała powierzchnia to jeden element
+    `role="button"` z `tabIndex=0`, `aria-label` i obsługą Enter oraz spacji. Kółko myszy przewija
+    stronę, bo overlay nie ma uchwytu zoomu.
+  - **Okno modalne** przez istniejący `components/ui/Modal.jsx` (portal, Escape, klik w tło, blokada
+    scrolla), mapa `h-[60vh] sm:h-[70vh]` w `max-w-5xl`, pełna interakcja włącznie z zoomem kółkiem
+    (w oknie strona i tak się nie przewija). Powrót ogniskowania na podgląd robi `ShipmentMap`
+    (ref plus `requestAnimationFrame`), nie `Modal`, żeby nie ruszać komponentu współdzielonego
+    z ubezpieczeniami.
+  - **Podgląd bez trasy NIE jest klikalny** i nie obiecuje powiększenia. Wynika to z konstrukcji:
+    gałąź „Brak jeszcze danych o trasie" wychodzi z komponentu przed wariantami, więc obszar
+    klikalny fizycznie nie powstaje.
+  - **`invalidateSize` przed dopasowaniem widoku** (`FitBounds`): Leaflet czyta rozmiar kontenera
+    przy inicjalizacji, a mapa montowana razem z otwarciem okna potrafi policzyć go przed ułożeniem
+    karty. Kolejność jest istotna, bo `fitBounds` na złych wymiarach daje zły zoom, więc samo
+    `invalidateSize` po fakcie by nie wystarczyło. Zmiany rozmiaru śledzi `ResizeObserver`
+    (API przeglądarki, zero nowych zależności), pierwsze wywołanie w `requestAnimationFrame`.
+  - **`isolate` na kontenerze mapy (OBA warianty) jest konieczne, nie kosmetyczne.** Leaflet nadaje
+    swoim warstwom z-index do 800 (kafelki 200, markery 600, kontrolki 800), a `Modal` ma z-50.
+    Bez własnego kontekstu nakładania mapa stojąca NA STRONIE przebijała się nad otwarte okno
+    modalne. Wyłapane na zrzucie ekranu (dwie kontrolki zoomu naraz), nie w testach. Dotyczyło to
+    każdego modalu w aplikacji otwartego przy widocznej mapie, także `ConfirmDialog`.
+  - **Usunięte:** trzy odnośniki `https://map.shipsgo.com/...` (`ContainerDetail`,
+    `RealShipmentDetail`, `ShipsGoLookupResult`), nieużywane już importy `ExternalLink` w tych
+    trzech plikach oraz klucz i18n `pages.tracking.map.openInShipsgo` (EN i PL). Kolumny `mapToken`
+    i `shipsgoId` ZOSTAJĄ w bazie i w odpowiedzi API. Odnośniki do agregatorów przewoźników
+    (`containerPrefixes.js`, `resolveTrackerUrl`, `ContainerTrackerBlock`) NIETKNIĘTE, to osobna
+    funkcja dla kontenerów nierozpoznanych. Nowe klucze: `previewHint`, `previewAria`, `modalTitle`.
+  - **Wpięcie:** podgląd w szczegółach kontenera i w widoku własnej przesyłki, wynik wyszukiwania
+    (`ShipsGoLookupResult`) zostaje w trybie `full`.
+  - **Punkt 6 makiety** (`docs/makieta_sledzenie_kontenera.html`, dwa wystąpienia) przepisany na
+    nową decyzję. W całym repozytorium nie ma już ani jednego wystąpienia `map.shipsgo.com`.
+  - Zweryfikowane: build zielony, 747/747 testów, `lint:locales` (1816 kluczy) i `lint:dashes`
+    czyste, oraz **14/14 testów akceptacyjnych w przeglądarce** (Playwright, tymczasowe wejście
+    Vite poza `src/`, skasowane po teście): podgląd i wskazówka, brak interakcji i brak `tabindex`
+    Leafleta w podglądzie, nieklikalny stan bez trasy, wariant `full` bez zmian, okno z działającym
+    zoomem i przeciąganiem, pełny rozmiar mapy od razu (982 z 984 px, 12 kafelków), Escape z powrotem
+    ogniskowania, klik w tło, tabulator dosięga podglądu jako PIERWSZY element, Enter i spacja,
+    przewijanie strony kółkiem bez zmiany zoomu, 375 px, ciemny motyw, wersja PL, zero błędów konsoli.
+  - **UWAGA przy oglądaniu na własnym koncie:** żaden z trzech rekordów w `container_tracking`
+    nie ma zapisanego `geojson` (sprawdzone w bazie 2026-08-07), więc wszystkie trzy pokazują dziś
+    komunikat „Brak jeszcze danych o trasie", a nie mapę. To stan sprzed tej zmiany, nie jej skutek.
+    Jedyny rekord, który może dostać trasę bez wydawania kredytu, to MMAU1351730 (SAILING) przez
+    przycisk „Odśwież" (GET). HLBU9258860 jest archiwalny (odświeżanie zablokowane), a TLLU1080331
+    ma status INPROGRESS, przy którym `shouldFetchGeojson` celowo nie pyta o trasę.
+
+- **Powiadomienie „kontener gotowy do śledzenia" - GOTOWE (2026-08-07):** gdy śledzony kontener
+  przestaje być w przygotowaniu i pojawiają się realne dane rejsu, każdy obserwujący dostaje
+  w dzwonku JEDNORAZOWE powiadomienie z przyciskiem prowadzącym prosto do tego kontenera.
+  - **`api/_lib/containerReadyNotifications.js`** (nowy) - `isContainerReady(row)` plus
+    `notifyContainerReady(row)`. Funkcja NIE WIE nic o cronie: to jedno wejście dla wszystkich
+    wywołujących, więc późniejsze podpięcie webhooka ShipsGo to dopisanie jednego wywołania
+    w `api/_routes/tracking.js`, bez przepisywania logiki.
+  - **Definicja gotowości:** `discardedAt` puste ORAZ `fetchState === 'ready'` ORAZ status spoza
+    `NEW/INPROGRESS/UNTRACKED/DISCHARGED` ORAZ migawka niepusta ORAZ są dane trasy (`geojson`
+    albo nazwa któregoś z portów). **DISCHARGED celowo wykluczony**: `isArchived` traktuje go jako
+    rejs zakończony, więc „gotowy do śledzenia" byłoby mylące. Skutek uboczny do świadomej
+    akceptacji: kontener, który przeskoczy z INPROGRESS prosto na DISCHARGED między przebiegami,
+    nie wygeneruje powiadomienia nigdy. Sam `geojson` NIE jest warunkiem twardym, bo
+    `fetchGeojsonSafe` zwraca `null` przy błędzie zapytania o trasę.
+  - **JEDNOKROTNOŚĆ pilnuje `container_tracking.ready_notified_at`, NIE indeks unikalny.**
+    Kategoria `CONTAINER_READY` **celowo NIE należy do `AUTO_KINDS`**: częściowy indeks
+    `(user_id, kind) WHERE read_at IS NULL`, który chroni powiadomienia automatyczne przed
+    duplikatem, dopuszczałby TYLKO JEDNO nieprzeczytane powiadomienie tej kategorii na konto,
+    więc drugi kontener gotowy tego samego dnia przepadłby po cichu (P2002 traktowane jak sukces).
+    Z tego samego powodu nie obowiązuje tu reguła odradzania się po 7 dniach.
+  - **Transakcja w kolejności „najpierw zajmij znacznik":** warunkowy `updateMany`
+    (`readyNotifiedAt: null`) zakłada blokadę wiersza, więc drugie równoległe wywołanie czeka
+    na zatwierdzenie pierwszego i widzi zero pasujących wierszy. Awaria w połowie wycofuje całość,
+    więc kolejny przebieg nadal utworzy dokładnie jeden komplet powiadomień.
+  - **`scripts/backfill-ready-notified.js`** (nowy, idempotentny, URUCHOMIONY 2026-08-07):
+    oznacza jako „już powiadomiono" rekordy spełniające definicję gotowości w chwili wdrożenia.
+    Bez tego pierwszy przebieg zasypałby użytkowników powiadomieniami o kontenerach śledzonych
+    od tygodni. Na produkcji oznaczył 1 rekord (MMAU1351730).
+  - **Cron `GET /api/cron/tracking-ready`** w `api/_routes/cron.js`, za istniejącym
+    `requireCronSecret` (401 bez nagłówka, 503 bez `CRON_SECRET`). Porcja **20 rekordów,
+    współbieżność 4** przez istniejące `mapLimit` z `api/_lib/rss.js`: najwyżej 40 zapytań na
+    przebieg, z zapasem poniżej limitu ShipsGo 100 na minutę i poniżej `maxDuration` 60 s.
+    **Wyłącznie GET-y, ani jednego POST** (kredyt schodzi tylko przy POST, a `createAndSave`
+    nie jest tu w ogóle importowane). Rekordy bez szans na gotowość (`UNTRACKED`, `DISCHARGED`,
+    `fetchState: 'failed'`) odsiewa zapytanie, żeby nie zajmowały porcji w kółko. Błąd jednego
+    rekordu jest logowany i nie przerywa przebiegu. Zwraca statystyki
+    `{sprawdzone, odpytane, gotowe, powiadomienia, bledy}`.
+  - **Harmonogram: `"0 5 * * *"` w `vercel.json`, JEDNA linia.** Plan **Hobby** dopuszcza
+    wyzwalanie raz dziennie i najwyżej dwa zadania, więc limit jest teraz wyczerpany
+    (sync-isztar plus to). Po przejściu na Pro wystarczy zmienić tę linię, np. na `"0 */3 * * *"`.
+    Komentarza nie da się umieścić w `vercel.json` (Vercel wymaga poprawnego JSON-a), więc opis
+    siedzi w nagłówku trasy w `api/_routes/cron.js`.
+  - **Adres do konkretnego rejsu: `/tracking?tab=container&trackingId=<id>`.** Po NASZYM id,
+    nie po numerze kontenera, bo ten sam numer wraca w kolejnych rejsach. Wymagało to trzech
+    rzeczy: `id` w odpowiedzi `toListItem`/`toDetail` (dotąd go NIE BYŁO), nowej trasy
+    `GET /api/tracking/containers/by-id/:trackingId` (czyta tylko z bazy) i obsługi parametrów
+    `tab`/`trackingId` w `TrackingPage` (także przez `useEffect`, bo klik w powiadomienie przy
+    otwartej zakładce zmienia sam adres, bez przemontowania widoku).
+  - **Reguła R3 przez trasę serwerową:** `POST /api/notifications/read-by-object`
+    (`{kind, objectId}`, mapa `OBJECT_PARAM_BY_KIND` po stronie serwera, filtr Prisma po
+    `params.trackingId`). Wybrana zamiast szukania po stronie klienta, bo dzwonek pobiera najwyżej
+    50 wpisów i tylko gdy jest zamontowany. Front woła to z JEDNEGO miejsca: efekt na
+    `selected?.id` w `ContainerLookup`, więc obejmuje wejście z dzwonka, z listy i z wyszukiwarki.
+  - **Treść z warstwy i18n**, nie z bazy: `notificationContent` dostał w `CONTENT_KEYS` wpisy
+    obiektowe z opcjonalnym `bodyKey(params)`, bo porty i przewoźnik bywają nieznane, a zdanie
+    z pustym miejscem wygląda jak usterka (klucze `body` i `bodyNoRoute`). Tekst w bazie jest
+    wyłącznie zapasem. Ikona kafelka w dzwonku per kategoria (`KIND_ICON` w `Topbar.jsx`).
+  - Zweryfikowane: build zielony, **766 testów** (przed sesją 747; 19 nowych w
+    `api/_lib/__tests__/containerReadyNotifications.test.js`), `lint:locales` (1820 kluczy)
+    i `lint:dashes` czyste, oraz **E2E 19/19 na realnym backendzie i bazie** (konta i rejsy
+    testowe zakładane na czas testu i skasowane; potwierdzone po teście: 13 kont produkcyjnych,
+    3 realne rekordy śledzenia bez zmian, 0 powiadomień na realnych kontach). Pokryte: 401 bez
+    sekretu, 401 ze złym sekretem, 503 bez `CRON_SECRET`, INPROGRESS bez powiadomienia, dwóch
+    obserwatorów dostaje po jednym, ukrywający nie dostaje nic, powtórny przebieg bez duplikatu,
+    trasa po id plus 404 na cudzym, oznaczanie po obiekcie (w tym izolacja kont, idempotencja,
+    401 bez sesji, 400 na kategorii bez obiektu), „X" bez powrotu po kolejnym przebiegu,
+    „oznacz wszystkie" obejmujące tę kategorię.
+  - **DO ZROBIENIA RĘCZNIE:** `CRON_SECRET` nie jest opisany w `.env.example` (uprawnienia sesji
+    blokują dostęp do plików `.env*`). Trzeba dopisać wpis ręcznie i ustawić zmienną w panelu
+    Vercela, inaczej trasa crona odpowiada 503.
+  - **NIE zweryfikowane w przeglądarce:** wygląd karty powiadomienia w dzwonku, przejście
+    przyciskiem do szczegółów kontenera i oznaczenie jako przeczytane po wejściu z listy.
+    Warstwa danych i trasy przetestowane E2E.
+
 **Do zrobienia:**
 - **ShipsGo na realnym tokenie:** potwierdzić kształt odpowiedzi (`date_of_loading`,
   `date_of_discharge_initial`, `transhipments`, `size_type`), format podpisu webhooka (hex czy

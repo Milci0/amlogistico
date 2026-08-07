@@ -1,8 +1,10 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ExternalLink } from 'lucide-react'
 import { findCarrierByName, resolveHomeUrl } from '../../data/containerPrefixes'
-import { addContainer, getContainer, refreshContainer, removeContainer } from '../../services/containerTrackingRepo'
+import { addContainer, getContainer, getContainerById, refreshContainer, removeContainer } from '../../services/containerTrackingRepo'
+import { markReadByObject } from '../../services/notificationsRepo'
+import { KIND_CONTAINER_READY } from '../../utils/notificationContent'
 import { useContainerList, useContainerPolling } from '../../hooks/useContainerTracking'
 import { isPendingStatus } from '../../data/containerStatus'
 import AlertBox from '../ui/AlertBox'
@@ -23,7 +25,7 @@ import CarrierPickerModal from './CarrierPickerModal'
 // Ciemny pomarańcz w tej zakładce celowo — „Śledzenie ładunku" wisi pod
 // „Trasy handlowe" w menu, pokrewny akcent co TradeRoutesPage (/routes), ale
 // wyraźnie ciemniejszy (patrz TrackingPage.jsx, komentarz przy TAB_ACCENT).
-export default function ContainerLookup() {
+export default function ContainerLookup({ initialTrackingId }) {
   const { t } = useTranslation('pages')
   const { containers, loading, upsert, remove } = useContainerList()
 
@@ -48,6 +50,30 @@ export default function ContainerLookup() {
     upsert(fresh)
   }, [upsert])
   const { pollingExhausted } = useContainerPolling(selected, applyPolled)
+
+  // Wejście z odnośnika w powiadomieniu: /tracking?tab=container&trackingId=<id>.
+  // Po NASZYM id, nie po numerze kontenera, bo ten sam numer wraca w kolejnych
+  // rejsach, a powiadomienie dotyczy dokładnie jednego transportu.
+  useEffect(() => {
+    if (!initialTrackingId) return undefined
+    let active = true
+    setBusy(true)
+    setError(null)
+    getContainerById(initialTrackingId)
+      .then((full) => { if (active) { setSelected(full); upsert(full) } })
+      .catch((e) => { if (active) setError(e) })
+      .finally(() => { if (active) setBusy(false) })
+    return () => { active = false }
+  }, [initialTrackingId, upsert])
+
+  // Reguła R3: wejście w szczegóły kontenera zamyka powiadomienie „gotowy do
+  // śledzenia" o tym rejsie, niezależnie od tego, czy użytkownik przyszedł
+  // z dzwonka, z listy, czy z wyszukiwarki. Jedno miejsce zamiast trzech, bo
+  // wszystkie ścieżki kończą się ustawieniem `selected`.
+  const selectedId = selected?.id
+  useEffect(() => {
+    if (selectedId) markReadByObject(KIND_CONTAINER_READY, selectedId)
+  }, [selectedId])
 
   async function handleSearch(containerNumber) {
     // Nazwa przewoźnika zamiast numeru („CMA CGM", „maersk") — istniejąca

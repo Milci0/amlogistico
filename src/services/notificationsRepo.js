@@ -38,6 +38,21 @@ export async function markRead(id) {
   notifyChange()
 }
 
+// markReadByObject(kind, objectId) -> Promise<number>   (ile oznaczono)
+//   Zamyka powiadomienia dotyczące konkretnego obiektu, gdy użytkownik i tak
+//   właśnie na niego patrzy. Woła to widok kontenera przy wejściu w szczegóły,
+//   niezależnie od tego, czy przyszedł z dzwonka, czy z listy. Cichy przy błędzie:
+//   to efekt uboczny nawigacji, a nie akcja, o której trzeba meldować.
+export async function markReadByObject(kind, objectId) {
+  try {
+    const { count } = await api.post('/notifications/read-by-object', { kind, objectId })
+    if (count > 0) notifyChange()
+    return count ?? 0
+  } catch {
+    return 0
+  }
+}
+
 // markAllRead() -> Promise<number>  (ile oznaczono)
 export async function markAllRead() {
   const { count } = await api.post('/notifications/read-all')

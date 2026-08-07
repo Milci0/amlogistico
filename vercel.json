@@ -5,7 +5,8 @@
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "crons": [
-    { "path": "/api/cron/sync-isztar", "schedule": "0 4 * * 1" }
+    { "path": "/api/cron/sync-isztar", "schedule": "0 4 * * 1" },
+    { "path": "/api/cron/tracking-ready", "schedule": "0 5 * * *" }
   ],
   "functions": {
     "api/index.js": { "maxDuration": 60 }

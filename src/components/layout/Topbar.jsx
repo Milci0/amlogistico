@@ -5,7 +5,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { useNotifications } from '../../hooks/useNotifications'
 import { markRead as markNotifRead, markAllRead, deleteNotification } from '../../services/notificationsRepo'
-import { notificationContent, KIND_ADMIN_MESSAGE } from '../../utils/notificationContent'
+import { notificationContent, KIND_ADMIN_MESSAGE, KIND_CONTAINER_READY } from '../../utils/notificationContent'
 import TemplateSearch from './TemplateSearch'
 import LanguageSwitcher from '../LanguageSwitcher'
 
@@ -58,9 +58,14 @@ function useDismissable(open, setOpen, ref) {
   }, [open, setOpen, ref])
 }
 
-// Ikona kafelka powiadomienia automatycznego (budynek firmy). Powiadomienia admina
-// używają ikony wynikającej z wagi wizualnej (NOTIF_STYLE).
+// Ikona kafelka powiadomienia generowanego przez system. Domyślnie budynek firmy
+// (zachęta „Uzupełnij dane firmy"), a dla kategorii dotyczących konkretnego obiektu
+// ikona pasująca do rzeczy, o której mowa. Powiadomienia admina używają ikony
+// wynikającej z wagi wizualnej (NOTIF_STYLE).
 const AUTO_ICON = 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2M5 21H3m6-14h1m-1 4h1m4-4h1m-1 4h1m-6 6h4v4H9v-4z'
+const KIND_ICON = {
+  [KIND_CONTAINER_READY]: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+}
 
 // ── Dzwonek powiadomień ─────────────────────────────────────────────────────────
 // Jedno źródło prawdy: /api/notifications. W jednej liście, posortowanej po dacie,
@@ -231,7 +236,7 @@ function NotificationsBell() {
                         }
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={auto ? AUTO_ICON : s.path} />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={auto ? (KIND_ICON[n.kind] || AUTO_ICON) : s.path} />
                         </svg>
                       </div>
                       <div className="min-w-0">

@@ -94,7 +94,7 @@ model Notification {
   userId    String    @map("user_id")
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  kind      String    @default("ADMIN_MESSAGE") // ADMIN_MESSAGE | PROFILE_COMPANY_DATA
+  kind      String    @default("ADMIN_MESSAGE") // ADMIN_MESSAGE | PROFILE_COMPANY_DATA | CONTAINER_READY
   type      String    @default("info") // waga wizualna: info | success | warning
   title     String
   body      String
@@ -254,6 +254,20 @@ model ContainerTracking {
   checkedAt       DateTime? @map("checked_at") // checked_at z ShipsGo
   discardedAt     DateTime? @map("discarded_at") // discarded_at z ShipsGo = rejs zakończony
   lastPolledAt    DateTime? @map("last_polled_at") // ostatnie odpytanie ShipsGo (nie: ostatnie wejście usera)
+
+  // Znacznik JEDNORAZOWEGO powiadomienia „kontener gotowy do śledzenia".
+  // Niepuste = już powiadomiono i to się nigdy nie powtórzy. Reguła 7 dni,
+  // która obowiązuje zachętę „Uzupełnij dane firmy", tu NIE ma zastosowania.
+  //
+  // DLACZEGO ZNACZNIK, A NIE INDEKS UNIKALNY NA POWIADOMIENIU: kategoria
+  // CONTAINER_READY celowo NIE należy do AUTO_KINDS (api/_lib/autoNotifications.js).
+  // Częściowy indeks (user_id, kind) WHERE read_at IS NULL, który chroni
+  // powiadomienia automatyczne przed duplikatem, dopuszczałby TYLKO JEDNO
+  // nieprzeczytane powiadomienie tej kategorii na konto, więc drugi kontener
+  // gotowy tego samego dnia przepadłby po cichu. Jednokrotność pilnuje więc
+  // ta kolumna plus transakcja w api/_lib/containerReadyNotifications.js.
+  readyNotifiedAt DateTime? @map("ready_notified_at")
+
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
