@@ -5,16 +5,24 @@ import { resolveTrackerUrl, AGGREGATORS } from '../../data/containerPrefixes'
 import AlertBox from '../ui/AlertBox'
 
 // Blok „rozpoznano linię / kontener leasingowany / nierozpoznane + agregatory"
-// dla DANEGO numeru kontenera — WSPÓLNY dla ContainerLookup.jsx (wyszukiwarka
-// w zakładce „Śledzenie ładunku") i widoku szczegółów przesyłki (numer wzięty
-// z zapisanego zestawu dokumentów). Rozpoznawanie linii NIE jest tu duplikowane
-// względem ContainerLookup — oba miejsca wołają identifyContainer().
+// dla DANEGO numeru kontenera — WSPÓLNY dla widoku szczegółów przesyłki
+// (RealShipmentDetail, numer wzięty z zapisanego zestawu dokumentów) i widoku
+// szczegółów śledzonego kontenera (ContainerDetail, persystentny rejestr
+// ShipsGo). Rozpoznawanie linii NIE jest tu duplikowane — oba miejsca wołają
+// identifyContainer().
 //
-// showCheckDigitWarning=false w widoku przesyłki (numer pochodzi z zapisanych
-// danych, nie ze świeżo wpisywanego pola) — zostaje jako przełącznik, bo
-// literówka w kreatorze też jest możliwa i warto ją sygnalizować.
+// showCheckDigitWarning=false w obu widokach szczegółów (numer pochodzi z
+// zapisanych danych, nie ze świeżo wpisywanego pola) — zostaje jako
+// przełącznik, bo literówka w kreatorze też jest możliwa i warto ją sygnalizować.
 //
-// Cała zakładka „Śledzenie ładunku" jest teraz w ciemnym pomarańczu (dopasowanie
+// showFallbackLinks=true domyślnie (link do trackera przewoźnika + sekcja
+// agregatorów) — w RealShipmentDetail.jsx wyłączony (2026-08-07): przy realnym
+// śledzeniu ShipsGo API te ręczne linki są tam zbędne. ContainerDetail.jsx
+// (rejestr ShipsGo) zostawia default: renderuje ten komponent WYŁĄCZNIE gdy
+// container.status === 'UNTRACKED', czyli dokładnie wtedy, gdy ShipsGo nie ma
+// żadnych danych — fallback ma tam sens tylko w tym jednym stanie.
+//
+// Cała zakładka „Śledzenie ładunku" jest w ciemnym pomarańczu (dopasowanie
 // do Trasy handlowe, pod którym wisi w menu — patrz TrackingPage.jsx), więc na
 // dziś jest tylko jeden akcent. Zostaje jako obiekt/prop (nie stałe klasy) —
 // tania furtka, gdyby kiedyś jednak trzeba było odróżnić dwa miejsca użycia.
@@ -29,7 +37,7 @@ const ACCENTS = {
   },
 }
 
-export default function ContainerTrackerBlock({ containerNo, showCheckDigitWarning = true, accent = 'orange' }) {
+export default function ContainerTrackerBlock({ containerNo, showCheckDigitWarning = true, accent = 'orange', showFallbackLinks = true }) {
   const { t } = useTranslation('pages')
   const result = identifyContainer(containerNo)
   const a = ACCENTS[accent] || ACCENTS.orange
@@ -40,7 +48,7 @@ export default function ContainerTrackerBlock({ containerNo, showCheckDigitWarni
         <AlertBox type="warning">{t('tracking.container.checkDigitWarning')}</AlertBox>
       )}
 
-      {result.carrier?.type === 'carrier' && (
+      {showFallbackLinks && result.carrier?.type === 'carrier' && (
         <>
           <div className={`flex items-center gap-2 px-4 py-3 rounded-lg border-l-4 ${a.recognizedWrap}`}>
             <CheckCircle2 className={`w-5 h-5 shrink-0 ${a.recognizedIcon}`} strokeWidth={1.75} />
@@ -78,25 +86,27 @@ export default function ContainerTrackerBlock({ containerNo, showCheckDigitWarni
         <AlertBox type="info">{t('tracking.container.unrecognized')}</AlertBox>
       )}
 
-      <div>
-        <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">
-          {t('tracking.container.aggregatorsTitle')}
-        </p>
-        <div className="flex flex-col gap-2">
-          {AGGREGATORS.map((agg) => (
-            <a
-              key={agg.id}
-              href={agg.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600 transition-colors group"
-            >
-              <span className="text-sm font-medium text-gray-700 dark:text-slate-200">{agg.name}</span>
-              <ExternalLink className="w-4 h-4 text-gray-400 dark:text-slate-500 group-hover:text-gray-600 dark:group-hover:text-slate-300 shrink-0" strokeWidth={1.75} />
-            </a>
-          ))}
+      {showFallbackLinks && (
+        <div>
+          <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+            {t('tracking.container.aggregatorsTitle')}
+          </p>
+          <div className="flex flex-col gap-2">
+            {AGGREGATORS.map((agg) => (
+              <a
+                key={agg.id}
+                href={agg.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600 transition-colors group"
+              >
+                <span className="text-sm font-medium text-gray-700 dark:text-slate-200">{agg.name}</span>
+                <ExternalLink className="w-4 h-4 text-gray-400 dark:text-slate-500 group-hover:text-gray-600 dark:group-hover:text-slate-300 shrink-0" strokeWidth={1.75} />
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

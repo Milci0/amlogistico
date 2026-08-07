@@ -327,7 +327,7 @@ export default function RealShipmentDetail({ shipment }) {
             {t('tracking.trackerSection')}
           </h3>
           {shipment.voyage.containerNo ? (
-            <ContainerTrackerBlock containerNo={shipment.voyage.containerNo} showCheckDigitWarning={false} />
+            <ContainerTrackerBlock containerNo={shipment.voyage.containerNo} showCheckDigitWarning={false} showFallbackLinks={false} />
           ) : (
             <p className="text-sm text-gray-500 dark:text-slate-400">
               {t('tracking.addContainerNumber')}{' '}

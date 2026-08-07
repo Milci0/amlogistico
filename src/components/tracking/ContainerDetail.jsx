@@ -185,11 +185,14 @@ export default function ContainerDetail({
         </div>
       )}
 
-      {/* Linki do trackera przewoźnika i agregatorów — istniejący blok, przydatny
-          zwłaszcza wtedy, gdy ShipsGo nie ma danych. */}
-      <div className="mt-6">
-        <ContainerTrackerBlock containerNo={container.containerNumber} showCheckDigitWarning={false} accent="orange" />
-      </div>
+      {/* Linki do trackera przewoźnika i agregatorów — TYLKO gdy ShipsGo faktycznie
+          nie ma danych (status UNTRACKED). Przy realnym śledzeniu ten ręczny
+          fallback nie jest już potrzebny (2026-08-07). */}
+      {untracked && (
+        <div className="mt-6">
+          <ContainerTrackerBlock containerNo={container.containerNumber} showCheckDigitWarning={false} accent="orange" />
+        </div>
+      )}
     </div>
   )
 }
