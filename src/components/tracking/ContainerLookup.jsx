@@ -32,7 +32,10 @@ export default function ContainerLookup() {
   const [error, setError] = useState(null)
   const [carrierHint, setCarrierHint] = useState(null) // wyszukiwanie po nazwie linii
   const [refreshing, setRefreshing] = useState(false)
-  const [confirm, setConfirm] = useState(null) // { kind: 'remove' | 'newVoyage' }
+  // { kind: 'remove' | 'newVoyage', containerNumber }. `containerNumber` jest
+  // NIESIONY w stanie zamiast czytany z `selected`, bo usuwanie da się teraz
+  // wywołać wprost z wiersza listy — bez otwierania szczegółów kontenera.
+  const [confirm, setConfirm] = useState(null)
   const [carrierPicker, setCarrierPicker] = useState(false)
   // Ostatni numer, który w tej sesji przeszedł walidację poprawnie. Trzymany
   // TUTAJ, a nie w formularzu: otwarcie kontenera i powrót do listy
@@ -101,14 +104,17 @@ export default function ContainerLookup() {
   }
 
   // „Usuń z listy" ukrywa wpis u nas i NIE woła DELETE w ShipsGo: tam usunięcie
-  // jest nieodwracalne, a ponowne dodanie to nowy kredyt.
+  // jest nieodwracalne, a ponowne dodanie to nowy kredyt. Wywoływane z wiersza
+  // listy (selected===null) i z widoku szczegółów (selected===ten kontener) —
+  // stąd numer bierzemy z `confirm`, nie z `selected`.
   async function handleRemove() {
-    const number = selected.containerNumber
+    const number = confirm?.containerNumber
+    if (!number) return
     setConfirm(null)
     try {
       await removeContainer(number)
       remove(number)
-      setSelected(null)
+      if (selected?.containerNumber === number) setSelected(null)
     } catch (e) {
       setError(e)
     }
@@ -185,7 +191,7 @@ export default function ContainerLookup() {
               </AlertBox>
               <button
                 type="button"
-                onClick={() => setConfirm({ kind: 'remove' })}
+                onClick={() => setConfirm({ kind: 'remove', containerNumber: selected.containerNumber })}
                 className="mt-4 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
               >
                 {t('tracking.container.removeFromList')}
@@ -214,15 +220,15 @@ export default function ContainerLookup() {
             onBack={() => setSelected(null)}
             onRefresh={handleRefresh}
             refreshing={refreshing}
-            onRemove={() => setConfirm({ kind: 'remove' })}
+            onRemove={() => setConfirm({ kind: 'remove', containerNumber: selected.containerNumber })}
             onPickCarrier={() => setCarrierPicker(true)}
-            onStartNewVoyage={() => setConfirm({ kind: 'newVoyage' })}
+            onStartNewVoyage={() => setConfirm({ kind: 'newVoyage', containerNumber: selected.containerNumber })}
           />
         )}
 
         <ConfirmDialog
           open={confirm?.kind === 'remove'}
-          title={t('tracking.container.confirmRemove.title')}
+          title={t('tracking.container.confirmRemove.title', { number: confirm?.containerNumber })}
           description={t('tracking.container.confirmRemove.body')}
           confirmLabel={t('tracking.container.confirmRemove.confirm')}
           destructive
@@ -290,7 +296,22 @@ export default function ContainerLookup() {
         </div>
       )}
 
-      <ContainerList containers={containers} loading={loading} onOpen={openContainer} />
+      <ContainerList
+        containers={containers}
+        loading={loading}
+        onOpen={openContainer}
+        onRemove={(number) => setConfirm({ kind: 'remove', containerNumber: number })}
+      />
+
+      <ConfirmDialog
+        open={confirm?.kind === 'remove'}
+        title={t('tracking.container.confirmRemove.title', { number: confirm?.containerNumber })}
+        description={t('tracking.container.confirmRemove.body')}
+        confirmLabel={t('tracking.container.confirmRemove.confirm')}
+        destructive
+        onConfirm={handleRemove}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

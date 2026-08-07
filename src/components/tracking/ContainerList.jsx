@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Container as ContainerIcon, ChevronRight } from 'lucide-react'
+import { Container as ContainerIcon, ChevronRight, Trash2 } from 'lucide-react'
 import { formatRelativeTime } from '../../utils/formatDate'
 import ContainerStatusBadge from './ContainerStatusBadge'
 
@@ -11,7 +11,7 @@ import ContainerStatusBadge from './ContainerStatusBadge'
 // Stan pusty jest widoczny OD RAZU, przed pierwszym wyszukaniem. To jedyny
 // moment, w którym można ustawić oczekiwania: że kontener zostanie na liście
 // i że nie trzeba go wpisywać ponownie.
-export default function ContainerList({ containers, loading, onOpen }) {
+export default function ContainerList({ containers, loading, onOpen, onRemove }) {
   const { t, i18n } = useTranslation('pages')
 
   return (
@@ -43,29 +43,43 @@ export default function ContainerList({ containers, loading, onOpen }) {
         <ul className="flex flex-col gap-2">
           {containers.map((c) => (
             <li key={c.containerNumber + (c.archived ? '-arch' : '')}>
-              <button
-                type="button"
-                onClick={() => onOpen(c)}
-                className="w-full text-left flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600 transition-colors group focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-mono tracking-wider font-semibold text-gray-900 dark:text-white">
-                    {c.containerNumber}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 truncate">
-                    {describeRoute(t, c)}
-                  </p>
-                </div>
-                <ContainerStatusBadge status={c.status} archived={c.archived} fetchState={c.fetchState} />
-                <span className="text-xs text-gray-400 dark:text-slate-500 whitespace-nowrap">
-                  {formatRelativeTime(c.updatedAt, i18n.language)}
-                </span>
-                <ChevronRight
-                  className="w-4 h-4 text-gray-300 dark:text-slate-600 group-hover:text-gray-500 dark:group-hover:text-slate-400 shrink-0"
-                  strokeWidth={2}
-                  aria-hidden="true"
-                />
-              </button>
+              {/* Przycisk otwarcia i przycisk usunięcia jako RODZEŃSTWO, nie
+                  zagnieżdżenie <button> w <button> — usuwanie z listy nie
+                  wymaga już wejścia w szczegóły kontenera. */}
+              <div className="flex items-stretch gap-1 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600 transition-colors group focus-within:ring-2 focus-within:ring-orange-500">
+                <button
+                  type="button"
+                  onClick={() => onOpen(c)}
+                  className="flex-1 min-w-0 text-left flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-xl focus:outline-none"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-mono tracking-wider font-semibold text-gray-900 dark:text-white">
+                      {c.containerNumber}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 truncate">
+                      {describeRoute(t, c)}
+                    </p>
+                  </div>
+                  <ContainerStatusBadge status={c.status} archived={c.archived} fetchState={c.fetchState} />
+                  <span className="text-xs text-gray-400 dark:text-slate-500 whitespace-nowrap">
+                    {formatRelativeTime(c.updatedAt, i18n.language)}
+                  </span>
+                  <ChevronRight
+                    className="w-4 h-4 text-gray-300 dark:text-slate-600 group-hover:text-gray-500 dark:group-hover:text-slate-400 shrink-0"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRemove(c.containerNumber)}
+                  aria-label={t('tracking.container.removeFromList')}
+                  title={t('tracking.container.removeFromList')}
+                  className="shrink-0 self-center mr-2 w-8 h-8 flex items-center justify-center rounded-lg border border-transparent text-red-600 dark:text-red-400 hover:border-red-500 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                >
+                  <Trash2 className="w-4 h-4" strokeWidth={1.75} />
+                </button>
+              </div>
             </li>
           ))}
         </ul>

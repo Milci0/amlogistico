@@ -858,7 +858,7 @@
         "confirmCarrier": "Utwórz śledzenie"
       },
       "confirmRemove": {
-        "title": "Usunąć kontener z listy?",
+        "title": "Usunąć {{number}} z listy?",
         "body": "Kontener zniknie z Twojej listy. Śledzenie po stronie ShipsGo zostaje, więc ponowne wpisanie tego samego numeru przywróci go bez żadnej opłaty.",
         "confirm": "Usuń z listy"
       },

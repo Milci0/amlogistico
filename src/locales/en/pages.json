@@ -844,7 +844,7 @@
         "confirmCarrier": "Create tracking"
       },
       "confirmRemove": {
-        "title": "Remove the container from your list?",
+        "title": "Remove {{number}} from your list?",
         "body": "The container will disappear from your list. Tracking on the ShipsGo side stays, so entering the same number again restores it at no cost.",
         "confirm": "Remove from list"
       },
