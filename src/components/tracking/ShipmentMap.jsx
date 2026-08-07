@@ -13,8 +13,7 @@ import 'leaflet/dist/leaflet.css'
 // Cała zakładka „Śledzenie ładunku" jest w ciemnym pomarańczu (patrz
 // TrackingPage.jsx) — jeden akcent dla obu widoków (własne przesyłki
 // w RealShipmentDetail i wolne wyszukiwanie w ShipsGoLookupResult). `accent`
-// zostaje jako prop (nie stała klasa) — tania furtka na przyszłość, ten sam
-// wzorzec co ACCENTS w ContainerTrackerBlock.jsx.
+// zostaje jako prop (nie stała klasa) — tania furtka na przyszłość.
 //
 // Kształt GeoJSON-a jest NIEZWERYFIKOWANY bez realnego tokena ShipsGo (patrz
 // uwaga przy trimGeojson) — klasyfikacja punktów jest więc obronna: Point z

@@ -146,7 +146,7 @@ export default function ContainerLookup() {
             </AlertBox>
           )}
 
-          <ContainerTrackerBlock containerNo={result.containerNo} accent="orange" />
+          <ContainerTrackerBlock containerNo={result.containerNo} />
         </div>
       )}
 

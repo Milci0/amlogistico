@@ -6,7 +6,7 @@
 //       przewoźnika → bezpośredni link do JEJ trackera.
 // type: 'lessor'  — kontener firmy leasingowej (Triton, Textainer, Florens...) —
 //       może być obsługiwany przez DOWOLNĄ linię. NIE zgadujemy przewoźnika,
-//       pokazujemy tylko nazwę leasingodawcy i kierujemy do agregatorów.
+//       pokazujemy tylko nazwę leasingodawcy (ContainerTrackerBlock.jsx).
 //
 // Kody własnościowe bywają przenoszone przy przejęciach — jeśli coś tu
 // przestanie się zgadzać, zaktualizuj ten plik (świadomie trzymany osobno od
@@ -131,25 +131,11 @@ export const CONTAINER_PREFIXES = {
   CCLU: 'cosco_shipping_development',
 }
 
-// Agregatory — alternatywa niezależnie od tego, czy linię/leasingodawcę rozpoznaliśmy.
-// Żaden nie ma potwierdzonego wzorca URL z numerem w adresie → strony główne narzędzi.
-export const AGGREGATORS = [
-  { id: 'shipsgo', name: 'ShipsGo', url: 'https://shipsgo.com/ocean' },
-  { id: 'tracktrace', name: 'Track-Trace', url: 'https://www.track-trace.com/container' },
-  { id: 'vesselfinder', name: 'VesselFinder', url: 'https://www.vesselfinder.com/container-tracking' },
-]
-
 // Zwraca { key, type, name, trackerUrl?, homeUrl? } albo null gdy prefiks nierozpoznany.
 export function lookupCarrierByPrefix(prefix) {
   const key = CONTAINER_PREFIXES[prefix]
   if (!key) return null
   return { key, ...CARRIERS[key] }
-}
-
-// Rozwiązuje trackerUrl (funkcja albo string) do gotowego linku dla danego numeru.
-// Tylko dla type:'carrier' — leasingodawcy nie mają własnego trackera.
-export function resolveTrackerUrl(carrier, code) {
-  return typeof carrier.trackerUrl === 'function' ? carrier.trackerUrl(code) : carrier.trackerUrl
 }
 
 // Strona główna trackera BEZ podstawionego numeru — używana przy wyszukiwaniu
