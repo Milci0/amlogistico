@@ -6,7 +6,7 @@ import { Package, DoorOpen, ArrowUpToLine, ArrowUpRight, ArrowDownRight, ArrowDo
 // zaobserwowane w innych przesyłkach.
 //
 // TO NIE JEST PEŁNA LISTA — ShipsGo może zwrócić kod, którego tu nie ma.
-// Nieznany kod NIE znika: renderer (ShipmentDateline) używa
+// Nieznany kod NIE znika: renderer (ContainerTimeline) używa
 // `t(`tracking.shipsgoEvents.${code}`, { defaultValue: code })` na etykietę
 // i SHIPSGO_EVENT_ICONS[code] || Circle na ikonę.
 export const KNOWN_SHIPSGO_EVENTS = [

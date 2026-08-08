@@ -5,22 +5,20 @@ import { resolveTrackerUrl, AGGREGATORS } from '../../data/containerPrefixes'
 import AlertBox from '../ui/AlertBox'
 
 // Blok „rozpoznano linię / kontener leasingowany / nierozpoznane + agregatory"
-// dla DANEGO numeru kontenera — WSPÓLNY dla widoku szczegółów przesyłki
-// (RealShipmentDetail, numer wzięty z zapisanego zestawu dokumentów) i widoku
-// szczegółów śledzonego kontenera (ContainerDetail, persystentny rejestr
-// ShipsGo). Rozpoznawanie linii NIE jest tu duplikowane — oba miejsca wołają
-// identifyContainer().
+// dla DANEGO numeru kontenera. Jedyny konsument: ContainerDetail.jsx
+// (persystentny rejestr ShipsGo) — „Lista przesyłek" (RealShipmentDetail,
+// numer wzięty z zapisanego zestawu dokumentów) USUNIĘTA 2026-08-08 razem
+// z całym przełącznikiem widoku na tej zakładce.
 //
-// showCheckDigitWarning=false w obu widokach szczegółów (numer pochodzi z
+// showCheckDigitWarning=false w widoku szczegółów (numer pochodzi z
 // zapisanych danych, nie ze świeżo wpisywanego pola) — zostaje jako
 // przełącznik, bo literówka w kreatorze też jest możliwa i warto ją sygnalizować.
 //
 // showFallbackLinks=true domyślnie (link do trackera przewoźnika + sekcja
-// agregatorów) — w RealShipmentDetail.jsx wyłączony (2026-08-07): przy realnym
-// śledzeniu ShipsGo API te ręczne linki są tam zbędne. ContainerDetail.jsx
-// (rejestr ShipsGo) zostawia default: renderuje ten komponent WYŁĄCZNIE gdy
-// container.status === 'UNTRACKED', czyli dokładnie wtedy, gdy ShipsGo nie ma
-// żadnych danych — fallback ma tam sens tylko w tym jednym stanie.
+// agregatorów) — ContainerDetail.jsx zostawia default, ale renderuje ten
+// komponent WYŁĄCZNIE gdy container.status === 'UNTRACKED', czyli dokładnie
+// wtedy, gdy ShipsGo nie ma żadnych danych — fallback ma sens tylko w tym
+// jednym stanie.
 //
 // Cała zakładka „Śledzenie ładunku" jest w ciemnym pomarańczu (dopasowanie
 // do Trasy handlowe, pod którym wisi w menu — patrz TrackingPage.jsx), więc na

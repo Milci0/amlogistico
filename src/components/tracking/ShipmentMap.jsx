@@ -12,10 +12,10 @@ import 'leaflet/dist/leaflet.css'
 // własne div-iconki w kolorze akcentu.
 //
 // Cała zakładka „Śledzenie ładunku" jest w ciemnym pomarańczu (patrz
-// TrackingPage.jsx) — jeden akcent dla obu widoków (własne przesyłki
-// w RealShipmentDetail i zakładka „Numer kontenera"). `accent` zostaje jako
-// prop (nie stała klasa) — tania furtka na przyszłość, ten sam wzorzec co
-// ACCENTS w ContainerTrackerBlock.jsx.
+// TrackingPage.jsx) — jeden akcent, dziś tylko w widoku „Numer kontenera"
+// (ContainerDetail.jsx; „Lista przesyłek"/RealShipmentDetail USUNIĘTA
+// 2026-08-08). `accent` zostaje jako prop (nie stała klasa) — tania furtka
+// na przyszłość, ten sam wzorzec co ACCENTS w ContainerTrackerBlock.jsx.
 //
 // ── Dwa warianty (2026-08-07) ──────────────────────────────────────────────
 //   full    – dotychczasowe zachowanie: mapa osadzona w karcie, przeciąganie

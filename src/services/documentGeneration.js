@@ -362,10 +362,15 @@ export function buildEngineResult(snapshot) {
 // (2026-08-06). Zero nowych pól w kreatorze — WYŁĄCZNIE to, co user już wpisał
 // (route/sea/cargo), skopiowane tu, żeby lista `/tracking` nie musiała dociągać
 // pełnego `formData` dla każdego zestawu (lista zwraca `meta` bez `formData`).
-// `delivered` NIE jest tu inicjalizowane — ustawiane wyłącznie przez
-// documentSetsRepo.markDelivered() (ręczne potwierdzenie, bo kreator nie zbiera
-// żadnej daty dostawy — sprawdzone w CmrTemplate/ZlecenieTemplate, te pola są
-// puste na wydruku).
+// `delivered` NIE jest tu inicjalizowane — kreator nie zbiera żadnej daty
+// dostawy (sprawdzone w CmrTemplate/ZlecenieTemplate, te pola są puste na
+// wydruku). UWAGA (2026-08-08): jedyny konsument tego pola,
+// documentSetsRepo.markDelivered(), USUNIĘTY razem z „Listą przesyłek"
+// (utils/shipmentFromSet.js) — całe `meta.shipment` (patrz niżej) nie ma dziś
+// żadnego czytelnika po stronie frontendu; backend (api/_routes/shipsgoTracking.js)
+// nadal go czyta/zapisuje, ale jest nieosiągalny z UI (jego jedyny klient,
+// services/shipsgoRepo.js, też usunięty). Świadomie NIETKNIĘTE w tej sesji —
+// zakres zadania to przełącznik widoku, nie kształt zapisu do bazy.
 export function buildMeta(snapshot, language) {
   return {
     routeFrom: snapshot.route.fromCountry,
