@@ -705,6 +705,10 @@
       "inputLabel": "Numer kontenera",
       "inputHint": "Wystarczy sam numer kontenera. Przewoźnika rozpoznajemy automatycznie.",
       "listTitle": "Twoje kontenery",
+      "filters": {
+        "collecting": "Zbieramy dane",
+        "collectingNote": "Dane pochodzą od ShipsGo i mogą pojawić się z opóźnieniem. Powiadomimy Cię, gdy będą gotowe."
+      },
       "listCount_one": "{{count}} śledzony",
       "listCount_few": "{{count}} śledzone",
       "listCount_many": "{{count}} śledzonych",

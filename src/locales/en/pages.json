@@ -697,6 +697,10 @@
       "inputLabel": "Container number",
       "inputHint": "The container number alone is enough. We identify the carrier automatically.",
       "listTitle": "Your containers",
+      "filters": {
+        "collecting": "Collecting data",
+        "collectingNote": "Data comes from ShipsGo and may take a little time to appear. We'll notify you once it's ready."
+      },
       "listCount_one": "{{count}} tracked",
       "listCount_other": "{{count}} tracked",
       "emptyTitle": "You are not tracking any container yet",

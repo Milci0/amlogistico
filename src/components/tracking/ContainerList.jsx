@@ -3,29 +3,33 @@ import { useTranslation } from 'react-i18next'
 import { Container as ContainerIcon, ChevronRight, Trash2, SearchX } from 'lucide-react'
 import { formatRelativeTime } from '../../utils/formatDate'
 import ContainerStatusBadge from './ContainerStatusBadge'
+import AlertBox from '../ui/AlertBox'
 
 // Filtry statusu — WYŁĄCZNIE realne wartości ShipsGo Ocean (OCEAN_STATUSES
 // w api/_lib/shipsgo.js, 8 wartości potwierdzonych w dokumentacji) plus flaga
-// `archived`, która w UI nadpisuje status (patrz containerStatus.js). Zredukowane
-// z 8+1 możliwych stanów do 5 przycisków (2026-08-08):
-//   - NEW/INPROGRESS ("Pobieramy dane") pominięte jako cel filtra — stan
-//     przejściowy, kontener nie powinien w nim długo zostawać
+// `archived`, która w UI nadpisuje status (patrz containerStatus.js). 5 przycisków
+// (zaktualizowane 2026-08-08 — kolejność odzwierciedla naturalny przebieg rejsu):
+//   - NEW/INPROGRESS razem jako „Zbieramy dane" — stan przejściowy zaraz po
+//     dodaniu kontenera, zanim ShipsGo skompletuje dane od przewoźnika. Osobna
+//     etykieta niż na odznace per-kontener („Pobieramy dane"/status.INPROGRESS) —
+//     tu to CEL WYSZUKIWANIA (świadomy wybór), nie stan pojedynczego wiersza,
+//     więc dostał własne, bardziej opisowe sformułowanie
 //   - BOOKED/LOADED/SAILING razem jako „W drodze" (przed dotarciem do portu)
 //   - ARRIVED/DISCHARGED razem jako „W porcie docelowym" (dotarł, nieważne
 //     czy już rozładowany) — CELOWO osobno od „W drodze", bo kontener w
 //     porcie docelowym to nie to samo co w trasie
 //   - `archived` sam w sobie jako „Rejs zakończony" (nadpisuje status)
-//   - UNTRACKED jako „Bez śledzenia"
-// Etykiety idą z JUŻ ISTNIEJĄCYCH kluczy (status.* per kontener,
-// realStatuses.in_destination_port ze starej „Listy przesyłek" — jedyny
-// ocalały klucz z tamtej sekcji, bo nazwa i znaczenie pasują 1:1) — żadnych
-// nowych tłumaczeń poza stanem pustej listy po filtrze.
+// UNTRACKED bez osobnego przycisku (usunięte 2026-08-08) — takie kontenery
+// nadal widoczne pod „Wszystkie", po prostu bez dedykowanego filtra.
+// Etykiety idą z JUŻ ISTNIEJĄCYCH kluczy tam, gdzie sens się pokrywa
+// (status.* per kontener, realStatuses.in_destination_port ze starej
+// „Listy przesyłek") — nowy tekst tylko dla „Zbieramy dane" i noty pod nim.
 const STATUS_FILTERS = [
   { id: 'all', labelKey: 'tracking.allStatuses' },
+  { id: 'collecting', statuses: ['NEW', 'INPROGRESS'], labelKey: 'tracking.container.filters.collecting' },
   { id: 'in_transit', statuses: ['BOOKED', 'LOADED', 'SAILING'], labelKey: 'tracking.container.status.SAILING' },
   { id: 'at_destination', statuses: ['ARRIVED', 'DISCHARGED'], labelKey: 'tracking.realStatuses.in_destination_port' },
   { id: 'archived', labelKey: 'tracking.container.status.ARCHIVED' },
-  { id: 'untracked', statuses: ['UNTRACKED'], labelKey: 'tracking.container.status.UNTRACKED' },
 ]
 
 function matchesFilter(c, filterId) {
@@ -101,6 +105,12 @@ export default function ContainerList({ containers, loading, onOpen, onRemove })
               )
             })}
           </div>
+
+          {statusFilter === 'collecting' && (
+            <div className="mb-3">
+              <AlertBox type="info">{t('tracking.container.filters.collectingNote')}</AlertBox>
+            </div>
+          )}
 
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center py-12 px-4 border border-dashed border-gray-200 dark:border-slate-700 rounded-xl">
