@@ -22,6 +22,7 @@ import {
   reserveTracking,
   saveSnapshot,
   markFailed,
+  markPollMiss,
   releaseReservation,
   shouldPoll,
 } from './containerTrackingRepo.js'
@@ -61,12 +62,22 @@ export async function persistShipment(trackingId, raw) {
 }
 
 // Odpytuje ShipsGo o istniejące śledzenie i zapisuje wynik (GET, bez kredytu).
-// Zwraca zaktualizowany wiersz albo, przy błędzie przejściowym, ten sprzed próby
-// — user zobaczy wtedy ostatnie znane dane zamiast błędu.
+// Zwraca zaktualizowany wiersz albo, przy błędzie, ten sprzed próby: user
+// zobaczy wtedy ostatnie znane dane zamiast błędu.
+//
+// ŻADEN błąd odpytania nie zatrzaskuje rekordu jako `failed`. Ta ścieżka dotyczy
+// przesyłki, która JUŻ istnieje i za którą JUŻ zapłacono kredyt, więc nie ma
+// czego chronić przed ponowieniem (GET jest darmowy), a jest co stracić:
+// `failed` wyłącza rekord z odpytywania na zawsze i pokazuje czerwoną kartę
+// zamiast danych. Odróżnia to tę funkcję od createAndSave(), gdzie `failed`
+// jest właśnie zabezpieczeniem przed drugą, płatną próbą (patrz komentarz tam).
+// Powody, dla których poprawny rekord dostaje 404, są realne i przemijające:
+// inny SHIPSGO_API_TOKEN w środowisku (baza jest jedna, konta ShipsGo dwa),
+// przesyłka usunięta ręcznie w panelu, awaria po ich stronie.
 export async function pollAndSave(row) {
   const result = await getOceanShipment(row.shipsgoId)
   if (!result.success) {
-    if (isPermanentError(result.code)) return markFailed(row.id, result.code)
+    if (isPermanentError(result.code)) return markPollMiss(row.id, result.code)
     return row
   }
   return persistShipment(row.id, result.data)

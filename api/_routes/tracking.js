@@ -16,9 +16,11 @@
 import { Router } from 'express'
 import crypto from 'node:crypto'
 import { requireAuth } from '../_lib/auth.js'
-import { ensureShipsgoAccess } from '../_lib/shipsgoAccess.js'
+import { ensureShipsgoAccess, hasShipsgoAccess } from '../_lib/shipsgoAccess.js'
 import { getOceanCarriers, describeShipsgoError } from '../_lib/shipsgo.js'
 import { persistShipment, pollAndSave, createAndSave } from '../_lib/shipsgoSync.js'
+import { mapLimit } from '../_lib/rss.js'
+import { isContainerReady, notifyContainerReady } from '../_lib/containerReadyNotifications.js'
 import { validateContainerNumber } from '../_lib/containerChecksum.js'
 import { createContainerSchema, containerNumberParam } from '../_validation/shipsgoTracking.js'
 import { tryConsumeLookup } from '../_lib/shipsgoRateLimit.js'
@@ -31,6 +33,7 @@ import {
   markDiscarded,
   releaseReservation,
   shouldPoll,
+  isAwaitingCarrierData,
   canManualRefresh,
   isArchived,
   linkUser,
@@ -130,6 +133,89 @@ function sendShipsgoError(res, code, retryAfter) {
   const payload = { error: message }
   if (retryAfter) payload.retryAfter = retryAfter
   return res.status(status).json(payload)
+}
+
+// ── Odświeżanie w locie przy odczycie ───────────────────────────────────────
+// DLACZEGO TO TU JEST: pierwotnie zakładaliśmy, że aktualizacje wpycha webhook
+// ShipsGo, więc odczyt czytał wyłącznie z bazy, a odpytywanie z przeglądarki
+// tylko sprawdzało, czy coś już przyszło. Webhook wymaga jednak rocznej
+// subskrypcji i nie został podłączony, przez co ta pętla nigdy nie miała czego
+// znaleźć: kontener wisiał na „Pobieramy dane", choć ShipsGo znało już trasę.
+//
+// GET do ShipsGo NIE kosztuje kredytu (kredyt schodzi wyłącznie przy POST,
+// patrz nagłówek api/_lib/shipsgo.js), więc odczyt może sam dociągnąć świeże
+// dane. Częstotliwość ogranicza shouldPoll(): minuta dla rejsu czekającego na
+// dane armatora, 5 minut dla rejsu w drodze. Limit jest NA REJS i pilnuje go
+// serwer, więc dziesięć otwartych kart daje jedno zapytanie do ShipsGo, nie
+// dziesięć, a przeglądarka może pytać nas tak często, jak wygodnie.
+//
+// Odświeżenie jest DODATKIEM do odczytu, nigdy jego warunkiem: brak dostępu,
+// błąd sieci czy awaria ShipsGo mają zwrócić ostatnie znane dane, a nie zamienić
+// działający odczyt w błąd.
+const LIST_REFRESH_MAX = 5
+const LIST_REFRESH_CONCURRENCY = 3
+
+// pollAndSave() zwraca surowy wiersz rejsu, a odczyty per użytkownik dokładają
+// `addedAt` z powiązania (to po nim lista pokazuje „8 minut temu"). Bez tego
+// odświeżony wiersz gubiłby datę dodania i wracał do createdAt.
+function keepUserFields(fresh, original) {
+  return { ...fresh, addedAt: original.addedAt }
+}
+
+// Gdy odświeżenie sprawiło, że rejs stał się gotowy, powiadomienie ma pójść OD
+// RAZU do wszystkich obserwujących, a nie czekać na nocne zadanie cykliczne.
+// notifyContainerReady() jest idempotentne (pilnuje tego kolumna
+// ready_notified_at), więc wołanie go przy każdym odświeżeniu jest bezpieczne.
+// Nieudane powiadomienie nie może zepsuć odczytu, po który przyszedł user.
+async function announceIfReady(row) {
+  try {
+    if (isContainerReady(row)) await notifyContainerReady(row)
+  } catch (e) {
+    console.error('[tracking] nie udalo sie wyslac powiadomienia o gotowosci:', row.containerNumber, e)
+  }
+}
+
+async function refreshIfStale(userId, row) {
+  if (!shouldPoll(row)) return row
+  if (!(await hasShipsgoAccess(userId))) return row
+  try {
+    const fresh = keepUserFields(await pollAndSave(row), row)
+    await announceIfReady(fresh)
+    return fresh
+  } catch (e) {
+    console.error('[tracking] odswiezenie przy odczycie nie powiodlo sie:', row.containerNumber, e)
+    return row
+  }
+}
+
+// Lista: odświeżamy rejsy, którym minął odstęp, ale najwyżej LIST_REFRESH_MAX
+// naraz, żeby wejście na listę nie czekało na kilkanaście zapytań sieciowych.
+// Najdawniej sprawdzane idą pierwsze, więc przy dłuższej liście porcje rotują
+// zamiast w kółko brać tych samych rekordów (ten sam wzorzec co w cronie).
+// Rejsy czekające na dane armatora mają pierwszeństwo: to one wiszą userowi
+// na ekranie jako „Pobieramy dane".
+function pollOrder(a, b) {
+  const awaiting = Number(isAwaitingCarrierData(b)) - Number(isAwaitingCarrierData(a))
+  if (awaiting !== 0) return awaiting
+  return new Date(a.lastPolledAt || 0) - new Date(b.lastPolledAt || 0)
+}
+
+async function refreshStaleRows(userId, rows) {
+  const stale = rows.filter(shouldPoll).sort(pollOrder).slice(0, LIST_REFRESH_MAX)
+  if (stale.length === 0) return rows
+  if (!(await hasShipsgoAccess(userId))) return rows
+
+  const freshById = new Map()
+  await mapLimit(stale, LIST_REFRESH_CONCURRENCY, async (row) => {
+    try {
+      const fresh = keepUserFields(await pollAndSave(row), row)
+      freshById.set(row.id, fresh)
+      await announceIfReady(fresh)
+    } catch (e) {
+      console.error('[tracking] odswiezenie na liscie nie powiodlo sie:', row.containerNumber, e)
+    }
+  })
+  return rows.map((r) => freshById.get(r.id) || r)
 }
 
 // ── Kształt odpowiedzi dla frontendu ────────────────────────────────────────
@@ -265,10 +351,11 @@ router.post('/containers', async (req, res, next) => {
 })
 
 // GET /api/tracking/containers — lista kontenerów użytkownika (bez ukrytych).
-// Czyta WYŁĄCZNIE z bazy. Zero zapytań do ShipsGo.
+// Czyta z bazy i po drodze dociąga rejsy, którym minął odstęp
+// (patrz refreshStaleRows: darmowe GET-y, limit odstępu po stronie serwera).
 router.get('/containers', async (req, res, next) => {
   try {
-    const rows = await listForUser(req.userId)
+    const rows = await refreshStaleRows(req.userId, await listForUser(req.userId))
     // Rekordy archiwalne pod aktywne, w obrębie grupy najnowsze pierwsze
     // (listForUser sortuje już po addedAt malejąco).
     const items = rows.map(toListItem)
@@ -303,8 +390,9 @@ async function loadOwnContainer(req, res) {
 // Zarejestrowane PRZED trasą z numerem, żeby kolejność dopasowania była oczywista.
 router.get('/containers/by-id/:trackingId', async (req, res, next) => {
   try {
-    const row = await findVisibleByIdForUser(req.userId, req.params.trackingId)
-    if (!row) return res.status(404).json({ error: 'Nie znaleziono kontenera na Twojej liście' })
+    const found = await findVisibleByIdForUser(req.userId, req.params.trackingId)
+    if (!found) return res.status(404).json({ error: 'Nie znaleziono kontenera na Twojej liście' })
+    const row = await refreshIfStale(req.userId, found)
     const previous = await listPreviousVoyages(req.userId, row.containerNumber, row.id)
     res.json({ container: toDetail(row, previous) })
   } catch (e) {
@@ -313,12 +401,14 @@ router.get('/containers/by-id/:trackingId', async (req, res, next) => {
 })
 
 // GET /api/tracking/containers/:containerNumber — pełne dane jednego rejsu
-// z bazy (snapshot + geojson). Zero zapytań do ShipsGo. To jest endpoint,
-// który odpytuje polling z frontendu.
+// (snapshot + geojson). To jest endpoint, który odpytuje przeglądarka, więc to
+// TU dzieje się automatyczne odświeżanie: gdy minął odstęp, dociąga świeże dane
+// z ShipsGo darmowym GET-em, zanim odpowie (patrz refreshIfStale).
 router.get('/containers/:containerNumber', async (req, res, next) => {
   try {
-    const row = await loadOwnContainer(req, res)
-    if (!row) return
+    const found = await loadOwnContainer(req, res)
+    if (!found) return
+    const row = await refreshIfStale(req.userId, found)
     const previous = await listPreviousVoyages(req.userId, row.containerNumber, row.id)
     res.json({ container: toDetail(row, previous) })
   } catch (e) {

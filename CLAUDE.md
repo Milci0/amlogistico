@@ -1162,7 +1162,62 @@ Sięgaj do tych plików gdy potrzebujesz konkretów (pola dokumentów, endpointy
     przyciskiem do szczegółów kontenera i oznaczenie jako przeczytane po wejściu z listy.
     Warstwa danych i trasy przetestowane E2E.
 
+- **Automatyczne odswiezanie sledzenia bez webhooka - GOTOWE (2026-08-08):** kontener przestal
+  wisiec na „Pobieramy dane". Cala funkcja byla zbudowana przy zalozeniu, ze aktualizacje wypycha
+  webhook ShipsGo, ktorego nie wykupiono (wymaga rocznej subskrypcji), wiec nic nigdy nie schodzilo
+  z ShipsGo po utworzeniu przesylki.
+  - **Blad glowny: `shouldPoll` dobieral odstep po `fetchState`, nie po statusie.** Rekord swiezo
+    utworzony ma `fetchState:'ready'` (POST zwrocil id i migawke, wiec z NASZEJ perspektywy odczyt
+    sie udal) przy statusie `NEW`/`INPROGRESS` (armator nie podal jeszcze trasy). Taki rekord
+    dostawal odstep godzinny zamiast minutowego, wiec `PENDING_RETRY_MS` nie obowiazywalo dokladnie
+    tych rekordow, dla ktorych je napisano. Potwierdzone na produkcji: CGMU5102420 `status=NEW`
+    `fetchState=ready` przez 37 minut bez jednego odpytania, TLLU1080331 przez 463 minuty.
+    Nowe `isAwaitingCarrierData(row)` + `AWAITING_CARRIER_STATUSES`.
+  - **Blad wtorny: petla w przegladarce odpytywala NAS, nie ShipsGo.** `GET /containers/:nr` czytal
+    wylacznie z bazy, wiec 30-sekundowa petla w kolko odczytywala ten sam nieaktualny wiersz.
+    Teraz odczyt sam dociaga dane (`refreshIfStale`), a lista porcjami (`refreshStaleRows`,
+    maks. 5 naraz, wspolbieznosc 3, najdawniej sprawdzane pierwsze, czekajace na armatora maja
+    pierwszenstwo). **GET do ShipsGo NIE kosztuje kredytu** (kredyt schodzi tylko przy POST), wiec
+    odczyt moze odswiezac. Limit jest NA REJS i pilnuje go serwer, wiec dziesiec otwartych kart
+    daje jedno zapytanie do ShipsGo, nie dziesiec.
+  - **`hasShipsgoAccess(userId)`** w `shipsgoAccess.js` - wariant CICHY bramki, ktory niczego nie
+    odpowiada. Brak dostepu ma pominac odswiezenie, a nie zamienic poprawny odczyt w 503.
+  - **Odstepy:** `PENDING_RETRY_MS` 60 s (czeka na armatora), `FRESH_MS` 5 min (bylo 60 min),
+    `MANUAL_REFRESH_MS` 60 s (bylo 5 min). Ostatnie zrownane z automatem, bo automat tez odswieza
+    `lastPolledAt`, wiec dluzszy odstep oznaczalby 429 zamiast danych tuz po cyklu automatycznym.
+  - **Powiadomienie „gotowy do sledzenia" leci od razu** po odswiezeniu (`announceIfReady` woła
+    `notifyContainerReady`, idempotentne przez `ready_notified_at`), nie dopiero o 5:00 z crona.
+  - **Front:** `useContainerPolling` bez limitu 15 minut (armator zwleka godzinami, a przerwanie
+    zostawialo usera przed ekranem, ktory nigdy sie nie zmieni): 60 s gdy czeka na dane, 5 min dla
+    rejsu w drodze, pauza przy `document.hidden`, natychmiastowy odczyt przy powrocie na karte.
+    Nowy `useContainerBackgroundSync(enabled)` zamontowany w `AppShell` robi to samo w tle na KAZDEJ
+    zakladce aplikacji (`notifications:changed` emitowane tylko gdy ktorys kontener wyszedl ze stanu
+    oczekiwania, nie przy kazdym cyklu). Odswiezanie jest CICHE: bez spinnera, kolko tylko po
+    recznym kliknieciu. Przycisk „Odswiez" widoczny OD RAZU (byl ukryty przez pierwsze 15 minut
+    „bo i tak dzieje sie samo", a nie dzialo sie nic).
+  - **DWA KONTA SHIPSGO, JEDNA BAZA (wazne, potwierdzone 2026-08-08):** `SHIPSGO_API_TOKEN` jest
+    INNY lokalnie niz na Vercelu, a `DATABASE_URL` ten sam. Przesylka utworzona na produkcji
+    dostaje przy odpytaniu ze srodowiska lokalnego 404, bo tamten token jej nie widzi
+    (`GET /ocean/shipments` z lokalnym tokenem: `meta {"more":false,"total":3}`, CGMU5102420 poza
+    lista). Dlatego `pollAndSave` NIE wola juz `markFailed` przy bledzie trwalym, tylko nowe
+    **`markPollMiss`** (zapisuje `lastError` i `lastPolledAt`, NIE rusza `fetchState`).
+    `markFailed` zatrzaskiwalo rekord na stale: `shouldPoll` zwraca false dla `failed`, wiec nie
+    mial jak wrocic do zycia nawet po odpytaniu wlasciwym tokenem, a UI pokazywal czerwone „Blad
+    utworzenia" zamiast danych, za ktore zaplacono kredyt. Rozroznienie jest istotne: 404 przy
+    TWORZENIU to wina numeru kontenera, 404 przy ODPYTANIU to „to id istnieje, tylko ten token
+    go nie widzi". W `createAndSave` `markFailed` ZOSTAJE, tam chroni przed druga platna proba.
+  - **`?container_number=` jest przez ShipsGo IGNOROWANE** (zwraca niefiltrowana liste calego
+    konta). Obrona w `findOceanShipmentByContainer` (filtrowanie po stronie Node) dziala i jest
+    konieczna, inaczej pod nasz numer podpiełaby sie pierwsza lepsza cudza przesylka.
+  - Zweryfikowane: build zielony, **776 testow** (przed sesja 770), `lint:dashes` czysty, oraz
+    realne odpytanie ShipsGo na MMAU1351730 (pelna sciezka `pollAndSave` -> `persistShipment` ->
+    `notifyContainerReady`). **NIE zweryfikowane w przegladarce** i **NIE zweryfikowane na
+    CGMU5102420**, bo tego kontenera nie widac tokenem lokalnym.
+
 **Do zrobienia:**
+- **UJEDNOLICIC `SHIPSGO_API_TOKEN` miedzy lokalnym `.env` a Vercelem** (albo swiadomie rozdzielic
+  bazy). Dzis kredyty rozjezdzaja sie na dwa konta, a rekordy z jednego srodowiska sa nieczytelne
+  z drugiego. `markPollMiss` lagodzi skutek, ale nie usuwa przyczyny.
 - **ShipsGo na realnym tokenie:** potwierdzić kształt odpowiedzi (`date_of_loading`,
   `date_of_discharge_initial`, `transhipments`, `size_type`), format podpisu webhooka (hex czy
   base64) i czy `GET /ocean/shipments?filters[container_number]=eq:` działa jak zakłada fallback

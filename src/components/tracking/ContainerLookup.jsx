@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ExternalLink } from 'lucide-react'
+import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { findCarrierByName, resolveHomeUrl } from '../../data/containerPrefixes'
 import { addContainer, getContainer, getContainerById, refreshContainer, removeContainer } from '../../services/containerTrackingRepo'
 import { markReadByObject } from '../../services/notificationsRepo'
@@ -49,7 +49,7 @@ export default function ContainerLookup({ initialTrackingId }) {
     setSelected(fresh)
     upsert(fresh)
   }, [upsert])
-  const { pollingExhausted } = useContainerPolling(selected, applyPolled)
+  useContainerPolling(selected, applyPolled)
 
   // Wejście z odnośnika w powiadomieniu: /tracking?tab=container&trackingId=<id>.
   // Po NASZYM id, nie po numerze kontenera, bo ten sam numer wraca w kolejnych
@@ -204,8 +204,9 @@ export default function ContainerLookup({ initialTrackingId }) {
             <button
               type="button"
               onClick={() => setSelected(null)}
-              className="text-sm text-gray-600 dark:text-slate-300 font-medium hover:text-orange-700 dark:hover:text-orange-400 transition-colors mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-700/60 hover:bg-orange-50 hover:text-orange-700 dark:hover:bg-orange-900/30 dark:hover:text-orange-400 transition-colors mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
             >
+              <ArrowLeft className="w-4 h-4" strokeWidth={1.8} />
               {t('tracking.container.backToContainers')}
             </button>
             <div className="border border-red-300 dark:border-red-900 rounded-xl p-5 bg-white dark:bg-slate-800">
@@ -229,15 +230,15 @@ export default function ContainerLookup({ initialTrackingId }) {
             <button
               type="button"
               onClick={() => setSelected(null)}
-              className="text-sm text-gray-600 dark:text-slate-300 font-medium hover:text-orange-700 dark:hover:text-orange-400 transition-colors mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-700/60 hover:bg-orange-50 hover:text-orange-700 dark:hover:bg-orange-900/30 dark:hover:text-orange-400 transition-colors mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
             >
+              <ArrowLeft className="w-4 h-4" strokeWidth={1.8} />
               {t('tracking.container.backToContainers')}
             </button>
             <ContainerPendingCard
               container={selected}
               onRefresh={handleRefresh}
               refreshing={refreshing}
-              pollingExhausted={pollingExhausted}
             />
           </div>
         ) : (

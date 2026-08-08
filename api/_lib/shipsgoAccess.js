@@ -30,10 +30,19 @@ export async function isUserAllowed(userId) {
   return !!user && allowed.includes(user.email.toLowerCase())
 }
 
+// Wariant CICHY: pyta o dostęp, ale niczego nie odpowiada. Dla tras, które
+// czytają z naszej bazy, a odświeżenie z ShipsGo traktują jako dodatek
+// (patrz refreshIfStale w api/_routes/tracking.js). Brak dostępu ma tam
+// pominąć odświeżenie, a nie zamienić poprawny odczyt w błąd 503.
+export async function hasShipsgoAccess(userId) {
+  if (!isShipsgoEnabled()) return false
+  return isUserAllowed(userId)
+}
+
 // Wspólna bramka dla tras, które MOGĄ sięgnąć do ShipsGo. Zwraca false i sama
 // odpowiada, gdy dostępu nie ma. Trasy czytające wyłącznie z naszej bazy
-// (lista, szczegóły, usuwanie z listy) jej NIE używają: użytkownik, który ma
-// już dane, powinien je widzieć także po wyłączeniu flagi.
+// (usuwanie z listy) jej NIE używają: użytkownik, który ma już dane, powinien
+// je widzieć także po wyłączeniu flagi.
 export async function ensureShipsgoAccess(req, res) {
   if (!isShipsgoEnabled()) {
     res.status(503).json({ error: 'Śledzenie ShipsGo jest wyłączone' })

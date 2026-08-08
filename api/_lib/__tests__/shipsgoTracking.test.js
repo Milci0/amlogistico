@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import crypto from 'node:crypto'
 import { trimShipmentData, trimGeojson, OCEAN_STATUSES, createOceanShipment, getOceanShipment } from '../shipsgo.js'
 import { validateContainerNumber, isValidContainerNumber } from '../containerChecksum.js'
-import { INACTIVE_STATUSES, isArchived } from '../containerTrackingRepo.js'
+import { INACTIVE_STATUSES, isArchived, isAwaitingCarrierData, shouldPoll } from '../containerTrackingRepo.js'
 
 // Kształt odpowiedzi ShipsGo (koperta z kluczem `shipment`), NIEZGADYWANY —
 // przechwycony z realnego konta 2026-08-06: POST /ocean/shipments zwrócił
@@ -92,6 +92,55 @@ describe('isArchived (definicja rekordu aktywnego)', () => {
 
   it('lista statusow nieaktywnych zawiera dokladnie te dwa', () => {
     expect(INACTIVE_STATUSES).toEqual(['DISCHARGED', 'UNTRACKED'])
+  })
+})
+
+// ── Odstep odpytywania zalezy od STATUSU, nie od fetchState ─────────────────
+// Regresja z 2026-08-08. Rekord swiezo utworzony ma fetchState 'ready' (POST
+// zwrocil id i migawke, wiec z naszej perspektywy odczyt sie UDAL), ale status
+// 'NEW'/'INPROGRESS', bo armator nie podal jeszcze trasy. Stara wersja
+// shouldPoll() dobierala odstep po fetchState, wiec taki rekord dostawal godzine
+// zamiast minuty i wisial userowi na „Pobieramy dane". Realny przypadek:
+// CGMU5102420 status=NEW fetchState=ready przez 37 minut bez jednego odpytania.
+describe('isAwaitingCarrierData i odstep odpytywania', () => {
+  const base = { shipsgoId: 1, discardedAt: null }
+
+  it('rekord ready ze statusem NEW nadal czeka na dane armatora', () => {
+    expect(isAwaitingCarrierData({ ...base, status: 'NEW', fetchState: 'ready' })).toBe(true)
+    expect(isAwaitingCarrierData({ ...base, status: 'INPROGRESS', fetchState: 'ready' })).toBe(true)
+  })
+
+  it('rejs w drodze nie czeka juz na dane armatora', () => {
+    expect(isAwaitingCarrierData({ ...base, status: 'SAILING', fetchState: 'ready' })).toBe(false)
+  })
+
+  it('fetchState pending wystarcza, nawet gdy statusu jeszcze nie znamy', () => {
+    expect(isAwaitingCarrierData({ ...base, status: null, fetchState: 'pending' })).toBe(true)
+  })
+
+  it('czekajacy na armatora jest odpytywalny po minucie, a nie po godzinie', () => {
+    const row = {
+      ...base,
+      status: 'NEW',
+      fetchState: 'ready',
+      lastPolledAt: new Date(Date.now() - 2 * 60 * 1000),
+    }
+    expect(shouldPoll(row)).toBe(true)
+  })
+
+  it('minute po odpytaniu nie ponawiamy', () => {
+    const row = {
+      ...base,
+      status: 'NEW',
+      fetchState: 'ready',
+      lastPolledAt: new Date(Date.now() - 5 * 1000),
+    }
+    expect(shouldPoll(row)).toBe(false)
+  })
+
+  it('rejs zakonczony nie jest odpytywany nigdy', () => {
+    const row = { ...base, status: 'DISCHARGED', fetchState: 'ready', lastPolledAt: new Date(0) }
+    expect(shouldPoll(row)).toBe(false)
   })
 })
 

@@ -4,11 +4,19 @@ import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import { NewsProvider } from '../../context/NewsContext'
 import StepTransition from '../StepTransition'
+import { useAuth } from '../../auth/AuthContext'
+import { useContainerBackgroundSync } from '../../hooks/useContainerTracking'
 
 export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const location = useLocation()
+  const { user } = useAuth()
+
+  // Odświeżanie śledzonych kontenerów w tle, na każdej zakładce aplikacji.
+  // Tylko dla zalogowanych: gość nie ma żadnych kontenerów, a zapytanie i tak
+  // wróciłoby z 401. AppShell jest publiczny (patrz trasy w App.jsx).
+  useContainerBackgroundSync(!!user)
 
   return (
     <NewsProvider>

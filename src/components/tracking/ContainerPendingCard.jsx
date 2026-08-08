@@ -39,7 +39,7 @@ function StepMarker({ state, index }) {
   )
 }
 
-export default function ContainerPendingCard({ container, onRefresh, refreshing, pollingExhausted }) {
+export default function ContainerPendingCard({ container, onRefresh, refreshing }) {
   const { t } = useTranslation('pages')
 
   return (
@@ -85,20 +85,21 @@ export default function ContainerPendingCard({ container, onRefresh, refreshing,
           ))}
         </ol>
 
-        {/* Przycisk ręcznego odświeżenia pojawia się dopiero, gdy automatyczne
-            sprawdzanie się wyczerpało (15 minut). Wcześniej byłby zaproszeniem
-            do klikania w coś, co i tak dzieje się samo. */}
-        {pollingExhausted && (
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={refreshing}
-            className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} strokeWidth={1.75} />
-            {t('tracking.container.refreshNow')}
-          </button>
-        )}
+        {/* Przycisk był wcześniej ukryty przez pierwsze 15 minut, bo „i tak
+            dzieje się samo". To założenie opierało się na webhooku ShipsGo,
+            którego nie wykupiono, więc przez ten kwadrans nie działo się NIC
+            i użytkownik nie miał czym tego ruszyć. Teraz odświeżanie faktycznie
+            chodzi samo, a przycisk jest dla niecierpliwych: GET do ShipsGo nie
+            kosztuje kredytu, więc nie ma powodu go chować. */}
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={refreshing}
+          className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} strokeWidth={1.75} />
+          {t('tracking.container.refreshNow')}
+        </button>
       </div>
     </div>
   )

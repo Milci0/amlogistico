@@ -35,20 +35,45 @@ const ACTIVE_WHERE = {
 }
 
 // Jak dlugo dane uznajemy za swieze (nie odpytuj ShipsGo ponownie).
-// Dane voyage zmieniaja sie kilka razy dziennie, nie w czasie rzeczywistym.
-export const FRESH_MS = 60 * 60 * 1000
+// Dane rejsu zmieniaja sie kilka razy dziennie, nie w czasie rzeczywistym, ale
+// GET nie kosztuje kredytu, wiec odstep dobieramy pod oczekiwanie uzytkownika
+// („patrze na kontener, wiec widze stan aktualny"), nie pod oszczednosc.
+// Bylo 60 minut, gdy odswiezanie miala wypychac subskrypcja webhooka.
+export const FRESH_MS = 5 * 60 * 1000
 
-// Jak czesto wolno ponawiac odpytanie sledzenia, ktore wciaz jest `pending`.
-// Krocej niz FRESH_MS, bo tu czekamy az ShipsGo dociagnie dane od przewoznika,
-// a to zwykle kwestia minut. GET nie kosztuje kredytu, wiec ten limit chroni
-// wylacznie przed zabiciem limitu 100 req/min, nie przed kosztem.
+// Jak czesto wolno ponawiac odpytanie sledzenia, ktore wciaz czeka na dane
+// od przewoznika. Krocej niz FRESH_MS, bo to kwestia minut, nie godzin.
+// GET nie kosztuje kredytu, wiec ten limit chroni wylacznie przed zabiciem
+// limitu 100 req/min, nie przed kosztem.
 export const PENDING_RETRY_MS = 60 * 1000
 
-// Reczne odswiezenie (przycisk usera): nie czesciej niz raz na 5 minut NA REJS,
-// niezaleznie od liczby uzytkownikow, ktorzy go sledza. Ten endpoint jest
-// zabezpieczeniem na wypadek niedzialajacego webhooka, nie podstawowym
-// mechanizmem aktualizacji.
-export const MANUAL_REFRESH_MS = 5 * 60 * 1000
+// Statusy, w ktorych ShipsGo dopiero kompletuje dane od armatora. To wlasnie
+// te rekordy interfejs pokazuje jako „Pobieramy dane".
+//
+// UWAGA, tu byl blad (naprawiony 2026-08-08): shouldPoll dobieral odstep po
+// `fetchState`, nie po statusie. Rekord swiezo utworzony ma `fetchState:'ready'`
+// (POST zwrocil id i migawke, wiec z naszej perspektywy odczyt sie UDAL),
+// a jednoczesnie status 'NEW'/'INPROGRESS', bo armator nie podal jeszcze trasy.
+// Taki rekord dostawal odstep godzinny zamiast minutowego, przez co
+// PENDING_RETRY_MS nie obowiazywalo dokladnie tych rekordow, dla ktorych je
+// napisano. Objaw: kontener wisial na „Pobieramy dane" przez godzine, mimo ze
+// ShipsGo mialo komplet danych po kilku minutach.
+export const AWAITING_CARRIER_STATUSES = ['NEW', 'INPROGRESS']
+
+export function isAwaitingCarrierData(row) {
+  if (!row) return false
+  return row.fetchState === 'pending' || AWAITING_CARRIER_STATUSES.includes(row.status)
+}
+
+// Reczne odswiezenie (przycisk usera): nie czesciej niz raz na minute NA REJS,
+// niezaleznie od liczby uzytkownikow, ktorzy go sledza.
+//
+// Bylo 5 minut, gdy przycisk byl JEDYNYM sposobem na swieze dane. Teraz
+// odswiezanie chodzi automatycznie i tez odswieza `lastPolledAt`, wiec dluzszy
+// odstep oznaczalby, ze klikniecie tuz po cyklu automatycznym dostaje 429
+// zamiast danych. Rownanie go z PENDING_RETRY_MS sprawia, ze przycisk jest
+// najwyzej tak samo powsciagliwy jak automat.
+export const MANUAL_REFRESH_MS = 60 * 1000
 
 // ── Odczyt ──────────────────────────────────────────────────────────────────
 
@@ -144,6 +169,26 @@ export function markFailed(id, errorCode) {
   })
 }
 
+// Nieudane ODPYTANIE istniejacego juz sledzenia. Zapisuje przyczyne i przesuwa
+// `lastPolledAt`, ale NIE rusza `fetchState` — user dalej widzi ostatnie znane
+// dane zamiast czerwonej karty „Blad utworzenia".
+//
+// DLACZEGO TO NIE JEST markFailed (wazne): 404 przy TWORZENIU znaczy „ShipsGo
+// nie zna tego numeru kontenera" i jest wina numeru, wiec ponawianie nic nie da.
+// 404 przy ODPYTANIU juz utworzonej przesylki znaczy co innego: to id istnieje,
+// bo kiedys je dostalismy i zaplacilismy za nie kredyt, tylko akurat TEN token
+// go nie widzi. Realny przypadek (2026-08-08): baza jest jedna, a SHIPSGO_API_TOKEN
+// rozny lokalnie i na Vercelu, wiec przesylka utworzona na produkcji dostawala
+// 404 przy odpytaniu ze srodowiska lokalnego. markFailed() zatrzaskiwalo wtedy
+// rekord na stale: shouldPoll() zwraca false dla `failed`, wiec nie mial jak
+// wrocic do zycia nawet po odpytaniu wlasciwym tokenem.
+export function markPollMiss(id, errorCode) {
+  return prisma.containerTracking.update({
+    where: { id },
+    data: { lastError: errorCode, lastPolledAt: new Date() },
+  })
+}
+
 // Kasuje rezerwacje po bledzie PRZEJSCIOWYM. Bez tego pusty wiersz `pending`
 // blokowalby kontener na zawsze: kolejne proby widzialyby „juz zarezerwowany",
 // nie wyslalyby POST-a i user nigdy nie dostalby danych.
@@ -166,7 +211,7 @@ export function shouldPoll(row) {
   if (row.fetchState === 'failed') return false
   if (isArchived(row)) return false // zakonczony rejs juz sie nie zmieni
   const last = row.lastPolledAt ? new Date(row.lastPolledAt).getTime() : 0
-  const gap = row.fetchState === 'pending' ? PENDING_RETRY_MS : FRESH_MS
+  const gap = isAwaitingCarrierData(row) ? PENDING_RETRY_MS : FRESH_MS
   return Date.now() - last >= gap
 }
 

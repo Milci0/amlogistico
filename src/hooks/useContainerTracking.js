@@ -39,62 +39,115 @@ export function useContainerList() {
   return { containers, loading, error, reload, upsert, remove }
 }
 
-// Odpytywanie stanu przejściowego: dopóki status to NEW albo INPROGRESS, pytamy
-// WŁASNY endpoint co 30 sekund, maksymalnie przez 15 minut. Potem przestajemy
-// i pokazujemy przycisk ręcznego odświeżenia.
+// Odświeżanie w tle na CAŁEJ aplikacji, niezależnie od otwartej zakładki.
+// Montowane raz, w AppShell.
 //
-// To odpytywanie idzie do NASZEJ bazy, nie do ShipsGo. Aktualizacje trafiają do
-// bazy webhookiem, więc polling tylko sprawdza, czy coś już przyszło.
-const POLL_INTERVAL_MS = 30 * 1000
-const POLL_MAX_MS = 15 * 60 * 1000
+// Po co, skoro otwarty kontener ma własną pętlę: żeby kontener przestał wisieć
+// na „Pobieramy dane" także wtedy, gdy użytkownik wypełnia kreator albo czyta
+// Newsy. Zapytanie o listę uruchamia po stronie serwera to samo odświeżenie
+// z ShipsGo co wejście na zakładkę (refreshStaleRows), a gdy rejs okaże się
+// gotowy, powiadomienie ląduje w dzwonku od razu, nie o 5:00 rano.
+//
+// Nie dotyczy to kart zamkniętych. Bez wykupionego webhooka nie da się tego
+// przeskoczyć i to świadome ograniczenie: dane rejsu są WSPÓLNE, więc każda
+// osoba śledząca ten sam kontener odświeża go dla wszystkich pozostałych.
+const BACKGROUND_AWAITING_MS = 60 * 1000
+const BACKGROUND_IDLE_MS = 5 * 60 * 1000
+
+export function useContainerBackgroundSync(enabled) {
+  // Odstęp zależy od tego, czy cokolwiek czeka na dane armatora. Trzymany
+  // w stanie, bo ma przełączyć timer, gdy ostatni kontener wyjdzie z oczekiwania.
+  const [intervalMs, setIntervalMs] = useState(BACKGROUND_IDLE_MS)
+  const awaitingRef = useRef(new Set())
+
+  useEffect(() => {
+    if (!enabled) return undefined
+
+    let cancelled = false
+    const tick = async () => {
+      if (document.hidden) return
+      try {
+        const list = await listContainers()
+        if (cancelled) return
+
+        const awaiting = new Set(list.filter((c) => isPendingStatus(c.status)).map((c) => c.id))
+        // Któryś kontener PRZESTAŁ czekać na dane, czyli serwer mógł właśnie
+        // utworzyć powiadomienie „gotowy do śledzenia". Prosimy dzwonek
+        // o odświeżenie tylko wtedy, zamiast przy każdym cyklu.
+        const becameReady = [...awaitingRef.current].some((id) => !awaiting.has(id))
+        awaitingRef.current = awaiting
+        if (becameReady) window.dispatchEvent(new Event('notifications:changed'))
+
+        setIntervalMs(awaiting.size > 0 ? BACKGROUND_AWAITING_MS : BACKGROUND_IDLE_MS)
+      } catch {
+        // Cisza celowa: użytkownik jest na zupełnie innej zakładce i nie prosił
+        // o tę operację. Komunikat o błędzie byłby tu tylko hałasem.
+      }
+    }
+
+    tick()
+    const timer = setInterval(tick, intervalMs)
+    document.addEventListener('visibilitychange', tick)
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', tick)
+    }
+  }, [enabled, intervalMs])
+}
+
+// Automatyczne odświeżanie OTWARTEGO kontenera.
+//
+// Pyta NASZ endpoint, a ten sam dociąga świeże dane z ShipsGo, gdy minął odstęp
+// (patrz refreshIfStale w api/_routes/tracking.js). Wcześniej ta pętla czytała
+// wyłącznie z bazy i przez to nigdy niczego nie znajdowała: dane miał wpychać
+// webhook, którego nie wykupiono, więc kontener wisiał na „Pobieramy dane".
+//
+// Nie ma już limitu 15 minut. Armator potrafi zwlekać godzinami, a przerwanie
+// odpytywania zostawiało użytkownika przed ekranem, który nigdy się nie zmieni.
+//
+// Odświeżanie jest CICHE: żadnego spinnera ani migania co minutę. Zmienia się
+// sama treść. Kółko pokazuje się wyłącznie po ręcznym kliknięciu „Odśwież".
+const AWAITING_INTERVAL_MS = 60 * 1000
+const ACTIVE_INTERVAL_MS = 5 * 60 * 1000
 
 export function useContainerPolling(container, onUpdate) {
-  const [exhausted, setExhausted] = useState(false)
-  const startedAt = useRef(null)
   const onUpdateRef = useRef(onUpdate)
   onUpdateRef.current = onUpdate
 
   const containerNumber = container?.containerNumber
-  // `fetchState: 'failed'` znaczy, że rekord nigdy nie dostanie realnego
-  // statusu z ShipsGo (patrz api/_lib/shipsgoSync.js) - odpytywanie w kółko
-  // niczego by nie rozwiązało, tylko marnowało zapytania do naszego API.
-  const shouldPoll = !!containerNumber && !container?.archived
-    && container?.fetchState !== 'failed' && isPendingStatus(container?.status)
+  // `fetchState: 'failed'` znaczy, że rekord nigdy nie dostanie realnego statusu
+  // z ShipsGo (patrz api/_lib/shipsgoSync.js), a rejs zakończony już się nie
+  // zmieni. W obu przypadkach odpytywanie w kółko niczego by nie rozwiązało.
+  const enabled = !!containerNumber && !container?.archived && container?.fetchState !== 'failed'
+  // Czeka na dane armatora, więc zmiana może przyjść w każdej chwili. Rejs
+  // w drodze aktualizuje się kilka razy dziennie, stąd znacznie rzadziej.
+  const intervalMs = isPendingStatus(container?.status) ? AWAITING_INTERVAL_MS : ACTIVE_INTERVAL_MS
 
   useEffect(() => {
-    if (!shouldPoll) {
-      startedAt.current = null
-      setExhausted(false)
-      return undefined
-    }
-
-    // Licznik startuje przy WEJŚCIU w stan przejściowy, nie przy montażu
-    // komponentu — dzięki temu przełączanie między kontenerami nie zeruje limitu
-    // dla kontenera, który czeka od kwadransa.
-    if (startedAt.current === null) startedAt.current = Date.now()
+    if (!enabled) return undefined
 
     let cancelled = false
-    const timer = setInterval(async () => {
-      if (Date.now() - startedAt.current >= POLL_MAX_MS) {
-        setExhausted(true)
-        clearInterval(timer)
-        return
-      }
+    const tick = async () => {
+      // Karta w tle nie ma komu pokazać wyniku, a zapytania i tak by szły.
+      if (document.hidden) return
       try {
         const fresh = await getContainer(containerNumber)
         if (!cancelled) onUpdateRef.current?.(fresh)
       } catch {
-        // Cisza jest tu celowa: to odpytywanie w tle, a nie akcja użytkownika.
+        // Cisza jest tu celowa: to odświeżanie w tle, a nie akcja użytkownika.
         // Błąd sieci nie powinien wyrzucać komunikatu na ekran, na którym user
-        // czeka na dane. Przy trwałym problemie zadziała limit 15 minut.
+        // czeka na dane. Kolejne wywołanie i tak spróbuje ponownie.
       }
-    }, POLL_INTERVAL_MS)
+    }
 
+    const timer = setInterval(tick, intervalMs)
+    // Powrót na kartę pokazuje aktualny stan od razu, a nie po pełnym odstępie.
+    document.addEventListener('visibilitychange', tick)
     return () => {
       cancelled = true
       clearInterval(timer)
+      document.removeEventListener('visibilitychange', tick)
     }
-  }, [shouldPoll, containerNumber])
-
-  return { pollingExhausted: exhausted }
+  }, [enabled, containerNumber, intervalMs])
 }
